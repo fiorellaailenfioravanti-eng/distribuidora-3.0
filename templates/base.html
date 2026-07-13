@@ -1,0 +1,149 @@
+{% load grupos %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'style/productos.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>{% block title %}{% endblock %}</title>
+    <style>
+    /* Estilo para que el dropdown se abra al pasar el mouse */
+    .nav-item.dropdown:hover .dropdown-menu {
+        display: block;
+        margin-top: 0; 
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100 bg-body" >
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    
+    <!-- HEADER -->
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg py-0">
+        <div class="container d-flex flex-wrap align-items-center justify-content-between"> 
+            <!--aqui arriba podria ir un logo o imagen -->
+            <a class="navbar-brand fw-bold" href="{% url 'inicio' %}">
+                <span class="fw-bold">🛒 DISTRIBUIDORA</span>
+            </a>
+            
+            <!-- Botón modo oscuro -->
+            <button id="toggle-theme" 
+                class="btn btn-outline-light rounded-circle shadow-sm order-2 ms-auto me-2 me-lg-0">
+                <i class="fa-solid fa-circle-half-stroke"></i>
+            </button>
+
+            <!-- Botón toggle para móviles -->
+            <button class="navbar-toggler order-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarPF"
+                    aria-controls="navbarPF" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Contenido colapsable -->
+             
+            <div class="collapse navbar-collapse order-4 order-lg-3 w-100 w-lg-auto" id="navbarPF">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.view_name == 'inicio' %}active{% endif %}" 
+                        href="{% url 'inicio' %}">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.view_name == 'apps.productos:listar_productos' %}active{% endif %}" 
+                        href="{% url 'apps.productos:listar_productos' %}">Productos</a>
+                    </li>
+                    {#logica de permiso para ver crear#}
+                    {% if user.is_superuser or user|has_group:"Vendedor" %}
+                    <li class="nav-item dropdown">
+                     <a class="nav-link dropdown-toggle text-info" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      + Crear
+                      </a>
+                        <ul class="dropdown-menu dropdown-menu-body shadow" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="{% url 'apps.productos:crear_categoria' %}">Nueva Categoría</a></li>
+                            <li><a class="dropdown-item" href="{% url 'apps.productos:crear_producto' %}"> Nuevo Producto</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-warning" href="{% url 'admin:index' %}" target="_blank">Admin</a>
+                    </li>
+                    {% endif %}
+                    
+                </ul>
+
+                <!-- Buscador -->
+                
+                <form class="d-flex mb-2 mb-lg-0 me-lg-3 order-5 order-lg-4" role="search" action="{% url 'apps.buscador:buscar_productos' %}" method="get">
+                    <input class="form-control me-2" type="search" name="q" placeholder="Buscar..." aria-label="Buscar"
+                        value="{{ query}}">
+                    <button class="btn btn-outline-info" type="submit">Buscar</button>
+                </form>
+
+                <!--Carrito-->
+                <ul class="navbar-nav mb-2 mb-lg-0 me-3">
+                    <li class="nav-item position-relative">
+                        <a href="{% url 'apps.carrito:ver_carrito' %}" class="nav-link text-white">
+                            <div class="position-relative d-inline-block">
+                                <i class="fas fa-shopping-cart fa-lg"></i>
+                                <!--El usuario podrá ver cuántos ítems tiene en el carrito (gracias al context_processor) sin importar qué tan abajo esté en el catálogo.-->
+                                {# Usamos la variable definida en tu context_processor #}
+                                {% if carrito_total_items > 0 %}
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+                                        {{ carrito_total_items }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Usuario / Invitado -->
+                <ul class="navbar-nav mb-2 mb-lg-0 order-6 order-lg-5">
+                    
+                    {% if user.is_authenticated %}
+                        <li class="nav-item d-flex align-items-center">
+                            <span class="navbar-text me-3">Hola, <strong>{{ user.username }}</strong></span>
+                            <a class="btn btn-outline-danger btn-sm" href="{% url 'apps.autenticacion:cerrar_sesion' %}">Salir</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'apps.autenticacion:ingresar' %}">Ingresar</a></li>
+                        <li class="nav-item"><a class="btn btn-primary btn-sm ms-lg-2" href="{% url 'apps.autenticacion:registrar' %}">Registrarse</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+    </header>
+    {% block content_banner %}{% endblock content_banner %}
+    <!-- Mensajes -->
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+
+    <!--Contenido principal aaaaaaaaaaa-->
+    <main class="container my-5 p-4 bg-body shadow-sm rounded">
+        {% block content %}{% endblock %}
+    </main>
+
+
+    {% block content_footer %}
+    {% endblock content_footer %}
+    <footer class="footer mt-auto py-3 bg-body border-top text-center">
+        <div class="container">
+            <span class="text-muted">&copy; 2026 Distribuidora - Gestión de Inventario</span>
+        </div>
+    </footer>
+    
+    <!--Esto hace que desaparezcan las alertas automáticamente después de 5 segundos-->
+    <script src="{% static 'js/main.js' %}"></script>
+
+</body>
+</html>

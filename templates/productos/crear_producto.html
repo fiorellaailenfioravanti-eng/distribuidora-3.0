@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Crear Producto{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-body text-body">
+                <h4 class="mb-0">Registrar Nuevo Producto</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        {# Esto asume que usas widgets de Bootstrap en tu forms.py #}
+                        {{ form.as_p }}
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-secondary me-2">Cancelar</a>
+                        <button type="submit" class="btn btn-success px-4">Guardar Producto</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Resultados de búsqueda{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4 text-body">Resultados para "{{ query }}"</h2>
+
+    {% if lista_productos %}
+    <div class="row">
+        {% for e in lista_productos %}
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 shadow-sm product-card">
+                <a href="{% url 'apps.productos:ver_producto' e.id_producto %}" class="text-decoration-none text-body">
+                    <div class="product-img-container text-center p-3">
+                        {% if e.imagen %}
+                            <img src="{{ e.imagen.url }}" class="card-img-top img-fluid" 
+                                alt="{{ e.nombre }}" style="height: 200px; object-fit: contain;">
+                        {% else %}
+                            <img src="{% static 'img/no-image.png' %}" class="card-img-top img-fluid opacity-50" 
+                                alt="Sin imagen" style="height: 200px;">
+                        {% endif %}
+                    </div>
+                    
+                    <div class="card-body text-start">
+                        <h5 class="card-title fw-bold">{{ e.nombre }}</h5>
+                        <p class="card-text mb-1">
+                            <span class="badge {% if e.stock < 5 %}bg-danger{% else %}bg-secondary{% endif %}">
+                                Stock: {{ e.stock }}
+                            </span>
+                        </p>
+                        <p class="card-text fw-bold text-success fs-5">$ {{ e.precio }}</p>
+                    </div>
+                </a>
+                
+                <div class="card-footer bg-transparent border-top-0 pb-3">
+                    <a href="{% url 'apps.carrito:agregar_al_carrito' e.id_producto %}" 
+                    class="btn btn-outline-primary btn-sm w-100">
+                    <i class="fas fa-cart-plus me-1"></i> Añadir
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Paginación tipo Bootstrap -->
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if lista_productos.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?q={{ query }}&page={{ lista_productos.previous_page_number }}">Anterior</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">Anterior</span>
+            </li>
+            {% endif %}
+
+            {% for num in lista_productos.paginator.page_range %}
+            {% if lista_productos.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if lista_productos.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?q={{ query }}&page={{ lista_productos.next_page_number }}">Siguiente</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">Siguiente</span>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% else %}
+    <p class="text-center mt-4 text-body">No se encontraron resultados.</p>
+    {% endif %}
+</div>
+{% endblock %}y

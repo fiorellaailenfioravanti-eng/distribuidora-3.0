@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{%load static %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Perfil de Usuario</h4>
+                </div>
+                <div class="card-body">
+                    <p><strong>Nombre de usuario:</strong> {{ user.username }}</p>
+                    <p><strong>Correo electrónico:</strong> {{ user.email }}</p>
+                    <p><strong>Nombre completo:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+                    <!-- Agrega más campos según tu modelo de usuario -->
+                </div>
+            </div>
+        </div>
+    </div>
+{%endblock%}

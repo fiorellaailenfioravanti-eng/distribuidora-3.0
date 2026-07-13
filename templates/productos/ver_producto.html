@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load grupos %}
+{% load static %}
+{% block title %}Ver Producto: {{ producto.nombre }}{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'inicio' %}">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'apps.productos:listar_productos' %}">Productos</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ producto.nombre }}</li>
+        </ol>
+    </nav>
+
+    <div class="card border-0 shadow-lg overflow-hidden">
+        <div class="row g-0">
+            <div class="col-md-6 bg-white d-flex align-items-center justify-content-center p-4 border-end">
+                {% if producto.imagen %}
+                    <img src="{{ producto.imagen.url }}" class="img-fluid rounded" alt="{{ producto.nombre }}" style="max-height: 500px; object-fit: contain;">
+                {% else %}
+                    <img src="{% static 'img/no-image.png' %}" class="img-fluid opacity-50" alt="Sin imagen" style="max-height: 400px;">
+                {% endif %}
+            </div>
+
+            <div class="col-md-6 bg-light p-5">
+                <div class="mb-3">
+                    {% for cat in producto.categoria.all %}
+                        <span class="badge bg-primary text-uppercase px-3 py-2 mb-2">{{ cat.nombre }}</span>
+                    {% endfor %}
+                </div>
+                
+                <h1 class="display-5 fw-bold mb-3">{{ producto.nombre }}</h1>
+                
+                <div class="mb-4">
+                    <h2 class="text-success fw-bold display-6">$ {{ producto.precio }}</h2>
+                    <p class="text-muted small">Precio final con impuestos incluidos.</p>
+                </div>
+
+                <!-- Botones de acciones principales-->
+                <div class="d-flex flex-column flex-sm-row gap-3 mb-5 mt-4">
+                    <!--Se desactiva el botón si no hay stock disponible-->
+                    {% if producto.stock > 0 %}
+                        <a href="{% url 'apps.carrito:agregar_al_carrito' producto.id_producto %}"
+                            class="btn btn-success btn-md rounded-3 shadow-sm d-flex align-items-center justify-content-center px-4">
+                            <i class="fas fa-shopping-cart me-2"></i>Añadir al carrito
+                        </a>
+                    {% else %}
+                        <button class="btn btn-secondary btn-md rounded-3 shadow-sm d-flex align-items-center justify-content-center px-4" disabled>
+                            <i class="fas fa-exclamation-triangle me-2"></i>Sin Stock
+                        </button>
+                    {% endif %}
+
+                    <button class="btn btn-outline-danger btn-md rounded-3 shadow-sm d-flex align-items-center justify-content-center px-4">
+                        <i class="fas fa-heart me-2"></i>Agregar a favoritos
+                    </button>
+
+                    <a href="{% url 'apps.productos:listar_productos' %}"
+                        class="btn btn-secondary btn-md rounded-3 shadow-sm d-flex align-items-center justify-content-center px-4">
+                        <i class="fas fa-arrow-left me-2"></i>Volver al catálogo
+                    </a>
+                </div>
+
+
+                <div class="mb-4">
+                    <h5 class="fw-bold">Descripción:</h5>
+                    <p class="text-secondary lh-lg">{{ producto.descripcion }}</p>
+                </div>
+
+                <div class="p-3 bg-white rounded border mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <span class="fs-4">📦</span>
+                        </div>
+                        <div>
+                            <p class="mb-0 fw-bold text-dark">Stock Disponible:</p>
+                            <p class="mb-0 text-muted">{{ producto.stock }} unidades en depósito</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-start mt-5">
+                    <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-outline-secondary px-4 me-md-2">
+                        ← Volver al listado
+                    </a>
+                    
+                    {% if user.is_superuser or user|has_group:"Vendedor" %}
+                    <div class="btn-group shadow-sm" role="group">
+                        <a href="{% url 'apps.productos:editar_producto' producto.pk %}" class="btn btn-warning px-4">
+                            ✏️ Editar
+                        </a>
+                        <a href="{% url 'apps.productos:eliminar_producto' producto.pk %}" class="btn btn-danger px-4">
+                            🗑️ Eliminar
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

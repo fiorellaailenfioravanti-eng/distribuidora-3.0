@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Crear Categoría{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-body text-body">
+                <h4 class="mb-0">Nueva Categoría</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {{ form.as_p }}
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-secondary me-2">Volver</a>
+                        <button type="submit" class="btn btn-success">Guardar Categoría</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

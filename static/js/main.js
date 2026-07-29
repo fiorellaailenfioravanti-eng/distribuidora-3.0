@@ -29,20 +29,17 @@ window.addEventListener('scroll', function() {
     }
 });
 
-// Función para cerrar alertas automáticamente después de 5 segundos
-document.addEventListener("DOMContentLoaded", function() {
-    const alerts = document.querySelectorAll('.alert');
-    
-    alerts.forEach(function(alert) {
-        setTimeout(function() {
-            // Verificamos que Bootstrap esté disponible para evitar errores
-            if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            } else {
-                // Alternativa si Bootstrap JS no cargó: ocultar con CSS
-                alert.style.display = 'none';
-            }
-        }, 5000);
-    });
-});
+// Función para cerrar alertas automáticamente desactivada a pedido del usuario
+// document.addEventListener("DOMContentLoaded", function() {
+//     const alerts = document.querySelectorAll('.alert');
+//     alerts.forEach(function(alert) {
+//         setTimeout(function() {
+//             if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
+//                 const bsAlert = new bootstrap.Alert(alert);
+//                 bsAlert.close();
+//             } else {
+//                 alert.style.display = 'none';
+//             }
+//         }, 5000);
+//     });
+// });

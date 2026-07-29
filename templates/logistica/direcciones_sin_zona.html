@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Asignar Rutas a Domicilios{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-0">📍 Domicilios sin Ruta Asignada</h1>
+        <small class="text-muted">Revisá los domicilios nuevos y asignalos a una zona de reparto</small>
+    </div>
+    <a href="{% url 'apps.logistica:listar_zonas' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i> Volver a Zonas
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        {% if direcciones %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Domicilio</th>
+                            <th>Barrio / Localidad</th>
+                            <th style="width: 300px;">Asignar a Zona/Ruta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in direcciones %}
+                        <tr>
+                            <td>
+                                <strong>{{ d.cliente.nombre_completo }}</strong>
+                                {% if d.cliente.es_premium %}
+                                <span class="badge bg-warning text-dark"><i class="fa-solid fa-star"></i> VIP</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ d.calle }} {{ d.altura }}
+                                {% if d.piso_depto %}<br><small class="text-muted">{{ d.piso_depto }}</small>{% endif %}
+                            </td>
+                            <td>
+                                {{ d.barrio|default:"—" }}<br>
+                                <small class="text-muted">{{ d.localidad }}</small>
+                            </td>
+                            <td>
+                                <select name="zona_direccion_{{ d.pk }}" class="form-select form-select-sm">
+                                    <option value="">A asignar...</option>
+                                    {% for z in zonas %}
+                                    <option value="{{ z.pk }}">{{ z.nombre }} ({{ z.dias_activos }})</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="d-flex justify-content-end mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-check-double me-1"></i> Guardar asignaciones
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="fa-solid fa-map-location-dot fa-3x mb-3 opacity-25"></i>
+            <p class="mb-0">¡Excelente! No hay domicilios pendientes de asignación de ruta.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

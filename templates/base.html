@@ -53,6 +53,30 @@
                         <a class="nav-link {% if request.resolver_match.view_name == 'apps.productos:listar_productos' %}active{% endif %}" 
                         href="{% url 'apps.productos:listar_productos' %}">Productos</a>
                     </li>
+                    {% if user.is_superuser or user|has_group:"Vendedor" %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'clientes' in request.resolver_match.view_name %}active{% endif %}"
+                           href="{% url 'apps.clientes:listar_clientes' %}">
+                           <i class="fa-solid fa-users me-1"></i>Clientes
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if user.is_superuser or user|has_group:"Vendedor" or user|has_group:"Repartidor" %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'logistica' in request.resolver_match.view_name %}active{% endif %}"
+                           href="{% url 'apps.logistica:listar_rutas' %}">
+                           <i class="fa-solid fa-route me-1"></i>Logística
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if user|has_group:"Repartidor" %}
+                    <li class="nav-item">
+                        <a class="nav-link text-success {% if request.resolver_match.view_name == 'apps.logistica:mi_ruta_hoy' %}active{% endif %}"
+                           href="{% url 'apps.logistica:mi_ruta_hoy' %}">
+                           <i class="fa-solid fa-truck-fast me-1"></i>Mi Ruta
+                        </a>
+                    </li>
+                    {% endif %}
                     {#logica de permiso para ver crear#}
                     {% if user.is_superuser or user|has_group:"Vendedor" %}
                     <li class="nav-item dropdown">
@@ -61,7 +85,10 @@
                       </a>
                         <ul class="dropdown-menu dropdown-menu-body shadow" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="{% url 'apps.productos:crear_categoria' %}">Nueva Categoría</a></li>
-                            <li><a class="dropdown-item" href="{% url 'apps.productos:crear_producto' %}"> Nuevo Producto</a></li>
+                            <li><a class="dropdown-item" href="{% url 'apps.productos:crear_producto' %}">Nuevo Producto</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'apps.clientes:crear_cliente' %}">Nuevo Cliente</a></li>
+                            <li><a class="dropdown-item" href="{% url 'apps.logistica:crear_ruta' %}">Nueva Ruta</a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
@@ -101,8 +128,10 @@
                 <ul class="navbar-nav mb-2 mb-lg-0 order-6 order-lg-5">
                     
                     {% if user.is_authenticated %}
-                        <li class="nav-item d-flex align-items-center">
-                            <span class="navbar-text me-3">Hola, <strong>{{ user.username }}</strong></span>
+                        <li class="nav-item d-flex align-items-center gap-2">
+                            <a class="navbar-text text-decoration-none" href="{% url 'apps.clientes:mi_perfil' %}">
+                                Hola, <strong>{{ user.username }}</strong>
+                            </a>
                             <a class="btn btn-outline-danger btn-sm" href="{% url 'apps.autenticacion:cerrar_sesion' %}">Salir</a>
                         </li>
                     {% else %}

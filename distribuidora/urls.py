@@ -27,4 +27,6 @@ urlpatterns = [
     path('auth/',include('apps.autenticacion.urls')),
     path('carrito/', include('apps.carrito.urls')),
     path('buscador/', include('apps.buscador.urls')),
+    path('logistica/', include('apps.logistica.urls')),
+    path('clientes/', include('apps.clientes.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

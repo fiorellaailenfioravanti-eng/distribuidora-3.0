@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Ruta de Hoy{% endblock %}
+
+{% block content %}
+<div class="text-center mb-4">
+    <h1 class="mb-1">📦 Mi Ruta de Hoy</h1>
+    <p class="text-muted">{{ hoy|date:"l d \d\e F \d\e Y" }}</p>
+</div>
+
+{% if ruta %}
+
+{# ── Info de la ruta ── #}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body text-center">
+        <div class="row g-3">
+            <div class="col-4">
+                <div class="text-muted small">Zona</div>
+                <strong>{{ ruta.zona.nombre }}</strong>
+            </div>
+            <div class="col-4">
+                <div class="text-muted small">Camión</div>
+                <strong>{{ ruta.camion.patente }}</strong>
+            </div>
+            <div class="col-4">
+                <div class="text-muted small">Paradas</div>
+                <strong>{{ ruta.paradas_entregadas }}/{{ ruta.total_paradas }}</strong>
+            </div>
+        </div>
+        <div class="progress mt-3" style="height:12px;">
+            <div class="progress-bar bg-success" style="width:{{ ruta.porcentaje_completado }}%;"></div>
+        </div>
+        <small class="text-muted">{{ ruta.porcentaje_completado }}% completado</small>
+    </div>
+</div>
+
+{# ── Lista de paradas (mobile-friendly) ── #}
+{% if detalles %}
+<div class="d-flex flex-column gap-3">
+    {% for d in detalles %}
+    <div class="card border-0 shadow-sm {% if d.estado == 'Entregado' %}border-success{% elif d.estado == 'Cancelado' %}border-danger{% endif %}">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <span class="badge bg-dark me-2">#{{ d.orden }}</span>
+                    <strong>{{ d.cliente_nombre|default:"Sin nombre" }}</strong>
+                </div>
+                <div>
+                    {% if d.estado == 'Pendiente' %}
+                        <span class="badge bg-secondary">Pendiente</span>
+                    {% elif d.estado == 'Entregado' %}
+                        <span class="badge bg-success">✅ Entregado</span>
+                    {% elif d.estado == 'Cancelado' %}
+                        <span class="badge bg-danger">❌ Cancelado</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">🔄 Reprogramado</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if d.direccion %}
+            <p class="mb-1 text-muted">
+                <i class="fa-solid fa-location-dot me-1"></i> {{ d.direccion }}
+            </p>
+            {% endif %}
+
+            {% if d.nota_entrega %}
+            <p class="mb-2 small text-info">
+                <i class="fa-solid fa-comment me-1"></i> {{ d.nota_entrega }}
+            </p>
+            {% endif %}
+
+            {% if d.hora_registro %}
+            <small class="text-muted">
+                <i class="fa-regular fa-clock me-1"></i> {{ d.hora_registro|date:"H:i" }}
+            </small>
+            {% endif %}
+
+            {# Botones de acción — solo si está pendiente #}
+            {% if d.estado == 'Pendiente' %}
+            <div class="d-flex gap-2 mt-3">
+                <a href="{% url 'apps.logistica:actualizar_estado_entrega' d.id_detalle %}"
+                   class="btn btn-success btn-lg flex-fill">
+                    <i class="fa-solid fa-check me-1"></i> Entregado
+                </a>
+                <a href="{% url 'apps.logistica:actualizar_estado_entrega' d.id_detalle %}"
+                   class="btn btn-outline-danger btn-lg flex-fill">
+                    <i class="fa-solid fa-xmark me-1"></i> Problema
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="text-center py-5 text-muted">
+    <i class="fa-solid fa-map-location-dot fa-3x mb-3 opacity-25"></i>
+    <p>Esta ruta no tiene paradas cargadas aún.</p>
+</div>
+{% endif %}
+
+{% else %}
+{# ── Sin ruta asignada hoy ── #}
+<div class="text-center py-5">
+    <i class="fa-solid fa-truck fa-4x mb-3 opacity-25"></i>
+    <h4>No tenés una ruta asignada para hoy</h4>
+    <p class="text-muted">Si esperabas tener una ruta hoy, consultá con el coordinador.</p>
+</div>
+{% endif %}
+{% endblock %}

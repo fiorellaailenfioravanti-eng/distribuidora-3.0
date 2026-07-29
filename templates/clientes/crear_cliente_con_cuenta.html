@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Nuevo Cliente con Cuenta Web{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-0">🔐 Nuevo Cliente con cuenta web</h1>
+        <small class="text-muted">El cliente podrá acceder al catálogo y carrito online</small>
+    </div>
+    <a href="{% url 'apps.clientes:crear_cliente' %}" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i> Volver
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-body d-flex justify-content-between align-items-center">
+                <span id="step-title"><i class="fa-solid fa-id-card me-2"></i>Paso 1: Datos Personales</span>
+                <span class="badge bg-primary" id="step-badge">1 / 2</span>
+            </div>
+            <div class="card-body p-4">
+                
+                {% if form_usuario.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form_usuario.non_field_errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data" id="wizard-form">
+                    {% csrf_token %}
+                    
+                    {# ── PASO 1: DATOS PERSONALES ── #}
+                    <div id="step-1" class="step-section">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+                                {{ form_usuario.first_name }}
+                                {% for e in form_usuario.first_name.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Apellido <span class="text-danger">*</span></label>
+                                {{ form_usuario.last_name }}
+                                {% for e in form_usuario.last_name.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">DNI</label>
+                                {{ form_usuario.dni }}
+                                {% for e in form_usuario.dni.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Fecha de nacimiento</label>
+                                {{ form_usuario.fecha_nacimiento }}
+                                {% for e in form_usuario.fecha_nacimiento.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Tipo de cliente</label>
+                                {{ form_usuario.tipo_cliente }}
+                                {% for e in form_usuario.tipo_cliente.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Notas internas</label>
+                                {{ form_usuario.notas_internas }}
+                            </div>
+
+                            <div class="col-12 mt-4">
+                                <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fa-solid fa-phone-volume me-2"></i>Teléfonos de contacto</h6>
+                                <table class="table table-borderless table-sm align-middle mb-0" id="tabla-telefonos">
+                                    <thead>
+                                        <tr>
+                                            <th class="fw-semibold">Número</th>
+                                            <th class="fw-semibold">Descripción / Relación</th>
+                                            <th style="width: 40px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="telefonos-tbody">
+                                        <tr>
+                                            <td><input type="text" name="telefono_numero[]" class="form-control" placeholder="Ej: 387 123 4567"></td>
+                                            <td><input type="text" name="telefono_relacion[]" class="form-control" placeholder="Ej: Celular principal" value="Titular"></td>
+                                            <td>
+                                                <button type="button" class="btn btn-success btn-sm" onclick="agregarTelefono()">
+                                                    <i class="fa-solid fa-plus"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button type="button" class="btn btn-primary btn-lg" onclick="nextStep()">
+                                Siguiente paso <i class="fa-solid fa-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    {# ── PASO 2: DATOS DE USUARIO ── #}
+                    <div id="step-2" class="step-section d-none">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Nombre de usuario <span class="text-danger">*</span></label>
+                                {{ form_usuario.username }}
+                                {% for e in form_usuario.username.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                                <div class="form-text small">Requerido. 150 caracteres o menos. Letras, dígitos y @/./+/-/_ únicamente.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                                {{ form_usuario.email }}
+                                {% for e in form_usuario.email.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Contraseña <span class="text-danger">*</span></label>
+                                {{ form_usuario.password1 }}
+                                {% for e in form_usuario.password1.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Confirmar contraseña <span class="text-danger">*</span></label>
+                                {{ form_usuario.password2 }}
+                                {% for e in form_usuario.password2.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info small mt-4">
+                            <i class="fa-solid fa-circle-info me-1"></i>
+                            Una vez creada la cuenta, podrás agregar sus domicilios desde la ficha del cliente.
+                        </div>
+
+                        <div class="d-flex gap-2 mt-3">
+                            <button type="button" class="btn btn-outline-secondary btn-lg" onclick="prevStep()">
+                                <i class="fa-solid fa-arrow-left me-2"></i> Atrás
+                            </button>
+                            <button type="submit" class="btn btn-success btn-lg flex-fill">
+                                <i class="fa-solid fa-user-lock me-2"></i>Finalizar y Crear Cuenta
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function nextStep() {
+        // En un caso real podrías validar los campos del step-1 aquí
+        document.getElementById('step-1').classList.add('d-none');
+        document.getElementById('step-2').classList.remove('d-none');
+        
+        document.getElementById('step-title').innerHTML = '<i class="fa-solid fa-user-lock me-2"></i>Paso 2: Datos de Acceso';
+        document.getElementById('step-badge').innerText = '2 / 2';
+    }
+
+    function prevStep() {
+        document.getElementById('step-2').classList.add('d-none');
+        document.getElementById('step-1').classList.remove('d-none');
+        
+        document.getElementById('step-title').innerHTML = '<i class="fa-solid fa-id-card me-2"></i>Paso 1: Datos Personales';
+        document.getElementById('step-badge').innerText = '1 / 2';
+    }
+
+    // Si hay errores en el formulario al cargar, mostrar el paso 2 directamente para que vean los errores de username/pass
+    document.addEventListener("DOMContentLoaded", function() {
+        const hasErrors = document.querySelectorAll(".text-danger.small").length > 0;
+        if(hasErrors) {
+            // Verificar si el error es del paso 1 o paso 2
+            const step2Errors = document.getElementById('step-2').querySelectorAll('.text-danger.small');
+            if (step2Errors.length > 0) {
+                nextStep();
+            }
+        }
+    });
+
+    function agregarTelefono() {
+        const tbody = document.getElementById('telefonos-tbody');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" name="telefono_numero[]" class="form-control" placeholder="Ej: 387 123 4567"></td>
+            <td><input type="text" name="telefono_relacion[]" class="form-control" placeholder="Ej: Trabajo / Familiar"></td>
+            <td>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('tr').remove()">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    }
+</script>
+{% endblock %}

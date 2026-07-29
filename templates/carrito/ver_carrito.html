@@ -10,8 +10,9 @@
     </h1>
 
     {% if items %}
-    <div class="table-responsive rounded-3 mb-4 shadow-sm">
-        <table class="table align-middle bg-body mb-0">
+    <div class="card border-0 shadow-sm rounded-4 surface-card overflow-hidden mb-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
             <thead class="table-body">
                 <tr>
                     <th scope="col" class="ps-4">Producto</th>
@@ -54,8 +55,9 @@
             </tbody>
         </table>
     </div>
+    </div>
 
-    <div class="card border-0 shadow-sm bg-body">
+    <div class="card border-0 shadow-sm rounded-4 surface-card">
         <div class="card-body p-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
             <h3 class="fw-bold mb-0">
                 Total a pagar: <span class="text-success">${{ total_precio }}</span>
@@ -68,7 +70,7 @@
                 <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-outline-secondary rounded-pill px-4">
                     <i class="fas fa-arrow-left me-2"></i>Seguir comprando
                 </a>
-                <a href="#" class="btn btn-success btn-lg rounded-pill px-5 shadow">
+                <a href="#" class="btn btn-primary btn-glow btn-lg rounded-pill px-5 shadow-sm">
                     Finalizar Pedido <i class="fas fa-check-circle ms-2"></i>
                 </a>
             </div>
@@ -76,13 +78,13 @@
     </div>
 
     {% else %}
-    <div class="text-center py-5 shadow-sm border rounded-3 bg-body">
+    <div class="text-center py-5 shadow-sm border-0 rounded-4 surface-card hover-lift">
         <div class="mb-4">
             <span class="display-1 text-muted opacity-25">🛒</span>
         </div>
         <h2 class="fw-bold">Tu carrito está vacío</h2>
         <p class="text-muted mb-4">Parece que aún no has añadido ningún producto a tu lista.</p>
-        <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-primary btn-lg rounded-pill px-5">
+        <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-primary btn-glow btn-lg rounded-pill px-5">
             Explorar Catálogo de Productos
         </a>
     </div>

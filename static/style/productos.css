@@ -2,19 +2,23 @@
 CARDS DE PRODUCTOS
 ========================================================*/
 
-
 /* Efecto de elevación al pasar el cursor sobre la tarjeta */
 .product-card {
-    transition: transform 0.3s ease, shadow 0.3s ease;
-    border: 1px solid #eee;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid var(--bs-border-color);
     border-radius: 12px;
     overflow: hidden;
     cursor: pointer;
+    background-color: var(--bg-surface);
 }
 
 .product-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+}
+
+[data-bs-theme="dark"] .product-card:hover {
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
 }
 
 /* Ajuste para que todas las imágenes de productos tengan el mismo tamaño */
@@ -23,7 +27,7 @@ CARDS DE PRODUCTOS
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #fff;
+    background-color: transparent; /* Antes era #fff, lo que rompía el modo oscuro */
     padding: 15px;
 }
 
@@ -31,12 +35,6 @@ CARDS DE PRODUCTOS
     max-height: 100%;
     max-width: 100%;
     object-fit: contain;
-}
-
-.price-tag {
-    font-size: 1.25rem;
-    font-weight: bold;
-    color: #333;
 }
 
 /* Quitar subrayado de los links que envuelven las cards */
@@ -55,74 +53,39 @@ CARDS DE PRODUCTOS
     position: absolute;
     top: 10px;
     right: 10px;
-    z-index: 10; /* Asegura que esté por encima de la imagen */
-    width: 35px;
-    height: 35px;
+    z-index: 10;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
-    transition: all 0.2s ease;
-    border: 1px solid #ddd;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    border: none;
 }
 
 .btn-quick-add:hover {
-    transform: scale(1.1);
-    background-color: #198754; /* Color success de Bootstrap */
-    color: white;
-    border-color: #198754;
+    transform: scale(1.1) rotate(90deg);
+    background-color: var(--color-primary);
+    color: var(--bg-surface);
+    box-shadow: 0 0 15px var(--color-primary);
 }
 
-/*=====================================================================
- ESTILO DEL HEADERRRR 
- ======================================================================*/
-/* Estilo base para que el header tenga color desde el inicio */
-/* Si el usuario pone el modo claro, el header podría ser gris oscuro para no perder el contraste */
-[data-bs-theme="light"] header {
-    background-color: #2b3035 !important;
-}
-/* 1. Estilo base (SIEMPRE ARRIBA) */
-header {
-    transition: all 0.4s ease-in-out;
-    background-color: #212529 !important; /* Negro sólido inicial */
-    padding: 15px 0;
-    z-index: 1030;
-}
-
-/* Forzar que las letras sean blancas siempre */
-header .nav-link, 
-header .navbar-brand, 
-header .navbar-text,
-header .navbar-toggler-icon {
-    color: white !important;
-}
-
-/* 2. Estilo cuando baja (DEBE IR ABAJO PARA SOBREESCRIBIR) */
-header.navbar-scrolled {
-    padding: 2px 0 !important; /* Aquí es donde se achica */
-    background-color: #1a1d20 !important; /* Un poco más oscuro */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-}
-
-header.navbar-scrolled .navbar-brand {
-    font-size: 0.95rem !important; /* Logo más pequeño */
-}
-header.navbar-scrolled {
-    background-color: #212529 !important; /* Negro sólido de Bootstrap */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
-}
-
-
-
-/*=============================================================
-PARA EL NAV
-================================================================*/
-
-/* Agrega esto a productos.css */
-header .nav-link.active {
-    color: #0d6efd !important; /* Un color azul o el que prefieras para resaltar */
+/* Categorias Sidebar */
+.list-group-item.active {
+    background-color: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    color: #fff !important;
     font-weight: bold;
-    border-bottom: 2px solid #0d6efd;
+}
+
+[data-bs-theme="dark"] .list-group-item {
+    background-color: var(--bg-surface);
+    border-color: var(--bs-border-color);
+    color: var(--text-main);
+}
+[data-bs-theme="dark"] .list-group-item:hover {
+    background-color: var(--bg-main);
 }

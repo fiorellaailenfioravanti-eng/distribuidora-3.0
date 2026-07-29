@@ -3,19 +3,20 @@
 {% block title %}Listado de Productos{% endblock %}
 {% block content %}
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Catálogo de Productos</h1>
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <h1 class="fw-bold mb-0 text-dark">Descubre nuestra pureza</h1>
     </div>
 
     <div class="row">
         <div class="col-md-3 mb-4">
-            <div class="list-group shadow-sm">
-                <a href="{% url 'apps.productos:listar_productos' %}" class="list-group-item list-group-item-action active">
-                    Todas las categorías
+            <h5 class="fw-bold mb-3 ms-2">Categorías</h5>
+            <div class="list-group shadow-sm rounded-4 overflow-hidden surface-card border-0">
+                <a href="{% url 'apps.productos:listar_productos' %}" class="list-group-item list-group-item-action border-0 py-3 {% if not categoria_actual %}active{% endif %}">
+                    <i class="fa-solid fa-water me-2"></i>Todo el catálogo
                 </a>
                 {% for e in categorias %}
-                <a href="{% url 'apps.productos:listar_productos' %}?categoria={{ e.nombre }}" class="list-group-item list-group-item-action">
-                    {{ e.nombre }}
+                <a href="{% url 'apps.productos:listar_productos' %}?categoria={{ e.nombre }}" class="list-group-item list-group-item-action border-0 py-3 {% if categoria_actual == e.nombre %}active{% endif %}">
+                    <i class="fa-solid fa-angle-right me-2 text-muted"></i>{{ e.nombre }}
                 </a>
                 {% endfor %}
             </div>
@@ -25,36 +26,43 @@
             <div class="row row-cols-1 row-cols-md-3 g-4">
                 {% for e in productos %}
                 <div class="col product-card-container">
-                    <a href="{% url 'apps.carrito:agregar_al_carrito' e.id_producto %}" 
-                    class="btn btn-light shadow-sm btn-quick-add" 
-                    title="Añadir al carrito">
-                        <i class="fas fa-plus"></i>
-                    </a>
-
-                    <a href="{% url 'apps.productos:ver_producto' e.id_producto %}" class="card-link text-decoration-none text-dark">
-                        <div class="card h-100 product-card shadow-sm">
-                            <div class="product-img-container text-center p-3">
+                    <div class="card h-100 product-card shadow-sm rounded-4 hover-lift border-0 overflow-hidden">
+                        
+                        <!-- Imagen clickable que lleva al detalle -->
+                        <a href="{% url 'apps.productos:ver_producto' e.id_producto %}" class="text-decoration-none d-block">
+                            <div class="product-img-container text-center p-4 position-relative">
                                 {% if e.imagen %}
                                     <img src="{{ e.imagen.url }}" alt="{{ e.nombre }}" class="img-fluid" style="height: 200px; object-fit: contain;">
                                 {% else %}
                                     <img src="{% static 'img/no-image.png' %}" alt="Sin imagen" class="img-fluid" style="height: 200px;">
                                 {% endif %}
+                                
+                                {% if e.stock < 5 %}
+                                    <span class="badge bg-danger position-absolute top-0 start-0 m-3 shadow-sm rounded-pill">¡Últimas unidades!</span>
+                                {% endif %}
                             </div>
-                            <div class="card-body">
-                                <h5 class="card-title text-truncate">{{ e.nombre }}</h5>
-                                <p class="card-text text-muted small">{{ e.descripcion|truncatewords:8 }}</p>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="fw-bold fs-5">${{ e.precio }}</span>
-                                    <span class="badge {% if e.stock < 5 %}bg-danger{% else %}bg-secondary{% endif %} opacity-75">
-                                        Stock: {{ e.stock }}
-                                    </span>
+                        </a>
+
+                        <!-- Contenido e información de compra -->
+                        <div class="card-body d-flex flex-column pt-0">
+                            <a href="{% url 'apps.productos:ver_producto' e.id_producto %}" class="text-decoration-none text-dark">
+                                <h5 class="card-title fw-bold mb-1">{{ e.nombre }}</h5>
+                            </a>
+                            <p class="card-text text-muted small mb-3 flex-grow-1">{{ e.descripcion|truncatewords:8 }}</p>
+                            
+                            <div class="d-flex flex-column gap-3 mt-auto">
+                                <div class="d-flex justify-content-between align-items-end">
+                                    <span class="fw-bold fs-4 text-primary">${{ e.precio }}</span>
+                                    <span class="small text-muted">Stock: {{ e.stock }}</span>
                                 </div>
-                            </div>
-                            <div class="card-footer bg-transparent border-top-0 pb-3">
-                                <span class="btn btn-outline-primary btn-sm w-100">Ver Detalles</span>
+                                
+                                <a href="{% url 'apps.carrito:agregar_al_carrito' e.id_producto %}" 
+                                   class="btn btn-secondary btn-glow w-100 rounded-pill text-white fw-bold py-2 shadow-sm">
+                                    <i class="fa-solid fa-cart-plus me-2"></i>Agregar al carrito
+                                </a>
                             </div>
                         </div>
-                    </a>
+                    </div>
                 </div>
                 {% endfor %}
             </div>

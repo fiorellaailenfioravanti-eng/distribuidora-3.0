@@ -1,0 +1,163 @@
+/* =========================================================
+   AQUADELLUVIA - Diseño Visual (Distribuidora 3.0)
+   ========================================================= */
+
+/* 1. Variables CSS (Extiende Bootstrap 5.3) - ESTILO LOGO */
+:root, [data-bs-theme="light"] {
+    /* Tema Claro */
+    --bg-main: #F4F7F6;       /* Blanco nube suave */
+    --bg-surface: #FFFFFF;    /* Blanco puro (banderín del logo) */
+    --color-primary: #6CB4EE; /* Azul Agua de Lluvia (Texto del logo) */
+    --color-secondary: #8BC34A;/* Verde Rana (Mascota) */
+    --color-accent: #F5B041;  /* Naranja/Amarillo Otoño (Fondo del logo) */
+    --text-main: #2C3E50;     /* Pizarra oscuro */
+    --text-muted: #7F8C8D;
+    
+    /* Tipografía */
+    --font-body: 'Inter', sans-serif;
+    --font-heading: 'Nunito', sans-serif;
+    
+    /* Variables de Bootstrap overrides */
+    --bs-body-bg: var(--bg-main);
+    --bs-body-color: var(--text-main);
+    --bs-primary: var(--color-primary);
+    --bs-secondary: var(--color-secondary);
+}
+
+[data-bs-theme="dark"] {
+    /* Tema Oscuro */
+    --bg-main: #1A252C;       /* Pizarra muy oscuro */
+    --bg-surface: #273746;    /* Pizarra superficie */
+    --color-primary: #5DADE2; /* Azul Agua de Lluvia (brillante) */
+    --color-secondary: #7CB342;/* Verde Rana */
+    --color-accent: #F39C12;  /* Naranja/Amarillo Otoño */
+    --text-main: #EAEDED;     /* Blanco suave */
+    --text-muted: #95A5A6;
+    
+    /* Variables de Bootstrap overrides */
+    --bs-body-bg: var(--bg-main);
+    --bs-body-color: var(--text-main);
+    --bs-primary: var(--color-primary);
+    --bs-secondary: var(--color-secondary);
+    --bs-border-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 2. Estructura y Componentes Base */
+
+body {
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    font-family: var(--font-body);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Tipografía Títulos (Headings) */
+h1, h2, h3, h4, h5, h6, .navbar-brand {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+h1 {
+    font-size: 2.5rem;
+    color: var(--color-primary);
+}
+
+h2 {
+    font-size: 2rem;
+    color: var(--text-main);
+}
+
+h3 {
+    font-size: 1.75rem;
+}
+
+/* Reemplazar fondos de bg-body por superficie de tarjeta cuando aplique */
+.surface-card {
+    background-color: var(--bg-surface) !important;
+}
+
+/* 3. Micro-animaciones y Efectos (Hover, Glassmorphism) */
+
+/* Elevación de tarjetas y elementos interactivos */
+.hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+[data-bs-theme="dark"] .hover-lift:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* Botones: Glow y transiciones fluidas */
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn-glow {
+    position: relative;
+}
+.btn-glow:hover {
+    box-shadow: 0 0 15px var(--color-primary);
+}
+
+[data-bs-theme="dark"] .btn-primary {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--bg-main); /* Alto contraste */
+}
+[data-bs-theme="dark"] .btn-primary:hover {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+}
+
+/* Focus en Inputs */
+.form-control:focus, .form-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.25rem rgba(108, 180, 238, 0.25);
+}
+
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select {
+    background-color: var(--bg-surface);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+}
+[data-bs-theme="dark"] .form-control:focus,
+[data-bs-theme="dark"] .form-select:focus {
+    background-color: var(--bg-surface);
+    border-color: var(--color-primary);
+    color: var(--text-main);
+}
+
+/* Navbar */
+.navbar {
+    background-color: var(--bg-surface) !important;
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.navbar .nav-link, 
+.navbar .navbar-brand, 
+.navbar .navbar-text {
+    color: var(--text-main) !important;
+    font-weight: 600;
+}
+
+.navbar .nav-link:hover, 
+.navbar .nav-link:focus,
+.navbar .nav-link.active {
+    color: var(--color-primary) !important;
+}
+
+[data-bs-theme="dark"] .navbar {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+/* Footer */
+.footer {
+    background-color: var(--bg-surface) !important;
+    border-top: 1px solid var(--bs-border-color) !important;
+}

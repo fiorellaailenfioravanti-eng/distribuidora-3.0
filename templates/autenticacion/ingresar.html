@@ -5,14 +5,14 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-5">
-        <div class="card shadow">
+        <div class="card border-0 shadow-lg rounded-4 surface-card overflow-hidden">
             <div class="card-body p-5">
                 <h1 class="text-center mb-4">Iniciar Sesión</h1>
                 <form method="POST">
                     {% csrf_token %}
                     {{ form.as_p }}
                     <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg">Ingresar</button>
+                        <button type="submit" class="btn btn-primary btn-glow btn-lg rounded-pill">Ingresar</button>
                     </div>
                 </form>
                 <div class="text-center mt-3">

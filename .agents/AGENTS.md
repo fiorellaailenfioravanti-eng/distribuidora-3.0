@@ -14,6 +14,14 @@ Este archivo contiene:
 - Mapa de URLs actual
 - Deuda técnica crítica
 
+👉 [`.agents/DESIGN.md`](.agents/DESIGN.md)
+
+Este archivo contiene:
+- Patrón de diseño visual de toda la aplicación (colores para tema oscuro y claro)
+- Configuración de espaciados, bordes y tipografía
+- Guía para componentes Bootstrap
+
+
 ---
 
 ## 🧭 Reglas de Trabajo

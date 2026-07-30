@@ -1,0 +1,68 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Resumen General{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-0 text-main">Resumen General</h1>
+            <p class="text-muted small mb-0">Bienvenido al panel de administración de Aquadelluvia.</p>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Widget Productos -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 bg-surface h-100">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                        <i class="fa-solid fa-wallet fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 small text-uppercase fw-bold">Gestión de Inventario</h6>
+                        <a href="{% url 'apps.productos:listar_productos_admin' %}" class="text-decoration-none fw-bold stretched-link hover-lift">Ir a Productos <i class="fa-solid fa-arrow-right ms-1"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Widget Clientes -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 bg-surface h-100">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                        <i class="fa-solid fa-users fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 small text-uppercase fw-bold">Directorio de Clientes</h6>
+                        <a href="{% url 'apps.clientes:listar_clientes' %}" class="text-decoration-none fw-bold stretched-link text-success hover-lift">Ir a Clientes <i class="fa-solid fa-arrow-right ms-1"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Widget Logística -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 bg-surface h-100">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                        <i class="fa-solid fa-route fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 small text-uppercase fw-bold">Control de Reparto</h6>
+                        <a href="{% url 'apps.logistica:listar_rutas' %}" class="text-decoration-none fw-bold stretched-link text-warning hover-lift">Ir a Logística <i class="fa-solid fa-arrow-right ms-1"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card border-0 shadow-sm rounded-4 bg-surface">
+        <div class="card-body p-5 text-center">
+            <h4 class="fw-bold">Panel en Construcción</h4>
+            <p class="text-muted mx-auto" style="max-width: 500px;">Próximamente aquí verás gráficos de ventas, alertas de stock bajo y estadísticas diarias de tu distribuidora.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

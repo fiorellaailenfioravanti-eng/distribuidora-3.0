@@ -1,22 +1,23 @@
-{% extends 'base.html' %}
+{% extends 'base_dashboard.html' %}
 
 {% block title %}Nuevo Cliente sin Cuenta{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="mb-0">📋 Nuevo Cliente sin cuenta web</h1>
-        <small class="text-muted">Solo para pedidos presenciales o telefónicos</small>
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-0 text-main"><i class="fa-solid fa-clipboard-list text-primary me-2"></i> Nuevo Cliente sin cuenta web</h1>
+            <p class="text-muted small mb-0">Solo para pedidos presenciales o telefónicos</p>
+        </div>
+        <a href="{% url 'apps.clientes:crear_cliente' %}" class="btn btn-light border-0 shadow-sm rounded-3 hover-lift">
+            <i class="fa-solid fa-arrow-left me-1"></i> Volver
+        </a>
     </div>
-    <a href="{% url 'apps.clientes:crear_cliente' %}" class="btn btn-outline-secondary">
-        <i class="fa-solid fa-arrow-left me-1"></i> Volver
-    </a>
-</div>
 
 <div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-4">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface mb-5">
+            <div class="card-body p-4 p-md-5">
 
                 {% if form.non_field_errors %}
                 <div class="alert alert-danger">
@@ -27,9 +28,9 @@
                 <form method="post">
                     {% csrf_token %}
 
-                    <h6 class="text-muted mb-3">
-                        <i class="fa-solid fa-id-card me-1"></i> Datos del cliente
-                    </h6>
+                    <h5 class="fw-bold text-main border-bottom pb-3 mb-4">
+                        <i class="fa-solid fa-id-card text-primary me-2"></i> Datos del cliente
+                    </h5>
 
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -68,21 +69,21 @@
                     </div>
 
                         <div class="col-12 mt-4">
-                            <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fa-solid fa-phone-volume me-2"></i>Teléfonos de contacto</h6>
+                            <h5 class="fw-bold border-bottom pb-3 mb-4 mt-2"><i class="fa-solid fa-phone-volume text-primary me-2"></i>Teléfonos de contacto</h5>
                             <table class="table table-borderless table-sm align-middle mb-0" id="tabla-telefonos">
-                                <thead>
+                                <thead class="table-light text-muted small text-uppercase">
                                     <tr>
-                                        <th class="fw-semibold">Número</th>
-                                        <th class="fw-semibold">Descripción / Relación</th>
-                                        <th style="width: 40px;"></th>
+                                        <th class="ps-3 border-bottom-0 rounded-start">Número</th>
+                                        <th class="border-bottom-0">Descripción / Relación</th>
+                                        <th class="pe-3 border-bottom-0 rounded-end text-end" style="width: 50px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="telefonos-tbody">
                                     <tr>
-                                        <td><input type="text" name="telefono_numero[]" class="form-control" placeholder="Ej: 387 123 4567"></td>
-                                        <td><input type="text" name="telefono_relacion[]" class="form-control" placeholder="Ej: Celular principal" value="Titular"></td>
-                                        <td>
-                                            <button type="button" class="btn btn-success btn-sm" onclick="agregarTelefono()">
+                                        <td class="ps-3 pt-3"><input type="text" name="telefono_numero[]" class="form-control rounded-3 bg-light border-0 shadow-none" placeholder="Ej: 387 123 4567"></td>
+                                        <td class="pt-3"><input type="text" name="telefono_relacion[]" class="form-control rounded-3 bg-light border-0 shadow-none" placeholder="Ej: Celular principal" value="Titular"></td>
+                                        <td class="pe-3 pt-3 text-end">
+                                            <button type="button" class="btn btn-primary rounded-3 btn-sm hover-lift" onclick="agregarTelefono()">
                                                 <i class="fa-solid fa-plus"></i>
                                             </button>
                                         </td>
@@ -93,15 +94,15 @@
 
                     </div>
 
-                    <div class="alert alert-secondary small mt-4 mb-3">
+                    <div class="alert alert-secondary bg-secondary bg-opacity-10 text-secondary border-0 rounded-3 small mt-4 mb-4">
                         <i class="fa-solid fa-circle-info me-1"></i>
                         Este cliente <strong>no tendrá acceso web</strong>. Solo el personal puede
                         ver y gestionar sus datos. Podés agregarle domicilios desde
                         la ficha una vez creado.
                     </div>
 
-                    <div class="d-grid mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg">
+                    <div class="d-grid mt-2">
+                        <button type="submit" class="btn btn-primary btn-glow rounded-pill fw-bold btn-lg">
                             <i class="fa-solid fa-user-plus me-2"></i>Crear cliente
                         </button>
                     </div>
@@ -110,16 +111,17 @@
         </div>
     </div>
 </div>
+</div>
 
 <script>
     function agregarTelefono() {
         const tbody = document.getElementById('telefonos-tbody');
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><input type="text" name="telefono_numero[]" class="form-control" placeholder="Ej: 387 123 4567"></td>
-            <td><input type="text" name="telefono_relacion[]" class="form-control" placeholder="Ej: Trabajo / Familiar"></td>
-            <td>
-                <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('tr').remove()">
+            <td class="ps-3 pt-2"><input type="text" name="telefono_numero[]" class="form-control rounded-3 bg-light border-0 shadow-none" placeholder="Ej: 387 123 4567"></td>
+            <td class="pt-2"><input type="text" name="telefono_relacion[]" class="form-control rounded-3 bg-light border-0 shadow-none" placeholder="Ej: Trabajo / Familiar"></td>
+            <td class="pe-3 pt-2 text-end">
+                <button type="button" class="btn btn-light text-danger rounded-3 btn-sm hover-lift border-0 shadow-sm" onclick="this.closest('tr').remove()">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             </td>

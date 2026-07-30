@@ -1,7 +1,23 @@
-{% extends "base.html" %}
+{% extends "base_tienda.html" %}
 {% block title %}Inicio{% endblock %}
 
 {% block content %}
-    <h1>¡Bienvenido a la Distribuidora!</h1>
-    <p>Esta es la página principal de nuestra distribuidora.</p>
+<!-- Hero Section -->
+<div class="px-3 px-md-4 py-5 my-4 my-md-5 text-center bg-surface rounded-4 shadow-sm border position-relative overflow-hidden">
+    <!-- Decoración sutil de fondo -->
+    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(135deg, rgba(108,180,238,0.05) 0%, rgba(139,195,74,0.05) 100%); z-index: 0;"></div>
+    
+    <div class="position-relative" style="z-index: 1;">
+        <i class="fa-solid fa-droplet text-primary mb-3 mb-md-4" style="font-size: 3rem; filter: drop-shadow(0 4px 6px rgba(108, 180, 238, 0.3));"></i>
+        <h1 class="display-6 fw-bold text-dark tracking-tight mb-3">Pureza en cada gota</h1>
+        <div class="col-lg-6 mx-auto">
+            <p class="mb-4 text-muted">Bienvenido a la distribuidora oficial de <strong>Agua de Lluvia</strong>. Llevamos la frescura de la naturaleza directamente a tu mesa, con envíos rápidos y el mejor servicio.</p>
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
+                <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-primary btn-glow px-4 py-2 gap-3 rounded-pill fw-bold shadow-sm">
+                    <i class="fa-solid fa-shop me-2"></i> Ver Catálogo
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

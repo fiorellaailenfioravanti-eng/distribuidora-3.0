@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base_tienda.html' %}
 {% load grupos %}
 {% load static %}
 {% block title %}Ver Producto: {{ producto.nombre }}{% endblock %}
@@ -6,90 +6,95 @@
 <div class="container py-5">
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'inicio' %}">Inicio</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'apps.productos:listar_productos' %}">Productos</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ producto.nombre }}</li>
+            <li class="breadcrumb-item"><a href="{% url 'inicio' %}" class="text-decoration-none text-muted">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'apps.productos:listar_productos' %}" class="text-decoration-none text-muted">Productos</a></li>
+            <li class="breadcrumb-item active fw-bold text-dark" aria-current="page">{{ producto.nombre }}</li>
         </ol>
     </nav>
 
-    <div class="card border-0 shadow rounded-4 overflow-hidden surface-card">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-surface">
         <div class="row g-0">
-            <div class="col-md-6 d-flex align-items-center justify-content-center p-5 border-end border-light-subtle">
+            <!-- Imagen del Producto -->
+            <div class="col-md-6 d-flex align-items-center justify-content-center p-4 p-md-5 border-md-end border-bottom border-md-bottom-0 border-light-subtle bg-white">
                 {% if producto.imagen %}
-                    <img src="{{ producto.imagen.url }}" class="img-fluid rounded" alt="{{ producto.nombre }}" style="max-height: 500px; object-fit: contain;">
+                    <img src="{{ producto.imagen.url }}" class="img-fluid" alt="{{ producto.nombre }}" style="max-height: 350px; object-fit: contain; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.1));">
                 {% else %}
-                    <img src="{% static 'img/no-image.png' %}" class="img-fluid opacity-50" alt="Sin imagen" style="max-height: 400px;">
+                    <img src="{% static 'img/no-image.png' %}" class="img-fluid opacity-25" alt="Sin imagen" style="max-height: 400px;">
                 {% endif %}
             </div>
 
-            <div class="col-md-6 p-5">
-                <div class="mb-3">
-                    {% for cat in producto.categoria.all %}
-                        <span class="badge bg-primary bg-opacity-25 text-primary rounded-pill text-uppercase px-3 py-2 mb-2">{{ cat.nombre }}</span>
-                    {% endfor %}
+            <!-- Detalles del Producto -->
+            <div class="col-md-6 p-4 p-md-5">
+                <div class="mb-2">
+                    <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill text-uppercase px-2 py-1 mb-2 fw-bold tracking-wide" style="font-size: 0.75rem;">
+                        {{ producto.categoria.nombre|default:"Sin Categoría" }}
+                    </span>
                 </div>
                 
-                <h1 class="display-5 fw-bold mb-3">{{ producto.nombre }}</h1>
+                <h1 class="h2 fw-bold mb-2 text-dark tracking-tight">{{ producto.nombre }}</h1>
                 
-                <div class="mb-4">
-                    <h2 class="text-success fw-bold display-6">$ {{ producto.precio }}</h2>
-                    <p class="text-muted small">Precio final con impuestos incluidos.</p>
+                <div class="mb-4 border-bottom pb-3">
+                    <h2 class="text-primary fw-bold h1 mb-1 tracking-tight">$ {{ producto.precio }}</h2>
+                    <p class="text-muted small mb-0" style="font-size: 0.8rem;"><i class="fa-solid fa-tag me-1"></i> Precio con impuestos incluidos.</p>
                 </div>
 
                 <!-- Botones de acciones principales-->
-                <div class="d-flex flex-column flex-sm-row gap-3 mb-5 mt-4">
-                    <!--Se desactiva el botón si no hay stock disponible-->
+                <div class="d-flex flex-column flex-sm-row gap-2 mb-4">
                     {% if producto.stock > 0 %}
                         <a href="{% url 'apps.carrito:agregar_al_carrito' producto.id_producto %}"
-                            class="btn btn-primary rounded-pill btn-glow shadow-sm d-flex align-items-center justify-content-center px-4 py-2">
-                            <i class="fas fa-shopping-cart me-2"></i>Añadir al carrito
+                            class="btn btn-primary rounded-pill btn-glow shadow-sm d-flex align-items-center justify-content-center px-4 py-2 fw-bold flex-grow-1 hover-lift">
+                            <i class="fas fa-shopping-cart me-2"></i> Añadir al carrito
                         </a>
                     {% else %}
-                        <button class="btn btn-secondary btn-md rounded-3 shadow-sm d-flex align-items-center justify-content-center px-4" disabled>
-                            <i class="fas fa-exclamation-triangle me-2"></i>Sin Stock
+                        <button class="btn btn-secondary rounded-pill shadow-sm d-flex align-items-center justify-content-center px-4 py-2 fw-bold flex-grow-1" disabled>
+                            <i class="fas fa-exclamation-triangle me-2"></i> Sin Stock
                         </button>
                     {% endif %}
 
-                    <button class="btn btn-outline-danger rounded-pill shadow-sm d-flex align-items-center justify-content-center px-4 py-2">
-                        <i class="fas fa-heart me-2"></i>Favoritos
+                    <button class="btn btn-outline-danger rounded-pill shadow-sm d-flex align-items-center justify-content-center px-3 py-2 fw-bold hover-lift" title="Agregar a favoritos">
+                        <i class="fas fa-heart"></i>
                     </button>
-
-                    <a href="{% url 'apps.productos:listar_productos' %}"
-                        class="btn btn-outline-secondary rounded-pill shadow-sm d-flex align-items-center justify-content-center px-4 py-2">
-                        <i class="fas fa-arrow-left me-2"></i>Catálogo
-                    </a>
                 </div>
 
 
                 <div class="mb-4">
-                    <h5 class="fw-bold">Descripción:</h5>
-                    <p class="text-secondary lh-lg">{{ producto.descripcion }}</p>
+                    <h6 class="fw-bold text-dark mb-2">Descripción</h6>
+                    <p class="text-secondary small lh-base">{{ producto.descripcion }}</p>
                 </div>
 
-                <div class="p-3 rounded-4 border border-light-subtle mb-4 surface-card">
+                <!-- Tarjeta de Stock -->
+                <div class="p-3 rounded-4 bg-light border-0 mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                     <div class="d-flex align-items-center">
-                        <div class="me-3">
-                            <span class="fs-4">📦</span>
+                        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm me-3 text-primary" style="width: 40px; height: 40px;">
+                            <i class="fa-solid fa-box-open fs-5"></i>
                         </div>
                         <div>
-                            <p class="mb-0 fw-bold">Stock Disponible:</p>
-                            <p class="mb-0 text-muted">{{ producto.stock }} unidades en depósito</p>
+                            <p class="mb-0 fw-bold text-dark small">Stock Disponible</p>
+                            <p class="mb-0 text-muted" style="font-size: 0.75rem;">{{ producto.stock }} unidades</p>
                         </div>
                     </div>
+                    {% if producto.stock > 10 %}
+                        <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1"><i class="fa-solid fa-check me-1"></i> Disponible</span>
+                    {% elif producto.stock > 0 %}
+                        <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-1"><i class="fa-solid fa-exclamation me-1"></i> Quedan pocos</span>
+                    {% else %}
+                        <span class="badge bg-danger bg-opacity-25 text-danger rounded-pill px-2 py-1">Agotado</span>
+                    {% endif %}
                 </div>
 
-                <div class="d-grid gap-2 d-md-flex justify-content-md-start mt-5">
-                    <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-outline-secondary px-4 me-md-2">
-                        ← Volver al listado
+                <!-- Controles Administrativos -->
+                <div class="d-flex flex-column flex-sm-row gap-2 mt-4 align-items-center justify-content-between">
+                    <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-light btn-sm fw-bold px-3 rounded-pill hover-lift text-muted w-100 w-sm-auto mb-2 mb-sm-0">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Volver al listado
                     </a>
                     
                     {% if user.is_superuser or user|has_group:"Vendedor" %}
-                    <div class="btn-group shadow-sm" role="group">
-                        <a href="{% url 'apps.productos:editar_producto' producto.pk %}" class="btn btn-warning px-4">
-                            ✏️ Editar
+                    <div class="d-flex gap-2 w-100 w-sm-auto">
+                        <a href="{% url 'apps.productos:editar_producto' producto.pk %}" class="btn btn-warning btn-sm rounded-pill px-3 text-dark shadow-sm hover-lift fw-bold flex-grow-1 flex-sm-grow-0">
+                            <i class="fa-solid fa-pen"></i> Editar
                         </a>
-                        <a href="{% url 'apps.productos:eliminar_producto' producto.pk %}" class="btn btn-danger px-4">
-                            🗑️ Eliminar
+                        <a href="{% url 'apps.productos:eliminar_producto' producto.pk %}" class="btn btn-danger btn-sm rounded-pill px-3 shadow-sm hover-lift fw-bold flex-grow-1 flex-sm-grow-0">
+                            <i class="fa-solid fa-trash"></i> Eliminar
                         </a>
                     </div>
                     {% endif %}

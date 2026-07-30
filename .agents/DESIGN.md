@@ -6,37 +6,43 @@ Este documento establece las guías de estilo, paleta de colores, márgenes, bor
 
 ---
 
-## 1. 🌊 Identidad Visual y Concepto
-**Agua de Lluvia** cuenta con un logotipo vibrante, amigable y familiar. El diseño web debe replicar esa calidez:
-- **Amigable y Familiar:** Colores vivos extraídos de la mascota (rana verde) y el entorno otoñal (amarillos/naranjas).
-- **Frescura:** El azul claro y luminoso de la tipografía del logo actúa como color principal para transmitir pureza y limpieza.
-- **Fluidez:** Uso de micro-animaciones (hover, transiciones) simulando el movimiento del agua.
+## 1. 🌊 Arquitectura Dual: Tienda vs Dashboard
+El proyecto implementa dos layouts completamente separados para ofrecer la mejor experiencia según el usuario:
+- **Tienda (Frontend):** Utiliza `base_tienda.html`. Se caracteriza por una **Barra de navegación superior (Navbar)** espaciosa, colores vibrantes de la marca y enfoque en e-commerce.
+- **Dashboard (Backend):** Utiliza `base_dashboard.html`. Se caracteriza por un **Menú lateral fijo (Sidebar)** a la izquierda, optimizando el espacio vertical para tablas de datos y paneles de administración.
 
 ---
 
-## 2. 🎨 Paleta de Colores (Basada en el Logo)
+## 2. 🎨 Paleta de Colores (Tienda)
+La tienda web debe replicar la calidez del logo original (Agua de Lluvia):
+- **Amigable y Familiar:** Colores vivos extraídos de la mascota (rana verde) y el entorno otoñal (amarillos/naranjas).
+- **Frescura:** El azul claro y luminoso de la tipografía del logo actúa como color principal para transmitir pureza y limpieza.
+
+---
+
+## 2. 🎨 Paleta de Colores (Dashboard Moderno)
 
 Se deben usar estas variables CSS personalizadas extendiendo Bootstrap 5.3.
 
 ### Tema Claro (Light Mode)
-El tema claro prioriza la luz del entorno natural del logo.
-- **Fondo Principal (`--bg-main`):** `#F4F7F6` (Blanco nube suave)
-- **Fondo Tarjetas/Paneles (`--bg-surface`):** `#FFFFFF` (Blanco puro, como el banderín del logo)
-- **Primario (`--color-primary`):** `#6CB4EE` (Azul Agua de Lluvia - Celeste brillante del texto del logo)
-- **Secundario (`--color-secondary`):** `#8BC34A` (Verde Rana - Extraído de la mascota)
-- **Acento (`--color-accent`):** `#F5B041` (Naranja/Amarillo Otoño - Extraído de los árboles de fondo)
-- **Texto Principal (`--text-main`):** `#2C3E50` (Pizarra oscuro - Para legibilidad sin ser negro puro)
-- **Texto Secundario (`--text-muted`):** `#7F8C8D`
+El tema claro prioriza el espacio en blanco y los tonos sutiles de la referencia visual.
+- **Fondo Principal (`--bg-main`):** `#F7F8FA` (Gris tenue, fondo del layout)
+- **Fondo Tarjetas/Sidebar (`--bg-surface`):** `#FFFFFF` (Blanco puro para separar componentes)
+- **Primario (`--color-primary`):** `#6466f1` (Azul Pervinca/Morado - Color destacado)
+- **Secundario (`--color-secondary`):** `#a5a6f6` (Morado claro)
+- **Acento (`--color-accent`):** `#f59e0b` (Naranja de acento general)
+- **Texto Principal (`--text-main`):** `#334155` (Slate oscuro - Gran legibilidad)
+- **Texto Secundario (`--text-muted`):** `#94a3b8`
 
-### Tema Oscuro (Dark Mode) - *Por defecto según CONTEXT.md*
-El tema oscuro contrasta los colores vivos del logo sobre un fondo elegante y moderno.
-- **Fondo Principal (`--bg-main`):** `#1A252C` (Pizarra muy oscuro)
-- **Fondo Tarjetas/Paneles (`--bg-surface`):** `#273746` (Pizarra superficie)
-- **Primario (`--color-primary`):** `#5DADE2` (Azul Agua de Lluvia - Adaptado para brillar en fondo oscuro)
-- **Secundario (`--color-secondary`):** `#7CB342` (Verde Rana)
-- **Acento (`--color-accent`):** `#F39C12` (Naranja/Amarillo Otoño)
-- **Texto Principal (`--text-main`):** `#EAEDED` (Blanco suave)
-- **Texto Secundario (`--text-muted`):** `#95A5A6`
+### Tema Oscuro (Dark Mode)
+El tema oscuro mantiene los tonos pervinca sobre un fondo pizarra oscuro elegante.
+- **Fondo Principal (`--bg-main`):** `#0F172A` (Slate muy oscuro)
+- **Fondo Tarjetas/Sidebar (`--bg-surface`):** `#1E293B` (Slate superficie)
+- **Primario (`--color-primary`):** `#818cf8` (Pervinca claro para contrastar en fondo oscuro)
+- **Secundario (`--color-secondary`):** `#c7d2fe`
+- **Acento (`--color-accent`):** `#fbbf24` 
+- **Texto Principal (`--text-main`):** `#f8fafc` (Blanco/Gris claro)
+- **Texto Secundario (`--text-muted`):** `#94a3b8`
 
 ---
 
@@ -125,6 +131,11 @@ Las interacciones deben sentirse fluidas ("líquidas"):
 
 ### Badges (`.badge`)
 - Usar colores semánticos suaves con `bg-opacity` (ej. `bg-success bg-opacity-25 text-success`) en lugar de fondos sólidos intensos, para lograr un look más moderno y prolijo.
+
+### Notificaciones y Alertas (Popups/Toasts)
+- Todo lo que sean notificaciones, mensajes temporales, advertencias o errores del sistema (Django Messages) **deben mostrarse como Popups (Toasts) flotantes** en la esquina inferior derecha (`bottom-0 end-0`), nunca como bloques de texto incrustados en la página (inline alerts) que rompan el flujo visual.
+- Deben tener `shadow-lg`, bordes redondeados (`rounded-4`), y cerrarse automáticamente.
+- Usar iconos de FontAwesome (`fa-solid`) correspondientes al tipo de mensaje (éxito, advertencia, error) y colores de fondo semánticos de Bootstrap (`text-bg-success`, `text-bg-danger`, etc.).
 
 ---
 

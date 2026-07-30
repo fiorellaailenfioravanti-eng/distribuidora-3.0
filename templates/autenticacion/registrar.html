@@ -1,14 +1,16 @@
-{% extends 'base.html' %}
+{% extends 'base_tienda.html' %}
 
 {% block title %}Registrar{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-7">
-        <div class="card border-0 shadow-lg rounded-4 surface-card overflow-hidden">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden mt-4">
             <div class="card-body p-5">
-                <h1 class="text-center mb-2">Crear Cuenta</h1>
-                <p class="text-center text-muted mb-4">Únete a nuestra distribuidora para gestionar productos</p>
+                <div class="text-center mb-4">
+                    <h1 class="display-5 fw-bold text-dark tracking-tight mb-2">Crear Cuenta</h1>
+                    <p class="text-muted mb-0">Únete a nuestra distribuidora para empezar a comprar.</p>
+                </div>
                 <hr>
                 
                 <form method="post" enctype="multipart/form-data">
@@ -19,13 +21,13 @@
                         {{ form.as_p }}
                     </div>
 
-                    <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary btn-glow btn-lg rounded-pill">Registrar Usuario</button>
+                    <div class="d-grid gap-2 mt-5">
+                        <button type="submit" class="btn btn-primary btn-glow btn-lg rounded-pill fw-bold hover-lift">Registrar Usuario</button>
                     </div>
                 </form>
                 
-                <div class="text-center mt-3">
-                    <p class="text-muted">¿Ya tienes una cuenta? <a href="{% url 'apps.autenticacion:ingresar' %}">Inicia sesión</a></p>
+                <div class="text-center mt-4 border-top pt-4">
+                    <p class="text-muted mb-0">¿Ya tienes una cuenta? <a href="{% url 'apps.autenticacion:ingresar' %}" class="text-primary text-decoration-none fw-bold">Inicia sesión</a></p>
                 </div>
             </div>
         </div>

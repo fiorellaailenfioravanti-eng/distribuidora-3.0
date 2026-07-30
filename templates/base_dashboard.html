@@ -1,0 +1,197 @@
+{% load grupos %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <!-- Fuentes de Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Estilo Global Dashboard -->
+    <link rel="stylesheet" href="{% static 'style/dashboard.css' %}?v=8">
+    <link rel="stylesheet" href="{% static 'style/productos.css' %}?v=6">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>{% block title %}{% endblock %}</title>
+    <style>
+    /* Estilo para que el dropdown se abra al pasar el mouse */
+    .nav-item.dropdown:hover .dropdown-menu {
+        display: block;
+        margin-top: 0; 
+        }
+    </style>
+</head>
+<body class="bg-body">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    
+    <div id="main-wrapper">
+        <!-- Sidebar Fijo (Escritorio) -->
+        <aside id="sidebar" class="d-none d-lg-flex flex-column p-3 vh-100 sticky-top">
+            <a href="{% url 'inicio' %}" class="navbar-brand d-flex align-items-center mb-4 mt-2 px-3 text-decoration-none">
+                <span class="fs-5 fw-bold text-primary tracking-wide text-uppercase" style="letter-spacing: 2px;">| Aquadelluvia</span>
+            </a>
+            
+            <ul class="nav flex-column mb-auto gap-1 mt-3">
+                <li class="nav-item">
+                    <a href="{% url 'dashboard' %}" class="sidebar-link {% if request.resolver_match.view_name == 'dashboard' %}active{% endif %}">
+                        <i class="fa-solid fa-border-all"></i> Resumen
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'apps.productos:listar_productos_admin' %}" class="sidebar-link {% if request.resolver_match.view_name == 'apps.productos:listar_productos_admin' %}active{% endif %}">
+                        <i class="fa-solid fa-wallet"></i> Productos
+                    </a>
+                </li>
+                {% if user.is_superuser or user|has_group:"Vendedor" %}
+                <li class="nav-item">
+                    <a href="{% url 'apps.clientes:listar_clientes' %}" class="sidebar-link {% if 'clientes' in request.resolver_match.view_name %}active{% endif %}">
+                        <i class="fa-solid fa-users"></i> Clientes
+                    </a>
+                </li>
+                {% endif %}
+                {% if user.is_superuser or user|has_group:"Vendedor" or user|has_group:"Repartidor" %}
+                <li class="nav-item">
+                    <a href="{% url 'apps.logistica:listar_rutas' %}" class="sidebar-link {% if 'logistica' in request.resolver_match.view_name %}active{% endif %}">
+                        <i class="fa-solid fa-route"></i> Logística
+                    </a>
+                </li>
+                {% endif %}
+                {% if user|has_group:"Repartidor" %}
+                <li class="nav-item">
+                    <a href="{% url 'apps.logistica:mi_ruta_hoy' %}" class="sidebar-link {% if request.resolver_match.view_name == 'apps.logistica:mi_ruta_hoy' %}active{% endif %}">
+                        <i class="fa-solid fa-truck-fast"></i> Mi Ruta
+                    </a>
+                </li>
+                {% endif %}
+                
+                <!-- Separador -->
+                <li class="nav-item mt-auto pt-3">
+                    <a href="{% url 'inicio' %}" class="sidebar-link text-primary fw-bold bg-primary bg-opacity-10 mt-4 rounded-3" target="_blank">
+                        <i class="fa-solid fa-shop"></i> Ver Tienda
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Sidebar Offcanvas (Móviles) -->
+        <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
+            <div class="offcanvas-header border-bottom">
+                <h5 class="offcanvas-title text-primary fw-bold text-uppercase" id="sidebarOffcanvasLabel">| Aquadelluvia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body p-0">
+                <!-- Se podría usar javascript para clonar el menú, pero por simplicidad lo replicaremos minimamente -->
+                <ul class="nav flex-column gap-1 p-3">
+                    <li class="nav-item"><a href="{% url 'inicio' %}" class="sidebar-link"><i class="fa-solid fa-border-all"></i> Resumen</a></li>
+                    <li class="nav-item"><a href="{% url 'apps.productos:listar_productos' %}" class="sidebar-link"><i class="fa-solid fa-wallet"></i> Productos</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content Wrapper -->
+        <div id="page-content-wrapper">
+            
+            <!-- Top Header (Topbar) -->
+            <header class="top-header">
+                <!-- Mobile Toggle -->
+                <button class="btn btn-light d-lg-none me-auto border-0 shadow-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                
+                <!-- Buscador -->
+                <form class="d-flex me-auto ms-3 d-none d-md-flex w-50" role="search" action="{% url 'apps.buscador:buscar_productos' %}" method="get">
+                    <div class="input-group">
+                        <span class="input-group-text bg-surface border-0 rounded-start-pill ps-3 text-muted"><i class="fa-solid fa-search"></i></span>
+                        <input class="form-control bg-surface border-0 rounded-end-pill shadow-none" type="search" name="q" placeholder="Buscar productos..." aria-label="Buscar" value="{{ query}}">
+                    </div>
+                </form>
+
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Botón modo oscuro -->
+                    <button id="toggle-theme" class="btn btn-light rounded-circle border-0 shadow-sm text-muted" style="width: 40px; height: 40px;">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    
+                    <!-- Carrito -->
+                    <a href="{% url 'apps.carrito:ver_carrito' %}" class="btn btn-light rounded-circle border-0 shadow-sm position-relative text-muted" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-shopping-cart"></i>
+                        {% if carrito_total_items > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                                {{ carrito_total_items }}
+                            </span>
+                        {% endif %}
+                    </a>
+                    
+                    <!-- Perfil -->
+                    <div class="ms-2 ps-3 border-start border-light-subtle d-flex align-items-center">
+                        {% if user.is_authenticated %}
+                            <div class="dropdown">
+                                <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <div class="text-end me-2 d-none d-md-block">
+                                        <div class="fw-bold text-main" style="font-size: 0.9rem;">{{ user.username }}</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">{% if user.is_superuser %}Admin{% else %}Usuario{% endif %}</div>
+                                    </div>
+                                    <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=6466f1&color=fff&rounded=true" alt="" width="40" height="40" class="shadow-sm">
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2" aria-labelledby="dropdownUser">
+                                    <li><a class="dropdown-item py-2" href="{% url 'apps.clientes:mi_perfil' %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi Perfil</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item py-2 text-danger" href="{% url 'apps.autenticacion:cerrar_sesion' %}"><i class="fa-solid fa-right-from-bracket me-2"></i> Cerrar Sesión</a></li>
+                                </ul>
+                            </div>
+                        {% else %}
+                            <a class="btn btn-outline-primary rounded-pill btn-sm fw-bold px-3" href="{% url 'apps.autenticacion:ingresar' %}">Ingresar</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </header>
+
+            {% block content_banner %}{% endblock content_banner %}
+            
+            <!-- Notificaciones (Popups Toasts) -->
+            {% if messages %}
+                <div class="toast-container position-fixed bottom-0 end-0 p-3 p-md-4" style="z-index: 1080;">
+                    {% for message in messages %}
+                    <div class="toast align-items-center text-white bg-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning text-dark{% elif message.tags == 'info' %}info{% else %}success{% endif %} border-0 shadow-lg rounded-4 mb-3" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                        <div class="d-flex">
+                            <div class="toast-body fw-bold px-3 py-3 d-flex align-items-center">
+                                <i class="fa-solid {% if message.tags == 'error' %}fa-circle-xmark{% elif message.tags == 'warning' %}fa-triangle-exclamation{% elif message.tags == 'info' %}fa-circle-info{% else %}fa-circle-check{% endif %} me-2 fs-5"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                            <button type="button" class="btn-close {% if message.tags == 'warning' %}btn-close-dark{% else %}btn-close-white{% endif %} me-3 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+                        var toastList = toastElList.map(function (toastEl) {
+                            var toast = new bootstrap.Toast(toastEl)
+                            toast.show()
+                        })
+                    });
+                </script>
+            {% endif %}
+
+            <!-- Contenido principal -->
+            <main class="container-fluid px-4 py-4 flex-grow-1">
+                {% block content %}{% endblock %}
+            </main>
+
+            {% block content_footer %}{% endblock content_footer %}
+            
+            <footer class="footer mt-auto py-4 text-center">
+                <div class="container-fluid px-4">
+                    <span class="small">&copy; 2026 Aquadelluvia</span>
+                </div>
+            </footer>
+        </div> <!-- End page-content-wrapper -->
+    </div> <!-- End main-wrapper -->
+    
+    <script src="{% static 'js/main.js' %}"></script>
+
+</body>
+</html>

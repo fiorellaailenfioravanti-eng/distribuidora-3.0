@@ -1,29 +1,40 @@
-{% extends 'base.html' %}
+{% extends 'base_tienda.html' %}
 {% load static %}
 {% block title %}Listado de Productos{% endblock %}
 {% block content %}
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-5">
-        <h1 class="fw-bold mb-0 text-dark">Descubre nuestra pureza</h1>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end border-bottom pb-3 mb-4">
+        <div>
+            <h1 class="h2 fw-bold mb-1 text-dark tracking-tight">Catálogo de Productos</h1>
+            <p class="text-muted mb-0">Llevamos la pureza del agua a tu puerta.</p>
+        </div>
     </div>
 
     <div class="row">
-        <div class="col-md-3 mb-4">
-            <h5 class="fw-bold mb-3 ms-2">Categorías</h5>
-            <div class="list-group shadow-sm rounded-4 overflow-hidden surface-card border-0">
-                <a href="{% url 'apps.productos:listar_productos' %}" class="list-group-item list-group-item-action border-0 py-3 {% if not categoria_actual %}active{% endif %}">
-                    <i class="fa-solid fa-water me-2"></i>Todo el catálogo
-                </a>
+        <div class="col-lg-3 col-md-4 mb-4">
+            <h5 class="fw-bold mb-3 ms-1 d-none d-md-block">Categorías</h5>
+            <!-- Botón para mostrar categorías en móvil -->
+            <button class="btn btn-outline-secondary w-100 d-md-none mb-3 text-start fw-bold d-flex justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#categoriasCollapse" aria-expanded="false" aria-controls="categoriasCollapse">
+                <span><i class="fa-solid fa-list me-2"></i> Ver Categorías</span>
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+
+            <div class="collapse d-md-block" id="categoriasCollapse">
+                <div class="list-group shadow-sm rounded-4 overflow-hidden bg-surface border">
+                    <a href="{% url 'apps.productos:listar_productos' %}" class="list-group-item list-group-item-action py-3 px-3 border-0 border-bottom {% if not categoria_actual %}active fw-bold{% endif %}">
+                        <i class="fa-solid fa-water me-2 {% if not categoria_actual %}text-white{% else %}text-primary{% endif %}"></i> Todo el catálogo
+                    </a>
                 {% for e in categorias %}
-                <a href="{% url 'apps.productos:listar_productos' %}?categoria={{ e.nombre }}" class="list-group-item list-group-item-action border-0 py-3 {% if categoria_actual == e.nombre %}active{% endif %}">
-                    <i class="fa-solid fa-angle-right me-2 text-muted"></i>{{ e.nombre }}
-                </a>
-                {% endfor %}
+                    <a href="{% url 'apps.productos:listar_productos' %}?categoria={{ e.nombre }}" class="list-group-item list-group-item-action py-3 px-3 border-0 border-bottom {% if categoria_actual == e.nombre %}active fw-bold{% else %}hover-lift text-dark{% endif %} d-flex align-items-center justify-content-between">
+                        <span><i class="fa-solid fa-angle-right me-2 {% if categoria_actual == e.nombre %}text-white{% else %}text-muted{% endif %} opacity-50"></i>{{ e.nombre }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
             </div>
         </div>
 
-        <div class="col-md-9">
-            <div class="row row-cols-1 row-cols-md-3 g-4">
+        <div class="col-lg-9 col-md-8">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
                 {% for e in productos %}
                 <div class="col product-card-container">
                     <div class="card h-100 product-card shadow-sm rounded-4 hover-lift border-0 overflow-hidden">
@@ -44,21 +55,27 @@
                         </a>
 
                         <!-- Contenido e información de compra -->
-                        <div class="card-body d-flex flex-column pt-0">
+                        <div class="card-body d-flex flex-column pt-3">
                             <a href="{% url 'apps.productos:ver_producto' e.id_producto %}" class="text-decoration-none text-dark">
-                                <h5 class="card-title fw-bold mb-1">{{ e.nombre }}</h5>
+                                <h6 class="card-title fw-bold mb-1">{{ e.nombre }}</h6>
                             </a>
-                            <p class="card-text text-muted small mb-3 flex-grow-1">{{ e.descripcion|truncatewords:8 }}</p>
+                            <p class="card-text text-muted small mb-3 flex-grow-1" style="font-size: 0.85rem;">{{ e.descripcion|truncatewords:8 }}</p>
                             
-                            <div class="d-flex flex-column gap-3 mt-auto">
-                                <div class="d-flex justify-content-between align-items-end">
-                                    <span class="fw-bold fs-4 text-primary">${{ e.precio }}</span>
-                                    <span class="small text-muted">Stock: {{ e.stock }}</span>
+                            <div class="d-flex flex-column gap-2 mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-bold h5 mb-0 text-primary tracking-tight">${{ e.precio }}</span>
+                                    {% if e.stock > 10 %}
+                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1" style="font-size: 0.75rem;"><i class="fa-solid fa-check me-1"></i> {{ e.stock }}</span>
+                                    {% elif e.stock > 0 %}
+                                        <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2 py-1" style="font-size: 0.75rem;"><i class="fa-solid fa-exclamation me-1"></i> Quedan {{ e.stock }}</span>
+                                    {% else %}
+                                        <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1" style="font-size: 0.75rem;">Agotado</span>
+                                    {% endif %}
                                 </div>
                                 
                                 <a href="{% url 'apps.carrito:agregar_al_carrito' e.id_producto %}" 
-                                   class="btn btn-secondary btn-glow w-100 rounded-pill text-white fw-bold py-2 shadow-sm">
-                                    <i class="fa-solid fa-cart-plus me-2"></i>Agregar al carrito
+                                   class="btn btn-primary btn-glow w-100 rounded-pill text-white fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center hover-lift" style="font-size: 0.9rem;">
+                                    <i class="fa-solid fa-cart-plus me-2"></i> Añadir
                                 </a>
                             </div>
                         </div>

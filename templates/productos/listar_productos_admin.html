@@ -1,0 +1,138 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% block title %}Inventario de Productos (Admin){% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-0 text-main">Inventario de Productos</h1>
+            <p class="text-muted small mb-0">Gestión de catálogo, stock y precios.</p>
+        </div>
+        <a href="{% url 'apps.productos:crear_producto' %}" class="btn btn-primary btn-glow rounded-3 fw-bold px-4">
+            <i class="fa-solid fa-plus me-2"></i> Nuevo Producto
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-surface">
+        <div class="card-body p-3 d-flex align-items-center gap-3">
+            <span class="fw-bold text-muted small text-uppercase">Filtrar por Categoría:</span>
+            <a href="{% url 'apps.productos:listar_productos_admin' %}" class="badge rounded-pill {% if not categoria_actual %}bg-primary text-white{% else %}bg-secondary bg-opacity-25 text-secondary text-decoration-none hover-lift{% endif %} px-3 py-2">
+                Todas
+            </a>
+            {% for e in categorias %}
+            <a href="{% url 'apps.productos:listar_productos_admin' %}?categoria={{ e.nombre }}" class="badge rounded-pill {% if categoria_actual == e.nombre %}bg-primary text-white{% else %}bg-secondary bg-opacity-25 text-secondary text-decoration-none hover-lift{% endif %} px-3 py-2">
+                {{ e.nombre }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Tabla de Productos -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-surface">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4 py-3 border-bottom-0" scope="col">ID</th>
+                        <th class="py-3 border-bottom-0" scope="col">Producto</th>
+                        <th class="py-3 border-bottom-0" scope="col">Categoría</th>
+                        <th class="py-3 border-bottom-0" scope="col">Stock</th>
+                        <th class="py-3 border-bottom-0 text-end" scope="col">Precio</th>
+                        <th class="pe-4 py-3 border-bottom-0 text-center" scope="col">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="border-top-0">
+                    {% for e in productos %}
+                    <tr>
+                        <td class="ps-4 text-muted">#{{ e.id_producto }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if e.imagen %}
+                                    <img src="{{ e.imagen.url }}" alt="{{ e.nombre }}" class="rounded-3 me-3 border shadow-sm" style="width: 48px; height: 48px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-secondary bg-opacity-25 rounded-3 me-3 d-flex align-items-center justify-content-center text-secondary shadow-sm" style="width: 48px; height: 48px;">
+                                        <i class="fa-solid fa-image"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-main">{{ e.nombre }}</h6>
+                                    <span class="text-muted small d-inline-block text-truncate" style="max-width: 200px;">{{ e.descripcion }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 py-1">
+                                {{ e.categoria.nombre }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if e.stock > 10 %}
+                                <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1"><i class="fa-solid fa-check me-1"></i> {{ e.stock }}</span>
+                            {% elif e.stock > 0 %}
+                                <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-1"><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ e.stock }}</span>
+                            {% else %}
+                                <span class="badge bg-danger bg-opacity-25 text-danger rounded-pill px-2 py-1"><i class="fa-solid fa-xmark me-1"></i> Agotado</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end fw-bold text-main">
+                            ${{ e.precio }}
+                        </td>
+                        <td class="pe-4 text-center">
+                            <div class="btn-group shadow-sm">
+                                <a href="{% url 'apps.productos:ver_producto' e.id_producto %}" class="btn btn-sm btn-light border-0 text-primary hover-lift" title="Ver" target="_blank">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                                <a href="{% url 'apps.productos:editar_producto' e.id_producto %}" class="btn btn-sm btn-light border-0 text-warning hover-lift" title="Editar">
+                                    <i class="fa-solid fa-pen"></i>
+                                </a>
+                                <a href="{% url 'apps.productos:eliminar_producto' e.id_producto %}" class="btn btn-sm btn-light border-0 text-danger hover-lift" title="Eliminar">
+                                    <i class="fa-solid fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-box-open fs-2 mb-3 d-block text-secondary opacity-50"></i>
+                            No hay productos en esta categoría.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        {% if productos.has_other_pages %}
+        <div class="card-footer bg-transparent border-top p-3">
+            <nav aria-label="Paginación">
+                <ul class="pagination pagination-sm justify-content-end mb-0">
+                    {% if productos.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link text-muted border-0 hover-lift" href="?page={{ productos.previous_page_number }}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}">Anterior</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in productos.paginator.page_range %}
+                        {% if productos.number == num %}
+                            <li class="page-item active"><span class="page-link bg-primary border-0 rounded-3 text-white shadow-sm mx-1">{{ num }}</span></li>
+                        {% elif num > productos.number|add:'-3' and num < productos.number|add:'3' %}
+                            <li class="page-item"><a class="page-link text-muted border-0 mx-1 hover-lift" href="?page={{ num }}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if productos.has_next %}
+                    <li class="page-item">
+                        <a class="page-link text-muted border-0 hover-lift" href="?page={{ productos.next_page_number }}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}">Siguiente</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

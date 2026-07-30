@@ -2,16 +2,21 @@
    AQUADELLUVIA - Diseño Visual (Distribuidora 3.0)
    ========================================================= */
 
-/* 1. Variables CSS (Extiende Bootstrap 5.3) - ESTILO LOGO */
+/* 1. Variables CSS (Extiende Bootstrap 5.3) - ESTILO DASHBOARD */
 :root, [data-bs-theme="light"] {
     /* Tema Claro */
-    --bg-main: #F4F7F6;       /* Blanco nube suave */
-    --bg-surface: #FFFFFF;    /* Blanco puro (banderín del logo) */
-    --color-primary: #6CB4EE; /* Azul Agua de Lluvia (Texto del logo) */
-    --color-secondary: #8BC34A;/* Verde Rana (Mascota) */
-    --color-accent: #F5B041;  /* Naranja/Amarillo Otoño (Fondo del logo) */
-    --text-main: #2C3E50;     /* Pizarra oscuro */
-    --text-muted: #7F8C8D;
+    --bg-main: #F7F8FA;       /* Gris muy tenue para el fondo */
+    --bg-surface: #FFFFFF;    /* Blanco puro para tarjetas y sidebar */
+    --color-primary: #6466f1; /* Azul Pervinca / Morado Dashboard */
+    --color-secondary: #a5a6f6;/* Morado claro */
+    --color-accent: #f59e0b;  /* Naranja de acento */
+    --text-main: #334155;     /* Pizarra oscuro para texto */
+    --text-muted: #94a3b8;    /* Gris para texto secundario */
+    
+    /* Sidebar */
+    --sidebar-width: 260px;
+    --sidebar-bg: #FFFFFF;
+    --sidebar-border: #e2e8f0;
     
     /* Tipografía */
     --font-body: 'Inter', sans-serif;
@@ -26,14 +31,19 @@
 
 [data-bs-theme="dark"] {
     /* Tema Oscuro */
-    --bg-main: #1A252C;       /* Pizarra muy oscuro */
-    --bg-surface: #273746;    /* Pizarra superficie */
-    --color-primary: #5DADE2; /* Azul Agua de Lluvia (brillante) */
-    --color-secondary: #7CB342;/* Verde Rana */
-    --color-accent: #F39C12;  /* Naranja/Amarillo Otoño */
-    --text-main: #EAEDED;     /* Blanco suave */
-    --text-muted: #95A5A6;
+    --bg-main: #0F172A;       /* Slate muy oscuro */
+    --bg-surface: #1E293B;    /* Slate para superficies */
+    --color-primary: #818cf8; /* Pervinca claro para destacar */
+    --color-secondary: #c7d2fe;
+    --color-accent: #fbbf24;  
+    --text-main: #f8fafc;     /* Blanco/Gris claro */
+    --text-muted: #94a3b8;
     
+    /* Sidebar */
+    --sidebar-width: 260px;
+    --sidebar-bg: #1E293B;
+    --sidebar-border: rgba(255, 255, 255, 0.05);
+
     /* Variables de Bootstrap overrides */
     --bs-body-bg: var(--bg-main);
     --bs-body-color: var(--text-main);
@@ -133,31 +143,82 @@ h3 {
     color: var(--text-main);
 }
 
-/* Navbar (Tienda) */
-.navbar {
-    background-color: var(--bg-surface) !important;
-    border-bottom: 1px solid var(--bs-border-color);
+/* Navbar (Reemplazado por Sidebar Layout) */
+#main-wrapper {
+    display: flex;
+    min-height: 100vh;
 }
 
-.navbar .nav-link, 
-.navbar .navbar-brand, 
-.navbar .navbar-text {
-    color: var(--text-main) !important;
+#sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border);
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+#page-content-wrapper {
+    flex-grow: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Sidebar Links Estilo Dashboard */
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 0.85rem 1.5rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-link i {
+    width: 24px;
+    margin-right: 12px;
+    font-size: 1.1rem;
+}
+
+.sidebar-link:hover {
+    color: var(--color-primary);
+    background-color: rgba(100, 102, 241, 0.05);
+}
+
+.sidebar-link.active {
+    color: var(--color-primary);
+    border-left-color: var(--color-primary);
+    background-color: rgba(100, 102, 241, 0.08);
     font-weight: 600;
 }
 
-.navbar .nav-link:hover, 
-.navbar .nav-link:focus,
-.navbar .nav-link.active {
-    color: var(--color-primary) !important;
+/* Header superior del contenido (Top bar) */
+.top-header {
+    background-color: transparent;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
 }
 
-[data-bs-theme="dark"] .navbar {
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+/* Responsive Sidebar */
+@media (max-width: 991.98px) {
+    #sidebar {
+        margin-left: calc(var(--sidebar-width) * -1);
+        position: fixed;
+        z-index: 1050;
+        height: 100vh;
+    }
+    #sidebar.show {
+        margin-left: 0;
+    }
 }
 
 /* Footer */
 .footer {
-    background-color: var(--bg-surface) !important;
-    border-top: 1px solid var(--bs-border-color) !important;
+    background-color: transparent !important;
+    border-top: none !important;
+    color: var(--text-muted) !important;
 }

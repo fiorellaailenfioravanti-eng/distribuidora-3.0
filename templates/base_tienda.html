@@ -1,0 +1,187 @@
+{% load grupos %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <!-- Fuentes de Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Estilo Global Aquadelluvia (Tienda) -->
+    <link rel="stylesheet" href="{% static 'style/aquadelluvia.css' %}?v=7">
+    <link rel="stylesheet" href="{% static 'style/productos.css' %}?v=7">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>{% block title %}{% endblock %}</title>
+    <style>
+    /* Estilo para que el dropdown se abra al pasar el mouse */
+    .nav-item.dropdown:hover .dropdown-menu {
+        display: block;
+        margin-top: 0; 
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100 bg-body" >
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    
+    <!-- HEADER TIENDA -->
+    <header class="sticky-top bg-surface shadow-sm border-bottom">
+        <nav class="navbar navbar-expand-lg py-2 py-lg-3">
+            <div class="container d-flex flex-wrap align-items-center justify-content-between"> 
+                <!-- Logo -->
+                <a class="navbar-brand d-flex align-items-center gap-2 me-auto me-lg-4" href="{% url 'inicio' %}">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                        <i class="fa-solid fa-droplet fs-6"></i>
+                    </div>
+                    <span class="fw-bold fs-5 fs-lg-4 tracking-tight text-dark">Aquadelluvia</span>
+                </a>
+                
+                <!-- Iconos móviles (siempre visibles) -->
+                <div class="d-flex align-items-center gap-2 d-lg-none">
+                    <!-- Carrito (Móvil) -->
+                    <a href="{% url 'apps.carrito:ver_carrito' %}" class="btn btn-light rounded-circle text-primary position-relative d-flex align-items-center justify-content-center p-0 shadow-sm" style="width: 40px; height: 40px;">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        {% if carrito_total_items > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" style="font-size: 0.65rem; transform: translate(-20%, -20%) !important;">
+                                {{ carrito_total_items }}
+                            </span>
+                        {% endif %}
+                    </a>
+                    
+                    <!-- Botón toggle (Hamburguesa) -->
+                    <button class="navbar-toggler border-0 shadow-none px-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTienda" aria-controls="navbarTienda" aria-expanded="false" aria-label="Toggle navigation">
+                        <i class="fa-solid fa-bars fs-4 text-dark"></i>
+                    </button>
+                </div>
+
+                <!-- Contenido colapsable -->
+                <div class="collapse navbar-collapse mt-3 mt-lg-0" id="navbarTienda">
+                    
+                    <!-- Buscador (Móvil) -->
+                    <form class="d-flex d-lg-none mb-3 w-100" role="search" action="{% url 'apps.buscador:buscar_productos' %}" method="get">
+                        <div class="input-group shadow-sm rounded-pill overflow-hidden">
+                            <input class="form-control border-0 ps-4 py-2 shadow-none bg-light" type="search" name="q" placeholder="Buscar productos..." value="{{ query }}">
+                            <button class="btn btn-light border-0 px-4 text-primary bg-light" type="submit">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Links principales -->
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 fw-medium gap-lg-2">
+                        <li class="nav-item">
+                            <a class="nav-link py-3 py-lg-2 px-3 rounded-3 {% if request.resolver_match.view_name == 'inicio' %}active text-primary fw-bold bg-primary bg-opacity-10{% else %}text-dark hover-bg-light{% endif %}" href="{% url 'inicio' %}">Inicio</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link py-3 py-lg-2 px-3 rounded-3 {% if request.resolver_match.view_name == 'apps.productos:listar_productos' %}active text-primary fw-bold bg-primary bg-opacity-10{% else %}text-dark hover-bg-light{% endif %}" href="{% url 'apps.productos:listar_productos' %}">Catálogo</a>
+                        </li>
+                        {% if user.is_superuser or user|has_group:"Vendedor" %}
+                        <li class="nav-item">
+                            <a class="nav-link py-3 py-lg-2 px-3 rounded-3 text-secondary hover-bg-light" href="{% url 'apps.clientes:listar_clientes' %}">
+                               <i class="fa-solid fa-border-all me-2 me-lg-1"></i> Dashboard
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+
+                    <!-- Buscador (Escritorio) -->
+                    <form class="d-none d-lg-flex mx-lg-3 flex-grow-1" style="max-width: 350px;" role="search" action="{% url 'apps.buscador:buscar_productos' %}" method="get">
+                        <div class="input-group shadow-sm rounded-pill overflow-hidden border">
+                            <input class="form-control border-0 ps-4 shadow-none bg-light" type="search" name="q" placeholder="Buscar productos..." value="{{ query }}">
+                            <button class="btn btn-light border-0 px-3 text-primary bg-light hover-lift" type="submit">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Acciones derecha -->
+                    <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-3 mt-3 mt-lg-0">
+                        <!-- Botón modo oscuro -->
+                        <div class="d-flex align-items-center justify-content-between d-lg-block pt-3 pt-lg-0">
+                            <span class="d-lg-none fw-bold text-muted">Tema Oscuro</span>
+                            <button id="toggle-theme" class="btn btn-light rounded-circle border shadow-sm text-muted d-flex align-items-center justify-content-center hover-lift" style="width: 42px; height: 42px;" title="Cambiar tema">
+                                <i class="fa-solid fa-moon"></i>
+                            </button>
+                        </div>
+
+                        <!-- Carrito (Escritorio) -->
+                        <a href="{% url 'apps.carrito:ver_carrito' %}" class="d-none d-lg-flex btn btn-primary btn-glow rounded-pill px-4 shadow-sm align-items-center gap-2 fw-bold text-nowrap hover-lift" style="height: 42px;">
+                            <i class="fa-solid fa-cart-shopping"></i>
+                            <span>Mi Carrito</span>
+                            {% if carrito_total_items > 0 %}
+                                <span class="badge bg-white text-primary ms-1 rounded-pill shadow-sm">{{ carrito_total_items }}</span>
+                            {% endif %}
+                        </a>
+
+                        <!-- Perfil / Login -->
+                        <div class="pt-3 pt-lg-0 ps-lg-2 w-100 w-lg-auto">
+                            {% if user.is_authenticated %}
+                                <div class="dropdown">
+                                    <a href="#" class="d-flex align-items-center justify-content-between justify-content-lg-start text-decoration-none dropdown-toggle text-dark p-2 p-lg-1 pe-lg-3 rounded-pill border hover-bg-light shadow-sm bg-white" id="dropdownUserStore" data-bs-toggle="dropdown" aria-expanded="false" style="height: 42px;">
+                                        <div class="d-flex align-items-center">
+                                            <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=6CB4EE&color=fff&rounded=true" alt="" width="32" height="32" class="me-2 rounded-circle">
+                                            <span class="fw-bold fs-6 me-1">{{ user.username|truncatechars:12 }}</span>
+                                        </div>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2 w-100 w-lg-auto" aria-labelledby="dropdownUserStore">
+                                        <li><a class="dropdown-item py-3 py-lg-2" href="{% url 'apps.clientes:mi_perfil' %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi Cuenta</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item py-3 py-lg-2 text-danger fw-bold" href="{% url 'apps.autenticacion:cerrar_sesion' %}"><i class="fa-solid fa-right-from-bracket me-2"></i> Salir</a></li>
+                                    </ul>
+                                </div>
+                            {% else %}
+                                <a class="btn btn-outline-primary rounded-pill fw-bold w-100 w-lg-auto text-nowrap" style="height: 42px; line-height: 28px;" href="{% url 'apps.autenticacion:ingresar' %}">Ingresar</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    {% block content_banner %}{% endblock content_banner %}
+    
+    <!-- Mensajes / Toasts (Popups) -->
+    {% if messages %}
+        <div class="toast-container position-fixed bottom-0 end-0 p-3 p-md-4" style="z-index: 1080;">
+            {% for message in messages %}
+            <div class="toast align-items-center text-white bg-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning text-dark{% elif message.tags == 'info' %}info{% else %}success{% endif %} border-0 shadow-lg rounded-4 mb-3" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                <div class="d-flex">
+                    <div class="toast-body fw-bold px-3 py-3 d-flex align-items-center">
+                        <i class="fa-solid {% if message.tags == 'error' %}fa-circle-xmark{% elif message.tags == 'warning' %}fa-triangle-exclamation{% elif message.tags == 'info' %}fa-circle-info{% else %}fa-circle-check{% endif %} me-2 fs-5"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                    <button type="button" class="btn-close {% if message.tags == 'warning' %}btn-close-dark{% else %}btn-close-white{% endif %} me-3 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+                var toastList = toastElList.map(function (toastEl) {
+                    var toast = new bootstrap.Toast(toastEl)
+                    toast.show()
+                })
+            });
+        </script>
+    {% endif %}
+
+    <!-- Contenido principal -->
+    <main class="container mt-4 mb-5">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block content_footer %}{% endblock content_footer %}
+    
+    <footer class="footer mt-auto py-4 text-center border-top">
+        <div class="container">
+            <span class="text-muted">&copy; 2026 Distribuidora Aquadelluvia - Tienda Oficial</span>
+        </div>
+    </footer>
+    
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

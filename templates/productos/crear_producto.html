@@ -1,25 +1,95 @@
-{% extends 'base.html' %}
+{% extends 'base_dashboard.html' %}
 {% block title %}Crear Producto{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card shadow-sm">
-            <div class="card-header bg-body text-body">
-                <h4 class="mb-0">Registrar Nuevo Producto</h4>
+<div class="container-fluid px-0">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-0 text-main">Registrar Nuevo Producto</h1>
+            <p class="text-muted small mb-0">Añade un nuevo ítem al catálogo de la tienda.</p>
+        </div>
+        <a href="{% url 'apps.productos:listar_productos_admin' %}" class="btn btn-light shadow-sm fw-bold">
+            <i class="fa-solid fa-arrow-left me-2"></i> Volver al inventario
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4 bg-surface">
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                            <div class="alert alert-danger rounded-3 border-0 shadow-sm mb-4">
+                                Por favor corrige los errores debajo.
+                            </div>
+                        {% endif %}
+
+                        <div class="row g-4">
+                            <!-- Nombre -->
+                            <div class="col-md-12">
+                                <label for="{{ form.nombre.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Nombre del Producto</label>
+                                {{ form.nombre }}
+                                {{ form.nombre.errors }}
+                            </div>
+
+                            <!-- Categoría & Precio -->
+                            <div class="col-md-6">
+                                <label for="{{ form.categoria.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Categoría</label>
+                                {{ form.categoria }}
+                                {{ form.categoria.errors }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.precio.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Precio de Venta ($)</label>
+                                {{ form.precio }}
+                                {{ form.precio.errors }}
+                            </div>
+
+                            <!-- Stock & Imagen -->
+                            <div class="col-md-6">
+                                <label for="{{ form.stock.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Stock Inicial</label>
+                                {{ form.stock }}
+                                {{ form.stock.errors }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.imagen.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Imagen (Opcional)</label>
+                                {{ form.imagen }}
+                                {{ form.imagen.errors }}
+                            </div>
+
+                            <!-- Descripción -->
+                            <div class="col-md-12">
+                                <label for="{{ form.descripcion.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Descripción</label>
+                                {{ form.descripcion }}
+                                {{ form.descripcion.errors }}
+                            </div>
+                        </div>
+
+                        <hr class="my-5 text-muted">
+                        
+                        <div class="d-flex justify-content-end gap-3">
+                            <a href="{% url 'apps.productos:listar_productos_admin' %}" class="btn btn-light fw-bold px-4 hover-lift">Cancelar</a>
+                            <button type="submit" class="btn btn-primary btn-glow rounded-3 fw-bold px-5">
+                                <i class="fa-solid fa-floppy-disk me-2"></i> Guardar Producto
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="card-body p-4">
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="row">
-                        {# Esto asume que usas widgets de Bootstrap en tu forms.py #}
-                        {{ form.as_p }}
-                    </div>
-                    <hr>
-                    <div class="d-flex justify-content-end">
-                        <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-secondary me-2">Cancelar</a>
-                        <button type="submit" class="btn btn-success px-4">Guardar Producto</button>
-                    </div>
-                </form>
+        </div>
+        
+        <!-- Tarjeta de ayuda lateral -->
+        <div class="col-lg-4 d-none d-lg-block">
+            <div class="card shadow-sm border-0 rounded-4 bg-primary bg-opacity-10 text-primary">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-lightbulb me-2"></i>Consejos</h5>
+                    <ul class="mb-0 small ps-3">
+                        <li class="mb-2">Asegúrate de que la <strong>imagen</strong> tenga fondo transparente (PNG) para que luzca bien en la tienda.</li>
+                        <li class="mb-2">El <strong>stock</strong> se actualizará automáticamente con cada venta.</li>
+                        <li>Las <strong>categorías</strong> nuevas se pueden crear desde el panel de administrador de Django.</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>

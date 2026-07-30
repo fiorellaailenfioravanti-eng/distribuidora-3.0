@@ -9,8 +9,12 @@ class ProductoForm(forms.ModelForm):
         model = Producto
         fields = '__all__'
         widgets = {
-            'precio': forms.NumberInput(attrs={'class': 'form-control'}),
-
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Botellón 20L'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción detallada...'}),
+            'categoria': forms.Select(attrs={'class': 'form-select'}),
+            'precio': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0.00'}),
+            'stock': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Cantidad inicial'}),
+            'imagen': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
 

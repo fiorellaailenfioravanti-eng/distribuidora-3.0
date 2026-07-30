@@ -1,16 +1,19 @@
-{% extends 'base.html' %}
+{% extends 'base_tienda.html' %}
 {% load static %}
 
 {% block title %}Mi Carrito - Distribuidora{% endblock %}
 
 {% block content %}
 <div class="container py-5">
-    <h1 class="mb-4 text-start fw-bold text-primary">
-        <i class="fas fa-shopping-cart me-2"></i>Tu carrito de compras
-    </h1>
+    <div class="mb-4 border-bottom pb-3">
+        <h1 class="h2 fw-bold text-dark tracking-tight mb-2">
+            <i class="fas fa-shopping-cart text-primary me-2"></i>Tu carrito de compras
+        </h1>
+        <p class="text-muted mb-0">Revisa tus productos antes de finalizar la compra.</p>
+    </div>
 
     {% if items %}
-    <div class="card border-0 shadow-sm rounded-4 surface-card overflow-hidden mb-4">
+    <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden mb-5">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
             <thead class="table-body">
@@ -43,11 +46,11 @@
                     <td class="text-center">
                         <span class="badge bg-light text-dark border px-3 py-2 fs-6">{{ item.cantidad }}</span>
                     </td>
-                    <td class="text-center fw-bold text-success">$ {{ item.subtotal }}</td>
+                    <td class="text-center fw-bold fs-5 text-primary">$ {{ item.subtotal }}</td>
                     <td class="text-center">
                         <a href="{% url 'apps.carrito:eliminar_del_carrito' item.id %}"
-                            class="btn btn-sm btn-outline-danger rounded-pill shadow-sm">
-                            <i class="fas fa-trash"></i> Quitar
+                            class="btn btn-sm btn-outline-danger rounded-pill shadow-sm hover-lift px-3">
+                            <i class="fas fa-trash me-1"></i> Quitar
                         </a>
                     </td>
                 </tr>
@@ -57,35 +60,40 @@
     </div>
     </div>
 
-    <div class="card border-0 shadow-sm rounded-4 surface-card">
-        <div class="card-body p-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-            <h3 class="fw-bold mb-0">
-                Total a pagar: <span class="text-success">${{ total_precio }}</span>
-            </h3>
+    <div class="card border-0 shadow-sm rounded-4 bg-surface mt-4">
+        <div class="card-body p-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-4">
+            <div class="text-center text-md-start">
+                <p class="text-muted mb-1 text-uppercase fw-bold tracking-wide" style="font-size: 0.75rem;">Total a pagar</p>
+                <h3 class="h2 fw-bold mb-0 text-primary tracking-tight">
+                    ${{ total_precio }}
+                </h3>
+            </div>
 
-            <div class="d-flex flex-wrap justify-content-center gap-2">
-                <a href="{% url 'apps.carrito:vaciar_carrito' %}" class="btn btn-outline-danger rounded-pill px-4">
-                    <i class="fas fa-trash-alt me-2"></i>Vaciar carrito
+            <div class="d-flex flex-column flex-sm-row flex-wrap justify-content-center gap-2 w-100 w-md-auto">
+                <a href="{% url 'apps.carrito:vaciar_carrito' %}" class="btn btn-light text-danger fw-bold rounded-pill px-4 hover-lift w-100 w-sm-auto mb-2 mb-sm-0">
+                    <i class="fas fa-trash-alt me-2"></i> Vaciar carrito
                 </a>
-                <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-outline-secondary rounded-pill px-4">
-                    <i class="fas fa-arrow-left me-2"></i>Seguir comprando
+                <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-outline-secondary rounded-pill px-4 hover-lift fw-bold w-100 w-sm-auto mb-2 mb-sm-0">
+                    <i class="fas fa-arrow-left me-2"></i> Seguir comprando
                 </a>
-                <a href="#" class="btn btn-primary btn-glow btn-lg rounded-pill px-5 shadow-sm">
-                    Finalizar Pedido <i class="fas fa-check-circle ms-2"></i>
+                <a href="#" class="btn btn-primary btn-glow rounded-pill px-4 shadow-sm fw-bold hover-lift w-100 w-sm-auto">
+                    Finalizar Pedido <i class="fas fa-arrow-right ms-2"></i>
                 </a>
             </div>
         </div>
     </div>
 
     {% else %}
-    <div class="text-center py-5 shadow-sm border-0 rounded-4 surface-card hover-lift">
+    <div class="text-center py-5 my-4 shadow-sm border-0 rounded-4 bg-surface hover-lift">
         <div class="mb-4">
-            <span class="display-1 text-muted opacity-25">🛒</span>
+            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center text-muted opacity-50" style="width: 80px; height: 80px;">
+                <i class="fa-solid fa-cart-shopping h1 mb-0"></i>
+            </div>
         </div>
-        <h2 class="fw-bold">Tu carrito está vacío</h2>
+        <h2 class="h3 fw-bold text-dark tracking-tight">Tu carrito está vacío</h2>
         <p class="text-muted mb-4">Parece que aún no has añadido ningún producto a tu lista.</p>
-        <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-primary btn-glow btn-lg rounded-pill px-5">
-            Explorar Catálogo de Productos
+        <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-primary btn-glow rounded-pill px-4 py-2 fw-bold hover-lift">
+            Explorar Catálogo <i class="fa-solid fa-arrow-right ms-2"></i>
         </a>
     </div>
     {% endif %}

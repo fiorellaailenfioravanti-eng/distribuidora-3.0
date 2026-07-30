@@ -35,8 +35,27 @@ def listar_productos(request):
         'categoria_actual': parametro_categoria # Útil para mantener el filtro en los links
     }
     return render(request, 'productos/listar_productos.html', contexto)
-# Create your views here.
 
+@user_passes_test(es_vendedor_o_admin)
+def listar_productos_admin(request):
+    listar_productos = Producto.objects.all()
+    parametro_categoria = request.GET.get('categoria',"").strip()
+    
+    if parametro_categoria:
+        listar_productos = listar_productos.filter(categoria__nombre__icontains=parametro_categoria)
+
+    paginator = Paginator(listar_productos, 20) # Mostrar más productos en tabla
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    contexto = {
+        'productos': page_obj,
+        'categorias': Categoria.objects.all(),
+        'categoria_actual': parametro_categoria
+    }
+    return render(request, 'productos/listar_productos_admin.html', contexto)
+
+# Create your views here.
 
 
 def ver_producto(request, pk):
@@ -69,7 +88,7 @@ def crear_producto(request):
         form = ProductoForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
-            return redirect('apps.productos:listar_productos')
+            return redirect('apps.productos:listar_productos_admin')
 
     else:
         #get 
@@ -95,7 +114,7 @@ def editar_producto(request, pk):
         form = ProductoForm(request.POST, request.FILES, instance=producto)
         if form.is_valid():
             form.save()
-            return redirect('apps.productos:listar_productos')
+            return redirect('apps.productos:listar_productos_admin')
     else:
         form = ProductoForm(instance=producto)
         return render(request, 'productos/editar_producto.html', {'form': form, 'producto': producto})
@@ -110,5 +129,5 @@ def eliminar_producto(request, pk):
     producto = get_object_or_404(Producto, id_producto=pk)
     if request.method == 'POST':
         producto.delete()
-        return redirect('apps.productos:listar_productos')
+        return redirect('apps.productos:listar_productos_admin')
     return render(request, 'productos/eliminar_producto.html', {'producto': producto})

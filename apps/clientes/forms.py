@@ -181,6 +181,14 @@ class DireccionEntregaForm(forms.ModelForm):
             'es_principal': forms.CheckboxInput(attrs={'class': _CHECK}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from apps.logistica.models import Zona
+        zona_default, _ = Zona.objects.get_or_create(nombre='Zona 1')
+        if not self.is_bound and not self.instance.pk:
+            self.initial['zona'] = zona_default.pk
+            self.initial['es_principal'] = True
+
 
 class BuscarClienteForm(forms.Form):
     """Buscador del panel de clientes."""
@@ -197,3 +205,46 @@ class BuscarClienteForm(forms.Form):
         choices=[('', '— Todos —'), ('Normal', 'Normal'), ('Premium', 'Premium')],
         widget=forms.Select(attrs={'class': _SELECT})
     )
+
+
+class EditarMiPerfilForm(forms.Form):
+    """Formulario para que un cliente edite sus propios datos personales y foto."""
+    first_name = forms.CharField(
+        label='Nombre',
+        max_length=150,
+        required=True,
+        widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Tu nombre'})
+    )
+    last_name = forms.CharField(
+        label='Apellido',
+        max_length=150,
+        required=True,
+        widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Tu apellido'})
+    )
+    email = forms.EmailField(
+        label='Correo electrónico',
+        required=True,
+        widget=forms.EmailInput(attrs={'class': _INPUT, 'placeholder': 'tu@email.com'})
+    )
+    dni = forms.CharField(
+        label='DNI',
+        max_length=15,
+        required=False,
+        widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Ej: 30123456'})
+    )
+    fecha_nacimiento = forms.DateField(
+        label='Fecha de nacimiento',
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date', 'class': _INPUT})
+    )
+    imagen_perfil = forms.ImageField(
+        label='Foto de perfil',
+        required=False,
+        widget=forms.FileInput(attrs={'class': _INPUT, 'accept': 'image/*'})
+    )
+    eliminar_foto = forms.BooleanField(
+        label='Eliminar foto actual y usar avatar por defecto',
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': _CHECK})
+    )
+

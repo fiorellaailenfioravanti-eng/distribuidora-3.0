@@ -29,4 +29,5 @@ urlpatterns = [
 
     # ── Perfil propio del cliente ──────────────────────────────
     path('mi-perfil/',                    views.mi_perfil_cliente,        name='mi_perfil'),
+    path('mi-perfil/editar/',             views.editar_mi_perfil,         name='editar_mi_perfil'),
 ]

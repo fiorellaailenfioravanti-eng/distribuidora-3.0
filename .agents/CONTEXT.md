@@ -338,22 +338,19 @@ El nombre de usuario en la navbar es un **link** a `/clientes/mi-perfil/`.
 
 ## 5. 🔲 LO QUE ESTÁ PENDIENTE (Meses 8–12)
 
-### Mes 8 — Lógica Transaccional Avanzada 🔴 PENDIENTE
+### Módulo `apps.pedidos` ✅ — NUEVO (Mes 8)
 
-- [ ] `@transaction.atomic` en vistas de pedidos, pagos y stock
-- [ ] `Django Signals` (`post_save`) para actualizar estado pedido cuando suma pagos = total
-- [ ] Módulo completo de **Pedidos**: estado (`Pendiente`, `Confirmado`, `Entregado`, `Cancelado`), dirección seleccionada, desglose de items
-- [ ] Pagos parciales con múltiples métodos: Efectivo, Transferencia, Tarjeta de Débito, Billetera Digital
+**Modelos e Integración:**
+- **`Pedido`**: Registra la transacción con estado (`Pendiente`, `Confirmado`, `En Camino`, `Entregado`, `Cancelado`), vinculando al `Cliente` y su `DireccionEntrega`.
+- **`DetallePedido`**: Congela el precio unitario y cantidad del producto al momento de la compra.
+- **`PagoPedido`**: Almacena los pagos, estados y la transacción de MercadoPago (`mercadopago_payment_id`, `mercadopago_status`).
+- **`MetodoPago`**: Soporta Efectivo en Entrega y MercadoPago / Pago Virtual.
 
-**Tablas planificadas:**
-```
-Pedido               (id_pedido [PK], estado, total, fecha, id_cliente [FK→Cliente])
-Producto_incluye_pedido (id_pedido [PK,FK], id_producto [PK,FK], precio_unit, cantidad, subtotal)
-Pago_pedido          (id_pago [PK], monto, fecha, id_metodo [FK], id_pedido [FK])
-Metodo_pago          (id_metodo [PK], descripcion)
-```
-
-> ⚠️ El `Pedido` ahora referencia `Cliente.pk` (no DNI), consistente con el modelo implementado.
+**Checkout & Transaccionalidad:**
+- Operación envuelta en `@transaction.atomic` para validación de stock de cada producto.
+- Descuento automático de `Producto.stock` al confirmar el pedido.
+- Integración de SDK `mercadopago` con Preferencias de Pago, callbacks y endpoint de Webhook (`/pedidos/webhook/mercadopago/`).
+- Panel de gestión para Vendedores (`/pedidos/gestion/`) e historial de usuario (`/pedidos/mis-pedidos/`).
 
 ---
 

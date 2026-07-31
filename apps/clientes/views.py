@@ -6,7 +6,8 @@ from django.core.paginator import Paginator
 
 from .models import Cliente, TelefonoContacto, DireccionEntrega
 from .forms  import (ClienteForm, ClienteSinCuentaForm, AltaClienteConCuentaForm, TelefonoContactoForm,
-                     DireccionEntregaForm, BuscarClienteForm)
+                     DireccionEntregaForm, BuscarClienteForm, EditarMiPerfilForm)
+from apps.pedidos.models import Pedido
 
 
 # ─────────────────────────────────────────────────────────────
@@ -14,6 +15,10 @@ from .forms  import (ClienteForm, ClienteSinCuentaForm, AltaClienteConCuentaForm
 # ─────────────────────────────────────────────────────────────
 def es_admin_o_vendedor(user):
     return user.is_superuser or user.groups.filter(name='Vendedor').exists()
+
+
+def es_dueno_o_staff(user, cliente):
+    return es_admin_o_vendedor(user) or (cliente and cliente.usuario == user)
 
 
 def _normalizar(texto):
@@ -249,11 +254,10 @@ def cambiar_tipo_cliente(request, pk):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def agregar_telefono(request, pk):
-    if not es_admin_o_vendedor(request.user):
-        messages.error(request, 'Sin permiso.')
-        return redirect('apps.clientes:listar_clientes')
-
     cliente = get_object_or_404(Cliente, pk=pk)
+    if not es_dueno_o_staff(request.user, cliente):
+        messages.error(request, 'Sin permiso para agregar teléfonos a este perfil.')
+        return redirect('inicio')
 
     if request.method == 'POST':
         form = TelefonoContactoForm(request.POST)
@@ -265,27 +269,30 @@ def agregar_telefono(request, pk):
         else:
             messages.error(request, 'Error al agregar el teléfono. Revisá los datos.')
 
+    if cliente.usuario == request.user and not es_admin_o_vendedor(request.user):
+        return redirect('apps.clientes:mi_perfil')
     return redirect('apps.clientes:ver_cliente', pk=pk)
 
 
 @login_required
 def eliminar_telefono(request, pk):
-    if not es_admin_o_vendedor(request.user):
-        messages.error(request, 'Sin permiso.')
-        return redirect('apps.clientes:listar_clientes')
+    tel = get_object_or_404(TelefonoContacto, pk=pk)
+    cliente = tel.cliente
 
-    tel        = get_object_or_404(TelefonoContacto, pk=pk)
-    cliente_pk = tel.cliente.pk
+    if not es_dueno_o_staff(request.user, cliente):
+        messages.error(request, 'Sin permiso.')
+        return redirect('inicio')
 
     if request.method == 'POST':
-        # No permitir eliminar si quedarían menos de 1 teléfono
-        if tel.cliente.cantidad_telefonos() <= 1:
-            messages.error(request, 'El cliente debe tener al menos 1 teléfono registrado.')
+        if cliente.cantidad_telefonos() <= 1:
+            messages.error(request, 'Debes tener al menos 1 teléfono registrado.')
         else:
             tel.delete()
             messages.success(request, 'Teléfono eliminado.')
 
-    return redirect('apps.clientes:ver_cliente', pk=cliente_pk)
+    if cliente.usuario == request.user and not es_admin_o_vendedor(request.user):
+        return redirect('apps.clientes:mi_perfil')
+    return redirect('apps.clientes:ver_cliente', pk=cliente.pk)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -293,64 +300,98 @@ def eliminar_telefono(request, pk):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def agregar_direccion(request, pk):
-    if not es_admin_o_vendedor(request.user):
-        messages.error(request, 'Sin permiso.')
-        return redirect('apps.clientes:listar_clientes')
-
     cliente = get_object_or_404(Cliente, pk=pk)
+    if not es_dueno_o_staff(request.user, cliente):
+        messages.error(request, 'Sin permiso para agregar direcciones a este perfil.')
+        return redirect('inicio')
+
+    # Regla de Negocio: Cada cliente solo puede tener 1 dirección de entrega.
+    # Si ya posee una registrada, se redirige a editar esa única dirección.
+    direccion_existente = cliente.direcciones.first()
+    if direccion_existente:
+        messages.info(request, 'Ya tienes un domicilio registrado. Puedes editar tus datos de entrega a continuación.')
+        url_editar = reverse('apps.clientes:editar_direccion', kwargs={'pk': direccion_existente.pk})
+        next_param = request.GET.get('next') or request.POST.get('next')
+        if next_param:
+            url_editar += f"?next={next_param}"
+        return redirect(url_editar)
+
+    next_url = request.GET.get('next') or request.POST.get('next') or ''
 
     if request.method == 'POST':
         form = DireccionEntregaForm(request.POST)
         if form.is_valid():
             dir_ = form.save(commit=False)
             dir_.cliente = cliente
+            # Asignar Zona 1 por defecto si no se especificó
+            if not dir_.zona:
+                from apps.logistica.models import Zona
+                zona_default, _ = Zona.objects.get_or_create(nombre='Zona 1')
+                dir_.zona = zona_default
+            dir_.es_principal = True
             dir_.save()
-            messages.success(request, f'Dirección "{dir_}" agregada.')
-        else:
-            messages.error(request, 'Error al agregar la dirección.')
+            messages.success(request, f'Dirección "{dir_}" agregada con éxito.')
 
-    return redirect('apps.clientes:ver_cliente', pk=pk)
+            if next_url:
+                return redirect(next_url)
+            if cliente.usuario == request.user and not es_admin_o_vendedor(request.user):
+                return redirect('apps.clientes:mi_perfil')
+            return redirect('apps.clientes:ver_cliente', pk=pk)
+        else:
+            messages.error(request, 'Error al agregar la dirección. Revisá los campos.')
+    else:
+        form = DireccionEntregaForm()
+
+    return render(request, 'clientes/agregar_direccion.html', {
+        'form': form,
+        'cliente': cliente,
+        'next': next_url,
+    })
 
 
 @login_required
 def editar_direccion(request, pk):
-    if not es_admin_o_vendedor(request.user):
-        messages.error(request, 'Sin permiso.')
-        return redirect('apps.clientes:listar_clientes')
-
     direccion  = get_object_or_404(DireccionEntrega, pk=pk)
-    cliente_pk = direccion.cliente.pk
+    cliente    = direccion.cliente
+
+    if not es_dueno_o_staff(request.user, cliente):
+        messages.error(request, 'Sin permiso.')
+        return redirect('inicio')
 
     if request.method == 'POST':
         form = DireccionEntregaForm(request.POST, instance=direccion)
         if form.is_valid():
             form.save()
             messages.success(request, 'Dirección actualizada.')
-            return redirect('apps.clientes:ver_cliente', pk=cliente_pk)
+            if cliente.usuario == request.user and not es_admin_o_vendedor(request.user):
+                return redirect('apps.clientes:mi_perfil')
+            return redirect('apps.clientes:ver_cliente', pk=cliente.pk)
     else:
         form = DireccionEntregaForm(instance=direccion)
 
     return render(request, 'clientes/editar_direccion.html', {
         'form':      form,
         'direccion': direccion,
-        'cliente':   direccion.cliente,
+        'cliente':   cliente,
     })
 
 
 @login_required
 def eliminar_direccion(request, pk):
-    if not es_admin_o_vendedor(request.user):
-        messages.error(request, 'Sin permiso.')
-        return redirect('apps.clientes:listar_clientes')
-
     direccion  = get_object_or_404(DireccionEntrega, pk=pk)
-    cliente_pk = direccion.cliente.pk
+    cliente    = direccion.cliente
+
+    if not es_dueno_o_staff(request.user, cliente):
+        messages.error(request, 'Sin permiso.')
+        return redirect('inicio')
 
     if request.method == 'POST':
         direccion.delete()
         messages.success(request, 'Dirección eliminada.')
 
-    return redirect('apps.clientes:ver_cliente', pk=cliente_pk)
+    if cliente.usuario == request.user and not es_admin_o_vendedor(request.user):
+        return redirect('apps.clientes:mi_perfil')
+    return redirect('apps.clientes:ver_cliente', pk=cliente.pk)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -362,15 +403,79 @@ def mi_perfil_cliente(request):
     try:
         cliente = request.user.perfil_cliente
     except Cliente.DoesNotExist:
-        messages.info(request, 'No tenés un perfil de cliente asociado aún.')
-        return redirect('inicio')
+        cliente, _ = Cliente.objects.get_or_create(
+            usuario=request.user,
+            defaults={
+                'nombre': request.user.first_name or request.user.username,
+                'apellido': request.user.last_name or '',
+                'email_contacto': request.user.email
+            }
+        )
 
     telefonos   = cliente.telefonos.all()
-    # Las direcciones se muestran SIN desc_seguridad para el propio cliente
     direcciones = cliente.direcciones.select_related('zona').all()
+    pedidos     = Pedido.objects.filter(cliente=cliente).select_related('metodo_pago').prefetch_related('detalles__producto')
 
     return render(request, 'clientes/mi_perfil_cliente.html', {
-        'cliente':    cliente,
-        'telefonos':  telefonos,
+        'cliente':     cliente,
+        'telefonos':   telefonos,
         'direcciones': direcciones,
+        'pedidos':     pedidos,
     })
+
+
+@login_required
+def editar_mi_perfil(request):
+    """Permite al cliente logueado modificar sus datos personales y foto de perfil."""
+    try:
+        cliente = request.user.perfil_cliente
+    except Cliente.DoesNotExist:
+        cliente, _ = Cliente.objects.get_or_create(
+            usuario=request.user,
+            defaults={
+                'nombre': request.user.first_name or request.user.username,
+                'apellido': request.user.last_name or '',
+                'email_contacto': request.user.email
+            }
+        )
+
+    if request.method == 'POST':
+        form = EditarMiPerfilForm(request.POST, request.FILES)
+        if form.is_valid():
+            user = request.user
+            user.first_name = form.cleaned_data['first_name']
+            user.last_name  = form.cleaned_data['last_name']
+            user.email      = form.cleaned_data['email']
+
+            if form.cleaned_data.get('eliminar_foto'):
+                user.imagen_perfil = 'usuarios/default.jpg'
+            elif request.FILES.get('imagen_perfil'):
+                user.imagen_perfil = request.FILES['imagen_perfil']
+
+            user.save()
+
+            cliente.nombre = user.first_name
+            cliente.apellido = user.last_name
+            cliente.email_contacto = user.email
+            cliente.dni = form.cleaned_data.get('dni')
+            cliente.fecha_nacimiento = form.cleaned_data.get('fecha_nacimiento')
+            cliente.save()
+
+            messages.success(request, '¡Tus datos de perfil han sido actualizados con éxito!')
+            return redirect('apps.clientes:mi_perfil')
+        else:
+            messages.error(request, 'Por favor revisá los datos ingresados.')
+    else:
+        form = EditarMiPerfilForm(initial={
+            'first_name': request.user.first_name,
+            'last_name':  request.user.last_name,
+            'email':      request.user.email,
+            'dni':        cliente.dni,
+            'fecha_nacimiento': cliente.fecha_nacimiento,
+        })
+
+    return render(request, 'clientes/editar_mi_perfil.html', {
+        'form': form,
+        'cliente': cliente
+    })
+

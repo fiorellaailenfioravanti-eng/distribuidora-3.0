@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Pedido #{{ pedido.id_pedido }} - Distribuidora{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+            <h1 class="fw-bold text-primary mb-1">
+                <i class="fas fa-file-invoice me-2"></i>Pedido #{{ pedido.id_pedido }}
+            </h1>
+            <p class="text-muted mb-0">Realizado el {{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</p>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            {% if request.user.is_superuser or request.user.groups.all.0.name == 'Vendedor' %}
+            <a href="{% url 'apps.pedidos:listar_pedidos' %}" class="btn btn-outline-secondary rounded-pill">
+                <i class="fas fa-list me-1"></i> Lista de Pedidos
+            </a>
+            {% else %}
+            <a href="{% url 'apps.pedidos:mis_pedidos' %}" class="btn btn-outline-secondary rounded-pill">
+                <i class="fas fa-arrow-left me-1"></i> Mis Pedidos
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Badges de Estado -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <div class="card border-0 shadow-sm rounded-4 surface-card p-3 d-flex flex-row align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted d-block small">Estado del Pedido</span>
+                    <strong class="fs-4">
+                        {% if pedido.estado == 'Pendiente' %}
+                            <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Pendiente</span>
+                        {% elif pedido.estado == 'Confirmado' %}
+                            <span class="badge bg-primary"><i class="fas fa-check-circle me-1"></i>Confirmado</span>
+                        {% elif pedido.estado == 'En Camino' %}
+                            <span class="badge bg-info text-dark"><i class="fas fa-truck me-1"></i>En Camino</span>
+                        {% elif pedido.estado == 'Entregado' %}
+                            <span class="badge bg-success"><i class="fas fa-box-check me-1"></i>Entregado</span>
+                        {% else %}
+                            <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Cancelado</span>
+                        {% endif %}
+                    </strong>
+                </div>
+                <i class="fas fa-truck-ramp-box fa-2x text-muted opacity-50"></i>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 surface-card p-3 d-flex flex-row align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted d-block small">Estado del Pago</span>
+                    <strong class="fs-4">
+                        {% if pedido.esta_pagado %}
+                            <span class="badge bg-success"><i class="fas fa-check me-1"></i>Aprobado / Pagado</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark"><i class="fas fa-hourglass-half me-1"></i>Pendiente de Pago</span>
+                        {% endif %}
+                    </strong>
+                </div>
+                <i class="fas fa-money-check-dollar fa-2x text-muted opacity-50"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Ítems del Pedido -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 surface-card overflow-hidden mb-4">
+                <div class="card-header bg-transparent border-bottom p-4">
+                    <h4 class="fw-bold mb-0 text-white"><i class="fas fa-boxes-stacked me-2 text-primary"></i>Productos Solicitados</h4>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-body">
+                            <tr>
+                                <th scope="col" class="ps-4">Producto</th>
+                                <th scope="col" class="text-center">Precio Unitario</th>
+                                <th scope="col" class="text-center">Cantidad</th>
+                                <th scope="col" class="text-end pe-4">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detalle in detalles %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center gap-3">
+                                        {% if detalle.producto.imagen %}
+                                            <img src="{{ detalle.producto.imagen.url }}" alt="{{ detalle.producto.nombre }}" class="rounded border" style="width:50px; height:50px; object-fit:cover;">
+                                        {% else %}
+                                            <img src="{% static 'img/no-image.png' %}" class="rounded border" style="width:50px; height:50px; object-fit:cover;">
+                                        {% endif %}
+                                        <span class="fw-bold text-white">{{ detalle.producto.nombre }}</span>
+                                    </div>
+                                </td>
+                                <td class="text-center">${{ detalle.precio_unitario }}</td>
+                                <td class="text-center"><span class="badge bg-secondary px-3 py-2 fs-6">{{ detalle.cantidad }}</span></td>
+                                <td class="text-end pe-4 fw-bold text-success">${{ detalle.subtotal }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer bg-transparent border-top p-4 d-flex justify-content-between align-items-center">
+                    <span class="fs-5 text-muted">Total del Pedido:</span>
+                    <span class="fs-2 fw-bold text-success">${{ pedido.total }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información de Entrega y Pago -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 surface-card mb-4">
+                <div class="card-header bg-transparent border-bottom p-4">
+                    <h5 class="fw-bold mb-0 text-white"><i class="fas fa-location-dot me-2 text-primary"></i>Datos de Entrega</h5>
+                </div>
+                <div class="card-body p-4">
+                    <p class="mb-1"><strong>Cliente:</strong> {{ pedido.cliente.nombre_completo }}</p>
+                    <p class="mb-1"><strong>Email:</strong> {{ pedido.cliente.email_display }}</p>
+
+                    {% if pedido.direccion_entrega %}
+                        <p class="mb-1"><strong>Dirección:</strong> {{ pedido.direccion_entrega.direccion_completa }}</p>
+                        {% if pedido.direccion_entrega.desc_seguridad and request.user.is_superuser or request.user.groups.all.0.name == 'Vendedor' or request.user.groups.all.0.name == 'Repartidor' %}
+                            <div class="alert alert-info border-0 rounded-3 mt-3 mb-0">
+                                <i class="fas fa-shield-alt me-1"></i><strong>Nota de Seguridad (RF-03):</strong> {{ pedido.direccion_entrega.desc_seguridad }}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-warning mb-0">Sin dirección especificada.</p>
+                    {% endif %}
+
+                    {% if pedido.notas_cliente %}
+                        <hr class="border-secondary border-opacity-25">
+                        <p class="mb-0"><strong>Indicaciones cliente:</strong> <em>"{{ pedido.notas_cliente }}"</em></p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 surface-card">
+                <div class="card-header bg-transparent border-bottom p-4">
+                    <h5 class="fw-bold mb-0 text-white"><i class="fas fa-wallet me-2 text-primary"></i>Detalle de Pago</h5>
+                </div>
+                <div class="card-body p-4">
+                    <p class="mb-1"><strong>Método:</strong> {{ pedido.metodo_pago.nombre }}</p>
+
+                    {% if pagos %}
+                        {% for pago in pagos %}
+                            <div class="p-3 border rounded-3 bg-dark-subtle mt-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="badge bg-primary bg-opacity-25 text-primary">{{ pago.estado_pago }}</span>
+                                    <small class="text-muted">${{ pago.monto }}</small>
+                                </div>
+                                {% if pago.mercadopago_payment_id %}
+                                    <small class="d-block text-muted">ID Pago MP: #{{ pago.mercadopago_payment_id }}</small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

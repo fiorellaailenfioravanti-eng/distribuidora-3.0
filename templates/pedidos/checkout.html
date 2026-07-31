@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout - Finalizar Pedido{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h1 class="fw-bold text-primary mb-0">
+            <i class="fas fa-credit-card me-2"></i>Finalizar Pedido
+        </h1>
+        <a href="{% url 'apps.carrito:ver_carrito' %}" class="btn btn-outline-secondary rounded-pill">
+            <i class="fas fa-arrow-left me-1"></i> Volver al Carrito
+        </a>
+    </div>
+
+    <form action="{% url 'apps.pedidos:confirmar_pedido' %}" method="post">
+        {% csrf_token %}
+        <div class="row g-4">
+            <!-- Columna Izquierda: Dirección y Medio de Pago -->
+            <div class="col-lg-7">
+                
+                <!-- 1. Dirección de Entrega -->
+                <div class="card border-0 shadow-sm rounded-4 surface-card mb-4">
+                    <div class="card-header bg-transparent border-bottom p-4">
+                        <h4 class="fw-bold mb-0 text-white">
+                            <span class="badge bg-primary rounded-circle me-2">1</span> Dirección de Entrega
+                        </h4>
+                    </div>
+                    <div class="card-body p-4">
+                        {% if direcciones %}
+                            <div class="d-flex flex-column gap-3 mb-3">
+                                {% for radio in form.direccion_entrega %}
+                                <div class="form-check p-3 border rounded-3 bg-dark-subtle hover-lift">
+                                    {{ radio.tag }}
+                                    <label class="form-check-label w-100 ms-2" for="{{ radio.id_for_label }}">
+                                        {{ radio.choice_label }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning rounded-3 mb-3">
+                                <i class="fas fa-exclamation-triangle me-2"></i>No tienes ninguna dirección registrada.
+                            </div>
+                        {% endif %}
+                        
+                        <a href="{% url 'apps.clientes:agregar_direccion' cliente.pk %}?next={% url 'apps.pedidos:checkout' %}"
+                           class="btn btn-sm btn-outline-primary rounded-pill mt-2">
+                            <i class="fas fa-plus me-1"></i> Agregar Nueva Dirección
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 2. Método de Pago -->
+                <div class="card border-0 shadow-sm rounded-4 surface-card mb-4">
+                    <div class="card-header bg-transparent border-bottom p-4">
+                        <h4 class="fw-bold mb-0 text-white">
+                            <span class="badge bg-primary rounded-circle me-2">2</span> Método de Pago
+                        </h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-column gap-3">
+                            {% for radio in form.metodo_pago %}
+                            <div class="form-check p-3 border rounded-3 bg-dark-subtle hover-lift d-flex align-items-center">
+                                {{ radio.tag }}
+                                <label class="form-check-label w-100 ms-2 fw-semibold" for="{{ radio.id_for_label }}">
+                                    {% if 'MercadoPago' in radio.choice_label or 'MERCADOPAGO' in radio.choice_label %}
+                                        <i class="fa-solid fa-bolt text-info me-2"></i>{{ radio.choice_label }}
+                                        <span class="badge bg-info bg-opacity-25 text-info ms-2 fs-6">Pago Online Automático</span>
+                                    {% else %}
+                                        <i class="fa-solid fa-money-bill-wave text-success me-2"></i>{{ radio.choice_label }}
+                                        <span class="badge bg-success bg-opacity-25 text-success ms-2 fs-6">Pago al Recibir</span>
+                                    {% endif %}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Indicaciones para la Entrega -->
+                <div class="card border-0 shadow-sm rounded-4 surface-card mb-4">
+                    <div class="card-header bg-transparent border-bottom p-4">
+                        <h4 class="fw-bold mb-0 text-white">
+                            <span class="badge bg-primary rounded-circle me-2">3</span> Indicaciones Adicionales
+                        </h4>
+                    </div>
+                    <div class="card-body p-4">
+                        {{ form.notas_cliente }}
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Columna Derecha: Resumen de Compra -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm rounded-4 surface-card sticky-top" style="top: 90px;">
+                    <div class="card-header bg-transparent border-bottom p-4">
+                        <h4 class="fw-bold mb-0 text-white">
+                            <i class="fas fa-receipt me-2 text-primary"></i>Resumen de Compra
+                        </h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <ul class="list-group list-group-flush mb-4 bg-transparent">
+                            {% for item in items %}
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0 border-secondary border-opacity-25">
+                                <div>
+                                    <span class="fw-bold text-white d-block">{{ item.producto.nombre }}</span>
+                                    <small class="text-muted">{{ item.cantidad }} x ${{ item.producto.precio }}</small>
+                                </div>
+                                <span class="fw-bold text-success">${{ item.subtotal }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+
+                        <hr class="border-secondary border-opacity-25">
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span class="fs-5 text-muted">Total a Pagar:</span>
+                            <span class="fs-2 fw-bold text-success">${{ total_precio }}</span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-glow btn-lg w-100 rounded-pill shadow">
+                            Confirmar y Realizar Pedido <i class="fas fa-check-circle ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -30,4 +30,5 @@ urlpatterns = [
     path('buscador/', include('apps.buscador.urls')),
     path('logistica/', include('apps.logistica.urls')),
     path('clientes/', include('apps.clientes.urls')),
+    path('pedidos/', include('apps.pedidos.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

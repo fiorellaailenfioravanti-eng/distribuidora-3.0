@@ -114,17 +114,40 @@ h3 {
     border-color: var(--color-secondary);
 }
 
-/* Focus en Inputs */
+/* Focus en Inputs y Legibilidad de Formularios */
+.form-label {
+    color: var(--text-main);
+}
+.form-text {
+    color: var(--text-muted);
+}
+
 .form-control:focus, .form-select:focus {
     border-color: var(--color-primary);
     box-shadow: 0 0 0 0.25rem rgba(108, 180, 238, 0.25);
 }
 
+[data-bs-theme="light"] .form-control,
+[data-bs-theme="light"] .form-select {
+    background-color: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    color: var(--text-main);
+}
+
+[data-bs-theme="light"] .form-control::placeholder {
+    color: #64748B;
+    opacity: 1;
+}
+
 [data-bs-theme="dark"] .form-control,
 [data-bs-theme="dark"] .form-select {
     background-color: var(--bg-surface);
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.15);
     color: var(--text-main);
+}
+[data-bs-theme="dark"] .form-control::placeholder {
+    color: #94A3B8;
+    opacity: 1;
 }
 [data-bs-theme="dark"] .form-control:focus,
 [data-bs-theme="dark"] .form-select:focus {

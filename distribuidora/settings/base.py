@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'apps.buscador',
     'apps.logistica',
     'apps.clientes',
+    'apps.pedidos',
 ]
 
 MIDDLEWARE = [

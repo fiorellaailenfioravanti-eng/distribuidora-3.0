@@ -14,70 +14,74 @@
 
     {% if items %}
     <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden mb-5">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-body">
-                <tr>
-                    <th scope="col" class="ps-4">Producto</th>
-                    <th scope="col" class="text-center">Precio Unitario</th>
-                    <th scope="col" class="text-center">Cantidad</th>
-                    <th scope="col" class="text-center">Subtotal</th>
-                    <th scope="col" class="text-center">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                <tr>
-                    <td class="ps-4">
-                        <div class="d-flex align-items-center gap-3 text-start">
-                            {% if item.producto.imagen %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-body">
+                    <tr>
+                        <th scope="col" class="ps-4">Producto</th>
+                        <th scope="col" class="text-center">Precio Unitario</th>
+                        <th scope="col" class="text-center">Cantidad</th>
+                        <th scope="col" class="text-center">Subtotal</th>
+                        <th scope="col" class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center gap-3 text-start">
+                                {% if item.producto.imagen %}
                                 <img src="{{ item.producto.imagen.url }}" alt="{{ item.producto.nombre }}"
                                     class="rounded border" style="width:60px; height:60px; object-fit:cover;">
-                            {% else %}
-                                <img src="{% static 'img/no-image.png' %}" class="rounded border" style="width:60px; height:60px; object-fit:cover;">
-                            {% endif %}
-                            <div>
-                                <span class="fw-bold d-block">{{ item.producto.nombre }}</span>
-                                <small class="text-muted">Ref: #{{ item.producto.id_producto }}</small>
+                                {% else %}
+                                <img src="{% static 'img/no-image.png' %}" class="rounded border"
+                                    style="width:60px; height:60px; object-fit:cover;">
+                                {% endif %}
+                                <div>
+                                    <span class="fw-bold d-block">{{ item.producto.nombre }}</span>
+                                    <small class="text-muted">Ref: #{{ item.producto.id_producto }}</small>
+                                </div>
                             </div>
-                        </div>
-                    </td>
-                    <td class="text-center">$ {{ item.producto.precio }}</td>
-                    <td class="text-center">
-                        <span class="badge bg-light text-dark border px-3 py-2 fs-6">{{ item.cantidad }}</span>
-                    </td>
-                    <td class="text-center fw-bold fs-5 text-primary">$ {{ item.subtotal }}</td>
-                    <td class="text-center">
-                        <a href="{% url 'apps.carrito:eliminar_del_carrito' item.id %}"
-                            class="btn btn-sm btn-outline-danger rounded-pill shadow-sm hover-lift px-3">
-                            <i class="fas fa-trash me-1"></i> Quitar
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+                        </td>
+                        <td class="text-center">$ {{ item.producto.precio }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-light text-dark border px-3 py-2 fs-6">{{ item.cantidad }}</span>
+                        </td>
+                        <td class="text-center fw-bold fs-5 text-primary">$ {{ item.subtotal }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'apps.carrito:eliminar_del_carrito' item.id %}"
+                                class="btn btn-sm btn-outline-danger rounded-pill shadow-sm hover-lift px-3">
+                                <i class="fas fa-trash me-1"></i> Quitar
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div class="card border-0 shadow-sm rounded-4 bg-surface mt-4">
         <div class="card-body p-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-4">
             <div class="text-center text-md-start">
-                <p class="text-muted mb-1 text-uppercase fw-bold tracking-wide" style="font-size: 0.75rem;">Total a pagar</p>
+                <p class="text-muted mb-1 text-uppercase fw-bold tracking-wide" style="font-size: 0.75rem;">Total a
+                    pagar</p>
                 <h3 class="h2 fw-bold mb-0 text-primary tracking-tight">
                     ${{ total_precio }}
                 </h3>
             </div>
 
             <div class="d-flex flex-column flex-sm-row flex-wrap justify-content-center gap-2 w-100 w-md-auto">
-                <a href="{% url 'apps.carrito:vaciar_carrito' %}" class="btn btn-light text-danger fw-bold rounded-pill px-4 hover-lift w-100 w-sm-auto mb-2 mb-sm-0">
+                <a href="{% url 'apps.carrito:vaciar_carrito' %}"
+                    class="btn btn-light text-danger fw-bold rounded-pill px-4 hover-lift w-100 w-sm-auto mb-2 mb-sm-0">
                     <i class="fas fa-trash-alt me-2"></i> Vaciar carrito
                 </a>
-                <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-outline-secondary rounded-pill px-4 hover-lift fw-bold w-100 w-sm-auto mb-2 mb-sm-0">
+                <a href="{% url 'apps.productos:listar_productos' %}"
+                    class="btn btn-outline-secondary rounded-pill px-4 hover-lift fw-bold w-100 w-sm-auto mb-2 mb-sm-0">
                     <i class="fas fa-arrow-left me-2"></i> Seguir comprando
                 </a>
-                <a href="#" class="btn btn-primary btn-glow rounded-pill px-4 shadow-sm fw-bold hover-lift w-100 w-sm-auto">
-                    Finalizar Pedido <i class="fas fa-arrow-right ms-2"></i>
+                <a href="#" class="btn btn-primary btn-glow btn-lg rounded-pill px-5 shadow-sm">
+                    Finalizar Pedido <i class="fas fa-check-circle ms-2"></i>
                 </a>
             </div>
         </div>
@@ -86,13 +90,15 @@
     {% else %}
     <div class="text-center py-5 my-4 shadow-sm border-0 rounded-4 bg-surface hover-lift">
         <div class="mb-4">
-            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center text-muted opacity-50" style="width: 80px; height: 80px;">
+            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center text-muted opacity-50"
+                style="width: 80px; height: 80px;">
                 <i class="fa-solid fa-cart-shopping h1 mb-0"></i>
             </div>
         </div>
         <h2 class="h3 fw-bold text-dark tracking-tight">Tu carrito está vacío</h2>
         <p class="text-muted mb-4">Parece que aún no has añadido ningún producto a tu lista.</p>
-        <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-primary btn-glow rounded-pill px-4 py-2 fw-bold hover-lift">
+        <a href="{% url 'apps.productos:listar_productos' %}"
+            class="btn btn-primary btn-glow rounded-pill px-4 py-2 fw-bold hover-lift">
             Explorar Catálogo <i class="fa-solid fa-arrow-right ms-2"></i>
         </a>
     </div>

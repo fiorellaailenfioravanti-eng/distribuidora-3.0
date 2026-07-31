@@ -2,7 +2,7 @@
 > **Distribuidora 3.0** · Sistema de Gestión Operativa, Logística y E-Commerce
 >
 > **⚠️ LEER PRIMERO:** Este archivo provee todo el contexto necesario para trabajar en este proyecto.
-> Última actualización: 29/07/2026 — Versión 3.0.
+> Última actualización: 31/07/2026 — Versión 3.1.
 
 ---
 
@@ -84,6 +84,7 @@ DISTRIBUIDORA-3.0/
 │   ├── carrito/                     # ✅ Carrito transaccional + validación stock
 │   ├── productos/                   # ✅ CRUD catálogo y categorías
 │   ├── clientes/                    # ✅ Gestión de clientes (Mes 7) — NUEVO
+│   ├── empleados/                   # ✅ Gestión de empleados y roles
 │   └── abonos/                      # 🔲 Alquileres de dispensers [PLANIFICADO]
 ├── templates/
 ├── static/

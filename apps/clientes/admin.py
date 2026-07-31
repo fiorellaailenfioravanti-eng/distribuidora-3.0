@@ -11,7 +11,7 @@ class TelefonoContactoInline(admin.TabularInline):
 class DireccionEntregaInline(admin.TabularInline):
     model   = DireccionEntrega
     extra   = 1
-    fields  = ('calle', 'altura', 'piso_depto', 'zona', 'desc_seguridad', 'coordenadas', 'es_principal')
+    fields  = ('calle', 'altura', 'piso_depto', 'barrio', 'desc_seguridad', 'coordenadas', 'es_principal')
 
 
 @admin.register(Cliente)
@@ -58,6 +58,6 @@ class TelefonoContactoAdmin(admin.ModelAdmin):
 
 @admin.register(DireccionEntrega)
 class DireccionEntregaAdmin(admin.ModelAdmin):
-    list_display  = ('cliente', 'calle', 'altura', 'piso_depto', 'zona', 'es_principal')
-    list_filter   = ('zona', 'es_principal')
+    list_display  = ('cliente', 'calle', 'altura', 'piso_depto', 'barrio', 'es_principal')
+    list_filter   = ('barrio__zona', 'barrio', 'es_principal')
     search_fields = ('cliente__usuario__username', 'calle')

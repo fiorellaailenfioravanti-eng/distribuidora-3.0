@@ -34,36 +34,36 @@
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold text-muted small text-uppercase">Nombre <span class="text-danger">*</span></label>
                             {{ form.nombre }}
                             {% for e in form.nombre.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Apellido</label>
+                            <label class="form-label fw-bold text-muted small text-uppercase">Apellido</label>
                             {{ form.apellido }}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">DNI</label>
+                            <label class="form-label fw-bold text-muted small text-uppercase">DNI</label>
                             {{ form.dni }}
                             {% for e in form.dni.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Fecha de nacimiento</label>
+                            <label class="form-label fw-bold text-muted small text-uppercase">Fecha de nacimiento</label>
                             {{ form.fecha_nacimiento }}
                         </div>
                         <div class="col-12">
-                            <label class="form-label fw-semibold">Email de contacto</label>
+                            <label class="form-label fw-bold text-muted small text-uppercase">Email de contacto</label>
                             {{ form.email_contacto }}
                         </div>
 
                         <div class="col-12"><hr class="my-1"></div>
 
                         <div class="col-md-12">
-                            <label class="form-label fw-semibold">Tipo de cliente</label>
+                            <label class="form-label fw-bold text-muted small text-uppercase">Tipo de cliente</label>
                             {{ form.tipo_cliente }}
                         </div>
                         <div class="col-12">
-                            <label class="form-label fw-semibold">Notas internas</label>
+                            <label class="form-label fw-bold text-muted small text-uppercase">Notas internas</label>
                             {{ form.notas_internas }}
                         </div>
                     </div>
@@ -101,8 +101,8 @@
                         la ficha una vez creado.
                     </div>
 
-                    <div class="d-grid mt-2">
-                        <button type="submit" class="btn btn-primary btn-glow rounded-pill fw-bold btn-lg">
+                    <div class="d-flex justify-content-end mt-2">
+                        <button type="submit" class="btn btn-primary btn-glow rounded-pill fw-bold px-4">
                             <i class="fa-solid fa-user-plus me-2"></i>Crear cliente
                         </button>
                     </div>

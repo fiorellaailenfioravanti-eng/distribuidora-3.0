@@ -5,30 +5,31 @@
 
 {% block content %}
 
+<div class="container-fluid px-0">
 {# ── Cabecera ── #}
 <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
     <div>
         <div class="d-flex align-items-center gap-3 mb-1">
-            <h1 class="mb-0">{{ cliente.nombre_completo }}</h1>
+            <h1 class="h3 fw-bold mb-0 text-main">{{ cliente.nombre_completo }}</h1>
             {% if cliente.tipo_cliente == 'Premium' %}
-                <span class="badge bg-warning text-dark fs-6">
+                <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-3 py-1 fs-6">
                     <i class="fa-solid fa-star me-1"></i>VIP Premium
                 </span>
             {% else %}
-                <span class="badge bg-secondary fs-6">Normal</span>
+                <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-3 py-1 fs-6">Normal</span>
             {% endif %}
         </div>
-        <small class="text-muted">
+        <p class="text-muted small mb-0">
             @{{ cliente.usuario.username }} ·
             {{ cliente.usuario.email }} ·
             Alta: {{ cliente.fecha_alta|date:"d/m/Y" }}
-        </small>
+        </p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a href="{% url 'apps.clientes:editar_cliente' cliente.pk %}" class="btn btn-warning rounded-pill shadow-sm text-dark">
+        <a href="{% url 'apps.clientes:editar_cliente' cliente.pk %}" class="btn btn-primary btn-glow rounded-pill shadow-sm fw-bold px-4">
             <i class="fa-solid fa-pen me-1"></i> Editar
         </a>
-        <a href="{% url 'apps.clientes:listar_clientes' %}" class="btn btn-outline-secondary rounded-pill shadow-sm">
+        <a href="{% url 'apps.clientes:listar_clientes' %}" class="btn btn-light rounded-pill shadow-sm fw-bold px-4">
             <i class="fa-solid fa-arrow-left me-1"></i> Volver
         </a>
     </div>
@@ -37,7 +38,7 @@
 {# ── Tarjetas de resumen ── #}
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm text-center h-100 rounded-4 surface-card hover-lift">
+        <div class="card border-0 shadow-sm text-center h-100 rounded-4 bg-surface hover-lift">
             <div class="card-body p-4">
                 <div class="fs-2 fw-bold text-primary">{{ cliente.bidones_prestados }}</div>
                 <small class="text-muted fw-semibold">Bidones prestados</small>
@@ -45,20 +46,20 @@
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm text-center h-100 rounded-4 surface-card hover-lift">
+        <div class="card border-0 shadow-sm text-center h-100 rounded-4 bg-surface hover-lift">
             <div class="card-body p-4">
                 <div class="fs-2 fw-bold {% if cliente.cantidad_telefonos >= 2 %}text-success{% else %}text-warning{% endif %}">
                     {{ cliente.cantidad_telefonos }}
                 </div>
                 <small class="text-muted fw-semibold">Teléfonos</small>
                 {% if cliente.cantidad_telefonos < 2 %}
-                <div><small class="text-warning fst-italic">Mín. 2 requerido</small></div>
+                <div class="mt-1"><span class="badge bg-warning bg-opacity-25 text-warning rounded-pill">Mín. 2 requerido</span></div>
                 {% endif %}
             </div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm text-center h-100 rounded-4 surface-card hover-lift">
+        <div class="card border-0 shadow-sm text-center h-100 rounded-4 bg-surface hover-lift">
             <div class="card-body p-4">
                 <div class="fs-2 fw-bold {% if cliente.cantidad_direcciones >= 1 %}text-success{% else %}text-danger{% endif %}">
                     {{ cliente.cantidad_direcciones }}
@@ -68,7 +69,7 @@
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm text-center h-100 rounded-4 surface-card hover-lift">
+        <div class="card border-0 shadow-sm text-center h-100 rounded-4 bg-surface hover-lift">
             <div class="card-body p-4">
                 {% if cliente.permite_fiado %}
                     <div class="fs-2 fw-bold text-success"><i class="fa-solid fa-check"></i></div>
@@ -87,33 +88,33 @@
     <div class="col-md-5">
 
         {# Datos personales #}
-        <div class="card border-0 shadow-sm mb-4 rounded-4 surface-card">
-            <div class="card-header border-0 bg-transparent fw-semibold pt-4 px-4 fs-5">
+        <div class="card border-0 shadow-sm mb-4 rounded-4 bg-surface">
+            <div class="card-header border-0 bg-transparent fw-bold pt-4 px-4 fs-5 text-main">
                 <i class="fa-solid fa-id-card me-2 text-primary"></i>Datos personales
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <dl class="row mb-0">
-                    <dt class="col-sm-5">DNI</dt>
-                    <dd class="col-sm-7">{{ cliente.dni|default:"—" }}</dd>
-                    <dt class="col-sm-5">Nacimiento</dt>
+                    <dt class="col-sm-5 text-muted fw-semibold">DNI</dt>
+                    <dd class="col-sm-7 fw-bold">{{ cliente.dni|default:"—" }}</dd>
+                    <dt class="col-sm-5 text-muted fw-semibold">Nacimiento</dt>
                     <dd class="col-sm-7">{{ cliente.fecha_nacimiento|date:"d/m/Y"|default:"—" }}</dd>
-                    <dt class="col-sm-5">Tipo</dt>
+                    <dt class="col-sm-5 text-muted fw-semibold">Tipo</dt>
                     <dd class="col-sm-7">{{ cliente.get_tipo_cliente_display }}</dd>
                 </dl>
 
                 {# Toggle Normal / Premium #}
-                <hr>
+                <hr class="text-muted opacity-25">
                 <form method="post" action="{% url 'apps.clientes:cambiar_tipo' cliente.pk %}">
                     {% csrf_token %}
                     {% if cliente.tipo_cliente == 'Normal' %}
                         <input type="hidden" name="tipo_cliente" value="Premium">
-                        <button type="submit" class="btn btn-warning btn-sm w-100"
+                        <button type="submit" class="btn btn-warning bg-opacity-25 text-warning rounded-pill fw-bold btn-sm w-100 border-0 hover-lift"
                                 onclick="return confirm('¿Promover a VIP Premium?')">
                             <i class="fa-solid fa-star me-1"></i> Promover a Premium
                         </button>
                     {% else %}
                         <input type="hidden" name="tipo_cliente" value="Normal">
-                        <button type="submit" class="btn btn-outline-secondary btn-sm w-100"
+                        <button type="submit" class="btn btn-light text-muted rounded-pill btn-sm fw-bold w-100 border-0 hover-lift"
                                 onclick="return confirm('¿Volver a cliente Normal? Se deshabilitará el fiado.')">
                             <i class="fa-solid fa-arrow-down me-1"></i> Cambiar a Normal
                         </button>
@@ -124,19 +125,19 @@
 
         {# Notas internas #}
         {% if cliente.notas_internas %}
-        <div class="card border-0 shadow-sm mb-4 border-start border-warning border-4">
-            <div class="card-body">
-                <small class="text-warning fw-semibold">
+        <div class="card border-0 shadow-sm mb-4 bg-warning bg-opacity-10 rounded-4">
+            <div class="card-body p-4">
+                <small class="text-warning fw-bold text-uppercase">
                     <i class="fa-solid fa-lock me-1"></i>Notas internas (solo Admin/Vendedor)
                 </small>
-                <p class="mb-0 mt-1">{{ cliente.notas_internas }}</p>
+                <p class="mb-0 mt-2 text-dark">{{ cliente.notas_internas }}</p>
             </div>
         </div>
         {% endif %}
 
         {# Teléfonos #}
-        <div class="card border-0 shadow-sm mb-4 rounded-4 surface-card overflow-hidden">
-            <div class="card-header border-0 bg-transparent fw-semibold d-flex justify-content-between align-items-center pt-4 px-4 fs-5">
+        <div class="card border-0 shadow-sm mb-4 rounded-4 bg-surface overflow-hidden">
+            <div class="card-header border-0 bg-transparent fw-bold text-main d-flex justify-content-between align-items-center pt-4 px-4 fs-5">
                 <span><i class="fa-solid fa-phone me-2 text-primary"></i>Teléfonos</span>
                 <span class="badge bg-primary bg-opacity-25 text-primary rounded-pill">{{ cliente.cantidad_telefonos }}</span>
             </div>
@@ -155,7 +156,7 @@
                         <form method="post" action="{% url 'apps.clientes:eliminar_telefono' tel.pk %}"
                               onsubmit="return confirm('¿Eliminar este teléfono?')">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-danger py-0">
+                            <button type="submit" class="btn btn-sm btn-light text-danger hover-lift py-1 rounded-3">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </form>
@@ -167,20 +168,24 @@
                 {% endif %}
             </div>
             {# Agregar teléfono inline #}
-            <div class="card-footer bg-body">
+            <div class="card-footer bg-transparent p-4 border-top">
                 <form method="post" action="{% url 'apps.clientes:agregar_telefono' cliente.pk %}">
                     {% csrf_token %}
                     <div class="row g-2">
-                        <div class="col-5">{{ form_tel.numero }}</div>
-                        <div class="col-5">{{ form_tel.desc_relacion }}</div>
+                        <div class="col-5">
+                            <input type="text" name="numero" class="form-control rounded-3 bg-light border-0" placeholder="Número">
+                        </div>
+                        <div class="col-5">
+                            <input type="text" name="desc_relacion" class="form-control rounded-3 bg-light border-0" placeholder="Relación">
+                        </div>
                         <div class="col-2">
-                            <button type="submit" class="btn btn-primary w-100">
+                            <button type="submit" class="btn btn-primary rounded-3 w-100 hover-lift">
                                 <i class="fa-solid fa-plus"></i>
                             </button>
                         </div>
-                        <div class="col-12 d-flex align-items-center gap-2">
-                            {{ form_tel.es_principal }}
-                            <label class="form-check-label small">Marcar como principal</label>
+                        <div class="col-12 d-flex align-items-center gap-2 mt-2">
+                            <input type="checkbox" name="es_principal" class="form-check-input" id="es_principal_tel">
+                            <label class="form-check-label small" for="es_principal_tel">Marcar como principal</label>
                         </div>
                     </div>
                 </form>
@@ -190,8 +195,8 @@
 
     {# ── Columna derecha: Domicilios ── #}
     <div class="col-md-7">
-        <div class="card border-0 shadow-sm rounded-4 surface-card overflow-hidden">
-            <div class="card-header border-0 bg-transparent fw-semibold d-flex justify-content-between align-items-center pt-4 px-4 fs-5">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden">
+            <div class="card-header border-0 bg-transparent fw-bold text-main d-flex justify-content-between align-items-center pt-4 px-4 fs-5">
                 <span><i class="fa-solid fa-location-dot me-2 text-primary"></i>Domicilios de entrega</span>
                 <span class="badge bg-primary bg-opacity-25 text-primary rounded-pill">{{ cliente.cantidad_direcciones }}</span>
             </div>
@@ -202,7 +207,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             {% if dir.es_principal %}
-                                <span class="badge bg-warning text-dark me-1">Principal</span>
+                                <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill me-1"><i class="fa-solid fa-star"></i> Principal</span>
                             {% endif %}
                             <strong>{{ dir.calle }} {{ dir.altura }}</strong>
                             {% if dir.piso_depto %}
@@ -215,11 +220,11 @@
                                 <span class="text-muted d-block small"><i class="fas fa-city me-1"></i>{{ dir.ciudad }}</span>
                             {% endif %}
                             {% if dir.zona and dir.zona.nombre == 'Zona 1' %}
-                                <span class="badge bg-warning text-dark mt-1" title="Zona asignada por defecto (Pendiente de revisión por Administrador)">
-                                    <i class="fa-solid fa-clock me-1"></i>{{ dir.zona.nombre }} (Pendiente de Asignación)
+                                <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill mt-1" title="Zona asignada por defecto (Pendiente de revisión por Administrador)">
+                                    <i class="fa-solid fa-clock me-1"></i>{{ dir.zona.nombre }} (Pendiente)
                                 </span>
                             {% elif dir.zona %}
-                                <span class="badge bg-info bg-opacity-25 text-info mt-1">{{ dir.zona.nombre }}</span>
+                                <span class="badge bg-info bg-opacity-25 text-info rounded-pill mt-1">{{ dir.zona.nombre }}</span>
                             {% endif %}
                             {% if dir.coordenadas %}
                                 <small class="text-muted ms-2">
@@ -239,13 +244,13 @@
                         </div>
                         <div class="d-flex gap-1 ms-2">
                             <a href="{% url 'apps.clientes:editar_direccion' dir.pk %}"
-                               class="btn btn-sm btn-outline-warning" title="Editar Dirección y Zona">
+                               class="btn btn-sm btn-light text-warning hover-lift rounded-3" title="Editar Dirección y Zona">
                                 <i class="fa-solid fa-pen"></i>
                             </a>
                             <form method="post" action="{% url 'apps.clientes:eliminar_direccion' dir.pk %}"
                                   onsubmit="return confirm('¿Eliminar esta dirección?')">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <button type="submit" class="btn btn-sm btn-light text-danger hover-lift rounded-3">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </form>
@@ -259,55 +264,55 @@
             </div>
 
             {# Agregar dirección inline #}
-            <div class="card-footer bg-body">
-                <p class="small fw-semibold mb-2">
-                    <i class="fa-solid fa-plus me-1"></i>Agregar domicilio
+            <div class="card-footer bg-transparent p-4 border-top">
+                <p class="fw-bold mb-3 text-main">
+                    <i class="fa-solid fa-plus text-primary me-1"></i>Agregar domicilio
                 </p>
                 <form method="post" action="{% url 'apps.clientes:agregar_direccion' cliente.pk %}">
                     {% csrf_token %}
-                    <div class="row g-2">
+                    <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label small">Calle</label>
+                            <label class="form-label small fw-semibold text-muted">Calle</label>
                             {{ form_dir.calle }}
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label small">Altura</label>
+                            <label class="form-label small fw-semibold text-muted">Altura</label>
                             {{ form_dir.altura }}
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label small">Piso/Dpto</label>
+                            <label class="form-label small fw-semibold text-muted">Piso/Dpto</label>
                             {{ form_dir.piso_depto }}
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small">Zona (Asignar)</label>
+                            <label class="form-label small fw-semibold text-muted">Zona (Asignar)</label>
                             {{ form_dir.zona }}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small">Barrio</label>
+                            <label class="form-label small fw-semibold text-muted">Barrio</label>
                             {{ form_dir.barrio }}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small">Ciudad</label>
+                            <label class="form-label small fw-semibold text-muted">Ciudad</label>
                             {{ form_dir.ciudad }}
                         </div>
                         <div class="col-12">
-                            <label class="form-label small">
-                                <i class="fa-solid fa-shield-halved text-danger me-1"></i>
+                            <label class="form-label small fw-semibold text-danger">
+                                <i class="fa-solid fa-shield-halved me-1"></i>
                                 Nota de seguridad (solo Admin/Vendedor/Repartidor)
                             </label>
                             {{ form_dir.desc_seguridad }}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small">Coordenadas (opcional)</label>
+                            <label class="form-label small fw-semibold text-muted">Coordenadas (opcional)</label>
                             {{ form_dir.coordenadas }}
                         </div>
                         <div class="col-md-6 d-flex align-items-end gap-2">
-                            <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center gap-2 mb-1">
                                 {{ form_dir.es_principal }}
                                 <label class="form-check-label small">Principal</label>
                             </div>
-                            <button type="submit" class="btn btn-primary ms-auto">
-                                <i class="fa-solid fa-plus me-1"></i>Agregar
+                            <button type="submit" class="btn btn-primary rounded-pill btn-glow fw-bold ms-auto px-4">
+                                <i class="fa-solid fa-plus me-1"></i> Agregar
                             </button>
                         </div>
                     </div>
@@ -320,50 +325,50 @@
 <!-- Historial de Pedidos del Cliente -->
 <div class="row mt-4 mb-4">
     <div class="col-12">
-        <div class="card border-0 shadow-sm rounded-4 surface-card overflow-hidden">
-            <div class="card-header border-0 bg-transparent fw-semibold d-flex justify-content-between align-items-center pt-4 px-4 fs-5">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden">
+            <div class="card-header border-0 bg-transparent fw-bold text-main d-flex justify-content-between align-items-center pt-4 px-4 fs-5">
                 <span><i class="fa-solid fa-boxes-packing me-2 text-primary"></i>Historial de Pedidos y Compras</span>
                 <span class="badge bg-info bg-opacity-25 text-info rounded-pill">{{ pedidos|length }} Pedido(s)</span>
             </div>
-            <div class="card-body p-0">
+            <div class="card-body p-0 mt-2">
                 {% if pedidos %}
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-body">
+                        <thead class="table-light text-muted small text-uppercase">
                             <tr>
-                                <th scope="col" class="ps-4"># Pedido</th>
-                                <th scope="col">Fecha</th>
-                                <th scope="col">Método de Pago</th>
-                                <th scope="col" class="text-center">Estado Pago</th>
-                                <th scope="col" class="text-center">Estado Pedido</th>
-                                <th scope="col" class="text-end">Total</th>
-                                <th scope="col" class="text-end pe-4">Detalles</th>
+                                <th scope="col" class="ps-4 py-3 border-bottom-0"># Pedido</th>
+                                <th scope="col" class="py-3 border-bottom-0">Fecha</th>
+                                <th scope="col" class="py-3 border-bottom-0">Método de Pago</th>
+                                <th scope="col" class="text-center py-3 border-bottom-0">Estado Pago</th>
+                                <th scope="col" class="text-center py-3 border-bottom-0">Estado Pedido</th>
+                                <th scope="col" class="text-end py-3 border-bottom-0">Total</th>
+                                <th scope="col" class="text-end pe-4 py-3 border-bottom-0">Detalles</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="border-top-0">
                             {% for ped in pedidos %}
                             <tr>
-                                <td class="ps-4 fw-bold text-white">#{{ ped.id_pedido }}</td>
-                                <td><small class="text-muted">{{ ped.fecha_pedido|date:"d/m/Y H:i" }}</small></td>
-                                <td><span class="badge bg-dark border text-light">{{ ped.metodo_pago.nombre }}</span></td>
+                                <td class="ps-4 fw-bold text-main">#{{ ped.id_pedido }}</td>
+                                <td><span class="small">{{ ped.fecha_pedido|date:"d/m/Y H:i" }}</span></td>
+                                <td><span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 py-1">{{ ped.metodo_pago.nombre }}</span></td>
                                 <td class="text-center">
                                     {% with p=ped.pagos.last %}
                                         {% if p and p.estado_pago == 'Aprobado' %}
-                                            <span class="badge bg-success text-white">Aprobado</span>
+                                            <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1">Aprobado</span>
                                         {% elif p and p.estado_pago == 'Rechazado' %}
-                                            <span class="badge bg-danger text-white">Rechazado</span>
+                                            <span class="badge bg-danger bg-opacity-25 text-danger rounded-pill px-2 py-1">Rechazado</span>
                                         {% else %}
-                                            <span class="badge bg-warning text-dark">Pendiente</span>
+                                            <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-1">Pendiente</span>
                                         {% endif %}
                                     {% endwith %}
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge bg-info bg-opacity-25 text-info">{{ ped.get_estado_display }}</span>
+                                    <span class="badge bg-info bg-opacity-25 text-info rounded-pill px-2 py-1">{{ ped.get_estado_display }}</span>
                                 </td>
                                 <td class="text-end fw-bold text-success">${{ ped.total }}</td>
                                 <td class="text-end pe-4">
-                                    <a href="{% url 'apps.pedidos:detalle_pedido' ped.id_pedido %}" class="btn btn-sm btn-outline-primary rounded-pill">
-                                        <i class="fa-solid fa-eye me-1"></i> Ver Detalle
+                                    <a href="{% url 'apps.pedidos:detalle_pedido' ped.id_pedido %}" class="btn btn-sm btn-light border-0 text-primary hover-lift rounded-pill px-3">
+                                        <i class="fa-solid fa-eye me-1"></i> Ver
                                     </a>
                                 </td>
                             </tr>
@@ -377,5 +382,6 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 {% endblock %}

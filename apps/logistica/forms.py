@@ -1,19 +1,19 @@
 from django import forms
-from .models import HojaRuta, DetalleHojaRuta, Zona, Camion, Empleado
+from .models import HojaRuta, DetalleHojaRuta, Zona, Camion, Empleado, RutaReparto, Barrio
 
 
 class HojaRutaForm(forms.ModelForm):
     class Meta:
         model  = HojaRuta
-        fields = ['fecha', 'empleado', 'camion', 'zona', 'estado', 'observaciones']
+        fields = ['fecha', 'ruta_reparto', 'empleado', 'camion', 'estado', 'observaciones']
         widgets = {
             'fecha': forms.DateInput(attrs={
                 'type': 'date',
                 'class': 'form-control'
             }),
+            'ruta_reparto': forms.Select(attrs={'class': 'form-select'}),
             'empleado': forms.Select(attrs={'class': 'form-select'}),
             'camion':   forms.Select(attrs={'class': 'form-select'}),
-            'zona':     forms.Select(attrs={'class': 'form-select'}),
             'estado':   forms.Select(attrs={'class': 'form-select'}),
             'observaciones': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -33,7 +33,7 @@ class HojaRutaForm(forms.ModelForm):
 class DetalleRutaForm(forms.ModelForm):
     class Meta:
         model  = DetalleHojaRuta
-        fields = ['orden', 'cliente_nombre', 'direccion', 'pedido_ref']
+        fields = ['orden', 'cliente_nombre', 'direccion_entrega', 'direccion_texto', 'pedido_ref']
         widgets = {
             'orden': forms.NumberInput(attrs={
                 'class': 'form-control',
@@ -44,7 +44,8 @@ class DetalleRutaForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Nombre del cliente'
             }),
-            'direccion': forms.TextInput(attrs={
+            'direccion_entrega': forms.Select(attrs={'class': 'form-select'}),
+            'direccion_texto': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Ej: San Martín 450, Barrio Norte'
             }),
@@ -82,32 +83,41 @@ class ActualizarEstadoForm(forms.ModelForm):
 class ZonaForm(forms.ModelForm):
     class Meta:
         model  = Zona
-        fields = ['nombre', 'ciudad', 'barrios', 'descripcion', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']
+        fields = ['nombre', 'descripcion']
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Ej: Zona 1, Zona Centro, Zona Norte...'
-            }),
-            'ciudad': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Ej: Presidencia Roque Sáenz Peña'
-            }),
-            'barrios': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 2,
-                'placeholder': 'Ej: Centro, San Martín, Belgrano, Puerta del Sol...'
             }),
             'descripcion': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 2,
                 'placeholder': 'Descripción opcional de la zona o referencias de entrega'
             }),
-            'lunes': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'martes': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'miercoles': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'jueves': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'viernes': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'sabado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class BarrioForm(forms.ModelForm):
+    class Meta:
+        model = Barrio
+        fields = ['nombre', 'ciudad', 'zona']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'ciudad': forms.TextInput(attrs={'class': 'form-control'}),
+            'zona': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+
+class RutaRepartoForm(forms.ModelForm):
+    class Meta:
+        model = RutaReparto
+        fields = ['nombre', 'zona', 'dia_semana', 'empleado_default', 'camion_default']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'zona': forms.Select(attrs={'class': 'form-select'}),
+            'dia_semana': forms.Select(attrs={'class': 'form-select'}),
+            'empleado_default': forms.Select(attrs={'class': 'form-select'}),
+            'camion_default': forms.Select(attrs={'class': 'form-select'}),
         }
 
 

@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 
-from .models import HojaRuta, DetalleHojaRuta, Zona, Camion, Empleado
+from .models import HojaRuta, DetalleHojaRuta, Zona, Barrio, Camion, Empleado, RutaReparto
 from .forms  import HojaRutaForm, DetalleRutaForm, ActualizarEstadoForm, ZonaForm, CamionForm
 from apps.clientes.models import DireccionEntrega
 
@@ -48,13 +48,13 @@ def listar_rutas(request):
     filtro_fecha  = request.GET.get('fecha', '')
 
     if filtro_zona:
-        rutas = rutas.filter(zona__id_zona=filtro_zona)
+        rutas = rutas.filter(ruta_reparto__zona__id_zona=filtro_zona)
     if filtro_estado:
         rutas = rutas.filter(estado=filtro_estado)
     if filtro_fecha:
         rutas = rutas.filter(fecha=filtro_fecha)
 
-    rutas = rutas.select_related('empleado__usuario', 'camion', 'zona')
+    rutas = rutas.select_related('empleado__usuario', 'camion', 'ruta_reparto', 'ruta_reparto__zona')
 
     contexto = {
         'rutas':         rutas,
@@ -95,7 +95,7 @@ def crear_ruta(request):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def ver_ruta(request, pk):
-    ruta = get_object_or_404(HojaRuta, id_ruta=pk)
+    ruta = get_object_or_404(HojaRuta.objects.select_related('ruta_reparto__zona'), id_ruta=pk)
 
     # Repartidor solo puede ver sus propias rutas
     if es_repartidor(request.user) and not es_admin_o_vendedor(request.user):
@@ -109,26 +109,22 @@ def ver_ruta(request, pk):
     detalles     = ruta.detalles.all()
     form_parada  = DetalleRutaForm()
 
-    # Sugerencias: clientes de la zona (si la ruta coincide con el día de la semana)
+    # Sugerencias: clientes de la zona
     dia_semana = ruta.fecha.weekday()  # 0=Lunes, 6=Domingo
-    zona = ruta.zona
+    ruta_reparto = ruta.ruta_reparto
+    zona = ruta_reparto.zona
     
-    coincide_dia = False
-    if dia_semana == 0 and zona.lunes: coincide_dia = True
-    elif dia_semana == 1 and zona.martes: coincide_dia = True
-    elif dia_semana == 2 and zona.miercoles: coincide_dia = True
-    elif dia_semana == 3 and zona.jueves: coincide_dia = True
-    elif dia_semana == 4 and zona.viernes: coincide_dia = True
-    elif dia_semana == 5 and zona.sabado: coincide_dia = True
+    coincide_dia = (dia_semana == ruta_reparto.dia_semana)
 
     sugerencias = []
     if coincide_dia and es_admin_o_vendedor(request.user):
-        from apps.clientes.models import DireccionEntrega
-        direcciones_zona = DireccionEntrega.objects.filter(zona=zona).select_related('cliente')
-        # Filtramos para no sugerir a clientes que ya están en la hoja (aproximación por nombre)
+        direcciones_zona = DireccionEntrega.objects.filter(barrio__zona=zona).select_related('cliente', 'barrio')
+        # Filtramos para no sugerir a clientes que ya están en la hoja (aproximación por nombre o direccion)
         nombres_ya_agregados = set(d.cliente_nombre for d in detalles)
+        direcciones_agregadas = set(d.direccion_entrega_id for d in detalles if d.direccion_entrega_id)
+        
         for d in direcciones_zona:
-            if d.cliente.nombre_completo() not in nombres_ya_agregados:
+            if d.pk not in direcciones_agregadas and d.cliente.nombre_completo() not in nombres_ya_agregados:
                 sugerencias.append(d)
 
     contexto = {
@@ -139,6 +135,34 @@ def ver_ruta(request, pk):
         'es_admin':    es_admin_o_vendedor(request.user),
     }
     return render(request, 'logistica/ver_ruta.html', contexto)
+
+
+# ─────────────────────────────────────────────────────────────
+# HOJAS DE RUTA — IMPRIMIR
+# ─────────────────────────────────────────────────────────────
+@login_required
+def imprimir_ruta(request, pk):
+    if not es_admin_vendedor_o_repartidor(request.user):
+        messages.error(request, 'No tenés permiso para imprimir esta ruta.')
+        return redirect('inicio')
+
+    ruta = get_object_or_404(HojaRuta.objects.select_related('ruta_reparto__zona', 'empleado__usuario', 'camion'), id_ruta=pk)
+
+    # Repartidor solo puede imprimir sus propias rutas
+    if es_repartidor(request.user) and not es_admin_o_vendedor(request.user):
+        try:
+            if ruta.empleado.usuario != request.user:
+                return redirect('apps.logistica:mi_ruta_hoy')
+        except Empleado.DoesNotExist:
+            return redirect('apps.logistica:mi_ruta_hoy')
+
+    detalles = ruta.detalles.all()
+
+    contexto = {
+        'ruta': ruta,
+        'detalles': detalles,
+    }
+    return render(request, 'logistica/imprimir_ruta.html', contexto)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -180,6 +204,12 @@ def agregar_parada(request, pk):
         if form.is_valid():
             parada = form.save(commit=False)
             parada.hoja_ruta = ruta
+            # Si se elige una direccion_entrega, poblamos el texto de direccion de respaldo
+            if parada.direccion_entrega:
+                if not parada.direccion_texto:
+                    parada.direccion_texto = parada.direccion_entrega.direccion_completa()
+                if not parada.cliente_nombre:
+                    parada.cliente_nombre = parada.direccion_entrega.cliente.nombre_completo()
             parada.save()
             messages.success(request, f'Parada {parada.orden} agregada a la ruta #{ruta.id_ruta}.')
         else:
@@ -214,7 +244,6 @@ def eliminar_parada(request, pk):
 def actualizar_estado_entrega(request, pk):
     parada = get_object_or_404(DetalleHojaRuta, id_detalle=pk)
 
-    # Solo el repartidor asignado a esa ruta (o un admin) puede actualizar
     es_admin = es_admin_o_vendedor(request.user)
     try:
         es_asignado = (parada.hoja_ruta.empleado.usuario == request.user)
@@ -232,7 +261,6 @@ def actualizar_estado_entrega(request, pk):
             parada_obj   = form.save(commit=False)
             parada_obj.marcar_estado(nuevo_estado)
             messages.success(request, f'Estado actualizado a "{nuevo_estado}" correctamente.')
-            # Redirigir al origen correcto
             if es_admin:
                 return redirect('apps.logistica:ver_ruta', pk=parada.hoja_ruta.id_ruta)
             return redirect('apps.logistica:mi_ruta_hoy')
@@ -260,7 +288,7 @@ def mi_ruta_hoy(request):
         ruta     = HojaRuta.objects.filter(
             empleado=empleado,
             fecha=hoy
-        ).select_related('camion', 'zona').first()
+        ).select_related('camion', 'ruta_reparto__zona').first()
 
         if ruta:
             detalles = ruta.detalles.all()
@@ -337,43 +365,44 @@ def eliminar_zona(request, pk):
 
 
 # ─────────────────────────────────────────────────────────────
-# ASIGNACIÓN RÁPIDA DE RUTAS A CLIENTES (DOMICILIOS)
+# ASIGNACIÓN RÁPIDA DE BARRIOS A ZONAS
 # ─────────────────────────────────────────────────────────────
 @login_required
 def direcciones_sin_zona(request):
+    """
+    Vista adaptada para asignar Barrios huerfanos a Zonas,
+    en vez de Direcciones a Zonas.
+    """
     if not es_admin_o_vendedor(request.user):
         messages.error(request, 'No tenés permiso para asignar zonas.')
         return redirect('inicio')
 
     if request.method == 'POST':
-        # Procesamiento masivo de zonas
-        # El POST vendrá con names de la forma zona_direccion_{pk}
         actualizados = 0
         for key, value in request.POST.items():
-            if key.startswith('zona_direccion_') and value:
-                dir_pk = key.replace('zona_direccion_', '')
+            if key.startswith('zona_barrio_') and value:
+                barrio_pk = key.replace('zona_barrio_', '')
                 try:
-                    direccion = DireccionEntrega.objects.get(pk=dir_pk)
+                    barrio = Barrio.objects.get(pk=barrio_pk)
                     zona_obj = Zona.objects.get(pk=value)
-                    direccion.zona = zona_obj
-                    direccion.save()
+                    barrio.zona = zona_obj
+                    barrio.save()
                     actualizados += 1
-                except (DireccionEntrega.DoesNotExist, Zona.DoesNotExist, ValueError):
+                except (Barrio.DoesNotExist, Zona.DoesNotExist, ValueError):
                     pass
         
         if actualizados > 0:
-            messages.success(request, f'Se asignaron {actualizados} domicilios a sus zonas correctamente.')
+            messages.success(request, f'Se asignaron {actualizados} barrios a sus zonas correctamente.')
         return redirect('apps.logistica:direcciones_sin_zona')
 
-    # Filtrar direcciones que no tienen zona asignada o que están en Zona 1 (pendiente de revisión)
     from django.db.models import Q
-    direcciones_huerfanas = DireccionEntrega.objects.filter(
-        Q(zona__isnull=True) | Q(zona__nombre='Zona 1')
-    ).select_related('cliente', 'zona')
+    barrios_huerfanos = Barrio.objects.filter(
+        Q(zona__isnull=True) | Q(zona__nombre='Sin Asignar') | Q(zona__nombre='Zona 1')
+    ).select_related('zona').order_by('nombre')
     zonas = Zona.objects.all()
 
     contexto = {
-        'direcciones': direcciones_huerfanas,
+        'barrios': barrios_huerfanos,
         'zonas': zonas
     }
     return render(request, 'logistica/direcciones_sin_zona.html', contexto)

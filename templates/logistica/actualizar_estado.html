@@ -3,12 +3,12 @@
 {% block title %}Actualizar Estado de Entrega{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
     <div>
-        <h1 class="mb-0">📝 Actualizar Entrega</h1>
-        <small class="text-muted">Parada #{{ parada.orden }} — {{ parada.cliente_nombre|default:parada.pedido_ref }}</small>
+        <h1 class="h3 fw-bold mb-1 text-main"><i class="fa-solid fa-pen-to-square text-primary me-2"></i> Actualizar Entrega</h1>
+        <p class="text-muted small mb-0">Parada #{{ parada.orden }} — {{ parada.cliente_nombre|default:parada.pedido_ref }}</p>
     </div>
-    <a href="javascript:history.back()" class="btn btn-outline-secondary">
+    <a href="javascript:history.back()" class="btn btn-light border-0 shadow-sm rounded-3 hover-lift fw-bold">
         <i class="fa-solid fa-arrow-left me-1"></i> Volver
     </a>
 </div>
@@ -22,20 +22,20 @@
         </div>
         {% endif %}
 
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-4">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface mb-5">
+            <div class="card-body p-4 p-md-5">
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-4">
-                        <label class="form-label fw-semibold fs-5">Nuevo estado</label>
+                        <label class="form-label fw-bold text-muted small text-uppercase">Nuevo estado</label>
                         {{ form.estado }}
                     </div>
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">Nota (opcional)</label>
+                        <label class="form-label fw-bold text-muted small text-uppercase">Nota (opcional)</label>
                         {{ form.nota_entrega }}
                     </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg">
+                    <div class="d-grid mt-5">
+                        <button type="submit" class="btn btn-primary btn-glow rounded-pill fw-bold btn-lg">
                             <i class="fa-solid fa-floppy-disk me-2"></i> Confirmar Estado
                         </button>
                     </div>

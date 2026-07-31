@@ -153,7 +153,7 @@ class DireccionEntregaForm(forms.ModelForm):
     """Agregar o editar una dirección de entrega."""
     class Meta:
         model  = DireccionEntrega
-        fields = ['calle', 'altura', 'piso_depto', 'barrio', 'ciudad', 'zona',
+        fields = ['calle', 'altura', 'piso_depto', 'barrio', 'ciudad',
                   'desc_seguridad', 'coordenadas', 'es_principal']
         widgets = {
             'calle': forms.TextInput(attrs={
@@ -168,15 +168,12 @@ class DireccionEntregaForm(forms.ModelForm):
                 'class': _INPUT,
                 'placeholder': 'Ej: 2°B, PB derecha (opcional)'
             }),
-            'barrio': forms.TextInput(attrs={
-                'class': _INPUT,
-                'placeholder': 'Ej: Centro, San Martín, Belgrano...'
-            }),
+            'barrio': forms.Select(attrs={'class': _SELECT}),
             'ciudad': forms.TextInput(attrs={
                 'class': _INPUT,
-                'placeholder': 'Ej: Presidencia Roque Sáenz Peña'
+                'placeholder': 'Ej: Resistencia',
+                'readonly': 'readonly'
             }),
-            'zona': forms.Select(attrs={'class': _SELECT}),
             'desc_seguridad': forms.Textarea(attrs={
                 'class': _INPUT,
                 'rows': 2,
@@ -192,18 +189,18 @@ class DireccionEntregaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         is_staff_or_admin = kwargs.pop('is_staff_or_admin', False)
         super().__init__(*args, **kwargs)
-        from apps.logistica.models import Zona
-        zona_default, _ = Zona.objects.get_or_create(nombre='Zona 1')
 
         if not self.is_bound and not self.instance.pk:
-            self.initial['zona'] = zona_default.pk
-            self.initial['ciudad'] = 'Presidencia Roque Sáenz Peña'
+            self.initial['ciudad'] = 'Resistencia'
             self.initial['es_principal'] = True
 
-        # Si el usuario NO es staff ni admin, no se le permite seleccionar o editar la Zona
+        from apps.logistica.models import Barrio
+        if 'barrio' in self.fields:
+            self.fields['barrio'].queryset = Barrio.objects.filter(ciudad__icontains='Resistencia').order_by('nombre')
+            self.fields['barrio'].required = True
+
+        # Si el usuario NO es staff ni admin, no se le permite agregar desc_seguridad
         if not is_staff_or_admin:
-            if 'zona' in self.fields:
-                del self.fields['zona']
             if 'desc_seguridad' in self.fields:
                 del self.fields['desc_seguridad']
 

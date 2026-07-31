@@ -6,7 +6,7 @@
 {% block content %}
 <div class="container py-4">
     <!-- Header del Perfil -->
-    <div class="card border-0 shadow-sm rounded-4 surface-card mb-4 overflow-hidden">
+    <div class="card border-0 shadow-sm rounded-4 bg-surface mb-4 overflow-hidden">
         <div class="card-body p-4">
             <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
                 <div class="d-flex align-items-center gap-3">
@@ -57,9 +57,9 @@
                 <div class="card-body p-3">
                     <div class="fs-5 fw-bold">
                         {% if cliente.tipo_cliente == 'Premium' %}
-                        <span class="badge bg-warning text-dark"><i class="fa-solid fa-star me-1"></i>Premium</span>
+                        <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-3 py-1"><i class="fa-solid fa-star me-1"></i>Premium</span>
                         {% else %}
-                        <span class="badge bg-secondary">Normal</span>
+                        <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-3 py-1">Normal</span>
                         {% endif %}
                     </div>
                     <small class="text-muted">Tipo de cuenta</small>
@@ -77,7 +77,7 @@
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm text-center rounded-4 surface-card">
+            <div class="card border-0 shadow-sm text-center rounded-4 bg-surface hover-lift">
                 <div class="card-body p-3">
                     <div class="fs-6 fw-bold text-white">{{ cliente.fecha_alta|date:"d/m/Y" }}</div>
                     <small class="text-muted">Cliente desde</small>
@@ -127,7 +127,7 @@
                     <ul class="list-group list-group-flush bg-transparent">
                         {% for tel in telefonos %}
                         <li
-                            class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-4 py-3 border-secondary border-opacity-25">
+                            class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-4 py-3 border-bottom border-light border-opacity-10">
                             <div>
                                 {% if tel.es_principal %}
                                 <i class="fa-solid fa-star text-warning me-1" title="Principal"></i>
@@ -138,7 +138,7 @@
                             <form action="{% url 'apps.clientes:eliminar_telefono' tel.pk %}" method="post"
                                 class="d-inline" onsubmit="return confirm('¿Eliminar este teléfono?');">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-outline-danger border-0 rounded-circle"
+                                <button type="submit" class="btn btn-sm btn-light text-danger border-0 rounded-circle hover-lift"
                                     title="Eliminar">
                                     <i class="fas fa-trash"></i>
                                 </button>
@@ -179,10 +179,10 @@
                     <div class="list-group list-group-flush bg-transparent">
                         {% for dir in direcciones %}
                         <div
-                            class="list-group-item bg-transparent p-4 border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                            class="list-group-item bg-transparent p-4 border-bottom border-light border-opacity-10 d-flex justify-content-between align-items-center">
                             <div>
                                 {% if dir.es_principal %}
-                                <span class="badge bg-warning text-dark me-2">Principal</span>
+                                <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-1 me-2"><i class="fa-solid fa-star"></i> Principal</span>
                                 {% endif %}
                                 <strong class="text-white fs-6">{{ dir.calle }} {{ dir.altura }}</strong>
                                 {% if dir.piso_depto %}
@@ -195,18 +195,18 @@
                                 <span class="text-muted d-block small"><i class="fas fa-city me-1"></i>{{ dir.ciudad }}</span>
                                 {% endif %}
                                 {% if dir.zona %}
-                                <span class="badge bg-info bg-opacity-25 text-info mt-1">{{ dir.zona }}</span>
+                                <span class="badge bg-info bg-opacity-25 text-info rounded-pill mt-1">{{ dir.zona }}</span>
                                 {% endif %}
                             </div>
                             <div class="d-flex gap-2">
                                 <a href="{% url 'apps.clientes:editar_direccion' dir.pk %}"
-                                    class="btn btn-sm btn-outline-secondary rounded-circle" title="Editar">
+                                    class="btn btn-sm btn-light text-warning hover-lift rounded-circle" title="Editar">
                                     <i class="fas fa-pen"></i>
                                 </a>
                                 <form action="{% url 'apps.clientes:eliminar_direccion' dir.pk %}" method="post"
                                     class="d-inline" onsubmit="return confirm('¿Eliminar esta dirección?');">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle"
+                                    <button type="submit" class="btn btn-sm btn-light text-danger hover-lift rounded-circle"
                                         title="Eliminar">
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -239,14 +239,14 @@
             {% if pedidos %}
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                    <thead class="table-body">
+                    <thead class="table-dark text-muted small text-uppercase">
                         <tr>
-                            <th scope="col" class="ps-4">Pedido #</th>
-                            <th scope="col">Fecha</th>
-                            <th scope="col" class="text-center">Estado Pedido</th>
-                            <th scope="col" class="text-center">Método Pago</th>
-                            <th scope="col" class="text-center">Total</th>
-                            <th scope="col" class="text-end pe-4">Acción</th>
+                            <th scope="col" class="ps-4 border-bottom-0">Pedido #</th>
+                            <th scope="col" class="border-bottom-0">Fecha</th>
+                            <th scope="col" class="text-center border-bottom-0">Estado Pedido</th>
+                            <th scope="col" class="text-center border-bottom-0">Método Pago</th>
+                            <th scope="col" class="text-center border-bottom-0">Total</th>
+                            <th scope="col" class="text-end pe-4 border-bottom-0">Acción</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -256,16 +256,15 @@
                             <td>{{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</td>
                             <td class="text-center">
                                 {% if pedido.estado == 'Pendiente' %}
-                                <span class="badge bg-warning text-dark"><i
-                                        class="fas fa-clock me-1"></i>Pendiente</span>
+                                <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-1"><i class="fas fa-clock me-1"></i>Pendiente</span>
                                 {% elif pedido.estado == 'Confirmado' %}
-                                <span class="badge bg-primary"><i class="fas fa-check-circle me-1"></i>Confirmado</span>
+                                <span class="badge bg-primary bg-opacity-25 text-primary rounded-pill px-2 py-1"><i class="fas fa-check-circle me-1"></i>Confirmado</span>
                                 {% elif pedido.estado == 'En Camino' %}
-                                <span class="badge bg-info text-dark"><i class="fas fa-truck me-1"></i>En Camino</span>
+                                <span class="badge bg-info bg-opacity-25 text-info rounded-pill px-2 py-1"><i class="fas fa-truck me-1"></i>En Camino</span>
                                 {% elif pedido.estado == 'Entregado' %}
-                                <span class="badge bg-success"><i class="fas fa-box-check me-1"></i>Entregado</span>
+                                <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1"><i class="fas fa-box-check me-1"></i>Entregado</span>
                                 {% else %}
-                                <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Cancelado</span>
+                                <span class="badge bg-danger bg-opacity-25 text-danger rounded-pill px-2 py-1"><i class="fas fa-times-circle me-1"></i>Cancelado</span>
                                 {% endif %}
                             </td>
                             <td class="text-center"><small class="text-muted">{{ pedido.metodo_pago.nombre }}</small>
@@ -273,7 +272,7 @@
                             <td class="text-center fw-bold text-success">${{ pedido.total }}</td>
                             <td class="text-end pe-4">
                                 <a href="{% url 'apps.pedidos:detalle_pedido' pedido.id_pedido %}"
-                                    class="btn btn-sm btn-outline-primary rounded-pill">
+                                    class="btn btn-sm btn-light border-0 text-primary hover-lift rounded-pill px-3">
                                     <i class="fas fa-eye me-1"></i> Ver Detalle
                                 </a>
                             </td>

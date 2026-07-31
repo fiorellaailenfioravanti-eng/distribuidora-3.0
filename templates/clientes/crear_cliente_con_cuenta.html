@@ -36,34 +36,34 @@
                     <div id="step-1" class="step-section">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+                                <label class="form-label fw-bold text-muted small text-uppercase">Nombre <span class="text-danger">*</span></label>
                                 {{ form_usuario.first_name }}
                                 {% for e in form_usuario.first_name.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Apellido <span class="text-danger">*</span></label>
+                                <label class="form-label fw-bold text-muted small text-uppercase">Apellido <span class="text-danger">*</span></label>
                                 {{ form_usuario.last_name }}
                                 {% for e in form_usuario.last_name.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
                             </div>
                             
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">DNI</label>
+                                <label class="form-label fw-bold text-muted small text-uppercase">DNI</label>
                                 {{ form_usuario.dni }}
                                 {% for e in form_usuario.dni.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Fecha de nacimiento</label>
+                                <label class="form-label fw-bold text-muted small text-uppercase">Fecha de nacimiento</label>
                                 {{ form_usuario.fecha_nacimiento }}
                                 {% for e in form_usuario.fecha_nacimiento.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Tipo de cliente</label>
+                                <label class="form-label fw-bold text-muted small text-uppercase">Tipo de cliente</label>
                                 {{ form_usuario.tipo_cliente }}
                                 {% for e in form_usuario.tipo_cliente.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
                             </div>
                             <div class="col-12">
-                                <label class="form-label fw-semibold">Notas internas</label>
+                                <label class="form-label fw-bold text-muted small text-uppercase">Notas internas</label>
                                 {{ form_usuario.notas_internas }}
                             </div>
 
@@ -92,8 +92,8 @@
                             </div>
                         </div>
 
-                        <div class="d-grid mt-4">
-                            <button type="button" class="btn btn-primary btn-lg" onclick="nextStep()">
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="button" class="btn btn-primary btn-glow rounded-pill fw-bold px-4" onclick="nextStep()">
                                 Siguiente paso <i class="fa-solid fa-arrow-right ms-2"></i>
                             </button>
                         </div>
@@ -103,24 +103,24 @@
                     <div id="step-2" class="step-section d-none">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Nombre de usuario <span class="text-danger">*</span></label>
+                                <label class="form-label fw-bold text-muted small text-uppercase">Nombre de usuario <span class="text-danger">*</span></label>
                                 {{ form_usuario.username }}
                                 {% for e in form_usuario.username.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
                                 <div class="form-text small">Requerido. 150 caracteres o menos. Letras, dígitos y @/./+/-/_ únicamente.</div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                                <label class="form-label fw-bold text-muted small text-uppercase">Email <span class="text-danger">*</span></label>
                                 {{ form_usuario.email }}
                                 {% for e in form_usuario.email.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Contraseña <span class="text-danger">*</span></label>
+                                <label class="form-label fw-bold text-muted small text-uppercase">Contraseña <span class="text-danger">*</span></label>
                                 {{ form_usuario.password1 }}
                                 {% for e in form_usuario.password1.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Confirmar contraseña <span class="text-danger">*</span></label>
+                                <label class="form-label fw-bold text-muted small text-uppercase">Confirmar contraseña <span class="text-danger">*</span></label>
                                 {{ form_usuario.password2 }}
                                 {% for e in form_usuario.password2.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
                             </div>

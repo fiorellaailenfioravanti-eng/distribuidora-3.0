@@ -4,15 +4,15 @@
 
 {% block content %}
 <div class="text-center mb-4">
-    <h1 class="mb-1">📦 Mi Ruta de Hoy</h1>
-    <p class="text-muted">{{ hoy|date:"l d \d\e F \d\e Y" }}</p>
+    <h1 class="h3 fw-bold mb-1 text-main"><i class="fa-solid fa-box-open text-primary me-2"></i> Mi Ruta de Hoy</h1>
+    <p class="text-muted small">{{ hoy|date:"l d \d\e F \d\e Y" }}</p>
 </div>
 
 {% if ruta %}
 
 {# ── Info de la ruta ── #}
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body text-center">
+<div class="card border-0 shadow-sm mb-4 rounded-4 bg-surface">
+    <div class="card-body text-center p-4">
         <div class="row g-3">
             <div class="col-4">
                 <div class="text-muted small">Zona</div>
@@ -27,8 +27,8 @@
                 <strong>{{ ruta.paradas_entregadas }}/{{ ruta.total_paradas }}</strong>
             </div>
         </div>
-        <div class="progress mt-3" style="height:12px;">
-            <div class="progress-bar bg-success" style="width:{{ ruta.porcentaje_completado }}%;"></div>
+        <div class="progress mt-4 rounded-pill" style="height:12px; background-color: var(--bs-secondary-bg-subtle);">
+            <div class="progress-bar bg-success rounded-pill shadow-sm" style="width:{{ ruta.porcentaje_completado }}%;"></div>
         </div>
         <small class="text-muted">{{ ruta.porcentaje_completado }}% completado</small>
     </div>
@@ -38,22 +38,22 @@
 {% if detalles %}
 <div class="d-flex flex-column gap-3">
     {% for d in detalles %}
-    <div class="card border-0 shadow-sm {% if d.estado == 'Entregado' %}border-success{% elif d.estado == 'Cancelado' %}border-danger{% endif %}">
-        <div class="card-body">
+    <div class="card border-0 shadow-sm rounded-4 bg-surface {% if d.estado == 'Entregado' %}border-start border-4 border-success{% elif d.estado == 'Cancelado' %}border-start border-4 border-danger{% endif %} hover-lift">
+        <div class="card-body p-4">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <div>
-                    <span class="badge bg-dark me-2">#{{ d.orden }}</span>
-                    <strong>{{ d.cliente_nombre|default:"Sin nombre" }}</strong>
+                    <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill me-2">#{{ d.orden }}</span>
+                    <strong class="text-main">{{ d.cliente_nombre|default:"Sin nombre" }}</strong>
                 </div>
                 <div>
                     {% if d.estado == 'Pendiente' %}
-                        <span class="badge bg-secondary">Pendiente</span>
+                        <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-3 py-2">Pendiente</span>
                     {% elif d.estado == 'Entregado' %}
-                        <span class="badge bg-success">✅ Entregado</span>
+                        <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-3 py-2"><i class="fa-solid fa-check me-1"></i> Entregado</span>
                     {% elif d.estado == 'Cancelado' %}
-                        <span class="badge bg-danger">❌ Cancelado</span>
+                        <span class="badge bg-danger bg-opacity-25 text-danger rounded-pill px-3 py-2"><i class="fa-solid fa-xmark me-1"></i> Cancelado</span>
                     {% else %}
-                        <span class="badge bg-warning text-dark">🔄 Reprogramado</span>
+                        <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-3 py-2"><i class="fa-solid fa-rotate me-1"></i> Reprogramado</span>
                     {% endif %}
                 </div>
             </div>
@@ -78,13 +78,13 @@
 
             {# Botones de acción — solo si está pendiente #}
             {% if d.estado == 'Pendiente' %}
-            <div class="d-flex gap-2 mt-3">
+            <div class="d-flex gap-2 mt-4">
                 <a href="{% url 'apps.logistica:actualizar_estado_entrega' d.id_detalle %}"
-                   class="btn btn-success btn-lg flex-fill">
+                   class="btn btn-success btn-glow rounded-pill flex-fill fw-bold py-2">
                     <i class="fa-solid fa-check me-1"></i> Entregado
                 </a>
                 <a href="{% url 'apps.logistica:actualizar_estado_entrega' d.id_detalle %}"
-                   class="btn btn-outline-danger btn-lg flex-fill">
+                   class="btn btn-light text-danger rounded-pill flex-fill fw-bold py-2 hover-lift border-0 shadow-sm">
                     <i class="fa-solid fa-xmark me-1"></i> Problema
                 </a>
             </div>

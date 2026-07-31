@@ -8,34 +8,38 @@ from django.utils import timezone
 class Zona(models.Model):
     id_zona     = models.AutoField(primary_key=True)
     nombre      = models.CharField(max_length=100, unique=True)
-    ciudad      = models.CharField(max_length=100, default='Presidencia Roque Sáenz Peña', blank=True, verbose_name='Ciudad')
-    barrios     = models.TextField(blank=True, verbose_name='Barrios incluidos', help_text='Barrios que abarca esta zona (ej: Centro, San Martín, Belgrano)')
     descripcion = models.TextField(blank=True, verbose_name='Descripción')
-    # Días de reparto
-    lunes       = models.BooleanField(default=False)
-    martes      = models.BooleanField(default=False)
-    miercoles   = models.BooleanField(default=False)
-    jueves      = models.BooleanField(default=False)
-    viernes     = models.BooleanField(default=False)
-    sabado      = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['nombre']
         verbose_name = 'Zona'
         verbose_name_plural = 'Zonas'
 
-    def dias_activos(self):
-        dias = []
-        if self.lunes: dias.append("Lun")
-        if self.martes: dias.append("Mar")
-        if self.miercoles: dias.append("Mié")
-        if self.jueves: dias.append("Jue")
-        if self.viernes: dias.append("Vie")
-        if self.sabado: dias.append("Sáb")
-        return ", ".join(dias) if dias else "Sin días"
-
     def __str__(self):
         return self.nombre
+
+
+# ────────────────────────────────────────────────
+# 1.5. BARRIO
+# ────────────────────────────────────────────────
+class Barrio(models.Model):
+    nombre = models.CharField(max_length=100)
+    ciudad = models.CharField(max_length=100, default='Resistencia')
+    zona   = models.ForeignKey(
+        Zona, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='barrios_asociados'
+    )
+
+    class Meta:
+        ordering = ['nombre']
+        verbose_name = 'Barrio'
+        verbose_name_plural = 'Barrios'
+
+    def __str__(self):
+        return f"{self.nombre} ({self.ciudad})"
 
 
 # ────────────────────────────────────────────────
@@ -98,6 +102,48 @@ class Camion(models.Model):
 
 
 # ────────────────────────────────────────────────
+# 4.5. RUTA DE REPARTO
+# ────────────────────────────────────────────────
+DIA_SEMANA_CHOICES = [
+    (0, 'Lunes'),
+    (1, 'Martes'),
+    (2, 'Miércoles'),
+    (3, 'Jueves'),
+    (4, 'Viernes'),
+    (5, 'Sábado'),
+    (6, 'Domingo'),
+]
+
+class RutaReparto(models.Model):
+    id_ruta = models.AutoField(primary_key=True)
+    nombre = models.CharField(max_length=100, help_text='Ej: Ruta Norte - Lunes')
+    zona = models.ForeignKey(Zona, on_delete=models.PROTECT, related_name='rutas')
+    dia_semana = models.IntegerField(choices=DIA_SEMANA_CHOICES)
+    empleado_default = models.ForeignKey(
+        Empleado, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='rutas_default'
+    )
+    camion_default = models.ForeignKey(
+        Camion, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='rutas_default'
+    )
+
+    class Meta:
+        ordering = ['dia_semana', 'nombre']
+        verbose_name = 'Ruta de Reparto'
+        verbose_name_plural = 'Rutas de Reparto'
+
+    def __str__(self):
+        return f"{self.nombre} ({self.get_dia_semana_display()})"
+
+
+# ────────────────────────────────────────────────
 # 5. HOJA DE RUTA
 # ────────────────────────────────────────────────
 ESTADOS_RUTA = [
@@ -106,24 +152,24 @@ ESTADOS_RUTA = [
     ('Cerrada',   'Cerrada'),
 ]
 
-
 class HojaRuta(models.Model):
     id_ruta       = models.AutoField(primary_key=True)
     fecha         = models.DateField()
+    ruta_reparto  = models.ForeignKey(
+        RutaReparto,
+        on_delete=models.PROTECT,
+        related_name='hojas_ruta',
+        verbose_name='Ruta de Reparto'
+    )
     empleado      = models.ForeignKey(
         Empleado,
         on_delete=models.PROTECT,
-        related_name='rutas'
+        related_name='hojas_ruta'
     )
     camion        = models.ForeignKey(
         Camion,
         on_delete=models.PROTECT,
-        related_name='rutas'
-    )
-    zona          = models.ForeignKey(
-        Zona,
-        on_delete=models.PROTECT,
-        related_name='rutas'
+        related_name='hojas_ruta'
     )
     estado        = models.CharField(
         max_length=20,
@@ -145,7 +191,7 @@ class HojaRuta(models.Model):
         verbose_name_plural = 'Hojas de Ruta'
 
     def __str__(self):
-        return f"Ruta #{self.id_ruta} — {self.fecha} · {self.zona} · {self.empleado}"
+        return f"Hoja #{self.id_ruta} — {self.fecha} · {self.ruta_reparto} · {self.empleado}"
 
     def total_paradas(self):
         return self.detalles.count()
@@ -170,7 +216,6 @@ ESTADOS_ENTREGA = [
     ('Reprogramado',  'Reprogramado'),
 ]
 
-
 class DetalleHojaRuta(models.Model):
     id_detalle    = models.AutoField(primary_key=True)
     hoja_ruta     = models.ForeignKey(
@@ -178,18 +223,24 @@ class DetalleHojaRuta(models.Model):
         on_delete=models.CASCADE,
         related_name='detalles'
     )
-    # FK a Pedido se activa cuando el módulo de Pedidos (Mes 8) esté implementado
-    # pedido      = models.ForeignKey('pedidos.Pedido', on_delete=models.SET_NULL, null=True, blank=True)
     pedido_ref    = models.CharField(
         max_length=100,
         blank=True,
         help_text='Referencia temporal al pedido hasta que exista el modelo Pedido'
     )
-    # Dirección textual hasta integrar el modelo Direccion_entrega (Mes 7)
-    direccion     = models.CharField(
+    direccion_entrega = models.ForeignKey(
+        'clientes.DireccionEntrega',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='visitas_ruta',
+        verbose_name='Dirección de Entrega'
+    )
+    # Dirección textual de respaldo
+    direccion_texto = models.CharField(
         max_length=255,
         blank=True,
-        help_text='Dirección de entrega (texto libre hasta integrar Direccion_entrega)'
+        help_text='Dirección en texto si no hay una vinculada'
     )
     cliente_nombre = models.CharField(
         max_length=200,

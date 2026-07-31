@@ -5,20 +5,22 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-5">
-        <div class="card border-danger border-0 shadow-sm text-center">
-            <div class="card-body p-5">
-                <i class="fa-solid fa-triangle-exclamation fa-3x text-danger mb-3"></i>
-                <h4>¿Eliminar {{ tipo }}?</h4>
-                <p class="text-muted mb-4">
+        <div class="card border-0 shadow-sm text-center rounded-4 bg-surface p-4">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-inline-flex justify-content-center align-items-center bg-danger bg-opacity-10 text-danger rounded-circle mb-4" style="width: 80px; height: 80px;">
+                    <i class="fa-solid fa-triangle-exclamation fa-2x"></i>
+                </div>
+                <h4 class="fw-bold mb-3 text-main">¿Eliminar {{ tipo }}?</h4>
+                <p class="text-muted mb-4 small">
                     Estás por eliminar <strong>{{ objeto }}</strong>. Esta acción no se puede deshacer.
                 </p>
-                <div class="d-flex gap-3 justify-content-center">
-                    <a href="{% url volver %}" class="btn btn-outline-secondary">
+                <div class="d-flex gap-3 justify-content-center mt-5">
+                    <a href="{% url volver %}" class="btn btn-light fw-bold px-4 hover-lift rounded-pill">
                         <i class="fa-solid fa-xmark me-1"></i> Cancelar
                     </a>
                     <form method="post">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">
+                        <button type="submit" class="btn btn-danger btn-glow fw-bold px-4 rounded-pill">
                             <i class="fa-solid fa-trash me-1"></i> Sí, eliminar
                         </button>
                     </form>

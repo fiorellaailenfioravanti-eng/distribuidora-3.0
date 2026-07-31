@@ -1,0 +1,115 @@
+{% extends 'base_dashboard.html' %}
+{% load grupos %}
+
+{% block title %}Editar Empleado — Aquadelluvia{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <h1 class="h3 fw-bold mb-0 text-main"><i class="fa-solid fa-pen text-primary me-2"></i>Editar Empleado</h1>
+    <a href="{% url 'apps.empleados:listar_empleados' %}" class="btn btn-light border-0 shadow-sm rounded-3 hover-lift fw-bold">
+        <i class="fa-solid fa-arrow-left me-1"></i> Volver a empleados
+    </a>
+</div>
+
+<div class="card shadow-sm rounded-4 bg-surface border-0 mb-5">
+    <div class="card-body p-4 p-md-5">
+        <form method="POST">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger rounded-3">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+            
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <label for="{{ form.nombre.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Nombre</label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}
+                    <div class="invalid-feedback d-block">{{ form.nombre.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ form.apellido.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Apellido</label>
+                    {{ form.apellido }}
+                    {% if form.apellido.errors %}
+                    <div class="invalid-feedback d-block">{{ form.apellido.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <label for="{{ form.dni.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">DNI</label>
+                    {{ form.dni }}
+                    {% if form.dni.errors %}
+                    <div class="invalid-feedback d-block">{{ form.dni.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ form.celular.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Celular</label>
+                    {{ form.celular }}
+                    {% if form.celular.errors %}
+                    <div class="invalid-feedback d-block">{{ form.celular.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <label for="{{ form.email.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Email</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                    <div class="invalid-feedback d-block">{{ form.email.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ form.rol.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Rol</label>
+                    {{ form.rol }}
+                    {% if form.rol.errors %}
+                    <div class="invalid-feedback d-block">{{ form.rol.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <label for="{{ form.fecha_ingreso.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Fecha de Ingreso</label>
+                    {{ form.fecha_ingreso }}
+                    {% if form.fecha_ingreso.errors %}
+                    <div class="invalid-feedback d-block">{{ form.fecha_ingreso.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 d-flex align-items-center pt-md-4">
+                    <div class="form-check form-switch fs-5">
+                        {{ form.activo }}
+                        <label class="form-check-label fw-bold ms-2 mt-1 fs-6 text-main" for="{{ form.activo.id_for_label }}">
+                            Empleado Activo
+                        </label>
+                    </div>
+                    {% if form.activo.errors %}
+                    <div class="invalid-feedback d-block">{{ form.activo.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row g-4 mb-5">
+                <div class="col-12">
+                    <label for="{{ form.notas.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Notas</label>
+                    {{ form.notas }}
+                    {% if form.notas.errors %}
+                    <div class="invalid-feedback d-block">{{ form.notas.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-3 mt-4">
+                <a href="{% url 'apps.empleados:listar_empleados' %}" class="btn btn-light fw-bold hover-lift rounded-pill px-4">Cancelar</a>
+                <button type="submit" class="btn btn-primary btn-glow rounded-pill fw-bold px-4">
+                    <i class="fa-solid fa-save me-2"></i> Guardar cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

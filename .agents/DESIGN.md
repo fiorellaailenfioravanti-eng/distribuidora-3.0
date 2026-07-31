@@ -25,14 +25,16 @@ La tienda web debe replicar la calidez del logo original (Agua de Lluvia):
 Se deben usar estas variables CSS personalizadas extendiendo Bootstrap 5.3.
 
 ### Tema Claro (Light Mode)
-El tema claro prioriza el espacio en blanco y los tonos sutiles de la referencia visual.
-- **Fondo Principal (`--bg-main`):** `#F7F8FA` (Gris tenue, fondo del layout)
+El tema claro prioriza el espacio en blanco y los tonos sutiles de la referencia visual, con foco en **alto contraste** para máxima accesibilidad.
+- **Fondo Principal (`--bg-main`):** `#F8FAFC` (Slate 50, Gris muy tenue)
 - **Fondo Tarjetas/Sidebar (`--bg-surface`):** `#FFFFFF` (Blanco puro para separar componentes)
-- **Primario (`--color-primary`):** `#6466f1` (Azul Pervinca/Morado - Color destacado)
-- **Secundario (`--color-secondary`):** `#a5a6f6` (Morado claro)
-- **Acento (`--color-accent`):** `#f59e0b` (Naranja de acento general)
-- **Texto Principal (`--text-main`):** `#334155` (Slate oscuro - Gran legibilidad)
-- **Texto Secundario (`--text-muted`):** `#94a3b8`
+- **Primario (`--color-primary`):** `#4338ca` (Indigo 700 - Alta legibilidad sobre blanco para enlaces y botones)
+- **Secundario (`--color-secondary`):** `#6366f1` (Indigo 500)
+- **Acento (`--color-accent`):** `#ea580c` (Orange 600 - Mejor contraste que amarillos claros)
+- **Texto Principal (`--text-main`):** `#0f172a` (Slate 900 - Negro/Gris muy oscuro)
+- **Texto Secundario (`--text-muted`):** `#475569` (Slate 600 - Legible pero secundario)
+
+*Nota: Los colores semánticos de Bootstrap (`--bs-info`, `--bs-warning`, `--bs-success`) han sido sobreescritos en el CSS para asegurar un ratio de contraste adecuado sobre fondos blancos (ej. usando variantes "600" o "700" de Tailwind).*
 
 ### Tema Oscuro (Dark Mode)
 El tema oscuro mantiene los tonos pervinca sobre un fondo pizarra oscuro elegante.
@@ -54,11 +56,12 @@ Para continuar con el enfoque familiar y amigable inspirado en el logo:
     - El `h2` (`2rem`) y `h3` (`1.75rem`) mantienen el color del texto principal.
 - **Cuerpo del Texto (Párrafos, Tablas, Botones):** Se usa la fuente **Inter**, que es extremadamente legible en tamaños pequeños para mantener el panel de administración profesional y fácil de usar.
 
-### Colores Semánticos (Ambos temas)
-- **Éxito (Success):** `#20C997` (Verde agua/Teal)
-- **Advertencia (Warning):** `#FFCA2C` (Amarillo sol)
-- **Peligro (Danger):** `#E63946` (Rojo atenuado)
-- **Información (Info):** `#0DCAF0` (Cyan)
+### Colores Semánticos y Accesibilidad
+Es **crítico** asegurar que los colores de acento sean legibles sobre el fondo:
+- **Éxito (Success):** `#16a34a` (Verde 600)
+- **Advertencia (Warning):** `#d97706` (Ambar 600 - No usar amarillo brillante sobre blanco)
+- **Peligro (Danger):** `#dc2626` (Rojo 600)
+- **Información (Info):** `#0284c7` (Azul Cielo 600 - No usar cyan brillante sobre blanco)
 
 ---
 
@@ -130,7 +133,8 @@ Las interacciones deben sentirse fluidas ("líquidas"):
 - En Dark Mode, fondo ligeramente distinto al fondo principal (ej. fondo de tarjeta) para diferenciar inputs.
 
 ### Badges (`.badge`)
-- Usar colores semánticos suaves con `bg-opacity` (ej. `bg-success bg-opacity-25 text-success`) en lugar de fondos sólidos intensos, para lograr un look más moderno y prolijo.
+- Usar colores semánticos suaves con `bg-opacity` (ej. `bg-success bg-opacity-25 text-success`) en lugar de fondos sólidos intensos para un look moderno.
+- **Importante:** Asegurarse de que el texto (`text-success`, `text-info`) tenga un contraste fuerte contra el `bg-opacity`. Los colores definidos en el CSS ya contemplan esto para el light mode. Si se ven muy pálidos, usar clases como `text-main` o las variantes oscuras.
 
 ### Notificaciones y Alertas (Popups/Toasts)
 - Todo lo que sean notificaciones, mensajes temporales, advertencias o errores del sistema (Django Messages) **deben mostrarse como Popups (Toasts) flotantes** en la esquina inferior derecha (`bottom-0 end-0`), nunca como bloques de texto incrustados en la página (inline alerts) que rompan el flujo visual.

@@ -9,6 +9,7 @@ urlpatterns = [
     path('nueva/',                       views.crear_ruta,              name='crear_ruta'),
     path('<int:pk>/',                    views.ver_ruta,                name='ver_ruta'),
     path('<int:pk>/editar/',             views.editar_ruta,             name='editar_ruta'),
+    path('<int:pk>/imprimir/',           views.imprimir_ruta,           name='imprimir_ruta'),
 
     # ── Paradas ────────────────────────────────────────────────
     path('<int:pk>/parada/agregar/',     views.agregar_parada,          name='agregar_parada'),

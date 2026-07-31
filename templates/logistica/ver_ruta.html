@@ -6,10 +6,10 @@
 {% block content %}
 
 {# ── Cabecera ── #}
-<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
     <div>
-        <h1 class="mb-1">🚚 Hoja de Ruta #{{ ruta.id_ruta }}</h1>
-        <p class="text-muted mb-0">
+        <h1 class="h3 fw-bold mb-1 text-main"><i class="fa-solid fa-route text-primary me-2"></i> Hoja de Ruta #{{ ruta.id_ruta }}</h1>
+        <p class="text-muted small mb-0">
             <i class="fa-solid fa-calendar-day me-1"></i> {{ ruta.fecha|date:"d \d\e F \d\e Y" }} &nbsp;·&nbsp;
             <i class="fa-solid fa-map-pin me-1"></i> {{ ruta.zona.nombre }} &nbsp;·&nbsp;
             <i class="fa-solid fa-truck me-1"></i> {{ ruta.camion.patente }}
@@ -17,11 +17,14 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         {% if es_admin %}
-        <a href="{% url 'apps.logistica:editar_ruta' ruta.id_ruta %}" class="btn btn-outline-warning btn-sm">
+        <a href="{% url 'apps.logistica:imprimir_ruta' ruta.id_ruta %}" target="_blank" class="btn btn-light text-info fw-bold shadow-sm hover-lift">
+            <i class="fa-solid fa-print me-1"></i> Imprimir
+        </a>
+        <a href="{% url 'apps.logistica:editar_ruta' ruta.id_ruta %}" class="btn btn-light text-warning fw-bold shadow-sm hover-lift">
             <i class="fa-solid fa-pen me-1"></i> Editar Ruta
         </a>
         {% endif %}
-        <a href="{% url 'apps.logistica:listar_rutas' %}" class="btn btn-outline-secondary btn-sm">
+        <a href="{% url 'apps.logistica:listar_rutas' %}" class="btn btn-light text-secondary fw-bold shadow-sm hover-lift">
             <i class="fa-solid fa-arrow-left me-1"></i> Volver
         </a>
     </div>
@@ -30,106 +33,109 @@
 {# ── Tarjetas de resumen ── #}
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
-        <div class="card text-center border-0 shadow-sm">
-            <div class="card-body">
+        <div class="card text-center border-0 shadow-sm rounded-4 bg-surface hover-lift">
+            <div class="card-body p-4">
                 <div class="fs-3 fw-bold text-primary">{{ ruta.total_paradas }}</div>
-                <small class="text-muted">Total paradas</small>
+                <small class="text-muted text-uppercase fw-semibold">Total paradas</small>
             </div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="card text-center border-0 shadow-sm">
-            <div class="card-body">
+        <div class="card text-center border-0 shadow-sm rounded-4 bg-surface hover-lift">
+            <div class="card-body p-4">
                 <div class="fs-3 fw-bold text-success">{{ ruta.paradas_entregadas }}</div>
-                <small class="text-muted">Entregadas</small>
+                <small class="text-muted text-uppercase fw-semibold">Entregadas</small>
             </div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="card text-center border-0 shadow-sm">
-            <div class="card-body">
+        <div class="card text-center border-0 shadow-sm rounded-4 bg-surface hover-lift">
+            <div class="card-body p-4">
                 <div class="fs-3 fw-bold text-warning">
                     {{ ruta.detalles.all|length|add:"-1" }}
                     {# pendientes #}
                 </div>
-                <small class="text-muted">Repartidor</small>
-                <div class="text-muted small">{{ ruta.empleado.usuario.get_full_name|default:ruta.empleado.usuario.username }}</div>
+                <small class="text-muted text-uppercase fw-semibold">Repartidor</small>
+                <div class="text-muted small text-truncate">{{ ruta.empleado.usuario.get_full_name|default:ruta.empleado.usuario.username }}</div>
             </div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="card text-center border-0 shadow-sm">
-            <div class="card-body">
-                <div class="fs-5 fw-bold">
+        <div class="card text-center border-0 shadow-sm rounded-4 bg-surface hover-lift">
+            <div class="card-body p-4">
+                <div class="fs-4 fw-bold mb-1">
                     {% if ruta.estado == 'Abierta' %}
-                        <span class="badge bg-info text-dark fs-6">{{ ruta.estado }}</span>
+                        <span class="badge bg-info bg-opacity-25 text-info rounded-pill px-3 py-1">{{ ruta.estado }}</span>
                     {% elif ruta.estado == 'En curso' %}
-                        <span class="badge bg-warning text-dark fs-6">{{ ruta.estado }}</span>
+                        <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-3 py-1">{{ ruta.estado }}</span>
                     {% else %}
-                        <span class="badge bg-success fs-6">{{ ruta.estado }}</span>
+                        <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-3 py-1">{{ ruta.estado }}</span>
                     {% endif %}
                 </div>
-                <small class="text-muted">Estado</small>
+                <small class="text-muted text-uppercase fw-semibold">Estado</small>
             </div>
         </div>
     </div>
 </div>
 
 {# ── Progreso global ── #}
-<div class="mb-4">
-    <div class="d-flex justify-content-between mb-1">
-        <small class="fw-semibold">Progreso de entregas</small>
-        <small>{{ ruta.porcentaje_completado }}%</small>
-    </div>
-    <div class="progress" style="height:10px;">
-        <div class="progress-bar bg-success" style="width:{{ ruta.porcentaje_completado }}%;"></div>
+<div class="card border-0 shadow-sm rounded-4 bg-surface mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between mb-2">
+            <small class="fw-bold text-muted text-uppercase">Progreso de entregas</small>
+            <small class="fw-bold text-success">{{ ruta.porcentaje_completado }}%</small>
+        </div>
+        <div class="progress rounded-pill" style="height:12px; background-color: var(--bs-secondary-bg-subtle);">
+            <div class="progress-bar bg-success rounded-pill shadow-sm" style="width:{{ ruta.porcentaje_completado }}%;"></div>
+        </div>
     </div>
 </div>
 
 {# ── Observaciones ── #}
 {% if ruta.observaciones %}
-<div class="alert alert-secondary mb-4">
-    <i class="fa-solid fa-note-sticky me-1"></i>
-    <strong>Observaciones:</strong> {{ ruta.observaciones }}
+<div class="alert alert-secondary border-0 shadow-sm rounded-4 mb-4 bg-surface">
+    <i class="fa-solid fa-note-sticky text-secondary me-2"></i>
+    <strong class="text-main">Observaciones:</strong> <span class="text-muted">{{ ruta.observaciones }}</span>
 </div>
 {% endif %}
 
 {# ── Tabla de paradas ── #}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="mb-0">📍 Paradas</h5>
+    <h5 class="mb-0 fw-bold text-main"><i class="fa-solid fa-location-dot text-primary me-2"></i> Paradas</h5>
 </div>
 
 {% if detalles %}
-<div class="table-responsive mb-4">
-    <table class="table table-hover align-middle">
-        <thead class="table-dark">
-            <tr>
-                <th>#</th>
-                <th>Cliente</th>
-                <th>Dirección</th>
-                <th>Referencia</th>
-                <th>Estado</th>
-                <th>Hora registro</th>
-                <th>Nota</th>
-                {% if es_admin %}<th></th>{% endif %}
-            </tr>
-        </thead>
+<div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden mb-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light text-muted small text-uppercase">
+                <tr>
+                    <th class="ps-4 border-bottom-0 py-3">#</th>
+                    <th class="border-bottom-0 py-3">Cliente</th>
+                    <th class="border-bottom-0 py-3">Dirección</th>
+                    <th class="border-bottom-0 py-3">Referencia</th>
+                    <th class="border-bottom-0 py-3">Estado</th>
+                    <th class="border-bottom-0 py-3">Hora registro</th>
+                    <th class="border-bottom-0 py-3">Nota</th>
+                    {% if es_admin %}<th class="pe-4 border-bottom-0 py-3"></th>{% endif %}
+                </tr>
+            </thead>
         <tbody>
             {% for d in detalles %}
             <tr>
-                <td><strong>{{ d.orden }}</strong></td>
-                <td>{{ d.cliente_nombre|default:"—" }}</td>
-                <td>{{ d.direccion|default:"—" }}</td>
-                <td><small class="text-muted">{{ d.pedido_ref|default:"—" }}</small></td>
+                <td class="ps-4 text-muted fw-bold">{{ d.orden }}</td>
+                <td class="text-main fw-semibold">{{ d.cliente_nombre|default:"—" }}</td>
+                <td class="text-muted small">{{ d.direccion|default:"—" }}</td>
+                <td><span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill">{{ d.pedido_ref|default:"—" }}</span></td>
                 <td>
                     {% if d.estado == 'Pendiente' %}
-                        <span class="badge bg-secondary">{{ d.estado }}</span>
+                        <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 py-1">{{ d.estado }}</span>
                     {% elif d.estado == 'Entregado' %}
-                        <span class="badge bg-success">{{ d.estado }}</span>
+                        <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1">{{ d.estado }}</span>
                     {% elif d.estado == 'Cancelado' %}
-                        <span class="badge bg-danger">{{ d.estado }}</span>
+                        <span class="badge bg-danger bg-opacity-25 text-danger rounded-pill px-2 py-1">{{ d.estado }}</span>
                     {% else %}
-                        <span class="badge bg-warning text-dark">{{ d.estado }}</span>
+                        <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-1">{{ d.estado }}</span>
                     {% endif %}
                 </td>
                 <td>
@@ -145,16 +151,16 @@
                     {% else %}—{% endif %}
                 </td>
                 {% if es_admin %}
-                <td>
-                    <div class="d-flex gap-1">
+                <td class="pe-4 text-end">
+                    <div class="btn-group shadow-sm">
                         <a href="{% url 'apps.logistica:actualizar_estado_entrega' d.id_detalle %}"
-                           class="btn btn-sm btn-outline-warning">
-                            <i class="fa-solid fa-pen-to-square"></i>
+                           class="btn btn-sm btn-light border-0 text-warning hover-lift" title="Editar Estado">
+                            <i class="fa-solid fa-pen"></i>
                         </a>
                         <form method="post" action="{% url 'apps.logistica:eliminar_parada' d.id_detalle %}"
-                              onsubmit="return confirm('¿Eliminar esta parada?')">
+                              onsubmit="return confirm('¿Eliminar esta parada?')" class="d-inline">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <button type="submit" class="btn btn-sm btn-light border-0 text-danger hover-lift" title="Eliminar Parada">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </form>
@@ -175,24 +181,25 @@
 
 {# ── Sugerencias de clientes de la zona para este día (solo admin/vendedor) ── #}
 {% if es_admin and sugerencias %}
-<div class="card border-info shadow-sm mb-4">
-    <div class="card-header bg-info text-dark fw-bold">
-        <i class="fa-solid fa-lightbulb me-1"></i> Sugerencias para hoy en esta zona
+<div class="card border-0 shadow-sm rounded-4 bg-surface mb-4">
+    <div class="card-header bg-transparent border-bottom p-4">
+        <h6 class="mb-0 fw-bold text-main"><i class="fa-solid fa-lightbulb text-info me-2"></i> Sugerencias para hoy en esta zona</h6>
     </div>
     <div class="card-body p-0">
-        <ul class="list-group list-group-flush">
+        <ul class="list-group list-group-flush rounded-bottom-4 overflow-hidden">
             {% for s in sugerencias %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
+            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center p-4 border-bottom-0 border-top text-main">
                 <div>
-                    <strong>{{ s.cliente.nombre_completo }}</strong><br>
+                    <strong class="fw-bold">{{ s.cliente.nombre_completo }}</strong><br>
                     <small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i> {{ s.direccion_completa }}</small>
                 </div>
                 <form method="post" action="{% url 'apps.logistica:agregar_parada' ruta.id_ruta %}">
                     {% csrf_token %}
                     <input type="hidden" name="cliente_nombre" value="{{ s.cliente.nombre_completo }}">
-                    <input type="hidden" name="direccion" value="{{ s.calle }} {{ s.altura }} {{ s.piso_depto }}">
+                    <input type="hidden" name="direccion_entrega" value="{{ s.pk }}">
+                    <input type="hidden" name="direccion_texto" value="{{ s.calle }} {{ s.altura }} {{ s.piso_depto }}">
                     <input type="hidden" name="orden" value="0">
-                    <button type="submit" class="btn btn-sm btn-outline-info">
+                    <button type="submit" class="btn btn-sm btn-light text-info fw-bold rounded-pill px-3 shadow-sm hover-lift">
                         <i class="fa-solid fa-plus me-1"></i> Agregar
                     </button>
                 </form>
@@ -205,32 +212,32 @@
 
 {# ── Agregar parada (solo admin/vendedor) ── #}
 {% if es_admin %}
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-body">
-        <h6 class="mb-0"><i class="fa-solid fa-plus me-1"></i> Agregar parada</h6>
+<div class="card border-0 shadow-sm rounded-4 bg-surface">
+    <div class="card-header bg-transparent border-bottom p-4">
+        <h6 class="mb-0 fw-bold text-main"><i class="fa-solid fa-plus text-primary me-2"></i> Agregar Parada Manual</h6>
     </div>
-    <div class="card-body">
+    <div class="card-body p-4">
         <form method="post" action="{% url 'apps.logistica:agregar_parada' ruta.id_ruta %}">
             {% csrf_token %}
-            <div class="row g-2">
+            <div class="row g-3 align-items-end">
                 <div class="col-md-1">
-                    <label class="form-label small">Orden</label>
+                    <label class="form-label fw-bold text-muted small text-uppercase">Orden</label>
                     {{ form_parada.orden }}
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small">Cliente</label>
+                    <label class="form-label fw-bold text-muted small text-uppercase">Cliente</label>
                     {{ form_parada.cliente_nombre }}
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label small">Dirección</label>
-                    {{ form_parada.direccion }}
+                    <label class="form-label fw-bold text-muted small text-uppercase">Dirección</label>
+                    {{ form_parada.direccion_texto }}
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small">Ref. Pedido</label>
+                    <label class="form-label fw-bold text-muted small text-uppercase">Ref. Pedido</label>
                     {{ form_parada.pedido_ref }}
                 </div>
-                <div class="col-md-1 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary btn-glow rounded-3 w-100" title="Agregar Parada">
                         <i class="fa-solid fa-plus"></i>
                     </button>
                 </div>

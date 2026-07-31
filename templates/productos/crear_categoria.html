@@ -2,24 +2,42 @@
 {% block title %}Crear Categoría{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-header bg-body text-body">
-                <h4 class="mb-0">Nueva Categoría</h4>
-            </div>
-            <div class="card-body p-4">
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        {{ form.as_p }}
-                    </div>
-                    <hr>
-                    <div class="d-flex justify-content-end">
-                        <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-secondary me-2">Volver</a>
-                        <button type="submit" class="btn btn-success">Guardar Categoría</button>
-                    </div>
-                </form>
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-0 text-main"><i class="fa-solid fa-tags text-primary me-2"></i>Nueva Categoría</h1>
+            <p class="text-muted small mb-0">Crea una nueva clasificación para el catálogo.</p>
+        </div>
+        <a href="{% url 'apps.productos:listar_productos_admin' %}" class="btn btn-light border-0 shadow-sm rounded-3 hover-lift fw-bold">
+            <i class="fa-solid fa-arrow-left me-1"></i> Volver
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 bg-surface mb-5">
+                <div class="card-body p-4 p-md-5">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% for field in form %}
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-muted small text-uppercase">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text text-muted">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-glow rounded-pill fw-bold btn-lg">
+                                <i class="fa-solid fa-floppy-disk me-2"></i>Guardar Categoría
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

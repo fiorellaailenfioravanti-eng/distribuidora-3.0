@@ -183,6 +183,18 @@ class DireccionEntrega(models.Model):
         verbose_name='Piso / Depto',
         help_text='Ej: "2°B", "PB derecha"'
     )
+    barrio         = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name='Barrio',
+        help_text='Ej: Centro, San Martín, Belgrano...'
+    )
+    ciudad         = models.CharField(
+        max_length=100,
+        blank=True,
+        default='Presidencia Roque Sáenz Peña',
+        verbose_name='Ciudad / Localidad'
+    )
     zona           = models.ForeignKey(
         'logistica.Zona',
         on_delete=models.SET_NULL,
@@ -214,13 +226,18 @@ class DireccionEntrega(models.Model):
 
     def __str__(self):
         extra = f" — {self.piso_depto}" if self.piso_depto else ""
+        barrio_str = f" (B° {self.barrio})" if self.barrio else ""
         zona  = f" [{self.zona}]" if self.zona else ""
-        return f"{self.calle} {self.altura}{extra}{zona}"
+        return f"{self.calle} {self.altura}{extra}{barrio_str}{zona}"
 
     def direccion_completa(self):
         partes = [f"{self.calle} {self.altura}"]
         if self.piso_depto:
             partes.append(self.piso_depto)
+        if self.barrio:
+            partes.append(f"B° {self.barrio}")
+        if self.ciudad:
+            partes.append(self.ciudad)
         if self.zona:
             partes.append(str(self.zona))
         return ', '.join(partes)

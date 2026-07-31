@@ -11,9 +11,14 @@
             <p class="text-muted small mb-0">Gestión de rutas de reparto y entregas diarias</p>
         </div>
         {% if user.is_superuser or user|has_group:"Vendedor" %}
-        <a href="{% url 'apps.logistica:crear_ruta' %}" class="btn btn-primary rounded-3 btn-glow fw-bold px-4">
-            <i class="fa-solid fa-plus me-2"></i> Nueva Ruta
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{% url 'apps.logistica:listar_zonas' %}" class="btn btn-outline-primary rounded-3 fw-bold px-3">
+                <i class="fa-solid fa-map-location-dot me-2"></i> Zonas de Reparto
+            </a>
+            <a href="{% url 'apps.logistica:crear_ruta' %}" class="btn btn-primary rounded-3 btn-glow fw-bold px-4">
+                <i class="fa-solid fa-plus me-2"></i> Nueva Ruta
+            </a>
+        </div>
         {% endif %}
     </div>
 

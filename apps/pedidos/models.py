@@ -124,6 +124,8 @@ class PagoPedido(models.Model):
     mercadopago_payment_id     = models.CharField(max_length=100, blank=True)
     mercadopago_preference_id  = models.CharField(max_length=100, blank=True)
     mercadopago_status         = models.CharField(max_length=50, blank=True)
+    tarjeta_ultimos_4          = models.CharField(max_length=4, blank=True, verbose_name='Últimos 4 dígitos tarjeta')
+    tarjeta_titular            = models.CharField(max_length=100, blank=True, verbose_name='Titular de la tarjeta')
     estado_pago                = models.CharField(
         max_length=30,
         choices=ESTADOS_PAGO,

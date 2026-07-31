@@ -365,8 +365,11 @@ def direcciones_sin_zona(request):
             messages.success(request, f'Se asignaron {actualizados} domicilios a sus zonas correctamente.')
         return redirect('apps.logistica:direcciones_sin_zona')
 
-    # Filtrar direcciones que no tienen zona asignada
-    direcciones_huerfanas = DireccionEntrega.objects.filter(zona__isnull=True).select_related('cliente')
+    # Filtrar direcciones que no tienen zona asignada o que están en Zona 1 (pendiente de revisión)
+    from django.db.models import Q
+    direcciones_huerfanas = DireccionEntrega.objects.filter(
+        Q(zona__isnull=True) | Q(zona__nombre='Zona 1')
+    ).select_related('cliente', 'zona')
     zonas = Zona.objects.all()
 
     contexto = {

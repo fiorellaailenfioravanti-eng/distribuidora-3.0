@@ -16,8 +16,16 @@
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label class="form-label">Nombre</label>
+                        <label class="form-label">Nombre de la Zona</label>
                         {{ form.nombre }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ciudad / Localidad</label>
+                        {{ form.ciudad }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Barrios Incluidos</label>
+                        {{ form.barrios }}
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Descripción</label>

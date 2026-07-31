@@ -77,39 +77,33 @@ def ver_producto(request, pk):
 #Create
 #MI DECORADOR SERIA ESTE PARA QUE VERIFIQUE SI ES VENDEDOR
 @user_passes_test(es_vendedor_o_admin)
-#este seria para comprar o añadir a lista de deseos
-#abajo le estoy diciendo que debe ser administrador o vendedor para crear productos
-# @permission_required('apps.productos.add_producto', raise_exception=True) #lo ultimo devuelve al usuario a login en caso de error
 def crear_producto(request):   
-    
-    
     if request.method == 'POST':
-        #post recibe información del formulario
         form = ProductoForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
             return redirect('apps.productos:listar_productos_admin')
-
     else:
-        #get 
         form = ProductoForm()   
-        return render(request, 'productos/crear_producto.html', {'form': form})
-    
+    return render(request, 'productos/crear_producto.html', {'form': form})
+
+
 @user_passes_test(es_vendedor_o_admin)
 def crear_categoria(request):
     if request.method == 'POST':
         form = CategoriaForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('apps.productos:listar_productos')
+            return redirect('apps.productos:listar_productos_admin')
     else:
         form = CategoriaForm()
     return render(request, 'productos/crear_categoria.html', {'form': form})
 
+
 #Update
 @user_passes_test(es_vendedor_o_admin)
 def editar_producto(request, pk):
-    producto = Producto.objects.get(id_producto=pk)
+    producto = get_object_or_404(Producto, id_producto=pk)
     if request.method == 'POST':
         form = ProductoForm(request.POST, request.FILES, instance=producto)
         if form.is_valid():
@@ -117,7 +111,7 @@ def editar_producto(request, pk):
             return redirect('apps.productos:listar_productos_admin')
     else:
         form = ProductoForm(instance=producto)
-        return render(request, 'productos/editar_producto.html', {'form': form, 'producto': producto})
+    return render(request, 'productos/editar_producto.html', {'form': form, 'producto': producto})
 
 
 

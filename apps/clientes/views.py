@@ -82,9 +82,10 @@ def ver_cliente(request, pk):
     cliente  = get_object_or_404(Cliente, pk=pk)
     telefonos = cliente.telefonos.all()
     direcciones = cliente.direcciones.select_related('zona').all()
+    pedidos = cliente.pedidos.select_related('metodo_pago').prefetch_related('detalles__producto', 'pagos').all()
 
     form_tel = TelefonoContactoForm()
-    form_dir = DireccionEntregaForm()
+    form_dir = DireccionEntregaForm(is_staff_or_admin=True)
 
     # Determinar si el usuario puede ver desc_seguridad (RF-03)
     puede_ver_seguridad = es_admin_o_vendedor(request.user) or \
@@ -94,6 +95,7 @@ def ver_cliente(request, pk):
         'cliente':            cliente,
         'telefonos':          telefonos,
         'direcciones':        direcciones,
+        'pedidos':            pedidos,
         'form_tel':           form_tel,
         'form_dir':           form_dir,
         'puede_ver_seguridad': puede_ver_seguridad,
@@ -318,8 +320,10 @@ def agregar_direccion(request, pk):
 
     next_url = request.GET.get('next') or request.POST.get('next') or ''
 
+    is_staff = es_admin_o_vendedor(request.user)
+
     if request.method == 'POST':
-        form = DireccionEntregaForm(request.POST)
+        form = DireccionEntregaForm(request.POST, is_staff_or_admin=is_staff)
         if form.is_valid():
             dir_ = form.save(commit=False)
             dir_.cliente = cliente
@@ -340,7 +344,7 @@ def agregar_direccion(request, pk):
         else:
             messages.error(request, 'Error al agregar la dirección. Revisá los campos.')
     else:
-        form = DireccionEntregaForm()
+        form = DireccionEntregaForm(is_staff_or_admin=is_staff)
 
     return render(request, 'clientes/agregar_direccion.html', {
         'form': form,
@@ -353,21 +357,27 @@ def agregar_direccion(request, pk):
 def editar_direccion(request, pk):
     direccion  = get_object_or_404(DireccionEntrega, pk=pk)
     cliente    = direccion.cliente
+    is_staff   = es_admin_o_vendedor(request.user)
 
     if not es_dueno_o_staff(request.user, cliente):
         messages.error(request, 'Sin permiso.')
         return redirect('inicio')
 
     if request.method == 'POST':
-        form = DireccionEntregaForm(request.POST, instance=direccion)
+        form = DireccionEntregaForm(request.POST, instance=direccion, is_staff_or_admin=is_staff)
         if form.is_valid():
-            form.save()
+            dir_ = form.save(commit=False)
+            if not dir_.zona:
+                from apps.logistica.models import Zona
+                zona_default, _ = Zona.objects.get_or_create(nombre='Zona 1')
+                dir_.zona = zona_default
+            dir_.save()
             messages.success(request, 'Dirección actualizada.')
             if cliente.usuario == request.user and not es_admin_o_vendedor(request.user):
                 return redirect('apps.clientes:mi_perfil')
             return redirect('apps.clientes:ver_cliente', pk=cliente.pk)
     else:
-        form = DireccionEntregaForm(instance=direccion)
+        form = DireccionEntregaForm(instance=direccion, is_staff_or_admin=is_staff)
 
     return render(request, 'clientes/editar_direccion.html', {
         'form':      form,

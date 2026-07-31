@@ -82,16 +82,25 @@ class ActualizarEstadoForm(forms.ModelForm):
 class ZonaForm(forms.ModelForm):
     class Meta:
         model  = Zona
-        fields = ['nombre', 'descripcion', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']
+        fields = ['nombre', 'ciudad', 'barrios', 'descripcion', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Ej: Centro, Barrio Norte, Zona Industrial...'
+                'placeholder': 'Ej: Zona 1, Zona Centro, Zona Norte...'
+            }),
+            'ciudad': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Presidencia Roque Sáenz Peña'
+            }),
+            'barrios': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Ej: Centro, San Martín, Belgrano, Puerta del Sol...'
             }),
             'descripcion': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 2,
-                'placeholder': 'Descripción opcional de la zona'
+                'placeholder': 'Descripción opcional de la zona o referencias de entrega'
             }),
             'lunes': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'martes': forms.CheckboxInput(attrs={'class': 'form-check-input'}),

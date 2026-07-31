@@ -8,7 +8,9 @@ from django.utils import timezone
 class Zona(models.Model):
     id_zona     = models.AutoField(primary_key=True)
     nombre      = models.CharField(max_length=100, unique=True)
-    descripcion = models.TextField(blank=True)
+    ciudad      = models.CharField(max_length=100, default='Presidencia Roque Sáenz Peña', blank=True, verbose_name='Ciudad')
+    barrios     = models.TextField(blank=True, verbose_name='Barrios incluidos', help_text='Barrios que abarca esta zona (ej: Centro, San Martín, Belgrano)')
+    descripcion = models.TextField(blank=True, verbose_name='Descripción')
     # Días de reparto
     lunes       = models.BooleanField(default=False)
     martes      = models.BooleanField(default=False)

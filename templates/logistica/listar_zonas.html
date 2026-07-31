@@ -29,8 +29,16 @@
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label class="form-label small">Nombre</label>
+                        <label class="form-label small">Nombre de la Zona</label>
                         {{ form.nombre }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">Ciudad / Localidad</label>
+                        {{ form.ciudad }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">Barrios Incluidos</label>
+                        {{ form.barrios }}
                     </div>
                     <div class="mb-3">
                         <label class="form-label small">Descripción</label>
@@ -85,22 +93,25 @@
                     <tr>
                         <th>#</th>
                         <th>Nombre</th>
+                        <th>Ciudad</th>
+                        <th>Barrios Incluidos</th>
                         <th>Días de Reparto</th>
-                        <th>Descripción</th>
-                        <th>Rutas</th>
-                        <th></th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for zona in zonas %}
                     <tr>
                         <td>{{ zona.id_zona }}</td>
-                        <td><strong>{{ zona.nombre }}</strong></td>
-                        <td><span class="badge bg-secondary">{{ zona.dias_activos }}</span></td>
-                        <td><small class="text-muted">{{ zona.descripcion|default:"—" }}</small></td>
                         <td>
-                            <span class="badge bg-primary rounded-pill">{{ zona.rutas.count }}</span>
+                            <strong>{{ zona.nombre }}</strong>
+                            {% if zona.nombre == 'Zona 1' %}
+                                <span class="badge bg-warning text-dark ms-1" title="Zona asignada por defecto"><i class="fa-solid fa-clock"></i> Default</span>
+                            {% endif %}
                         </td>
+                        <td><small>{{ zona.ciudad }}</small></td>
+                        <td><small class="text-muted">{{ zona.barrios|default:"—" }}</small></td>
+                        <td><span class="badge bg-secondary">{{ zona.dias_activos }}</span></td>
                         <td>
                             <div class="d-flex gap-1">
                                 <a href="{% url 'apps.logistica:editar_zona' zona.id_zona %}"

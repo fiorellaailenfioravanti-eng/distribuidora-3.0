@@ -46,6 +46,11 @@
                 </li>
                 {% if user.is_superuser or user|has_group:"Vendedor" %}
                 <li class="nav-item">
+                    <a href="{% url 'apps.pedidos:listar_pedidos' %}" class="sidebar-link {% if 'pedidos' in request.resolver_match.view_name %}active{% endif %}">
+                        <i class="fa-solid fa-boxes-packing"></i> Pedidos
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{% url 'apps.clientes:listar_clientes' %}" class="sidebar-link {% if 'clientes' in request.resolver_match.view_name %}active{% endif %}">
                         <i class="fa-solid fa-users"></i> Clientes
                     </a>
@@ -84,7 +89,8 @@
             <div class="offcanvas-body p-0">
                 <!-- Se podría usar javascript para clonar el menú, pero por simplicidad lo replicaremos minimamente -->
                 <ul class="nav flex-column gap-1 p-3">
-                    <li class="nav-item"><a href="{% url 'inicio' %}" class="sidebar-link"><i class="fa-solid fa-border-all"></i> Resumen</a></li>
+                    <li class="nav-item"><a href="{% url 'dashboard' %}" class="sidebar-link"><i class="fa-solid fa-border-all"></i> Resumen</a></li>
+                    <li class="nav-item"><a href="{% url 'apps.pedidos:listar_pedidos' %}" class="sidebar-link"><i class="fa-solid fa-boxes-packing"></i> Pedidos</a></li>
                     <li class="nav-item"><a href="{% url 'apps.productos:listar_productos' %}" class="sidebar-link"><i class="fa-solid fa-wallet"></i> Productos</a></li>
                 </ul>
             </div>
@@ -114,6 +120,7 @@
                         <i class="fa-solid fa-moon"></i>
                     </button>
                     
+                    {% if not user.is_superuser and not user|has_group:"Vendedor" %}
                     <!-- Carrito -->
                     <a href="{% url 'apps.carrito:ver_carrito' %}" class="btn btn-light rounded-circle border-0 shadow-sm position-relative text-muted" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-shopping-cart"></i>
@@ -123,6 +130,7 @@
                             </span>
                         {% endif %}
                     </a>
+                    {% endif %}
                     
                     <!-- Perfil -->
                     <div class="ms-2 ps-3 border-start border-light-subtle d-flex align-items-center">
@@ -136,7 +144,11 @@
                                     <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=6466f1&color=fff&rounded=true" alt="" width="40" height="40" class="shadow-sm">
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2" aria-labelledby="dropdownUser">
-                                    <li><a class="dropdown-item py-2" href="{% url 'apps.clientes:mi_perfil' %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi Perfil</a></li>
+                                    {% if user.is_superuser or user|has_group:"Vendedor" %}
+                                        <li><a class="dropdown-item py-2" href="{% url 'apps.pedidos:listar_pedidos' %}"><i class="fa-solid fa-boxes-packing me-2 text-muted"></i> Gestión de Pedidos</a></li>
+                                    {% else %}
+                                        <li><a class="dropdown-item py-2" href="{% url 'apps.clientes:mi_perfil' %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi Perfil</a></li>
+                                    {% endif %}
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item py-2 text-danger" href="{% url 'apps.autenticacion:cerrar_sesion' %}"><i class="fa-solid fa-right-from-bracket me-2"></i> Cerrar Sesión</a></li>
                                 </ul>

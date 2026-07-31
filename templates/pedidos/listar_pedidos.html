@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base_dashboard.html' %}
 {% load static %}
 
 {% block title %}Gestión de Pedidos - Distribuidora{% endblock %}
@@ -11,8 +11,8 @@
         </h1>
 
         <!-- Filtros por estado -->
-        <div class="btn-group" role="group">
-            <a href="{% url 'apps.pedidos:listar_pedidos' %}" class="btn btn-outline-secondary btn-sm {% if not estado_filtro %}active{% endif %}">
+        <div class="btn-group flex-wrap" role="group">
+            <a href="{% url 'apps.pedidos:listar_pedidos' %}" class="btn btn-outline-secondary btn-sm {% if not estado_filtro and not pago_filtro %}active{% endif %}">
                 Todos
             </a>
             {% for cod, nombre in estados_choices %}
@@ -20,6 +20,9 @@
                 {{ nombre }}
             </a>
             {% endfor %}
+            <a href="{% url 'apps.pedidos:listar_pedidos' %}?pago_estado=Pendiente" class="btn btn-outline-warning btn-sm {% if pago_filtro == 'Pendiente' %}active{% endif %}">
+                <i class="fa-solid fa-credit-card me-1"></i> Pagos Pendientes
+            </a>
         </div>
     </div>
 
@@ -35,7 +38,8 @@
                         <th scope="col">Dirección</th>
                         <th scope="col" class="text-center">Método Pago</th>
                         <th scope="col" class="text-center">Total</th>
-                        <th scope="col" class="text-center">Estado</th>
+                        <th scope="col" class="text-center">Estado Pago</th>
+                        <th scope="col" class="text-center">Estado Pedido</th>
                         <th scope="col" class="text-end pe-4">Acciones</th>
                     </tr>
                 </thead>
@@ -44,7 +48,9 @@
                     <tr>
                         <td class="ps-4 fw-bold text-white">#{{ pedido.id_pedido }}</td>
                         <td>
-                            <strong class="d-block text-white">{{ pedido.cliente.nombre_completo }}</strong>
+                            <a href="{% url 'apps.clientes:ver_cliente' pedido.cliente.pk %}" class="text-decoration-none text-white fw-bold d-block hover-lift">
+                                {{ pedido.cliente.nombre_completo }}
+                            </a>
                             <small class="text-muted">{{ pedido.cliente.email_display }}</small>
                         </td>
                         <td><small>{{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</small></td>
@@ -57,6 +63,18 @@
                             <span class="badge bg-dark border text-light">{{ pedido.metodo_pago.nombre }}</span>
                         </td>
                         <td class="text-center fw-bold text-success">${{ pedido.total }}</td>
+                        <td class="text-center">
+                            {% with ultimo_pago=pedido.pagos.last %}
+                            <form action="{% url 'apps.pedidos:cambiar_estado_pago' pedido.id_pedido %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <select name="estado_pago" class="form-select form-select-sm border-secondary rounded-pill {% if ultimo_pago and ultimo_pago.estado_pago == 'Aprobado' %}bg-success text-white{% elif ultimo_pago and ultimo_pago.estado_pago == 'Rechazado' %}bg-danger text-white{% else %}bg-warning text-dark{% endif %}" onchange="this.form.submit()">
+                                    <option value="Pendiente" {% if not ultimo_pago or ultimo_pago.estado_pago == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                    <option value="Aprobado" {% if ultimo_pago and ultimo_pago.estado_pago == 'Aprobado' %}selected{% endif %}>Aprobado</option>
+                                    <option value="Rechazado" {% if ultimo_pago and ultimo_pago.estado_pago == 'Rechazado' %}selected{% endif %}>Rechazado</option>
+                                </select>
+                            </form>
+                            {% endwith %}
+                        </td>
                         <td class="text-center">
                             <form action="{% url 'apps.pedidos:cambiar_estado_pedido' pedido.id_pedido %}" method="post" class="d-inline">
                                 {% csrf_token %}

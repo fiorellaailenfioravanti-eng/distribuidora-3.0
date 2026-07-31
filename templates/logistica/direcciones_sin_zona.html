@@ -43,13 +43,15 @@
                             </td>
                             <td>
                                 {{ d.barrio|default:"—" }}<br>
-                                <small class="text-muted">{{ d.localidad }}</small>
+                                <small class="text-muted">{{ d.ciudad }}</small>
                             </td>
                             <td>
-                                <select name="zona_direccion_{{ d.pk }}" class="form-select form-select-sm">
-                                    <option value="">A asignar...</option>
+                                <select name="zona_direccion_{{ d.pk }}" class="form-select form-select-sm border-warning">
+                                    <option value="">-- Sin Zona --</option>
                                     {% for z in zonas %}
-                                    <option value="{{ z.pk }}">{{ z.nombre }} ({{ z.dias_activos }})</option>
+                                    <option value="{{ z.pk }}" {% if d.zona == z %}selected{% endif %}>
+                                        {{ z.nombre }} ({% if z.nombre == 'Zona 1' %}Default - Pendiente{% else %}{{ z.dias_activos }}{% endif %})
+                                    </option>
                                     {% endfor %}
                                 </select>
                             </td>

@@ -18,6 +18,43 @@ class CheckoutForm(forms.Form):
         required=True,
         label="Método de Pago"
     )
+    # Campos opcionales para Tarjeta de Crédito / Débito
+    tarjeta_numero = forms.CharField(
+        required=False,
+        max_length=19,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control bg-dark-subtle border-secondary text-white',
+            'placeholder': '4500 1234 5678 9010',
+            'id': 'inputTarjetaNumero'
+        })
+    )
+    tarjeta_titular = forms.CharField(
+        required=False,
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control bg-dark-subtle border-secondary text-white',
+            'placeholder': 'Como figura en la tarjeta',
+            'id': 'inputTarjetaTitular'
+        })
+    )
+    tarjeta_vencimiento = forms.CharField(
+        required=False,
+        max_length=7,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control bg-dark-subtle border-secondary text-white',
+            'placeholder': 'MM/AA',
+            'id': 'inputTarjetaVencimiento'
+        })
+    )
+    tarjeta_cvv = forms.CharField(
+        required=False,
+        max_length=4,
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control bg-dark-subtle border-secondary text-white',
+            'placeholder': '123',
+            'id': 'inputTarjetaCVV'
+        })
+    )
     notas_cliente = forms.CharField(
         widget=forms.Textarea(attrs={
             'class': 'form-control',
@@ -39,3 +76,12 @@ class CheckoutForm(forms.Form):
                 self.fields['direccion_entrega'].initial = direccion_principal.pk
             elif cliente.direcciones.exists() and not self.is_bound:
                 self.fields['direccion_entrega'].initial = cliente.direcciones.first().pk
+
+            # Preseleccionar método de pago activo
+            metodos_activos = self.fields['metodo_pago'].queryset
+            if metodos_activos.count() == 1 and not self.is_bound:
+                self.fields['metodo_pago'].initial = metodos_activos.first().pk
+            else:
+                ultimo_pedido = cliente.pedidos.first()
+                if ultimo_pedido and ultimo_pedido.metodo_pago and not self.is_bound:
+                    self.fields['metodo_pago'].initial = ultimo_pedido.metodo_pago.pk

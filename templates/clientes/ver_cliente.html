@@ -208,8 +208,18 @@
                             {% if dir.piso_depto %}
                                 <span class="text-muted"> · {{ dir.piso_depto }}</span>
                             {% endif %}
-                            {% if dir.zona %}
-                                <span class="badge bg-secondary ms-2">{{ dir.zona }}</span>
+                            {% if dir.barrio %}
+                                <span class="text-muted d-block small mt-1"><i class="fas fa-building-user me-1"></i>B° {{ dir.barrio }}</span>
+                            {% endif %}
+                            {% if dir.ciudad %}
+                                <span class="text-muted d-block small"><i class="fas fa-city me-1"></i>{{ dir.ciudad }}</span>
+                            {% endif %}
+                            {% if dir.zona and dir.zona.nombre == 'Zona 1' %}
+                                <span class="badge bg-warning text-dark mt-1" title="Zona asignada por defecto (Pendiente de revisión por Administrador)">
+                                    <i class="fa-solid fa-clock me-1"></i>{{ dir.zona.nombre }} (Pendiente de Asignación)
+                                </span>
+                            {% elif dir.zona %}
+                                <span class="badge bg-info bg-opacity-25 text-info mt-1">{{ dir.zona.nombre }}</span>
                             {% endif %}
                             {% if dir.coordenadas %}
                                 <small class="text-muted ms-2">
@@ -229,7 +239,7 @@
                         </div>
                         <div class="d-flex gap-1 ms-2">
                             <a href="{% url 'apps.clientes:editar_direccion' dir.pk %}"
-                               class="btn btn-sm btn-outline-warning">
+                               class="btn btn-sm btn-outline-warning" title="Editar Dirección y Zona">
                                 <i class="fa-solid fa-pen"></i>
                             </a>
                             <form method="post" action="{% url 'apps.clientes:eliminar_direccion' dir.pk %}"
@@ -256,7 +266,7 @@
                 <form method="post" action="{% url 'apps.clientes:agregar_direccion' cliente.pk %}">
                     {% csrf_token %}
                     <div class="row g-2">
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <label class="form-label small">Calle</label>
                             {{ form_dir.calle }}
                         </div>
@@ -268,9 +278,17 @@
                             <label class="form-label small">Piso/Dpto</label>
                             {{ form_dir.piso_depto }}
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label small">Zona</label>
+                        <div class="col-md-4">
+                            <label class="form-label small">Zona (Asignar)</label>
                             {{ form_dir.zona }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">Barrio</label>
+                            {{ form_dir.barrio }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">Ciudad</label>
+                            {{ form_dir.ciudad }}
                         </div>
                         <div class="col-12">
                             <label class="form-label small">
@@ -294,6 +312,68 @@
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Historial de Pedidos del Cliente -->
+<div class="row mt-4 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 surface-card overflow-hidden">
+            <div class="card-header border-0 bg-transparent fw-semibold d-flex justify-content-between align-items-center pt-4 px-4 fs-5">
+                <span><i class="fa-solid fa-boxes-packing me-2 text-primary"></i>Historial de Pedidos y Compras</span>
+                <span class="badge bg-info bg-opacity-25 text-info rounded-pill">{{ pedidos|length }} Pedido(s)</span>
+            </div>
+            <div class="card-body p-0">
+                {% if pedidos %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-body">
+                            <tr>
+                                <th scope="col" class="ps-4"># Pedido</th>
+                                <th scope="col">Fecha</th>
+                                <th scope="col">Método de Pago</th>
+                                <th scope="col" class="text-center">Estado Pago</th>
+                                <th scope="col" class="text-center">Estado Pedido</th>
+                                <th scope="col" class="text-end">Total</th>
+                                <th scope="col" class="text-end pe-4">Detalles</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ped in pedidos %}
+                            <tr>
+                                <td class="ps-4 fw-bold text-white">#{{ ped.id_pedido }}</td>
+                                <td><small class="text-muted">{{ ped.fecha_pedido|date:"d/m/Y H:i" }}</small></td>
+                                <td><span class="badge bg-dark border text-light">{{ ped.metodo_pago.nombre }}</span></td>
+                                <td class="text-center">
+                                    {% with p=ped.pagos.last %}
+                                        {% if p and p.estado_pago == 'Aprobado' %}
+                                            <span class="badge bg-success text-white">Aprobado</span>
+                                        {% elif p and p.estado_pago == 'Rechazado' %}
+                                            <span class="badge bg-danger text-white">Rechazado</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">Pendiente</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info bg-opacity-25 text-info">{{ ped.get_estado_display }}</span>
+                                </td>
+                                <td class="text-end fw-bold text-success">${{ ped.total }}</td>
+                                <td class="text-end pe-4">
+                                    <a href="{% url 'apps.pedidos:detalle_pedido' ped.id_pedido %}" class="btn btn-sm btn-outline-primary rounded-pill">
+                                        <i class="fa-solid fa-eye me-1"></i> Ver Detalle
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4 small mb-0">Este cliente aún no registra compras ni pedidos.</p>
+                {% endif %}
             </div>
         </div>
     </div>

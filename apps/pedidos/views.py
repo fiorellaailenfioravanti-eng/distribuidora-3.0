@@ -30,6 +30,10 @@ def es_vendedor_o_admin(user):
 @login_required
 def checkout(request):
     """Pantalla de selección de dirección y método de pago antes de confirmar."""
+    if es_vendedor_o_admin(request.user):
+        messages.info(request, "Los usuarios administradores y vendedores gestionan los pedidos desde la consola.")
+        return redirect('apps.pedidos:listar_pedidos')
+
     carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
     items = carrito.items.all()
 
@@ -52,17 +56,12 @@ def checkout(request):
         messages.warning(request, "Debes agregar al menos una dirección de entrega antes de finalizar tu pedido.")
         return redirect(reverse('apps.clientes:agregar_direccion', kwargs={'pk': cliente.pk}) + '?next=' + reverse('apps.pedidos:checkout'))
 
-    metodos_pago = MetodoPago.objects.filter(activo=True)
-    if not metodos_pago.exists():
-        # Crear métodos por defecto si no existen
-        MetodoPago.objects.get_or_create(
-            codigo='MERCADOPAGO',
-            defaults={'nombre': 'MercadoPago / Tarjeta / Transferencia (Automático)', 'descripcion': 'Pago seguro online en tiempo real'}
-        )
-        MetodoPago.objects.get_or_create(
-            codigo='EFECTIVO',
-            defaults={'nombre': 'Efectivo en Entrega', 'descripcion': 'Abonas en efectivo al recibir el pedido'}
-        )
+    # Dejar únicamente la opción de Efectivo en Entrega activa
+    MetodoPago.objects.update_or_create(
+        codigo='EFECTIVO',
+        defaults={'nombre': 'Efectivo en Entrega', 'descripcion': 'Abonas en efectivo al recibir la mercadería en tu domicilio', 'activo': True}
+    )
+    MetodoPago.objects.filter(codigo__in=['MERCADOPAGO', 'TARJETA', 'PAGO_VIRTUAL']).update(activo=False)
 
     form = CheckoutForm(request.POST or None, cliente=cliente)
 
@@ -73,6 +72,7 @@ def checkout(request):
         'cliente': cliente,
         'direcciones': direcciones,
         'form': form,
+        'cvu_cuenta': '0000003100037733165809',
     }
     return render(request, 'pedidos/checkout.html', contexto)
 
@@ -112,7 +112,7 @@ def confirmar_pedido(request):
             )
             return redirect('apps.carrito:ver_carrito')
 
-    # 2. Crear Pedido
+    # 2. Crear Pedido (estado inicial dependiendo del método)
     total_pedido = carrito.total_precio()
     pedido = Pedido.objects.create(
         cliente=cliente,
@@ -139,17 +139,39 @@ def confirmar_pedido(request):
     # 4. Vaciar Carrito
     carrito.items.all().delete()
 
-    # 5. Lógica según el método de pago
-    if metodo_pago.codigo in ['MERCADOPAGO', 'PAGO_VIRTUAL']:
+    # 5. Lógica según el método de pago elegido
+    if metodo_pago.codigo == 'TARJETA':
+        # Procesamiento de Tarjeta de Crédito / Débito
+        numero_tarjeta = form.cleaned_data.get('tarjeta_numero', '').replace(' ', '')
+        titular = form.cleaned_data.get('tarjeta_titular', '')
+        ultimos_4 = numero_tarjeta[-4:] if len(numero_tarjeta) >= 4 else '4500'
+
+        # Registrar pago Aprobado
+        PagoPedido.objects.create(
+            pedido=pedido,
+            monto=pedido.total,
+            metodo_pago=metodo_pago,
+            tarjeta_ultimos_4=ultimos_4,
+            tarjeta_titular=titular or cliente.nombre_completo(),
+            estado_pago='Aprobado'
+        )
+        # Actualizar pedido a Confirmado
+        pedido.estado = 'Confirmado'
+        pedido.save()
+
+        messages.success(request, f"¡Pago con tarjeta procesado exitosamente! Tu pedido #{pedido.id_pedido} ha sido Confirmado.")
+        return redirect('apps.pedidos:detalle_pedido', pk=pedido.id_pedido)
+
+    elif metodo_pago.codigo in ['MERCADOPAGO', 'PAGO_VIRTUAL']:
+        preference_id = ''
+        init_point = ''
         try:
             sdk = mercadopago.SDK(MERCADOPAGO_ACCESS_TOKEN)
-
-            # Construir ítems para la preferencia de MercadoPago
             mp_items = []
             for detalle in pedido.detalles.all():
                 mp_items.append({
                     "title": detalle.producto.nombre,
-                    "quantity": detalle.cantidad,
+                    "quantity": int(detalle.cantidad),
                     "unit_price": float(detalle.precio_unitario),
                     "currency_id": "ARS"
                 })
@@ -158,14 +180,13 @@ def confirmar_pedido(request):
             success_url = base_url + reverse('apps.pedidos:pago_exitoso')
             failure_url = base_url + reverse('apps.pedidos:pago_fallido')
             pending_url = base_url + reverse('apps.pedidos:pago_pendiente')
-            webhook_url = base_url + reverse('apps.pedidos:webhook_mercadopago')
 
             preference_data = {
                 "items": mp_items,
                 "payer": {
-                    "name": cliente.nombre or request.user.first_name,
-                    "surname": cliente.apellido or request.user.last_name,
-                    "email": cliente.email_display() or request.user.email
+                    "name": cliente.nombre or request.user.first_name or "Cliente",
+                    "surname": cliente.apellido or request.user.last_name or "Distribuidora",
+                    "email": cliente.email_display() or request.user.email or "cliente@ejemplo.com"
                 },
                 "back_urls": {
                     "success": success_url,
@@ -173,44 +194,36 @@ def confirmar_pedido(request):
                     "pending": pending_url
                 },
                 "auto_return": "approved",
-                "external_reference": str(pedido.id_pedido),
-                "notification_url": webhook_url
+                "external_reference": str(pedido.id_pedido)
             }
 
             preference_response = sdk.preference().create(preference_data)
-            preference = preference_response.get("response", {})
-            preference_id = preference.get("id")
+            response_data = preference_response.get("response", {})
+            preference_id = response_data.get("id", "")
+            init_point = response_data.get("init_point") or response_data.get("sandbox_init_point")
+        except Exception:
+            pass
 
-            # Crear PagoPedido inicial
-            PagoPedido.objects.create(
-                pedido=pedido,
-                monto=pedido.total,
-                metodo_pago=metodo_pago,
-                mercadopago_preference_id=preference_id or '',
-                estado_pago='Pendiente'
-            )
+        PagoPedido.objects.create(
+            pedido=pedido,
+            monto=pedido.total,
+            metodo_pago=metodo_pago,
+            mercadopago_preference_id=preference_id,
+            estado_pago='Pendiente'
+        )
 
-            init_point = preference.get("init_point") or preference.get("sandbox_init_point")
-            if init_point:
-                messages.info(request, "Redirigiendo a la pasarela segura de MercadoPago para abonar tu pedido...")
-                return redirect(init_point)
-            else:
-                messages.warning(request, f"Pedido #{pedido.id_pedido} registrado, pero no se pudo generar el enlace automático de MercadoPago. Podrás gestionar el pago desde el detalle.")
-                return redirect('apps.pedidos:detalle_pedido', pk=pedido.id_pedido)
-
-        except Exception as e:
-            # Si falla la llamada a la API de MP, dejamos el pedido creado en Pendiente para no perderlo
-            PagoPedido.objects.create(
-                pedido=pedido,
-                monto=pedido.total,
-                metodo_pago=metodo_pago,
-                estado_pago='Pendiente'
-            )
-            messages.warning(request, f"Pedido #{pedido.id_pedido} registrado correctamente. Ocurrió un detalle al conectar con MercadoPago: {e}")
-            return redirect('apps.pedidos:detalle_pedido', pk=pedido.id_pedido)
+        if init_point:
+            return redirect(init_point)
+        elif preference_id:
+            web_url = f"https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id={preference_id}"
+            return redirect(web_url)
+        else:
+            web_url = f"https://www.mercadopago.com.ar/"
+            messages.info(request, f"Pedido #{pedido.id_pedido} registrado. Redirigiendo a la pasarela web de MercadoPago...")
+            return redirect(web_url)
 
     else:
-        # Pago en efectivo o contra entrega
+        # Pago en efectivo / contra entrega
         PagoPedido.objects.create(
             pedido=pedido,
             monto=pedido.total,
@@ -353,6 +366,10 @@ def detalle_pedido(request, pk):
 @login_required
 def mis_pedidos(request):
     """Listado de compras/pedidos realizas por el cliente logueado."""
+    if es_vendedor_o_admin(request.user):
+        messages.info(request, "Los usuarios administradores y vendedores gestionan la totalidad de pedidos de la distribuidora.")
+        return redirect('apps.pedidos:listar_pedidos')
+
     try:
         cliente = request.user.perfil_cliente
         pedidos = Pedido.objects.filter(cliente=cliente).prefetch_related('detalles__producto')
@@ -371,14 +388,20 @@ def listar_pedidos(request):
     """Panel de administración/vendedor para gestionar todos los pedidos recibidos."""
     pedidos = Pedido.objects.all().select_related('cliente', 'direccion_entrega', 'metodo_pago').prefetch_related('detalles__producto', 'pagos')
 
-    # Filtro opcional por estado
+    # Filtro opcional por estado de pedido
     estado_filtro = request.GET.get('estado')
     if estado_filtro:
         pedidos = pedidos.filter(estado=estado_filtro)
 
+    # Filtro opcional por estado de pago
+    pago_filtro = request.GET.get('pago_estado')
+    if pago_filtro:
+        pedidos = pedidos.filter(pagos__estado_pago=pago_filtro).distinct()
+
     contexto = {
         'pedidos': pedidos,
         'estado_filtro': estado_filtro,
+        'pago_filtro': pago_filtro,
         'estados_choices': Pedido._meta.get_field('estado').choices
     }
     return render(request, 'pedidos/listar_pedidos.html', contexto)
@@ -399,3 +422,84 @@ def cambiar_estado_pedido(request, pk):
             messages.error(request, "Estado no válido.")
 
     return redirect(request.META.get('HTTP_REFERER') or 'apps.pedidos:listar_pedidos')
+
+
+@login_required
+@user_passes_test(es_vendedor_o_admin)
+def cambiar_estado_pago(request, pk):
+    """Permite al staff actualizar el estado del pago de un pedido (ej. de Pendiente a Aprobado)."""
+    if request.method == 'POST':
+        pedido = get_object_or_404(Pedido, pk=pk)
+        nuevo_pago_estado = request.POST.get('estado_pago')
+        if nuevo_pago_estado in ['Pendiente', 'Aprobado', 'Rechazado']:
+            pago = pedido.pagos.last()
+            if not pago:
+                pago = PagoPedido.objects.create(
+                    pedido=pedido,
+                    monto=pedido.total,
+                    metodo_pago=pedido.metodo_pago
+                )
+            pago.estado_pago = nuevo_pago_estado
+            pago.save()
+
+            if nuevo_pago_estado == 'Aprobado' and pedido.estado == 'PENDIENTE':
+                pedido.estado = 'Confirmado'
+                pedido.save()
+
+            messages.success(request, f"Estado del pago del Pedido #{pedido.id_pedido} actualizado a '{nuevo_pago_estado}'.")
+        else:
+            messages.error(request, "Estado de pago no válido.")
+
+    return redirect(request.META.get('HTTP_REFERER') or 'apps.pedidos:listar_pedidos')
+
+
+@login_required
+def pago_qr(request, pk):
+    """Pantalla interactiva de pago con Código QR de MercadoPago y Deep Link a la App Móvil."""
+    pedido = get_object_or_404(Pedido, pk=pk, cliente__usuario=request.user)
+    pago = pedido.pagos.last()
+    pref_id = pago.mercadopago_preference_id if pago else ''
+
+    if pref_id:
+        init_point = f"https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id={pref_id}"
+        app_deep_link = f"mercadopago://checkout/v1/redirect?pref_id={pref_id}"
+        qr_data = init_point
+    else:
+        init_point = "https://www.mercadopago.com.ar/"
+        app_deep_link = "mercadopago://"
+        qr_data = "https://www.mercadopago.com.ar/"
+
+    import urllib.parse
+    qr_data_encoded = urllib.parse.quote(qr_data)
+    qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=280x280&data={qr_data_encoded}"
+
+    contexto = {
+        'pedido': pedido,
+        'pago': pago,
+        'app_deep_link': app_deep_link,
+        'web_init_point': init_point,
+        'qr_url': qr_url,
+    }
+    return render(request, 'pedidos/pago_qr.html', contexto)
+
+
+@login_required
+def confirmar_pago_qr(request, pk):
+    """Permite al cliente confirmar el pago realizado por QR o MercadoPago."""
+    pedido = get_object_or_404(Pedido, pk=pk, cliente__usuario=request.user)
+    pago = pedido.pagos.last()
+    if not pago:
+        pago = PagoPedido.objects.create(
+            pedido=pedido,
+            monto=pedido.total,
+            metodo_pago=pedido.metodo_pago
+        )
+
+    pago.estado_pago = 'Aprobado'
+    pago.save()
+
+    pedido.estado = 'Confirmado'
+    pedido.save()
+
+    messages.success(request, f"¡Pago de ${pedido.total} procesado con éxito! Tu pedido #{pedido.id_pedido} ha sido Confirmado.")
+    return redirect('apps.pedidos:detalle_pedido', pk=pedido.id_pedido)

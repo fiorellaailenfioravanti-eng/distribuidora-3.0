@@ -423,7 +423,7 @@ def mi_perfil_cliente(request):
         )
 
     telefonos   = cliente.telefonos.all()
-    direcciones = cliente.direcciones.select_related('zona').all()
+    direcciones = cliente.direcciones.select_related('barrio__zona').all()
     pedidos     = Pedido.objects.filter(cliente=cliente).select_related('metodo_pago').prefetch_related('detalles__producto')
 
     return render(request, 'clientes/mi_perfil_cliente.html', {
@@ -433,6 +433,9 @@ def mi_perfil_cliente(request):
         'pedidos':     pedidos,
     })
 
+
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 
 @login_required
 def editar_mi_perfil(request):

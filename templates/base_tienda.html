@@ -40,6 +40,11 @@
                 
                 <!-- Iconos móviles (siempre visibles) -->
                 <div class="d-flex align-items-center gap-2 d-lg-none">
+                    <!-- Botón modo oscuro (Móvil) -->
+                    <button class="toggle-theme-btn btn btn-light rounded-circle border shadow-sm text-muted d-flex align-items-center justify-content-center p-0" style="width: 40px; height: 40px;" title="Cambiar tema">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+
                     {% if not user.is_superuser and not user|has_group:"Vendedor" %}
                     <!-- Carrito (Móvil) -->
                     <a href="{% url 'apps.carrito:ver_carrito' %}" class="btn btn-light rounded-circle text-primary position-relative d-flex align-items-center justify-content-center p-0 shadow-sm" style="width: 40px; height: 40px;">
@@ -100,10 +105,9 @@
 
                     <!-- Acciones derecha -->
                     <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-3 mt-3 mt-lg-0">
-                        <!-- Botón modo oscuro -->
-                        <div class="d-flex align-items-center justify-content-between d-lg-block pt-3 pt-lg-0">
-                            <span class="d-lg-none fw-bold text-muted">Tema Oscuro</span>
-                            <button id="toggle-theme" class="btn btn-light rounded-circle border shadow-sm text-muted d-flex align-items-center justify-content-center hover-lift" style="width: 42px; height: 42px;" title="Cambiar tema">
+                        <!-- Botón modo oscuro (Escritorio) -->
+                        <div class="d-none d-lg-block">
+                            <button class="toggle-theme-btn btn btn-light rounded-circle border shadow-sm text-muted d-flex align-items-center justify-content-center hover-lift" style="width: 42px; height: 42px;" title="Cambiar tema">
                                 <i class="fa-solid fa-moon"></i>
                             </button>
                         </div>

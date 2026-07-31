@@ -4,6 +4,19 @@ from django.shortcuts import render
 def inicio(request):
     return render(request, 'inicio.html')
 
+from django.contrib.auth.decorators import user_passes_test, login_required
+
+def es_admin_o_vendedor(user):
+    if not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    if hasattr(user, 'perfil_empleado'):
+        return user.perfil_empleado.rol.nombre in ['Administrador', 'Vendedor']
+    return False
+
+@login_required
+@user_passes_test(es_admin_o_vendedor, login_url='/')
 def resumen_dashboard(request):
     from apps.pedidos.models import Pedido, PagoPedido
     from apps.clientes.models import Cliente

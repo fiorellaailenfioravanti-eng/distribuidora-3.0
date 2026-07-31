@@ -5,12 +5,12 @@
 
 {% block content %}
 <div class="container-fluid px-0">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
         <div>
-            <h1 class="h3 fw-bold mb-0 text-main"><i class="fa-solid fa-users text-primary me-2"></i> Directorio de Clientes</h1>
+            <h1 class="h3 fw-bold mb-0 text-main">Directorio de Clientes</h1>
             <p class="text-muted small mb-0">Gestión de cuentas y perfiles de clientes.</p>
         </div>
-        <a href="{% url 'apps.clientes:crear_cliente' %}" class="btn btn-primary rounded-3 btn-glow fw-bold px-4">
+        <a href="{% url 'apps.clientes:crear_cliente' %}" class="btn btn-primary rounded-3 btn-glow fw-bold px-4 w-100 text-center" style="max-width: 250px;">
             <i class="fa-solid fa-user-plus me-2"></i> Nuevo Cliente
         </a>
     </div>
@@ -18,24 +18,31 @@
 {# ── Buscador y filtros ── #}
 <div class="card border-0 shadow-sm rounded-4 mb-4 bg-surface">
     <div class="card-body p-3">
-        <form method="get" class="row g-2">
-            <div class="col-md-7">
-                {{ form.q }}
-            </div>
-            <div class="col-md-3">
-                {{ form.tipo }}
-            </div>
-            <div class="col-md-2 d-flex gap-2">
-                <button type="submit" class="btn btn-primary hover-lift w-100 rounded-3">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </button>
-                {% if q or tipo %}
-                <a href="{% url 'apps.clientes:listar_clientes' %}" class="btn btn-light hover-lift rounded-3">
-                    <i class="fa-solid fa-xmark"></i>
-                </a>
-                {% endif %}
-            </div>
-        </form>
+        <!-- Botón de colapso solo visible en móvil -->
+        <button class="btn btn-light rounded-pill fw-bold w-100 d-md-none text-muted shadow-sm mb-1 hover-lift border-0" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosClientesCollapse" aria-expanded="false" aria-controls="filtrosClientesCollapse">
+            <i class="fa-solid fa-filter me-2 text-primary"></i> Filtrar Clientes <i class="fa-solid fa-chevron-down ms-2 small"></i>
+        </button>
+        
+        <div class="collapse d-md-block mt-2 mt-md-0" id="filtrosClientesCollapse">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-md-7">
+                    {{ form.q }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.tipo }}
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary hover-lift w-100 rounded-3">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                    {% if q or tipo %}
+                    <a href="{% url 'apps.clientes:listar_clientes' %}" class="btn btn-light hover-lift rounded-3">
+                        <i class="fa-solid fa-xmark"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -47,13 +54,13 @@
         <thead class="table-light text-muted small text-uppercase">
             <tr>
                 <th class="ps-4 py-3 border-bottom-0">Cliente</th>
-                <th class="py-3 border-bottom-0">Email</th>
-                <th class="py-3 border-bottom-0">DNI</th>
-                <th class="py-3 border-bottom-0">Tipo</th>
-                <th class="py-3 border-bottom-0 text-center">Teléfonos</th>
-                <th class="py-3 border-bottom-0 text-center">Domicilios</th>
+                <th class="py-3 border-bottom-0 d-none d-md-table-cell">Email</th>
+                <th class="py-3 border-bottom-0 d-none d-md-table-cell">DNI</th>
+                <th class="py-3 border-bottom-0 d-none d-lg-table-cell">Tipo</th>
+                <th class="py-3 border-bottom-0 text-center d-none d-lg-table-cell">Teléfonos</th>
+                <th class="py-3 border-bottom-0 text-center d-none d-lg-table-cell">Domicilios</th>
                 <th class="py-3 border-bottom-0 text-center">Bidones</th>
-                <th class="py-3 border-bottom-0">Alta</th>
+                <th class="py-3 border-bottom-0 d-none d-xl-table-cell">Alta</th>
                 <th class="pe-4 py-3 border-bottom-0 text-center">Acciones</th>
             </tr>
         </thead>
@@ -70,17 +77,17 @@
                         </small>
                     {% endif %}
                 </td>
-                <td>
+                <td class="d-none d-md-table-cell">
                     <span class="text-muted small">{{ cliente.email_display|default:"—" }}</span>
                 </td>
-                <td>
+                <td class="d-none d-md-table-cell">
                     {% if cliente.dni %}
                         <span class="text-main fw-semibold small">{{ cliente.dni }}</span>
                     {% else %}
                         <span class="text-muted fst-italic small">Sin DNI</span>
                     {% endif %}
                 </td>
-                <td>
+                <td class="d-none d-lg-table-cell">
                     {% if cliente.tipo_cliente == 'Premium' %}
                         <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-1">
                             <i class="fa-solid fa-star me-1"></i>Premium
@@ -89,12 +96,12 @@
                         <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 py-1">Normal</span>
                     {% endif %}
                 </td>
-                <td class="text-center">
+                <td class="text-center d-none d-lg-table-cell">
                     <span class="badge {% if cliente.cantidad_telefonos >= 2 %}bg-success bg-opacity-25 text-success{% elif cliente.cantidad_telefonos == 1 %}bg-warning bg-opacity-25 text-warning{% else %}bg-danger bg-opacity-25 text-danger{% endif %} rounded-pill px-2 py-1">
                         {{ cliente.cantidad_telefonos }}
                     </span>
                 </td>
-                <td class="text-center">
+                <td class="text-center d-none d-lg-table-cell">
                     <span class="badge {% if cliente.cantidad_direcciones >= 1 %}bg-success bg-opacity-25 text-success{% else %}bg-danger bg-opacity-25 text-danger{% endif %} rounded-pill px-2 py-1">
                         {{ cliente.cantidad_direcciones }}
                     </span>
@@ -106,7 +113,7 @@
                         <span class="text-muted small">—</span>
                     {% endif %}
                 </td>
-                <td><span class="text-muted small">{{ cliente.fecha_alta|date:"d/m/Y" }}</span></td>
+                <td class="d-none d-xl-table-cell"><span class="text-muted small">{{ cliente.fecha_alta|date:"d/m/Y" }}</span></td>
                 <td class="pe-4 text-center">
                     <div class="btn-group shadow-sm">
                         <a href="{% url 'apps.clientes:ver_cliente' cliente.pk %}"
@@ -168,3 +175,4 @@
 {% endif %}
 </div>
 {% endblock %}
+

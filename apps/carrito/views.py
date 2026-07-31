@@ -21,13 +21,29 @@ def agregar_al_carrito(request, producto_id):
     carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
     item_carrito, creado = ItemCarrito.objects.get_or_create(carrito=carrito, producto=producto)
 
-    # Verificamos si la cantidad actual en el carrito + 1 supera el stock disponible
-    nueva_cantidad = item_carrito.cantidad + (0 if creado else 1)
+    cantidad_a_agregar = 1
+    if request.method == 'POST':
+        cantidad_str = request.POST.get('cantidad', '1')
+        try:
+            cantidad_a_agregar = int(cantidad_str)
+        except ValueError:
+            pass
+    elif 'cantidad' in request.GET:
+        try:
+            cantidad_a_agregar = int(request.GET.get('cantidad', '1'))
+        except ValueError:
+            pass
+            
+    if cantidad_a_agregar <= 0:
+        cantidad_a_agregar = 1
+
+    # Verificamos si la cantidad actual en el carrito + agregada supera el stock disponible
+    cantidad_previa = 0 if creado else item_carrito.cantidad
+    nueva_cantidad = cantidad_previa + cantidad_a_agregar
     
     if producto.stock >= nueva_cantidad:
-        if not creado:
-            item_carrito.cantidad += 1
-            item_carrito.save()
+        item_carrito.cantidad = nueva_cantidad
+        item_carrito.save()
         messages.success(request, f"{producto.nombre} se añadió al carrito.")
     else:
         messages.error(request, f"Lo sentimos, no hay suficiente stock de {producto.nombre}. (Máximo: {producto.stock})")
@@ -36,8 +52,8 @@ def agregar_al_carrito(request, producto_id):
             item_carrito.delete()
     
     referer = request.META.get('HTTP_REFERER')
-    if referer and 'producto' in referer:
-        return redirect('apps.productos:ver_producto', pk=producto.id_producto)
+    if referer:
+        return redirect(referer)
     return redirect('apps.productos:listar_productos')
 
 

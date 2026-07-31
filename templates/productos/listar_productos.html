@@ -73,10 +73,31 @@
                                     {% endif %}
                                 </div>
                                 
-                                <a href="{% url 'apps.carrito:agregar_al_carrito' e.id_producto %}" 
-                                   class="btn btn-primary btn-glow w-100 rounded-pill text-white fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center hover-lift" style="font-size: 0.9rem;">
-                                    <i class="fa-solid fa-cart-plus me-2"></i> Añadir
-                                </a>
+                                <div class="add-to-cart-container" id="add-container-{{ e.id_producto }}">
+                                    {% if e.stock > 0 %}
+                                    <!-- Botón inicial -->
+                                    <button type="button" class="btn btn-primary btn-glow w-100 rounded-pill text-white fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center hover-lift" id="btn-add-init-{{ e.id_producto }}" onclick="showQuantitySelector({{ e.id_producto }})" style="font-size: 0.9rem;">
+                                        <i class="fa-solid fa-cart-plus me-2"></i> Añadir
+                                    </button>
+                                    
+                                    <!-- Selector de cantidad (Oculto inicialmente) -->
+                                    <form action="{% url 'apps.carrito:agregar_al_carrito' e.id_producto %}" method="post" class="d-none" id="qty-form-{{ e.id_producto }}">
+                                        {% csrf_token %}
+                                        <div class="input-group input-group-sm mb-2 shadow-sm rounded-pill overflow-hidden border">
+                                            <button class="btn btn-light px-3 fw-bold text-primary" type="button" onclick="changeQty({{ e.id_producto }}, -1)">-</button>
+                                            <input type="number" name="cantidad" id="qty-input-{{ e.id_producto }}" class="form-control text-center border-0 fw-bold text-main" value="1" min="1" max="{{ e.stock }}" inputmode="numeric" oninput="validateQty(this, {{ e.stock }})" style="min-width: 40px; box-shadow: none;">
+                                            <button class="btn btn-light px-3 fw-bold text-primary" type="button" onclick="changeQty({{ e.id_producto }}, 1)">+</button>
+                                        </div>
+                                        <button type="submit" class="btn btn-success btn-glow w-100 rounded-pill text-white fw-bold py-1 shadow-sm d-flex align-items-center justify-content-center hover-lift" style="font-size: 0.85rem;">
+                                            <i class="fa-solid fa-check me-2"></i> Añadir <span id="qty-display-{{ e.id_producto }}" class="ms-1">1</span>
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <button type="button" class="btn btn-secondary w-100 rounded-pill text-white fw-bold py-2 shadow-sm" disabled style="font-size: 0.9rem;">
+                                        Agotado
+                                    </button>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -129,4 +150,52 @@
                 {% endif %}
             </ul>
     </nav>
+
+{% block extra_js %}
+<script>
+    function showQuantitySelector(productoId) {
+        // Ocultar botón inicial
+        document.getElementById('btn-add-init-' + productoId).classList.add('d-none');
+        // Mostrar form
+        document.getElementById('qty-form-' + productoId).classList.remove('d-none');
+    }
+
+    function changeQty(productoId, delta) {
+        const input = document.getElementById('qty-input-' + productoId);
+        const max = parseInt(input.getAttribute('max')) || 1;
+        let currentVal = parseInt(input.value) || 1;
+        
+        let newVal = currentVal + delta;
+        if (newVal < 1) newVal = 1;
+        if (newVal > max) newVal = max;
+        
+        input.value = newVal;
+        updateQtyDisplay(productoId, newVal);
+    }
+
+    function validateQty(input, max) {
+        let val = parseInt(input.value);
+        if (isNaN(val) || val < 1) val = 1;
+        if (val > max) val = max;
+        
+        // Si el usuario está escribiendo, no lo forzamos inmediatamente a menos que se pase del máximo o sea un valor vacío
+        if (parseInt(input.value) > max) {
+            input.value = max;
+        }
+        
+        let displayVal = parseInt(input.value) || 1;
+        
+        // Extraemos el id del producto desde el id del input (ej: qty-input-15)
+        const productoId = input.id.replace('qty-input-', '');
+        updateQtyDisplay(productoId, displayVal);
+    }
+    
+    function updateQtyDisplay(productoId, val) {
+        const display = document.getElementById('qty-display-' + productoId);
+        if (display) {
+            display.textContent = val;
+        }
+    }
+</script>
+{% endblock %}
 {% endblock %}

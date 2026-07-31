@@ -3,9 +3,9 @@
 {% block title %}Actualizar Estado de Entrega{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+<div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="h3 fw-bold mb-1 text-main"><i class="fa-solid fa-pen-to-square text-primary me-2"></i> Actualizar Entrega</h1>
+        <h1 class="h3 fw-bold mb-1 text-main">Actualizar Entrega</h1>
         <p class="text-muted small mb-0">Parada #{{ parada.orden }} — {{ parada.cliente_nombre|default:parada.pedido_ref }}</p>
     </div>
     <a href="javascript:history.back()" class="btn btn-light border-0 shadow-sm rounded-3 hover-lift fw-bold">
@@ -45,3 +45,4 @@
     </div>
 </div>
 {% endblock %}
+

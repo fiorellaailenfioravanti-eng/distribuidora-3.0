@@ -94,11 +94,40 @@
             <div class="offcanvas-body p-0">
                 <!-- Se podría usar javascript para clonar el menú, pero por simplicidad lo replicaremos minimamente -->
                 <ul class="nav flex-column gap-1 p-3">
-                    <li class="nav-item"><a href="{% url 'dashboard' %}" class="sidebar-link"><i class="fa-solid fa-border-all"></i> Resumen</a></li>
-                    <li class="nav-item"><a href="{% url 'apps.pedidos:listar_pedidos' %}" class="sidebar-link"><i class="fa-solid fa-box-open"></i> Pedidos</a></li>
-                    <li class="nav-item"><a href="{% url 'apps.productos:listar_productos' %}" class="sidebar-link"><i class="fa-solid fa-wallet"></i> Productos</a></li>
-                    <li class="nav-item"><a href="{% url 'apps.clientes:listar_clientes' %}" class="sidebar-link"><i class="fa-solid fa-users"></i> Clientes</a></li>
-                    <li class="nav-item"><a href="{% url 'apps.empleados:listar_empleados' %}" class="sidebar-link"><i class="fa-solid fa-id-badge"></i> Empleados</a></li>
+                    <li class="nav-item">
+                        <a href="{% url 'dashboard' %}" class="sidebar-link"><i class="fa-solid fa-border-all"></i> Resumen</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'apps.productos:listar_productos_admin' %}" class="sidebar-link"><i class="fa-solid fa-wallet"></i> Productos</a>
+                    </li>
+                    {% if user.is_superuser or user|has_group:"Vendedor" %}
+                    <li class="nav-item">
+                        <a href="{% url 'apps.pedidos:listar_pedidos' %}" class="sidebar-link"><i class="fa-solid fa-box-open"></i> Pedidos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'apps.clientes:listar_clientes' %}" class="sidebar-link"><i class="fa-solid fa-users"></i> Clientes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'apps.empleados:listar_empleados' %}" class="sidebar-link"><i class="fa-solid fa-id-badge"></i> Empleados</a>
+                    </li>
+                    {% endif %}
+                    {% if user.is_superuser or user|has_group:"Vendedor" or user|has_group:"Repartidor" %}
+                    <li class="nav-item">
+                        <a href="{% url 'apps.logistica:listar_rutas' %}" class="sidebar-link"><i class="fa-solid fa-route"></i> Logística</a>
+                    </li>
+                    {% endif %}
+                    {% if user|has_group:"Repartidor" %}
+                    <li class="nav-item">
+                        <a href="{% url 'apps.logistica:mi_ruta_hoy' %}" class="sidebar-link"><i class="fa-solid fa-truck-fast"></i> Mi Ruta</a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Separador -->
+                    <li class="nav-item mt-auto pt-3">
+                        <a href="{% url 'inicio' %}" class="sidebar-link text-primary fw-bold bg-primary bg-opacity-10 mt-4 rounded-3" target="_blank">
+                            <i class="fa-solid fa-shop"></i> Ver Tienda
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -123,7 +152,7 @@
 
                 <div class="d-flex align-items-center gap-3">
                     <!-- Botón modo oscuro -->
-                    <button id="toggle-theme" class="btn btn-light rounded-circle border-0 shadow-sm text-muted" style="width: 40px; height: 40px;">
+                    <button class="toggle-theme-btn btn btn-light rounded-circle border-0 shadow-sm text-muted" style="width: 40px; height: 40px;">
                         <i class="fa-solid fa-moon"></i>
                     </button>
                     
@@ -151,10 +180,12 @@
                                     <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=6466f1&color=fff&rounded=true" alt="" width="40" height="40" class="shadow-sm">
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2" aria-labelledby="dropdownUser">
-                                    {% if user.is_superuser or user|has_group:"Vendedor" %}
-                                        <li><a class="dropdown-item py-2" href="{% url 'apps.pedidos:listar_pedidos' %}"><i class="fa-solid fa-box-open me-2 text-muted"></i> Gestión de Pedidos</a></li>
-                                    {% else %}
+                                    {% if user.perfil_empleado %}
+                                        <li><a class="dropdown-item py-2" href="{% url 'apps.empleados:ver_empleado' user.perfil_empleado.id_empleado %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi Perfil</a></li>
+                                    {% elif not user.is_superuser %}
                                         <li><a class="dropdown-item py-2" href="{% url 'apps.clientes:mi_perfil' %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi Perfil</a></li>
+                                    {% else %}
+                                        <li><a class="dropdown-item py-2" href="{% url 'apps.autenticacion:perfil' %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi Perfil</a></li>
                                     {% endif %}
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item py-2 text-danger" href="{% url 'apps.autenticacion:cerrar_sesion' %}"><i class="fa-solid fa-right-from-bracket me-2"></i> Cerrar Sesión</a></li>

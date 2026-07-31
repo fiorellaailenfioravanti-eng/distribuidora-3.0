@@ -117,7 +117,7 @@ Las interacciones deben sentirse fluidas ("líquidas"):
 ## 7. 🧩 Guía de Componentes Bootstrap Modificados
 
 ### Botones (`.btn`)
-- **Acciones principales:** Botones con fondo sólido y esquinas redondeadas (`btn-primary rounded-pill` o `rounded-3`).
+- **Acciones principales (Ej. Nuevo Cliente/Producto):** Usar siempre las clases `btn btn-primary rounded-3 btn-glow fw-bold px-4`. El icono FontAwesome (si tiene) debe usar `me-2` para separarse del texto. Evitar `rounded-pill` en botones de cabecera.
 - **Acciones secundarias:** Botones outline (`btn-outline-primary` o `btn-outline-secondary`).
 - No usar bordes rectos.
 

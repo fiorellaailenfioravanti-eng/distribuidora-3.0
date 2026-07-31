@@ -6,9 +6,9 @@
 {% block content %}
 
 {# ── Cabecera ── #}
-<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+<div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="h3 fw-bold mb-1 text-main"><i class="fa-solid fa-route text-primary me-2"></i> Hoja de Ruta #{{ ruta.id_ruta }}</h1>
+        <h1 class="h3 fw-bold mb-1 text-main">Hoja de Ruta #{{ ruta.id_ruta }}</h1>
         <p class="text-muted small mb-0">
             <i class="fa-solid fa-calendar-day me-1"></i> {{ ruta.fecha|date:"d \d\e F \d\e Y" }} &nbsp;·&nbsp;
             <i class="fa-solid fa-map-pin me-1"></i> {{ ruta.zona.nombre }} &nbsp;·&nbsp;
@@ -247,3 +247,4 @@
 </div>
 {% endif %}
 {% endblock %}
+

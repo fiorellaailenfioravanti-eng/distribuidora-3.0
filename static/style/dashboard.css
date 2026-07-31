@@ -144,6 +144,25 @@ h3 {
     border-color: var(--color-secondary);
 }
 
+[data-bs-theme="dark"] .btn-outline-primary {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+[data-bs-theme="dark"] .btn-outline-primary:hover {
+    background-color: var(--color-primary);
+    color: var(--bg-main);
+}
+
+[data-bs-theme="dark"] .btn-light {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+    border-color: transparent;
+}
+[data-bs-theme="dark"] .btn-light:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+
 /* Focus en Inputs */
 .form-control:focus, .form-select:focus {
     border-color: var(--color-primary);

@@ -12,14 +12,14 @@
         <h1 class="h3 fw-bold mb-0 text-main">{{ empleado.nombre }} {{ empleado.apellido }}</h1>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <form method="POST" action="{% url 'apps.empleados:cambiar_estado' empleado.id %}" class="d-inline">
+        <form method="POST" action="{% url 'apps.empleados:cambiar_estado' empleado.id_empleado %}" class="d-inline">
             {% csrf_token %}
             <button type="submit" class="btn {% if empleado.activo %}btn-light text-warning border-0{% else %}btn-light text-success border-0{% endif %} shadow-sm fw-bold rounded-pill hover-lift px-3">
                 <i class="fa-solid fa-power-off me-1"></i> 
                 {% if empleado.activo %}Desactivar{% else %}Activar{% endif %}
             </button>
         </form>
-        <a href="{% url 'apps.empleados:editar_empleado' empleado.id %}" class="btn btn-primary btn-glow fw-bold rounded-pill px-3">
+        <a href="{% url 'apps.empleados:editar_empleado' empleado.id_empleado %}" class="btn btn-primary btn-glow fw-bold rounded-pill px-3">
             <i class="fa-solid fa-pen me-1"></i> Editar
         </a>
         <button type="button" class="btn btn-danger btn-glow fw-bold rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#eliminarModal">
@@ -111,7 +111,7 @@
             </div>
             <div class="modal-footer border-top-0 p-4 pt-0 gap-2">
                 <button type="button" class="btn btn-light fw-bold rounded-pill hover-lift px-4" data-bs-dismiss="modal">Cancelar</button>
-                <form method="POST" action="{% url 'apps.empleados:eliminar_empleado' empleado.id %}">
+                <form method="POST" action="{% url 'apps.empleados:eliminar_empleado' empleado.id_empleado %}">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger btn-glow fw-bold rounded-pill px-4">Sí, eliminar</button>
                 </form>

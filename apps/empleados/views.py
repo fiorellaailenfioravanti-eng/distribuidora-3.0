@@ -52,7 +52,7 @@ def listar_empleados(request):
     roles = RolEmpleado.objects.all()
 
     return render(request, 'empleados/listar_empleados.html', {
-        'page_obj': page_obj,
+        'empleados': page_obj,
         'query': query,
         'rol_id': rol_id,
         'estado': estado,

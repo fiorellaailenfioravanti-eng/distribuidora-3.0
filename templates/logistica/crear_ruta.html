@@ -4,9 +4,9 @@
 
 {% block content %}
 <div class="container-fluid px-0">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="h3 fw-bold mb-1 text-main"><i class="fa-solid fa-route text-primary me-2"></i> Nueva Hoja de Ruta</h1>
+        <h1 class="h3 fw-bold mb-1 text-main">Nueva Hoja de Ruta</h1>
         <p class="text-muted small mb-0">Completá los datos para crear la ruta de reparto.</p>
     </div>
     <a href="{% url 'apps.logistica:listar_rutas' %}" class="btn btn-light border-0 shadow-sm rounded-3 hover-lift fw-bold">
@@ -70,3 +70,4 @@
 </div>
 </div>
 {% endblock %}
+

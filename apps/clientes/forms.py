@@ -223,43 +223,20 @@ class BuscarClienteForm(forms.Form):
 
 
 class EditarMiPerfilForm(forms.Form):
-    """Formulario para que un cliente edite sus propios datos personales y foto."""
-    first_name = forms.CharField(
-        label='Nombre',
-        max_length=150,
-        required=True,
-        widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Tu nombre'})
-    )
-    last_name = forms.CharField(
-        label='Apellido',
-        max_length=150,
-        required=True,
-        widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Tu apellido'})
-    )
-    email = forms.EmailField(
-        label='Correo electrónico',
-        required=True,
-        widget=forms.EmailInput(attrs={'class': _INPUT, 'placeholder': 'tu@email.com'})
-    )
-    dni = forms.CharField(
-        label='DNI',
-        max_length=15,
+    """Formulario para que un cliente edite su foto y teléfono."""
+    celular = forms.CharField(
+        label='Número de teléfono',
+        max_length=30,
         required=False,
-        widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Ej: 30123456'})
-    )
-    fecha_nacimiento = forms.DateField(
-        label='Fecha de nacimiento',
-        required=False,
-        widget=forms.DateInput(attrs={'type': 'date', 'class': _INPUT})
+        widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Ej: 11 1234-5678'})
     )
     imagen_perfil = forms.ImageField(
-        label='Foto de perfil',
+        label='Nueva foto de perfil',
         required=False,
-        widget=forms.FileInput(attrs={'class': _INPUT, 'accept': 'image/*'})
+        widget=forms.FileInput(attrs={'class': _INPUT})
     )
     eliminar_foto = forms.BooleanField(
-        label='Eliminar foto actual y usar avatar por defecto',
+        label='Eliminar foto actual',
         required=False,
         widget=forms.CheckboxInput(attrs={'class': _CHECK})
     )
-

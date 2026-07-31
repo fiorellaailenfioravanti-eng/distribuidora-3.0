@@ -3,9 +3,9 @@
 {% block title %}Asignar Zonas a Barrios{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+<div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="h3 fw-bold mb-1 text-main"><i class="fa-solid fa-map-location-dot text-primary me-2"></i> Barrios sin Zona Asignada</h1>
+        <h1 class="h3 fw-bold mb-1 text-main">Barrios sin Zona Asignada</h1>
         <p class="text-muted small mb-0">Revisá los barrios y asignalos a una zona de reparto.</p>
     </div>
     <a href="{% url 'apps.logistica:listar_zonas' %}" class="btn btn-light border-0 shadow-sm rounded-3 hover-lift fw-bold">
@@ -71,3 +71,4 @@
     </div>
 </div>
 {% endblock %}
+

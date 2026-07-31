@@ -6,26 +6,26 @@
 {% block content %}
 <div class="container py-4">
     <div class="d-flex align-items-center justify-content-between mb-4">
-        <h1 class="fw-bold text-primary mb-0">
-            <i class="fas fa-user-pen me-2"></i>Editar Mi Perfil
-        </h1>
+        <h1 class="fw-bold text-primary mb-0">Editar Mi Perfil</h1>
         <a href="{% url 'apps.clientes:mi_perfil' %}" class="btn btn-outline-secondary rounded-pill">
-            <i class="fas fa-arrow-left me-1"></i> Volver a Mi Perfil
+            <i class="fas fa-arrow-left me-1"></i> Volver
         </a>
     </div>
 
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 surface-card overflow-hidden">
+    <div class="row g-4">
+        <!-- Tarjeta: Editar Foto y Teléfono -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 surface-card h-100 overflow-hidden">
                 <div class="card-header bg-transparent border-bottom p-4">
-                    <h4 class="fw-bold mb-0 text-white"><i class="fas fa-id-card me-2 text-primary"></i>Datos Personales</h4>
+                    <h4 class="fw-bold mb-0 text-white"><i class="fas fa-user-pen me-2 text-primary"></i>Datos de Perfil</h4>
                 </div>
                 <div class="card-body p-4">
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
+                        <input type="hidden" name="form_perfil" value="1">
 
-                        <!-- Foto de perfil actual y campo para cambiarla -->
-                        <div class="d-flex flex-column flex-md-row align-items-center gap-4 p-3 bg-dark-subtle rounded-3 mb-4">
+                        <!-- Foto actual -->
+                        <div class="d-flex flex-column flex-sm-row align-items-center gap-4 p-3 bg-dark-subtle rounded-3 mb-4">
                             <div class="text-center">
                                 {% if user.imagen_perfil %}
                                     <img src="{{ user.imagen_perfil.url }}" alt="{{ user.username }}" class="rounded-circle border border-primary border-3 shadow" style="width: 100px; height: 100px; object-fit: cover;">
@@ -34,50 +34,65 @@
                                 {% endif %}
                             </div>
                             <div class="flex-grow-1">
-                                <label for="{{ form.imagen_perfil.id_for_label }}" class="form-label fw-semibold">Foto de perfil</label>
-                                {{ form.imagen_perfil }}
+                                <label for="{{ form_perfil.imagen_perfil.id_for_label }}" class="form-label fw-semibold">Cambiar Foto</label>
+                                {{ form_perfil.imagen_perfil }}
                                 {% if user.imagen_perfil and 'default.jpg' not in user.imagen_perfil.url %}
                                 <div class="form-check mt-2">
-                                    {{ form.eliminar_foto }}
-                                    <label class="form-check-label text-warning small" for="{{ form.eliminar_foto.id_for_label }}">
-                                        <i class="fas fa-trash-can me-1"></i> Eliminar foto actual y usar avatar por defecto
+                                    {{ form_perfil.eliminar_foto }}
+                                    <label class="form-check-label text-warning small" for="{{ form_perfil.eliminar_foto.id_for_label }}">
+                                        <i class="fas fa-trash-can me-1"></i> Eliminar foto actual
                                     </label>
                                 </div>
                                 {% endif %}
                             </div>
                         </div>
 
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="{{ form.first_name.id_for_label }}" class="form-label fw-semibold">Nombre *</label>
-                                {{ form.first_name }}
-                            </div>
-                            <div class="col-md-6">
-                                <label for="{{ form.last_name.id_for_label }}" class="form-label fw-semibold">Apellido *</label>
-                                {{ form.last_name }}
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">Correo Electrónico *</label>
-                                {{ form.email }}
-                            </div>
-                            <div class="col-md-6">
-                                <label for="{{ form.dni.id_for_label }}" class="form-label fw-semibold">DNI</label>
-                                {{ form.dni }}
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="{{ form.fecha_nacimiento.id_for_label }}" class="form-label fw-semibold">Fecha de Nacimiento</label>
-                                {{ form.fecha_nacimiento }}
-                            </div>
+                        <!-- Celular -->
+                        <div class="mb-4">
+                            <label for="{{ form_perfil.celular.id_for_label }}" class="form-label fw-semibold">Número de Teléfono</label>
+                            {{ form_perfil.celular }}
+                            <div class="form-text">Usaremos este número para comunicarnos sobre tus pedidos.</div>
                         </div>
 
-                        <div class="d-flex justify-content-end gap-2 mt-4">
-                            <a href="{% url 'apps.clientes:mi_perfil' %}" class="btn btn-outline-secondary rounded-pill px-4">
-                                Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-primary btn-glow rounded-pill px-5">
-                                <i class="fas fa-save me-1"></i> Guardar Cambios
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary btn-glow rounded-pill px-4">
+                                <i class="fas fa-save me-1"></i> Actualizar Perfil
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta: Cambiar Contraseña -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 surface-card h-100 overflow-hidden">
+                <div class="card-header bg-transparent border-bottom p-4">
+                    <h4 class="fw-bold mb-0 text-white"><i class="fas fa-lock me-2 text-warning"></i>Seguridad</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_password" value="1">
+                        
+                        <p class="text-muted mb-4">Para proteger tu cuenta, asegúrate de usar una contraseña fuerte y única.</p>
+
+                        {% for field in form_password %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                            <div class="form-text small">{{ field.help_text|safe }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="submit" class="btn btn-warning rounded-pill px-4">
+                                <i class="fas fa-key me-1"></i> Cambiar Contraseña
                             </button>
                         </div>
                     </form>
@@ -87,3 +102,4 @@
     </div>
 </div>
 {% endblock %}
+

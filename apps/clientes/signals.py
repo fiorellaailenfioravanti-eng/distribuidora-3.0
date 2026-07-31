@@ -18,6 +18,10 @@ def crear_perfil_cliente(sender, instance, created, **kwargs):
     if not created:
         return
 
+    # Si se marcó explícitamente como empleado antes de guardar, no creamos perfil de cliente
+    if getattr(instance, '_es_empleado', False):
+        return
+
     from apps.clientes.models import Cliente, TelefonoContacto
 
     # No crear si ya existe un perfil (evita duplicados)

@@ -8,5 +8,12 @@ class RegistroUsuarioForm(UserCreationForm):
         fields = ('username', 'email','password1', 'password2','celular1','celular2', 'imagen_perfil')
 
 class IngresarUsuarioForm(forms.Form):
-   username = forms.CharField(label='Nombre de usuario', max_length=150)
-   password = forms.CharField(label='Contraseña', widget=forms.PasswordInput)
+    username = forms.CharField(
+        label='Nombre de usuario', 
+        max_length=150,
+        widget=forms.TextInput(attrs={'class': 'form-control rounded-3 py-2 px-3'})
+    )
+    password = forms.CharField(
+        label='Contraseña', 
+        widget=forms.PasswordInput(attrs={'class': 'form-control rounded-3 py-2 px-3'})
+    )

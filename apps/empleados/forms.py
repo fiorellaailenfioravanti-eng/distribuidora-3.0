@@ -21,11 +21,7 @@ class EmpleadoForm(forms.ModelForm):
             'notas': forms.Textarea(attrs={'class': _INPUT, 'rows': 3}),
         }
 
-    crear_usuario = forms.BooleanField(
-        required=False,
-        label="Crear cuenta de usuario para este empleado",
-        widget=forms.CheckboxInput(attrs={'class': _CHECK})
-    )
+
     username = forms.CharField(
         required=False,
         label="Nombre de usuario",
@@ -48,38 +44,37 @@ class EmpleadoForm(forms.ModelForm):
 
         # Si el empleado ya tiene un usuario vinculado, ocultamos los campos de creación
         if self.instance and self.instance.pk and self.instance.usuario:
-            self.fields['crear_usuario'].widget = forms.HiddenInput()
             self.fields['username'].widget = forms.HiddenInput()
             self.fields['password'].widget = forms.HiddenInput()
+        else:
+            self.fields['email'].required = True
 
     def clean(self):
         cleaned_data = super().clean()
-        crear_usuario = cleaned_data.get('crear_usuario')
         username = cleaned_data.get('username')
         email = cleaned_data.get('email')
         password = cleaned_data.get('password')
 
-        if crear_usuario:
+        if not self.instance.pk or not self.instance.usuario:
             if not username:
-                self.add_error('username', 'El nombre de usuario es obligatorio para crear una cuenta.')
+                self.add_error('username', 'El nombre de usuario es obligatorio para crear la cuenta.')
             elif Usuario.objects.filter(username=username).exists():
                 self.add_error('username', 'Este nombre de usuario ya está en uso.')
                 
             if not email:
-                self.add_error('email', 'El email es obligatorio para crear una cuenta de usuario.')
+                self.add_error('email', 'El email es obligatorio para crear la cuenta de usuario.')
             elif Usuario.objects.filter(email=email).exists():
                 self.add_error('email', 'Ya existe un usuario con este email.')
                 
             if not password:
-                self.add_error('password', 'La contraseña es obligatoria para crear una cuenta de usuario.')
+                self.add_error('password', 'La contraseña es obligatoria para crear la cuenta de usuario.')
                 
         return cleaned_data
 
     def save(self, commit=True):
         empleado = super().save(commit=False)
-        crear_usuario = self.cleaned_data.get('crear_usuario')
         
-        if crear_usuario and not empleado.usuario:
+        if not empleado.usuario:
             username = self.cleaned_data.get('username')
             email = self.cleaned_data.get('email')
             password = self.cleaned_data.get('password')
@@ -87,13 +82,15 @@ class EmpleadoForm(forms.ModelForm):
             apellido = self.cleaned_data.get('apellido')
             
             # Crear el usuario
-            nuevo_usuario = Usuario.objects.create_user(
+            nuevo_usuario = Usuario(
                 username=username,
                 email=email,
-                password=password,
                 first_name=nombre,
                 last_name=apellido
             )
+            nuevo_usuario.set_password(password)
+            nuevo_usuario._es_empleado = True  # Bandera para omitir la señal que crea Cliente
+            nuevo_usuario.save()
             empleado.usuario = nuevo_usuario
             
         if commit:

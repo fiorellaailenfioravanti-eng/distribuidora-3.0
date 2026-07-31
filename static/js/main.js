@@ -1,6 +1,6 @@
 //funcion para cambiar el tema de bootstrap segun la preferencia del usuario
 document.addEventListener("DOMContentLoaded", function () {
-    const btn = document.getElementById("toggle-theme");
+    const btns = document.querySelectorAll(".toggle-theme-btn");
     const html = document.documentElement;
 
     // Recuperar el tema guardado en localStorage al cargar la página
@@ -9,13 +9,15 @@ document.addEventListener("DOMContentLoaded", function () {
         html.setAttribute("data-bs-theme", savedTheme);
     }
 
-    btn.addEventListener("click", function () {
-        const current = html.getAttribute("data-bs-theme");
-        const next = current === "dark" ? "light" : "dark";
-        html.setAttribute("data-bs-theme", next);
+    btns.forEach(btn => {
+        btn.addEventListener("click", function () {
+            const current = html.getAttribute("data-bs-theme");
+            const next = current === "dark" ? "light" : "dark";
+            html.setAttribute("data-bs-theme", next);
 
-        // Guardar el tema elegido en localStorage
-        localStorage.setItem("theme", next);
+            // Guardar el tema elegido en localStorage
+            localStorage.setItem("theme", next);
+        });
     });
 });
 

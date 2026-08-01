@@ -219,12 +219,14 @@
                             {% if dir.ciudad %}
                                 <span class="text-muted d-block small"><i class="fas fa-city me-1"></i>{{ dir.ciudad }}</span>
                             {% endif %}
-                            {% if dir.zona and dir.zona.nombre == 'Zona 1' %}
-                                <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill mt-1" title="Zona asignada por defecto (Pendiente de revisión por Administrador)">
-                                    <i class="fa-solid fa-clock me-1"></i>{{ dir.zona.nombre }} (Pendiente)
-                                </span>
-                            {% elif dir.zona %}
-                                <span class="badge bg-info bg-opacity-25 text-info rounded-pill mt-1">{{ dir.zona.nombre }}</span>
+                            {% if dir.barrio and dir.barrio.zona %}
+                                {% if 'Zona 1' in dir.barrio.zona.nombre or 'Pendiente' in dir.barrio.zona.nombre %}
+                                    <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill mt-1" title="Zona asignada por defecto (Pendiente de revisión por Administrador)">
+                                        <i class="fa-solid fa-clock me-1"></i>{{ dir.barrio.zona.nombre }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-info bg-opacity-25 text-info rounded-pill mt-1"><i class="fa-solid fa-map-location-dot me-1"></i>{{ dir.barrio.zona.nombre }}</span>
+                                {% endif %}
                             {% endif %}
                             {% if dir.coordenadas %}
                                 <small class="text-muted ms-2">

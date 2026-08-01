@@ -81,7 +81,7 @@ def ver_cliente(request, pk):
 
     cliente  = get_object_or_404(Cliente, pk=pk)
     telefonos = cliente.telefonos.all()
-    direcciones = cliente.direcciones.select_related('zona').all()
+    direcciones = cliente.direcciones.select_related('barrio__zona').all()
     pedidos = cliente.pedidos.select_related('metodo_pago').prefetch_related('detalles__producto', 'pagos').all()
 
     form_tel = TelefonoContactoForm()
@@ -327,11 +327,15 @@ def agregar_direccion(request, pk):
         if form.is_valid():
             dir_ = form.save(commit=False)
             dir_.cliente = cliente
-            # Asignar Zona 1 por defecto si no se especificó
-            if not dir_.zona:
+            # Asignar Zona 1 (Pendiente de Asignación) al barrio si no posee una zona definida
+            if dir_.barrio and not dir_.barrio.zona:
                 from apps.logistica.models import Zona
-                zona_default, _ = Zona.objects.get_or_create(nombre='Zona 1')
-                dir_.zona = zona_default
+                zona_default, _ = Zona.objects.get_or_create(
+                    nombre='Zona 1 (Pendiente de Asignación)',
+                    defaults={'ciudad': 'Resistencia', 'descripcion': 'Zona por defecto asignada a nuevos domicilios hasta su revisión'}
+                )
+                dir_.barrio.zona = zona_default
+                dir_.barrio.save()
             dir_.es_principal = True
             dir_.save()
             messages.success(request, f'Dirección "{dir_}" agregada con éxito.')
@@ -367,10 +371,14 @@ def editar_direccion(request, pk):
         form = DireccionEntregaForm(request.POST, instance=direccion, is_staff_or_admin=is_staff)
         if form.is_valid():
             dir_ = form.save(commit=False)
-            if not dir_.zona:
+            if dir_.barrio and not dir_.barrio.zona:
                 from apps.logistica.models import Zona
-                zona_default, _ = Zona.objects.get_or_create(nombre='Zona 1')
-                dir_.zona = zona_default
+                zona_default, _ = Zona.objects.get_or_create(
+                    nombre='Zona 1 (Pendiente de Asignación)',
+                    defaults={'ciudad': 'Resistencia', 'descripcion': 'Zona por defecto asignada a nuevos domicilios hasta su revisión'}
+                )
+                dir_.barrio.zona = zona_default
+                dir_.barrio.save()
             dir_.save()
             messages.success(request, 'Dirección actualizada.')
             if cliente.usuario == request.user and not es_admin_o_vendedor(request.user):

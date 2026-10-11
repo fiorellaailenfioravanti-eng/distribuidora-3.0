@@ -13,18 +13,17 @@ from .models import Pedido, DetallePedido, PagoPedido, MetodoPago
 from .forms import CheckoutForm
 from apps.carrito.models import Carrito
 from apps.clientes.models import Cliente
-
-
-# Token de prueba de MercadoPago por defecto (Sandbox / Test Token)
-MERCADOPAGO_ACCESS_TOKEN = getattr(
-    settings,
-    'MERCADOPAGO_ACCESS_TOKEN',
-    'APP_USR-7837096695275811-073008-0dbcaef7331562b0833116df163a8a30-244301549'
+from apps.permisos.roles import (
+    es_admin_o_vendedor as es_vendedor_o_admin,
+    puede_ver_nota_seguridad,
 )
 
 
-def es_vendedor_o_admin(user):
-    return user.is_superuser or user.groups.filter(name='Vendedor').exists()
+# Token de MercadoPago. En desarrollo puede ir vacío: el checkout con QR
+# informa al usuario y el resto de los métodos de pago siguen operativos.
+MERCADOPAGO_ACCESS_TOKEN = getattr(settings, 'MERCADOPAGO_ACCESS_TOKEN', '') or ''
+
+MERCADOPAGO_WEBHOOK_SECRET = getattr(settings, 'MERCADOPAGO_WEBHOOK_SECRET', '') or ''
 
 
 @login_required
@@ -56,12 +55,16 @@ def checkout(request):
         messages.warning(request, "Debes agregar al menos una dirección de entrega antes de finalizar tu pedido.")
         return redirect(reverse('apps.clientes:agregar_direccion', kwargs={'pk': cliente.pk}) + '?next=' + reverse('apps.pedidos:checkout'))
 
-    # Dejar únicamente la opción de Efectivo en Entrega activa
-    MetodoPago.objects.update_or_create(
-        codigo='EFECTIVO',
-        defaults={'nombre': 'Efectivo en Entrega', 'descripcion': 'Abonas en efectivo al recibir la mercadería en tu domicilio', 'activo': True}
-    )
-    MetodoPago.objects.filter(codigo__in=['MERCADOPAGO', 'TARJETA', 'PAGO_VIRTUAL']).update(activo=False)
+    # El catálogo de métodos de pago se siembra y mantiene por migración de
+    # datos (apps/pedidos/migrations/0003_sembrar_metodos_pago.py). La vista no
+    # lo modifica: antes desactivaba MercadoPago y Tarjeta en cada visita al
+    # checkout, lo que dejaba esos métodos inutilizables para el resto del
+    # sistema y borraba los códigos nuevos (TRANSFERENCIA, BILLETERA).
+    #
+    # Solo se desactiva MercadoPago si no hay token configurado, para no ofrecer
+    # un checkout que va a fallar.
+    if not MERCADOPAGO_ACCESS_TOKEN:
+        MetodoPago.objects.filter(codigo='MERCADOPAGO').update(activo=False)
 
     form = CheckoutForm(request.POST or None, cliente=cliente)
 
@@ -113,6 +116,7 @@ def confirmar_pedido(request):
             return redirect('apps.carrito:ver_carrito')
 
     # 2. Crear Pedido (estado inicial dependiendo del método)
+    from apps.logistica.services import fecha_estimada_para_direccion
     total_pedido = carrito.total_precio()
     pedido = Pedido.objects.create(
         cliente=cliente,
@@ -120,10 +124,14 @@ def confirmar_pedido(request):
         metodo_pago=metodo_pago,
         total=total_pedido,
         notas_cliente=notas,
-        estado='Pendiente'
+        estado='Pendiente',
+        origen='WEB',
+        fecha_estimada_entrega=fecha_estimada_para_direccion(direccion),
     )
 
-    # 3. Crear DetallePedido y Descontar Stock
+    # 3. Crear DetallePedido. El stock NO se descuenta aquí: el descuento
+    #    ocurre en logística al cargar el camión (confirmar la hoja de ruta),
+    #    de modo que el regreso devuelva los sobrantes sin contar dos veces.
     for item in items:
         DetallePedido.objects.create(
             pedido=pedido,
@@ -132,9 +140,6 @@ def confirmar_pedido(request):
             cantidad=item.cantidad,
             subtotal=item.subtotal()
         )
-        # Descontar del stock del producto
-        item.producto.stock -= item.cantidad
-        item.producto.save()
 
     # 4. Vaciar Carrito
     carrito.items.all().delete()
@@ -359,6 +364,11 @@ def detalle_pedido(request, pk):
         'pedido': pedido,
         'detalles': pedido.detalles.select_related('producto').all(),
         'pagos': pedido.pagos.all(),
+        # RNF-02: la nota de seguridad se evalúa sobre la dirección concreta
+        # del pedido, no sobre el rol del usuario.
+        'puede_ver_nota_seguridad': puede_ver_nota_seguridad(
+            request.user, pedido.direccion_entrega
+        ),
     }
     return render(request, 'pedidos/detalle_pedido.html', contexto)
 

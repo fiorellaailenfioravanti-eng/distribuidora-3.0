@@ -3,6 +3,16 @@ from .models import Pedido, MetodoPago
 from apps.clientes.models import DireccionEntrega
 
 
+def _etiqueta_direccion_con_fecha(direccion):
+    """Texto de la dirección con la fecha estimada de entrega de su zona (RF-16/3E)."""
+    from apps.logistica.services import fecha_estimada_para_direccion
+    etiqueta = str(direccion)
+    fecha = fecha_estimada_para_direccion(direccion)
+    if fecha:
+        etiqueta += f' — entrega estimada: {fecha:%d/%m/%Y}'
+    return etiqueta
+
+
 class CheckoutForm(forms.Form):
     direccion_entrega = forms.ModelChoiceField(
         queryset=DireccionEntrega.objects.none(),
@@ -68,6 +78,7 @@ class CheckoutForm(forms.Form):
     def __init__(self, *args, **kwargs):
         cliente = kwargs.pop('cliente', None)
         super().__init__(*args, **kwargs)
+        self.fields['direccion_entrega'].label_from_instance = _etiqueta_direccion_con_fecha
         if cliente:
             self.fields['direccion_entrega'].queryset = cliente.direcciones.all()
             # Si tiene direcciones, seleccionar la principal por defecto

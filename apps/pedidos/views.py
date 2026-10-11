@@ -452,7 +452,7 @@ def cambiar_estado_pago(request, pk):
             pago.estado_pago = nuevo_pago_estado
             pago.save()
 
-            if nuevo_pago_estado == 'Aprobado' and pedido.estado == 'PENDIENTE':
+            if nuevo_pago_estado == 'Aprobado' and pedido.estado == 'Pendiente':
                 pedido.estado = 'Confirmado'
                 pedido.save()
 

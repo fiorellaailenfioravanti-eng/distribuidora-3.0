@@ -12,6 +12,9 @@
         </div>
         {% if user.is_superuser or user|has_group:"Vendedor" %}
         <div class="d-flex flex-column flex-md-row gap-2">
+            <a href="{% url 'apps.logistica:planificar_reparto' %}" class="btn btn-success rounded-3 fw-bold px-4 text-center">
+                <i class="fa-solid fa-calendar-plus me-2"></i> Planificar Reparto
+            </a>
             <a href="{% url 'apps.logistica:listar_zonas' %}" class="btn btn-outline-primary rounded-3 fw-bold px-4 text-center">
                 <i class="fa-solid fa-map-location-dot me-2"></i> Zonas de Reparto
             </a>
@@ -105,9 +108,9 @@
                     </div>
                 </td>
                 <td class="text-center">
-                    {% if ruta.estado == 'Abierta' %}
+                    {% if ruta.estado == 'Borrador' %}
                         <span class="badge bg-info bg-opacity-25 text-info rounded-pill px-2 py-1"><i class="fa-solid fa-box-open me-1"></i> {{ ruta.estado }}</span>
-                    {% elif ruta.estado == 'En curso' %}
+                    {% elif ruta.estado == 'Confirmada' %}
                         <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-1"><i class="fa-solid fa-truck-fast me-1"></i> {{ ruta.estado }}</span>
                     {% else %}
                         <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1"><i class="fa-solid fa-check-double me-1"></i> {{ ruta.estado }}</span>

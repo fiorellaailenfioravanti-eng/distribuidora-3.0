@@ -2,7 +2,7 @@
 > **Distribuidora 3.0** · Sistema de Gestión Operativa, Logística y E-Commerce
 >
 > **⚠️ LEER PRIMERO:** Este archivo provee todo el contexto necesario para trabajar en este proyecto.
-> Última actualización: 31/07/2026 — Versión 3.1.
+> Última actualización: 30/09/2026 — Versión 4.0.
 
 ---
 
@@ -15,14 +15,14 @@
 | **Institución** | Universidad Nacional del Chaco Austral (UNCAUS) – Ingeniería en Sistemas de Información |
 | **Contexto** | Trabajo Final de Grado / Tesis (Cátedra de Gestión de Datos) |
 | **Framework** | Django 5.0 (Python) |
-| **Base de datos** | SQLite3 (desarrollo) |
+| **Base de datos** | SQLite3 (desarrollo y despliegue académico) |
 
 ### 👥 Equipo de Desarrollo
 
 | Integrante | L.U. | Módulo asignado |
 |---|---|---|
 | **Fiorella Ailén Fioravanti** | 15427 | Portal web e-commerce: autenticación, catálogo, carrito, seguridad, clientes |
-| **Lucas** | — | Módulo logístico: hojas de ruta, agrupación geográfica, app para repartidores |
+| **Lucas Masson** | 37492 | Módulo logístico: hojas de ruta, agrupación geográfica, app para repartidores |
 
 ### 🏪 Negocio del cliente
 Aquadelluvia comercializa y distribuye **domiciliariamente**:
@@ -52,16 +52,17 @@ La empresa coordinaba su operativa con herramientas totalmente informales:
 
 ## 3. ⚙️ Arquitectura y Stack Tecnológico
 
-### Patrón: Django MVT
+### Patrón: Django MVT (Function-Based Views)
 
 | Capa | Tecnología | Detalle |
 |---|---|---|
 | **Model** | Django ORM + SQLite 3 | Mapeo ORM, transacciones ACID, serverless, `db.sqlite3` local |
-| **View** | Function-Based Views (FBV) | Lógica de negocio con decoradores `@login_required` |
+| **View** | Function-Based Views (FBV) | Lógica de negocio con decoradores `@login_required`. **No se usan CBV.** |
 | **Template** | Django Template Language (DTL) | HTML5 + Bootstrap 5.3 (dark mode) |
 | **Auth** | Django Auth (modelo custom) | `AbstractUser` extendido (`autenticacion.Usuario`) |
 | **Media** | Pillow | Manejo de `ImageField` para productos y perfiles |
 | **Búsqueda** | `unicodedata` (stdlib Python) | Normalización de tildes y búsqueda fuzzy |
+| **Config** | `python-decouple` | `SECRET_KEY` y credenciales de MercadoPago fuera del repositorio |
 | **Idioma/Zona** | `es-AR` / `America/Argentina/Buenos_Aires` | — |
 
 ### Estructura de Directorios
@@ -71,21 +72,24 @@ DISTRIBUIDORA-3.0/
 ├── manage.py
 ├── db.sqlite3
 ├── requirements.txt
+├── .env.example                     # Plantilla de variables (SECRET_KEY, ALLOWED_HOSTS, MP)
 ├── distribuidora/
 │   ├── urls.py                      # Router raíz
 │   ├── views.py                     # Vista de inicio
 │   └── settings/
-│       ├── base.py                  # Config compartida
-│       ├── local.py                 # Dev: DEBUG=True, SQLite
-│       └── production.py            # [VACÍO — pendiente]
+│       ├── base.py                  # Config compartida (decouple, apps, i18n)
+│       ├── local.py                 # Dev: DEBUG=True, SQLite, hosts abiertos
+│       └── production.py            # ✅ Despliegue: DEBUG=False, HTTPS, hosts y credenciales
 ├── apps/
-│   ├── autenticacion/               # ✅ Usuarios, roles, perfiles, login
+│   ├── autenticacion/               # ✅ Usuarios, login, perfil, templatetag has_group
 │   ├── buscador/                    # ✅ Búsqueda tolerante a tildes
 │   ├── carrito/                     # ✅ Carrito transaccional + validación stock
 │   ├── productos/                   # ✅ CRUD catálogo y categorías
-│   ├── clientes/                    # ✅ Gestión de clientes (Mes 7) — NUEVO
-│   ├── empleados/                   # ✅ Gestión de empleados y roles
-│   └── abonos/                      # 🔲 Alquileres de dispensers [PLANIFICADO]
+│   ├── clientes/                    # ✅ Gestión de clientes, teléfonos y direcciones
+│   ├── pedidos/                     # ✅ Checkout, Pedido, Pagos, MercadoPago, webhook
+│   ├── logistica/                   # ✅ Zonas, barrios, camiones, rutas y hojas de ruta
+│   ├── empleados/                   # ✅ Empleados y roles (FUENTE ÚNICA del personal)
+│   └── permisos/                    # ✅ Módulo central de roles + sincronización de grupos
 ├── templates/
 ├── static/
 └── media/
@@ -94,13 +98,19 @@ DISTRIBUIDORA-3.0/
 ### Configuración clave (`base.py`)
 
 ```python
+BASE_DIR            = Path(__file__).resolve().parent.parent.parent   # raíz del repo
 AUTH_USER_MODEL     = 'autenticacion.Usuario'
 LOGIN_URL           = '/auth/ingresar/'
 LOGIN_REDIRECT_URL  = '/'
 LOGOUT_REDIRECT_URL = '/auth/ingresar/'
 LANGUAGE_CODE       = 'es-AR'
 TIME_ZONE           = 'America/Argentina/Buenos_Aires'
+SECRET_KEY          = config('SECRET_KEY', default=SECRET_KEY_FALLBACK)  # fallback solo dev
+MERCADOPAGO_ACCESS_TOKEN = config('MERCADOPAGO_ACCESS_TOKEN', default='')
 ```
+
+> `production.py` **no** admite defaults: si falta `SECRET_KEY`, `ALLOWED_HOSTS`,
+> `MERCADOPAGO_ACCESS_TOKEN` o `MERCADOPAGO_WEBHOOK_SECRET`, el arranque falla.
 
 ### Context Processors habilitados
 
@@ -113,6 +123,7 @@ TIME_ZONE           = 'America/Argentina/Buenos_Aires'
 ```bash
 python -m venv venv && venv\Scripts\activate
 pip install -r requirements.txt
+copy .env.example .env          # completar SECRET_KEY, ALLOWED_HOSTS y credenciales MP
 python manage.py migrate --settings=distribuidora.settings.local
 python manage.py createsuperuser --settings=distribuidora.settings.local
 python manage.py runserver --settings=distribuidora.settings.local
@@ -121,7 +132,7 @@ python manage.py runserver --settings=distribuidora.settings.local
 
 ---
 
-## 4. ✅ LO QUE ESTÁ REALIZADO (Meses 1–7)
+## 4. ✅ LO QUE ESTÁ REALIZADO
 
 ### Módulo `apps.autenticacion` ✅
 
@@ -147,6 +158,10 @@ def has_group(user, group_name):
 # Uso en templates: {% if user|has_group:"Vendedor" %}
 ```
 
+**Migración de grupos base** (`autenticacion/migrations/0003_grupos_base.py`):
+crea los grupos `Vendedor` y `Repartidor` en cada base nueva. La asignación de
+permisos se centralizó en `apps.permisos`.
+
 ---
 
 ### Módulo `apps.productos` ✅
@@ -170,22 +185,33 @@ class Producto(models.Model):
 ```
 
 CRUD completo: listar (paginado 6/pág + filtro categoría), ver, crear, editar, eliminar.
-Rutas de escritura protegidas con `@user_passes_test(es_vendedor_o_admin)`.
 
 ---
 
-### Sistema de Roles y Permisos ✅
+### Sistema de Roles y Permisos ✅ — MÓDULO CENTRAL `apps.permisos`
+
+La lógica antes replicada en cinco apps vive ahora en `apps/permisos/roles.py`:
 
 ```python
-def es_vendedor_o_admin(user):
-    return user.is_superuser or user.groups.filter(name='Vendedor').exists()
+def es_admin(user):                       # superusuario activo
+def es_vendedor(user):                    # admin o grupo "Vendedor"
+def es_repartidor(user):                  # grupo "Repartidor"
+def es_admin_o_vendedor(user):            # escritura en el panel
+def es_admin_vendedor_o_repartidor(user): # lectura de logística
+def obtener_empleado(user):               # perfil_empleado o None
+def puede_ver_nota_seguridad(user, direccion)  # RNF-02
 ```
+
+`apps/permisos/signals.py` sincroniza los permisos de los grupos en `post_migrate`
+(aditivo, idempotente): Vendedor administra productos, clientes, pedidos,
+empleados y logística; Repartidor solo hojas de ruta y sus paradas.
 
 | Rol | Acceso |
 |---|---|
 | Invitado | Ver catálogo, usar buscador |
-| Cliente registrado | Todo lo anterior + carrito |
-| Vendedor (grupo Django) | Todo lo anterior + CRUD productos/categorías |
+| Cliente registrado | Todo lo anterior + carrito y sus pedidos |
+| Vendedor (grupo Django) | Todo lo anterior + CRUD productos/clientes/pedidos/empleados/logística |
+| Repartidor (grupo Django) | Ver e imprimir **sus** hojas de ruta; marcar entregas |
 | Superusuario/Admin | Todo + `/admin/` |
 
 ---
@@ -216,12 +242,6 @@ class ItemCarrito(models.Model):
 
 **Vistas:** `ver_carrito`, `agregar_al_carrito`, `eliminar_del_carrito`, `vaciar_carrito`
 
-> ⚠️ El carrito valida stock pero **NO lo descuenta ni genera un Pedido**.
-> El módulo de Pedidos (Mes 8) es la pieza central pendiente.
-
-**Context Processor** (`apps.carrito.context_processors.carrito_total`):
-Inyecta `carrito_total_items` en todos los templates → badge del carrito en navbar.
-
 ---
 
 ### Módulo `apps.buscador` ✅
@@ -242,88 +262,129 @@ Resultados paginados (6/pág), ordenados por nombre.
 
 ---
 
-### Módulo `apps.clientes` ✅ — NUEVO (Mes 7)
+### Módulo `apps.clientes` ✅
 
 **Modelos implementados:**
 
 ```python
 class Cliente(models.Model):
-    # Cuenta web (opcional — null si el cliente no compra online)
     usuario          = OneToOneField('autenticacion.Usuario',
                                      on_delete=SET_NULL, null=True, blank=True,
                                      related_name='perfil_cliente')
-    # Datos propios (usados cuando no hay cuenta, o como complemento)
     nombre           = CharField(max_length=100, blank=True)
     apellido         = CharField(max_length=100, blank=True)
     email_contacto   = EmailField(blank=True)
-    # Datos de negocio
     dni              = CharField(max_length=15, unique=True, null=True, blank=True)
     fecha_nacimiento = DateField(null=True, blank=True)
     tipo_cliente     = CharField(choices=['Normal','Premium'], default='Normal')
     bidones_prestados = PositiveIntegerField(default=0)
     permite_fiado    = BooleanField(default=False)  # auto True para Premium
     notas_internas   = TextField(blank=True)
-
-    # Métodos clave:
-    # nombre_completo() → str   (usa usuario o nombre+apellido propios)
-    # email_display()   → str   (usa email del usuario o email_contacto)
-    # tiene_cuenta()    → bool
-    # es_premium()      → bool
-    # tiene_datos_completos() → bool (≥2 teléfonos + ≥1 dirección)
+    # Métodos: nombre_completo(), email_display(), tiene_cuenta(),
+    #          es_premium(), tiene_datos_completos()
 
 class TelefonoContacto(models.Model):
     cliente      = ForeignKey(Cliente, related_name='telefonos', on_delete=CASCADE)
     numero       = CharField(max_length=30)
-    desc_relacion = CharField(max_length=60)   # "Titular", "Familiar", etc.
-    es_principal = BooleanField(default=False)  # solo 1 por cliente
+    desc_relacion = CharField(max_length=60)
+    es_principal = BooleanField(default=False)
 
 class DireccionEntrega(models.Model):
     cliente        = ForeignKey(Cliente, related_name='direcciones', on_delete=CASCADE)
     calle          = CharField(max_length=150)
     numero         = CharField(max_length=10)
     piso_dpto      = CharField(max_length=30, blank=True)
-    barrio         = CharField(max_length=100, blank=True)
+    barrio         = ForeignKey('logistica.Barrio', null=True, blank=True, related_name='direcciones')
     localidad      = CharField(max_length=100)
     referencia     = TextField(blank=True)
-    desc_seguridad = TextField(blank=True)  # RF-03: solo visible Admin/Vendedor/Repartidor
+    desc_seguridad = TextField(blank=True)  # RNF-02: visible Admin/Vendedor/repartidor ASIGNADO
     es_principal   = BooleanField(default=False)
 ```
 
+> **C-6 corregido:** la nota de seguridad se etiqueta como **RNF-02**, no RF-03.
+
 **Señal `post_save`** en `apps.clientes.signals`:
-- Al registrarse un `Usuario` → crea `Cliente` automáticamente (con nombre/apellido del usuario).
+- Al registrarse un `Usuario` → crea `Cliente` automáticamente.
 - Migra `celular1`/`celular2` a `TelefonoContacto`.
 - Protegida contra duplicados.
 
-**Tipos de alta de cliente:**
-1. **Sin cuenta web** (`/clientes/nuevo/sin-cuenta/`) — Solo Admin/Vendedor. Para clientes presenciales/telefónicos.
-2. **Con cuenta web** (`/clientes/nuevo/con-cuenta/`) — Wizard de 2 pasos: Paso 1 = Datos personales + teléfonos dinámicos, Paso 2 = Credenciales de acceso.
+**Tipos de alta:** sin cuenta web (presencial/telefónica) y con cuenta web (wizard de 2 pasos).
 
-**Teléfonos dinámicos en alta:** El formulario permite agregar N teléfonos con descripción mediante tabla JavaScript (botón `+` agrega fila, botón 🗑️ elimina). Se procesan en `guardar_telefonos_dinamicos()` en `views.py`.
+**Vistas:** `listar_clientes`, `crear_cliente[_sin_cuenta|_con_cuenta]`, `ver_cliente`,
+`editar_cliente`, `cambiar_tipo_cliente`, `agregar/eliminar_telefono`,
+`agregar/editar/eliminar_direccion`, `mi_perfil_cliente`.
 
-**Vistas y URLs:**
+**RNF-02 cerrado:** `desc_seguridad` solo se expone a superusuarios, vendedores y
+al **repartidor asignado** a la parada que incluye esa dirección. Los templates
+de logística (`mi_ruta_hoy`, `ver_ruta`, `imprimir_ruta`) reciben la lista
+`paradas_con_nota_visible` calculada en la vista con `puede_ver_nota_seguridad()`.
 
-| Vista | URL | Acceso |
-|---|---|---|
-| `listar_clientes` | `/clientes/` | Login |
-| `crear_cliente` | `/clientes/nuevo/` | Admin/Vendedor |
-| `crear_cliente_sin_cuenta` | `/clientes/nuevo/sin-cuenta/` | Admin/Vendedor |
-| `crear_cliente_con_cuenta` | `/clientes/nuevo/con-cuenta/` | Admin/Vendedor |
-| `ver_cliente` | `/clientes/<pk>/` | Login |
-| `editar_cliente` | `/clientes/<pk>/editar/` | Admin/Vendedor |
-| `cambiar_tipo_cliente` | `/clientes/<pk>/tipo/` | Admin/Vendedor |
-| `agregar_telefono` | `/clientes/<pk>/telefono/nuevo/` | Admin/Vendedor |
-| `eliminar_telefono` | `/clientes/telefono/<pk>/eliminar/` | Admin/Vendedor |
-| `agregar_direccion` | `/clientes/<pk>/direccion/nueva/` | Admin/Vendedor |
-| `editar_direccion` | `/clientes/direccion/<pk>/editar/` | Admin/Vendedor |
-| `eliminar_direccion` | `/clientes/direccion/<pk>/eliminar/` | Admin/Vendedor |
-| `mi_perfil_cliente` | `/clientes/mi-perfil/` | Cliente propio |
+---
 
-**Comportamientos especiales:**
-- 🟡 Badge amarillo en listado: cliente con menos de 2 teléfonos.
-- 🔴 Badge rojo: sin teléfonos o sin dirección.
-- ⭐ Toggle Normal↔Premium desde la ficha (auto-habilita fiado).
-- 🛡️ `desc_seguridad` invisible para el propio cliente (RF-03 cumplido).
-- Las notificaciones (alertas Django) **no desaparecen automáticamente** (timeout desactivado en `main.js`).
+### Módulo `apps.pedidos` ✅
+
+**Modelos:** `Pedido`, `DetallePedido`, `PagoPedido`, `MetodoPago`.
+
+- `Pedido`: estado (`Pendiente`, `Confirmado`, `En Camino`, `Entregado`, `Cancelado`),
+  total, fecha, FK a `Cliente` y `DireccionEntrega`, FK a `MetodoPago`.
+- `DetallePedido`: congela precio unitario y cantidad del producto al comprar.
+- `PagoPedido`: pagos parciales, estados y transacción de MercadoPago
+  (`mercadopago_payment_id`, `mercadopago_status`).
+- `MetodoPago`: `EFECTIVO`, `MERCADOPAGO`, `TARJETA`, `TRANSFERENCIA`, `BILLETERA`
+  (sembrados por `pedidos/migrations/0003_sembrar_metodos_pago.py`).
+
+**Checkout & transaccionalidad:**
+- Operación en `@transaction.atomic` con validación y descuento de stock.
+- Integración del SDK `mercadopago` con preferencias, callbacks y webhook
+  (`/pedidos/webhook/mercadopago/`). El **token se lee del entorno** (no está en el código).
+- Panel de gestión para Vendedores (`/pedidos/gestion/`) e historial (`/pedidos/mis-pedidos/`).
+
+---
+
+### Módulo `apps.empleados` ✅ — FUENTE ÚNICA DEL PERSONAL
+
+```python
+class RolEmpleado(models.Model):
+    id_rol      = AutoField(primary_key=True)
+    nombre      = CharField(max_length=60, unique=True)
+    descripcion = TextField(blank=True)
+
+class Empleado(models.Model):
+    id_empleado = AutoField(primary_key=True)
+    usuario     = OneToOneField(Usuario, on_delete=SET_NULL, null=True, blank=True,
+                                related_name='perfil_empleado')
+    nombre, apellido, dni (unique), celular, email
+    rol         = ForeignKey(RolEmpleado, on_delete=PROTECT, related_name='empleados')
+    activo      = BooleanField(default=True)
+    notas, fecha_creacion, fecha_actualizacion
+```
+
+**H-2/H-3 corregidos:** `logistica` ya **no** define `Empleado` ni `RolEmpleado`
+propios; los importa de `apps.empleados`. Se eliminaron las tablas
+`logistica_empleado` y `logistica_rolempleado`. `HojaRuta.empleado` y
+`RutaReparto.empleado_default` apuntan a `empleados.Empleado`.
+
+---
+
+### Módulo `apps.logistica` ✅ (Mes 9–10, parcial en RF-17/RF-19)
+
+**Modelos:** `Zona`, `Barrio`, `Camion`, `RutaReparto`, `HojaRuta`, `DetalleHojaRuta`.
+
+- `Zona` con días de reparto (lunes…domingo) y `barrios` relacionados.
+- `Barrio` FK a `Zona`.
+- `Camion` (patente PK).
+- `RutaReparto`: nombre, zona, día de semana, empleado y camión por defecto.
+- `HojaRuta`: fecha, `RutaReparto`, `Empleado`, `Camion`, estado
+  (`Abierta`/`En curso`/`Cerrada`), observaciones, `creado_por`.
+- `DetalleHojaRuta`: orden, `direccion_entrega` (FK opcional), `direccion_texto`,
+  `cliente_nombre`, `pedido_ref` (CharField temporal), estado de entrega y nota.
+
+**Vistas:** `listar_rutas`, `crear/ver/editar/imprimir_ruta`, `agregar/eliminar_parada`,
+`actualizar_estado_entrega`, `mi_ruta_hoy`, CRUD de zonas y camiones,
+`direcciones_sin_zona`.
+
+> ⏳ **Pendiente de Fase 3:** vincular `DetalleHojaRuta` con `pedidos.Pedido`,
+> agrupar pedidos confirmados por zona y generar hojas de ruta quincenales.
 
 ---
 
@@ -332,83 +393,41 @@ class DireccionEntrega(models.Model):
 `base.html` tiene: Bootstrap 5.3 dark mode, Font Awesome 6, navbar con toggle dark/light,
 buscador integrado, badge del carrito, menú `+ Crear` condicional (Vendedor/Admin),
 mensajes Django **persistentes** (sin auto-dismiss).
-
 El nombre de usuario en la navbar es un **link** a `/clientes/mi-perfil/`.
 
 ---
 
-## 5. 🔲 LO QUE ESTÁ PENDIENTE (Meses 8–12)
+## 5. 🔲 LO QUE ESTÁ PENDIENTE (Fases 3–7)
 
-### Módulo `apps.pedidos` ✅ — NUEVO (Mes 8)
+### Fase 3 — Logística ↔ Pedido 🔴
+- [ ] Vincular `DetalleHojaRuta` → `pedidos.Pedido` (FK) y migrar `pedido_ref` (H-4)
+- [ ] Agrupar pedidos `Confirmado` por zona y proponer carga (RF-17)
+- [ ] Comando de generación quincenal de hojas de ruta (RF-17)
+- [ ] Al marcar entrega: actualizar `Pedido.estado` y stock en `transaction.atomic` (RF-19)
 
-**Modelos e Integración:**
-- **`Pedido`**: Registra la transacción con estado (`Pendiente`, `Confirmado`, `En Camino`, `Entregado`, `Cancelado`), vinculando al `Cliente` y su `DireccionEntrega`.
-- **`DetallePedido`**: Congela el precio unitario y cantidad del producto al momento de la compra.
-- **`PagoPedido`**: Almacena los pagos, estados y la transacción de MercadoPago (`mercadopago_payment_id`, `mercadopago_status`).
-- **`MetodoPago`**: Soporta Efectivo en Entrega y MercadoPago / Pago Virtual.
+### Fase 4 — Cuentas corrientes, morosidad y abonos 🔴
+- [ ] `apps.cuentas`: `CuentaCorriente`, `MovimientoCuenta` (RF-14)
+- [ ] Regla de fiado solo para clientes `Premium`/`permite_fiado` (RF-05)
+- [ ] Semaforización 🟡 inicio de mes · 🟠 10 días · 🔴 15 días
+- [ ] `apps.abonos`: alquiler de dispensers (RF-15)
 
-**Checkout & Transaccionalidad:**
-- Operación envuelta en `@transaction.atomic` para validación de stock de cada producto.
-- Descuento automático de `Producto.stock` al confirmar el pedido.
-- Integración de SDK `mercadopago` con Preferencias de Pago, callbacks y endpoint de Webhook (`/pedidos/webhook/mercadopago/`).
-- Panel de gestión para Vendedores (`/pedidos/gestion/`) e historial de usuario (`/pedidos/mis-pedidos/`).
+### Fase 5 — Bidones y promociones prepago 🔴
+- [ ] Historial `MovimientoBidon` (entrada/salida) — reemplaza `bidones_prestados` (RF-08)
+- [ ] `Promocion` / saldo de promoción "Paga 3 Lleva 4" (RF-09)
+- [ ] Caducidad estricta a 30 días corridos (RF-10)
 
----
+### Fase 6 — Pagos parciales y pedido automático 🔴
+- [ ] Bloquear checkout con <2 teléfonos o 0 direcciones (RF-04)
+- [ ] Vista de cobro manual con pagos parciales (RF-13, HU-05)
+- [ ] `PedidoAutomatico` quincenal (RF-18)
 
-### Mes 9 — Cuentas Corrientes, Bidones y Promociones 🔴 PENDIENTE
-
-- [ ] Trazabilidad de bidones prestados sin cargo (RF-08) — el campo `bidones_prestados` ya existe en `Cliente`
-- [ ] `apps.abonos`: contratos de alquiler mensual con estado (`Activo`, `Suspendido`, `Finalizado`)
-- [ ] Promociones prepago "Paga 3, lleva 4" con entregas parciales (RF-09)
-- [ ] Caducidad estricta: saldo de promociones vence a los **30 días corridos** (RF-10)
-- [ ] Semaforización de deuda en cuentas corrientes (RF-14):
-  - 🟡 Amarillo: deuda al comenzar el mes
-  - 🟠 Naranja: 10 días sin saldar
-  - 🔴 Rojo: más de 15 días (+ notificación automatizada)
-
-**Tablas planificadas:**
-```
-Cliente_alquila_producto (id_cliente [PK,FK], id_producto [PK,FK], fecha_inicio, costo_mensual, estado)
-Promociones              (id_promo [PK], nombre, cant_articulos, plazo_validez)
-Incluye_promo            (id_promo [PK,FK], id_pedido [PK,FK], cant_comprada, subtotal)
-Saldo_disp_promocion     (id_cliente [FK], id_promo [FK], id_pedido [FK], unid_restantes, fecha_caducidad)
-```
-
----
-
-### Mes 10 — Logística y Hojas de Ruta 🔴 PENDIENTE (módulo Lucas)
-
-- [ ] Creación de Hojas de Ruta diarias (fecha, zona, camión, chofer)
-- [ ] Algoritmo de ordenamiento de pedidos por dirección/zona
-- [ ] Generación quincenal automática de rutas (RF-17)
-- [ ] Interfaz para repartidores: `Entregado` / `Cancelado` en tiempo real (RF-19)
-
-**Tablas planificadas:**
-```
-Empleado         (id_empleado [PK], dni [FK→Persona], id_rol [FK→Rol_empleado])
-Rol_empleado     (id_rol [PK], descripcion)
-Camion           (patente [PK], descripcion)
-Zona             (id_zona [PK], nombre)
-Hoja_ruta        (id_ruta [PK], fecha, id_empleado [FK], patente [FK], id_zona [FK])
-Detalle_hoja_ruta(id_pedido [PK,FK], id_ruta [PK,FK], estado)
-```
-
----
-
-### Mes 11 — Alertas y Automatizaciones 🔴 PENDIENTE
-
-- [ ] Panel visual de morosidad con semaforización
-- [ ] Notificaciones automáticas para deuda > 15 días
-- [ ] Alertas de vencimiento de saldos de promociones
-
----
-
-### Mes 12 — QA, Testing y Memoria Final 🔴 PENDIENTE
-
-- [ ] Tests unitarios e integración (`pytest-django` / `unittest`)
-- [ ] Completar `distribuidora/settings/production.py`
-- [ ] Mover `SECRET_KEY` a variable de entorno (`.env`)
-- [ ] Redacción del documento final de Tesis
+### Fase 7 — QA, producción y tesis 🎓
+- [x] Tests de permisos, roles y RNF-02 (`apps/permisos/tests.py`)
+- [x] `settings/production.py` completo
+- [x] `SECRET_KEY` y credenciales MP en entorno
+- [ ] Suites de carrito, pedidos, logística, cuentas y buscador
+- [ ] Verificar el DER del informe contra el esquema real
+- [ ] Memoria final de tesis
 
 ---
 
@@ -416,16 +435,27 @@ Detalle_hoja_ruta(id_pedido [PK,FK], id_ruta [PK,FK], estado)
 
 ```
 autenticacion.Usuario (AbstractUser)
-    └── clientes.Cliente  [OneToOne, nullable → usuario puede ser NULL]
-            ├── nombre, apellido, email_contacto  (campos propios si no tiene cuenta)
-            ├── dni, fecha_nacimiento, tipo_cliente, bidones_prestados, permite_fiado
-            ├── TelefonoContacto  [FK, multiple] → numero, desc_relacion, es_principal
-            └── DireccionEntrega  [FK, multiple] → calle, numero, barrio, localidad,
-                                                    desc_seguridad (RF-03), es_principal
+    ├── clientes.Cliente  [OneToOne, nullable]
+    │       ├── TelefonoContacto [FK] → numero, desc_relacion, es_principal
+    │       └── DireccionEntrega [FK] → calle, altura, barrio [FK→logistica.Barrio],
+    │                                   desc_seguridad (RNF-02), es_principal
+    ├── carrito.Carrito [OneToOne]
+    │       └── ItemCarrito [FK→productos.Producto]
+    └── empleados.Empleado [OneToOne, nullable, related_name=perfil_empleado]
+            └── rol [FK→empleados.RolEmpleado]
 
-productos.Producto  [ManyToMany→ Categoria]
-carrito.Carrito     [OneToOne→ Usuario]
-    └── ItemCarrito [FK→ Producto]
+productos.Producto [ManyToMany→ Categoria]
+
+pedidos.Pedido [FK→Cliente, FK→DireccionEntrega, FK→MetodoPago]
+    ├── DetallePedido [FK→Producto]
+    └── PagoPedido
+
+logistica.Zona
+    └── Barrio [FK→Zona]
+logistica.Camion
+logistica.RutaReparto [FK→Zona, FK→Empleado, FK→Camion]
+    └── HojaRuta [FK→RutaReparto, FK→Empleado, FK→Camion, FK→Usuario(creado_por)]
+            └── DetalleHojaRuta [FK→DireccionEntrega opcional; pedido_ref temporal]
 ```
 
 ---
@@ -433,24 +463,20 @@ carrito.Carrito     [OneToOne→ Usuario]
 ## 7. 🗃️ Esquema Relacional Completo (Diseño Final Planificado)
 
 ```
-Cliente (id [PK], usuario_id [FK→Usuario, nullable], nombre, apellido, ...)
-    ├── TelefonoContacto (id, cliente [FK], numero, desc_relacion, es_principal)
-    ├── DireccionEntrega (id, cliente [FK], calle, desc_seguridad, coordenadas, id_zona [FK])
-    ├── Pedido (id_pedido [PK], estado, total, fecha, cliente [FK])
-    │       ├── Producto_incluye_pedido
-    │       ├── Pago_pedido → Metodo_pago
-    │       ├── Detalle_hoja_ruta → Hoja_ruta
-    │       └── Incluye_promo → Promociones
-    ├── Cliente_alquila_producto → Producto
-    └── Saldo_disp_promocion
+Cliente
+    ├── TelefonoContacto
+    ├── DireccionEntrega [FK→Zona] ──────────────┐
+    ├── Pedido                                     │
+    │       ├── DetallePedido                      │
+    │       ├── PagoPedido → MetodoPago            │
+    │       └── DetalleHojaRuta → HojaRuta ────────┘
+    ├── CuentaCorriente → MovimientoCuenta
+    ├── Abono → Producto
+    └── SaldoDispensadorPromocion → Promocion
 
-Producto (id_producto [PK], nombre, precio, costo_alquiler, capacidad, id_categoria [FK])
-    └── Categoria (id_categoria [PK], nombre)
-
-Hoja_ruta   (id_ruta [PK], fecha, id_empleado [FK], patente [FK→Camion], id_zona [FK→Zona])
-Camion      (patente [PK], descripcion)
-Zona        (id_zona [PK], nombre)
-Empleado    (id_empleado [PK], dni, id_rol [FK→Rol_empleado])
+Producto → Categoria
+RolEmpleado ← Empleado → HojaRuta
+Camion ← RutaReparto → Zona
 ```
 
 ---
@@ -461,7 +487,7 @@ Empleado    (id_empleado [PK], dni, id_rol [FK→Rol_empleado])
 /                              → inicio
 /admin/                        → Django Admin
 
-/productos/                    → listar_productos  (paginado + filtro categoría)
+/productos/                    → listar_productos
 /productos/producto/<pk>       → ver_producto
 /productos/crear/              → crear_producto        [🔒 Vendedor/Admin]
 /productos/categoria/crear/    → crear_categoria       [🔒 Vendedor/Admin]
@@ -484,7 +510,7 @@ Empleado    (id_empleado [PK], dni, id_rol [FK→Rol_empleado])
 /clientes/nuevo/               → selector tipo de alta [🔒 Admin/Vendedor]
 /clientes/nuevo/sin-cuenta/    → alta sin cuenta web   [🔒 Admin/Vendedor]
 /clientes/nuevo/con-cuenta/    → alta con cuenta web   [🔒 Admin/Vendedor]
-/clientes/<pk>/                → ver_cliente           [🔒 Login]
+/clientes/<pk>/                → ver_cliente           [🔒 Admin/Vendedor]
 /clientes/<pk>/editar/         → editar_cliente        [🔒 Admin/Vendedor]
 /clientes/<pk>/tipo/           → cambiar_tipo_cliente  [🔒 Admin/Vendedor]
 /clientes/<pk>/telefono/nuevo/ → agregar_telefono      [🔒 Admin/Vendedor]
@@ -493,6 +519,39 @@ Empleado    (id_empleado [PK], dni, id_rol [FK→Rol_empleado])
 /clientes/direccion/<pk>/editar/  → editar_direccion   [🔒 Admin/Vendedor]
 /clientes/direccion/<pk>/eliminar/→ eliminar_direccion [🔒 Admin/Vendedor]
 /clientes/mi-perfil/           → mi_perfil_cliente     [🔒 Login]
+
+/pedidos/checkout/             → checkout              [🔒 Login]
+/pedidos/confirmar/            → confirmar_pedido      [🔒 Login]
+/pedidos/pago/exitoso|pendiente|fallido/ → callbacks MP
+/pedidos/webhook/mercadopago/  → webhook_mercadopago
+/pedidos/<pk>/pago-qr/         → pago_qr               [🔒 Login]
+/pedidos/<pk>/confirmar-qr/    → confirmar_pago_qr     [🔒 Login]
+/pedidos/mis-pedidos/          → mis_pedidos           [🔒 Login]
+/pedidos/gestion/              → listar_pedidos        [🔒 Admin/Vendedor]
+/pedidos/<pk>/                 → detalle_pedido        [🔒 Login]
+/pedidos/<pk>/cambiar-estado/  → cambiar_estado_pedido [🔒 Admin/Vendedor]
+/pedidos/<pk>/cambiar-estado-pago/ → cambiar_estado_pago [🔒 Admin/Vendedor]
+
+/logistica/                    → listar_rutas          [🔒 Admin/Vendedor/Repartidor]
+/logistica/nueva/              → crear_ruta            [🔒 Admin/Vendedor]
+/logistica/<pk>/               → ver_ruta              [🔒 Admin/Vendedor/Repartidor asignado]
+/logistica/<pk>/editar/        → editar_ruta           [🔒 Admin/Vendedor]
+/logistica/<pk>/imprimir/      → imprimir_ruta         [🔒 Admin/Vendedor/Repartidor asignado]
+/logistica/<pk>/parada/agregar/→ agregar_parada        [🔒 Admin/Vendedor]
+/logistica/parada/<pk>/eliminar/ → eliminar_parada     [🔒 Admin/Vendedor]
+/logistica/parada/<pk>/estado/ → actualizar_estado_entrega [🔒 asignado]
+/logistica/mi-ruta/            → mi_ruta_hoy           [🔒 Admin/Vendedor/Repartidor]
+/logistica/zonas/              → listar_zonas          [🔒 Admin/Vendedor]
+/logistica/camiones/           → listar_camiones       [🔒 Admin/Vendedor]
+
+/empleados/                    → listar_empleados      [🔒 Admin/Vendedor]
+/empleados/nuevo/              → crear_empleado        [🔒 Admin/Vendedor]
+/empleados/<pk>/               → ver_empleado          [🔒 Admin/Vendedor]
+/empleados/<pk>/editar/        → editar_empleado       [🔒 Admin/Vendedor]
+/empleados/<pk>/estado/        → cambiar_estado        [🔒 Admin/Vendedor]
+/empleados/<pk>/eliminar/      → eliminar_empleado     [🔒 Admin/Vendedor]
+/empleados/roles/              → listar_roles          [🔒 Admin/Vendedor]
+/empleados/roles/nuevo/        → crear_rol             [🔒 Admin/Vendedor]
 ```
 
 ---
@@ -500,45 +559,54 @@ Empleado    (id_empleado [PK], dni, id_rol [FK→Rol_empleado])
 ## 9. 📖 Historias de Usuario
 
 | HU | Como | Quiero | Estado |
-|---|---|---|:---:|
+|---|---|---|---|
 | HU-01 | Cliente nuevo | Registrarme con ≥2 teléfonos y relación explícita | ✅ Completa |
 | HU-02 | Cliente registrado | Guardar múltiples domicilios con zona y nota de seguridad | ✅ Completa |
 | HU-03 | Visitante | Buscar sin tildes ni mayúsculas | ✅ Completa |
 | HU-04 | Usuario no logueado | Al intentar agregar al carrito → redirige a login con alerta | ✅ Completa |
 | HU-05 | Vendedor | Registrar pagos parciales → auto-actualiza estado pedido | 🔲 Pendiente |
-| HU-06 | Repartidor | Marcar estado de entrega desde la app | 🔲 Pendiente |
+| HU-06 | Repartidor | Marcar estado de entrega desde la app | 🟡 Parcial (sin impacto en `Pedido`) |
 | HU-07 | Vendedor | Dar de alta un cliente sin cuenta web para pedidos telefónicos | ✅ Completa |
 | HU-08 | Admin | Ver ficha completa de cliente con teléfonos, domicilios y seguridad | ✅ Completa |
 
 ---
 
-## 10. 📅 Cronograma Resumido
+## 10. 📅 Cronograma Canónico (reconciliado)
 
-| Mes | Hito | Estado |
+| Mes | Hito | Estado real |
 |:---:|---|:---:|
-| 1–3 | Relevamiento, análisis, diseño | ✅ Completado |
-| 4 | CRUD core de productos | ✅ Completado |
-| 5 | Seguridad y roles | ✅ Completado |
+| 1–3 | Relevamiento, análisis, DER | ✅ Completado |
+| 4 | CRUD core de productos + categorías | ✅ Completado |
+| 5 | Seguridad, roles y validadores de claves | ✅ Completado |
 | 6 | UX, buscador, carrito | ✅ Completado |
 | 7 | Segmentación y gestión de clientes | ✅ Completado |
-| 8 | Lógica transaccional (Pedidos, Pagos) | 🔴 Pendiente |
-| 9 | Cuentas corrientes, bidones, promociones | 🔴 Pendiente |
-| 10 | Logística y hojas de ruta | 🔴 Pendiente |
-| 11 | Alertas y semaforización | 🔴 Pendiente |
-| 12 | QA, Testing, Memoria de Tesis | 🔴 Pendiente |
+| 8 | Lógica transaccional: Pedidos, Pagos, MercadoPago | ✅ Completado |
+| 9 | Empleados, roles y estructura logística | ✅ Completado |
+| 10 | Hojas de ruta + vista de repartidor | 🟡 Parcial |
+| 11 | Cuentas corrientes, morosidad, abonos, bidones, promociones | 🔴 Pendiente |
+| 12 | RF-18, tests restantes, memoria de tesis | 🔴 Pendiente |
+
+> Este cronograma reemplaza al del Informe de Avances (Julio 2026), que describe 4 apps
+> y no menciona MercadoPago, `empleados` ni `logistica`.
 
 ---
 
-## 11. ⚠️ Deuda Técnica Crítica
+## 11. ⚠️ Deuda Técnica y Estado de Correcciones
 
-| Problema | Severidad | Solución |
-|---|---|---|
-| `SECRET_KEY` hardcodeada en `base.py` | 🔴 Alta | Mover a `.env` con `python-decouple` |
-| `production.py` vacío | 🔴 Alta | Completar con `ALLOWED_HOSTS`, PostgreSQL, storage |
-| Carrito no descuenta stock ni genera Pedido | 🟠 Media | Implementar módulo Pedidos (Mes 8) |
-| `celular1/celular2` en `Usuario` son redundantes | 🟡 Baja | Se migran via señal, evaluar deprecación futura |
+| Problema | Severidad | Estado |
+|---|---|:---:|
+| `SECRET_KEY` hardcodeada en `base.py` | 🔴 Alta | ✅ Resuelta (`python-decouple` + `.env`) |
+| `production.py` vacío | 🔴 Alta | ✅ Resuelto (`DEBUG=False`, HTTPS, hosts, MP) |
+| Grupo `Vendedor` inexistente | 🔴 Crítica | ✅ Resuelto (migración `0003_grupos_base`) |
+| `Empleado`/`RolEmpleado` duplicados | 🔴 Crítica | ✅ Resuelto (fuente única en `apps.empleados`) |
+| `groups.all.0` en templates | 🔴 Alta | ✅ Resuelto (`has_group` + `apps.permisos`) |
+| RNF-02 sin filtro por repartidor asignado | 🟠 Media | ✅ Resuelto (`puede_ver_nota_seguridad`) |
+| Cero tests | 🟠 Media | 🟡 Parcial (suite de permisos/RNF-02) |
+| Carrito no descuenta stock ni genera Pedido | 🟠 Media | 🟡 Pedidos ya descuentan; falta reserva en carrito (RF-12) |
+| `celular1/celular2` en `Usuario` redundantes | 🟡 Baja | 🟡 Se migran vía señal |
+| `DetalleHojaRuta` no vinculado a `Pedido` | 🔴 Alta | 🔴 Pendiente (Fase 3) |
 
 ---
 
-*Contexto actualizado: 29/07/2026 — Versión 3.0*
+*Contexto actualizado: 30/09/2026 — Versión 4.0.*
 *Actualizar este archivo ante cualquier cambio estructural significativo.*

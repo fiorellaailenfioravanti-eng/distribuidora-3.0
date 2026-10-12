@@ -9,10 +9,8 @@ from .forms import ProductoForm, CategoriaForm
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render, redirect, get_object_or_404 # Agrega get_object_or_404 aquí
-#validar grupos a los que pertenece el usuario
-#esto seria lo mismo que el filtro en el frontend que se implemento en distribuidora/grupos.py
-def es_vendedor_o_admin(user):
-    return user.is_superuser or user.groups.filter(name='Vendedor').exists()
+from apps.permisos.roles import es_admin_o_vendedor as es_vendedor_o_admin
+
 #CRUD
 #Aca empeiza Read
 

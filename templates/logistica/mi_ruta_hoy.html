@@ -64,6 +64,14 @@
             </p>
             {% endif %}
 
+            {# RNF-02: la nota de acceso al domicilio se evalúa por parada. #}
+            {% if d.id_detalle in paradas_con_nota_visible and d.direccion_entrega.desc_seguridad %}
+            <p class="mb-2 small text-warning-emphasis bg-warning bg-opacity-10 border-start border-4 border-warning rounded p-2">
+                <i class="fa-solid fa-shield-halved me-1"></i>
+                <strong>Atención:</strong> {{ d.direccion_entrega.desc_seguridad }}
+            </p>
+            {% endif %}
+
             {% if d.nota_entrega %}
             <p class="mb-2 small text-info">
                 <i class="fa-solid fa-comment me-1"></i> {{ d.nota_entrega }}

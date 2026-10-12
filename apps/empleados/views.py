@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from django.db.models import Count
 from django.http import HttpResponseNotAllowed
 
-from apps.clientes.views import es_admin_o_vendedor
+from apps.permisos.roles import es_admin_o_vendedor
 from .models import Empleado, RolEmpleado
 from .forms import EmpleadoForm, RolEmpleadoForm
 

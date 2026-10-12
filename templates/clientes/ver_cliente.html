@@ -234,8 +234,8 @@
                                 </small>
                             {% endif %}
 
-                            {# desc_seguridad — solo visible para Admin/Vendedor/Repartidor (RF-03) #}
-                            {% if puede_ver_seguridad and dir.desc_seguridad %}
+                            {# RNF-02: la nota se evalúa por dirección. Un repartidor solo ve las de sus paradas. #}
+                            {% if dir.pk in direcciones_con_nota_visible and dir.desc_seguridad %}
                             <div class="mt-1">
                                 <small class="text-danger">
                                     <i class="fa-solid fa-shield-halved me-1"></i>
@@ -300,9 +300,16 @@
                         <div class="col-12">
                             <label class="form-label small fw-semibold text-danger">
                                 <i class="fa-solid fa-shield-halved me-1"></i>
-                                Nota de seguridad (solo Admin/Vendedor/Repartidor)
+                                Nota de seguridad (solo Admin/Vendedor)
                             </label>
-                            {{ form_dir.desc_seguridad }}
+                            {% if es_personal %}
+                                {{ form_dir.desc_seguridad }}
+                            {% else %}
+                                <p class="text-muted small mb-0">
+                                    <i class="fa-solid fa-lock me-1"></i>
+                                    Solo el personal interno puede registrar y ver esta información.
+                                </p>
+                            {% endif %}
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold text-muted">Coordenadas (opcional)</label>

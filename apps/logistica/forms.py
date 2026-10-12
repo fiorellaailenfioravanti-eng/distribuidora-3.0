@@ -1,5 +1,9 @@
 from django import forms
-from .models import HojaRuta, DetalleHojaRuta, Zona, Camion, Empleado, RutaReparto, Barrio
+from .models import (
+    HojaRuta, DetalleHojaRuta, Zona, Camion, Empleado, RutaReparto, Barrio,
+    DIA_SEMANA_CHOICES,
+)
+from apps.pedidos.models import MetodoPago
 
 
 class HojaRutaForm(forms.ModelForm):
@@ -58,6 +62,25 @@ class DetalleRutaForm(forms.ModelForm):
 
 class ActualizarEstadoForm(forms.ModelForm):
     """Formulario mínimo para que el repartidor actualice el estado de una entrega."""
+    envases_retirados = forms.IntegerField(
+        min_value=0, required=False, initial=0, label='Envases retirados (vacíos)',
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
+    envases_vendidos = forms.IntegerField(
+        min_value=0, required=False, initial=0, label='Envases vendidos (no devueltos)',
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
+    monto_cobrado = forms.DecimalField(
+        min_value=0, required=False, max_digits=12, decimal_places=2,
+        label='Monto cobrado (opcional)',
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'})
+    )
+    metodo_pago = forms.ModelChoiceField(
+        queryset=MetodoPago.objects.filter(activo=True), required=False,
+        label='Método de pago',
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
     class Meta:
         model  = DetalleHojaRuta
         fields = ['estado', 'nota_entrega']
@@ -81,6 +104,13 @@ class ActualizarEstadoForm(forms.ModelForm):
 
 
 class ZonaForm(forms.ModelForm):
+    dias_reparto = forms.MultipleChoiceField(
+        choices=DIA_SEMANA_CHOICES,
+        required=False,
+        label='Días de reparto',
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'})
+    )
+
     class Meta:
         model  = Zona
         fields = ['nombre', 'descripcion']
@@ -95,6 +125,19 @@ class ZonaForm(forms.ModelForm):
                 'placeholder': 'Descripción opcional de la zona o referencias de entrega'
             }),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields['dias_reparto'].initial = self.instance.get_dias_reparto()
+
+    def save(self, commit=True):
+        zona = super().save(commit=False)
+        zona.set_dias_reparto(self.cleaned_data.get('dias_reparto') or [])
+        if commit:
+            zona.save()
+            self.save_m2m()
+        return zona
 
 
 class BarrioForm(forms.ModelForm):
@@ -124,7 +167,7 @@ class RutaRepartoForm(forms.ModelForm):
 class CamionForm(forms.ModelForm):
     class Meta:
         model  = Camion
-        fields = ['patente', 'descripcion', 'activo']
+        fields = ['patente', 'descripcion', 'capacidad_botellones', 'activo']
         widgets = {
             'patente': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -133,6 +176,10 @@ class CamionForm(forms.ModelForm):
             'descripcion': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Descripción del vehículo (marca, modelo, color...)'
+            }),
+            'capacidad_botellones': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0
             }),
             'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

@@ -39,9 +39,6 @@
                         <div class="mb-3">
                             <label class="form-label fw-semibold">
                                 {{ field.label }}
-                                {% if field.name == 'desc_seguridad' and not user.is_superuser and not user.groups.all.0.name == 'Vendedor' %}
-                                    {# Ocultar o dar indicación #}
-                                {% endif %}
                             </label>
                             {{ field }}
                             {% if field.help_text %}

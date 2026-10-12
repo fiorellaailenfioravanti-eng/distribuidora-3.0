@@ -11,6 +11,15 @@ TIPO_CLIENTE_CHOICES = [
 
 
 # ────────────────────────────────────────────────
+# TIPO DE REGISTRO
+# ────────────────────────────────────────────────
+TIPO_REGISTRO_CHOICES = [
+    ('registrado', 'Registrado'),
+    ('pasajero',   'Pasajero'),
+]
+
+
+# ────────────────────────────────────────────────
 # 1. CLIENTE
 #    Perfil de negocio. Puede o no tener cuenta de acceso web.
 #    Si tiene cuenta: vinculado a autenticacion.Usuario via OneToOne.
@@ -77,6 +86,23 @@ class Cliente(models.Model):
         blank=True,
         verbose_name='Notas internas',
         help_text='Visible solo para Admin/Vendedor'
+    )
+    tipo_registro    = models.CharField(
+        max_length=12,
+        choices=TIPO_REGISTRO_CHOICES,
+        default='registrado',
+        verbose_name='Tipo de registro',
+        help_text='Los clientes pasajeros son registrados en el reparto y pueden no tener cuenta.'
+    )
+    es_frecuente     = models.BooleanField(
+        default=False,
+        verbose_name='Cliente frecuente',
+        help_text='Aparece al planificar las hojas de ruta de su zona.'
+    )
+    cantidad_recurrente_default = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Botellones habituales',
+        help_text='Cantidad sugerida al incluirlo en una hoja de ruta.'
     )
 
     class Meta:
@@ -167,7 +193,8 @@ class TelefonoContacto(models.Model):
 
 # ────────────────────────────────────────────────
 # 3. DIRECCIÓN DE ENTREGA  — RF-03
-#    desc_seguridad visible SOLO para Admin/Vendedor/Repartidor
+#    desc_seguridad es información sensible: se controla por RNF-02
+#    (ver apps/permisos/roles.py::puede_ver_nota_seguridad)
 # ────────────────────────────────────────────────
 class DireccionEntrega(models.Model):
     cliente        = models.ForeignKey(
@@ -200,7 +227,10 @@ class DireccionEntrega(models.Model):
     desc_seguridad = models.TextField(
         blank=True,
         verbose_name='Nota de seguridad',
-        help_text='SOLO visible para Admin, Vendedor y Repartidor asignado — RF-03'
+        help_text=(
+            'Información sensible: visible solo para Admin, Vendedor y el '
+            'Repartidor asignado a esa dirección (RNF-02).'
+        )
     )
     coordenadas    = models.CharField(
         max_length=60,

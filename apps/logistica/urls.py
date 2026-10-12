@@ -6,10 +6,14 @@ app_name = 'apps.logistica'
 urlpatterns = [
     # ── Hojas de Ruta ──────────────────────────────────────────
     path('',                             views.listar_rutas,            name='listar_rutas'),
+    path('planificar/',                  views.planificar_reparto,      name='planificar_reparto'),
     path('nueva/',                       views.crear_ruta,              name='crear_ruta'),
     path('<int:pk>/',                    views.ver_ruta,                name='ver_ruta'),
     path('<int:pk>/editar/',             views.editar_ruta,             name='editar_ruta'),
     path('<int:pk>/imprimir/',           views.imprimir_ruta,           name='imprimir_ruta'),
+    path('<int:pk>/confirmar/',          views.confirmar_ruta,          name='confirmar_ruta'),
+    path('<int:pk>/regreso/',            views.registrar_regreso_ruta,  name='registrar_regreso_ruta'),
+    path('<int:pk>/venta-calle/',         views.venta_calle,             name='venta_calle'),
 
     # ── Paradas ────────────────────────────────────────────────
     path('<int:pk>/parada/agregar/',     views.agregar_parada,          name='agregar_parada'),

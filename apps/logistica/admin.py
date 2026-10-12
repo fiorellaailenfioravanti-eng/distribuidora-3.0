@@ -1,11 +1,22 @@
 from django.contrib import admin
-from .models import Zona, Barrio, RolEmpleado, Empleado, Camion, RutaReparto, HojaRuta, DetalleHojaRuta
+from apps.empleados.models import Empleado
+from .models import (
+    Zona, Barrio, Camion, RutaReparto, HojaRuta, DetalleHojaRuta,
+    CalendarioExcepcion, CargaHojaRuta,
+)
 
 
 @admin.register(Zona)
 class ZonaAdmin(admin.ModelAdmin):
-    list_display  = ('id_zona', 'nombre', 'descripcion')
+    list_display  = ('id_zona', 'nombre', 'dias_reparto', 'descripcion')
     search_fields = ('nombre',)
+
+
+@admin.register(CalendarioExcepcion)
+class CalendarioExcepcionAdmin(admin.ModelAdmin):
+    list_display  = ('fecha', 'tipo', 'zona', 'motivo')
+    list_filter   = ('tipo', 'zona', 'fecha')
+    date_hierarchy = 'fecha'
 
 
 @admin.register(Barrio)
@@ -15,21 +26,9 @@ class BarrioAdmin(admin.ModelAdmin):
     search_fields = ('nombre',)
 
 
-@admin.register(RolEmpleado)
-class RolEmpleadoAdmin(admin.ModelAdmin):
-    list_display = ('id_rol', 'descripcion')
-
-
-@admin.register(Empleado)
-class EmpleadoAdmin(admin.ModelAdmin):
-    list_display  = ('id_empleado', 'usuario', 'rol', 'activo')
-    list_filter   = ('rol', 'activo')
-    search_fields = ('usuario__username', 'usuario__first_name', 'usuario__last_name')
-
-
 @admin.register(Camion)
 class CamionAdmin(admin.ModelAdmin):
-    list_display = ('patente', 'descripcion', 'activo')
+    list_display = ('patente', 'descripcion', 'capacidad_botellones', 'activo')
     list_filter  = ('activo',)
 
 
@@ -43,16 +42,18 @@ class RutaRepartoAdmin(admin.ModelAdmin):
 class DetalleHojaRutaInline(admin.TabularInline):
     model  = DetalleHojaRuta
     extra  = 1
-    fields = ('orden', 'cliente_nombre', 'direccion_entrega', 'direccion_texto', 'pedido_ref', 'estado', 'nota_entrega', 'hora_registro')
+    fields = ('orden', 'pedido', 'cliente', 'cliente_nombre', 'direccion_entrega',
+              'direccion_texto', 'cantidad_bidones', 'envases_retirados',
+              'envases_vendidos', 'pedido_ref', 'estado', 'nota_entrega', 'hora_registro')
     readonly_fields = ('hora_registro',)
     ordering = ('orden',)
 
 
 @admin.register(HojaRuta)
 class HojaRutaAdmin(admin.ModelAdmin):
-    list_display   = ('id_ruta', 'fecha', 'empleado', 'camion', 'ruta_reparto', 'estado',
+    list_display   = ('id_ruta', 'fecha', 'zona', 'empleado', 'camion', 'ruta_reparto', 'estado',
                       'total_paradas', 'paradas_entregadas', 'porcentaje_completado')
-    list_filter    = ('estado', 'ruta_reparto__zona', 'fecha')
+    list_filter    = ('estado', 'zona', 'fecha')
     search_fields  = ('empleado__usuario__username', 'ruta_reparto__nombre')
     date_hierarchy = 'fecha'
     inlines        = [DetalleHojaRutaInline]
@@ -66,8 +67,15 @@ class HojaRutaAdmin(admin.ModelAdmin):
 
 @admin.register(DetalleHojaRuta)
 class DetalleHojaRutaAdmin(admin.ModelAdmin):
-    list_display  = ('id_detalle', 'hoja_ruta', 'orden', 'cliente_nombre',
-                     'direccion_texto', 'estado', 'hora_registro')
-    list_filter   = ('estado', 'hoja_ruta__ruta_reparto__zona')
+    list_display  = ('id_detalle', 'hoja_ruta', 'orden', 'cliente_nombre', 'pedido',
+                     'cantidad_bidones', 'direccion_texto', 'estado', 'hora_registro')
+    list_filter   = ('estado', 'hoja_ruta__zona')
     search_fields = ('cliente_nombre', 'pedido_ref', 'direccion_texto')
     readonly_fields = ('hora_registro',)
+
+
+@admin.register(CargaHojaRuta)
+class CargaHojaRutaAdmin(admin.ModelAdmin):
+    list_display = ('hoja_ruta', 'producto', 'cantidad_cargada',
+                    'cantidad_entregada', 'cantidad_retornada')
+    list_filter  = ('hoja_ruta__zona',)

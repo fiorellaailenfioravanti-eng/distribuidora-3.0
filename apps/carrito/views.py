@@ -4,11 +4,7 @@ from .models import Carrito, ItemCarrito
 from apps.productos.models import Producto
 from django.urls import reverse
 from django.contrib import messages
-
-
-# Create your views here.
-def es_staff_or_admin(user):
-    return user.is_superuser or user.groups.filter(name='Vendedor').exists()
+from apps.permisos.roles import es_admin_o_vendedor as es_staff_or_admin
 
 
 @login_required

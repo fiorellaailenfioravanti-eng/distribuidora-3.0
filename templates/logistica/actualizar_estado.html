@@ -34,6 +34,25 @@
                         <label class="form-label fw-bold text-muted small text-uppercase">Nota (opcional)</label>
                         {{ form.nota_entrega }}
                     </div>
+                    <hr class="my-4">
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <label class="form-label fw-bold text-muted small text-uppercase">Envases retirados</label>
+                            {{ form.envases_retirados }}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold text-muted small text-uppercase">Envases vendidos</label>
+                            {{ form.envases_vendidos }}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold text-muted small text-uppercase">Monto cobrado</label>
+                            {{ form.monto_cobrado }}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold text-muted small text-uppercase">Método de pago</label>
+                            {{ form.metodo_pago }}
+                        </div>
+                    </div>
                     <div class="d-grid mt-5">
                         <button type="submit" class="btn btn-primary btn-glow rounded-pill fw-bold btn-lg">
                             <i class="fa-solid fa-floppy-disk me-2"></i> Confirmar Estado

@@ -20,6 +20,25 @@ class Producto(models.Model):
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
     imagen = models.ImageField(upload_to='productos/', null=True, blank=True)
+    es_envase = models.BooleanField(
+        default=False,
+        verbose_name='Es envase',
+        help_text='Marca el producto que representa al bidón vacío (envase retornable).'
+    )
+    es_retornable = models.BooleanField(
+        default=False,
+        verbose_name='Es retornable',
+        help_text='Producto cuyo envase se retira al momento de entregar.'
+    )
+    envase = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='productos_que_lo_usan',
+        verbose_name='Envase asociado',
+        help_text='Envase que debe retirarse al entregar este producto.'
+    )
 
     def __str__(self):
         return self.nombre

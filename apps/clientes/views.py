@@ -8,15 +8,12 @@ from .models import Cliente, TelefonoContacto, DireccionEntrega
 from .forms  import (ClienteForm, ClienteSinCuentaForm, AltaClienteConCuentaForm, TelefonoContactoForm,
                      DireccionEntregaForm, BuscarClienteForm, EditarMiPerfilForm)
 from apps.pedidos.models import Pedido
+from apps.permisos.roles import es_admin_o_vendedor, puede_ver_nota_seguridad
 
 
 # ─────────────────────────────────────────────────────────────
 # HELPERS
 # ─────────────────────────────────────────────────────────────
-def es_admin_o_vendedor(user):
-    return user.is_superuser or user.groups.filter(name='Vendedor').exists()
-
-
 def es_dueno_o_staff(user, cliente):
     return es_admin_o_vendedor(user) or (cliente and cliente.usuario == user)
 
@@ -85,20 +82,31 @@ def ver_cliente(request, pk):
     pedidos = cliente.pedidos.select_related('metodo_pago').prefetch_related('detalles__producto', 'pagos').all()
 
     form_tel = TelefonoContactoForm()
+
+    # RNF-02: la nota de seguridad se calcula por DIRECCIÓN, no por usuario.
+    # Esta ficha solo la abre personal con poder de escritura; el repartidor
+    # recibe la nota de sus paradas en las vistas de logística (mi_ruta_hoy,
+    # ver_ruta e imprimir_ruta), no en la ficha completa del cliente.
+    es_personal = es_admin_o_vendedor(request.user)
+
+    # El formulario de alta/edición de dirección incluye el campo de nota de
+    # seguridad, que es información sensible (RNF-02). Solo se expone al
+    # personal interno; al cliente se le oculta el campo.
     form_dir = DireccionEntregaForm(is_staff_or_admin=True)
 
-    # Determinar si el usuario puede ver desc_seguridad (RF-03)
-    puede_ver_seguridad = es_admin_o_vendedor(request.user) or \
-                          request.user.groups.filter(name='Repartidor').exists()
-
     return render(request, 'clientes/ver_cliente.html', {
-        'cliente':            cliente,
-        'telefonos':          telefonos,
-        'direcciones':        direcciones,
-        'pedidos':            pedidos,
-        'form_tel':           form_tel,
-        'form_dir':           form_dir,
-        'puede_ver_seguridad': puede_ver_seguridad,
+        'cliente':             cliente,
+        'telefonos':           telefonos,
+        'direcciones':         direcciones,
+        'pedidos':             pedidos,
+        'form_tel':            form_tel,
+        'form_dir':            form_dir,
+        'es_personal':         es_personal,
+        # Lista de IDs de dirección cuya nota de seguridad puede ver este usuario.
+        'direcciones_con_nota_visible': [
+            direccion.pk for direccion in direcciones
+            if puede_ver_nota_seguridad(request.user, direccion)
+        ],
     })
 
 

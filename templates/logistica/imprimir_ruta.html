@@ -97,6 +97,7 @@
                 <th style="width: 40%;">Dirección / Barrio</th>
                 <th style="width: 15%;">Estado</th>
                 <th style="width: 15%;">Notas de Entrega</th>
+                <th style="width: 15%;">Alerta de acceso</th>
             </tr>
         </thead>
         <tbody>
@@ -126,10 +127,15 @@
                 <td>
                     <div style="min-height: 30px;">{{ d.nota_entrega|default:"" }}</div>
                 </td>
+                <td>
+                    {% if d.id_detalle in paradas_con_nota_visible and d.direccion_entrega.desc_seguridad %}
+                        <strong>{{ d.direccion_entrega.desc_seguridad }}</strong>
+                    {% else %}—{% endif %}
+                </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" class="text-center py-4">No hay paradas registradas en esta hoja de ruta.</td>
+                <td colspan="6" class="text-center py-4">No hay paradas registradas en esta hoja de ruta.</td>
             </tr>
             {% endfor %}
         </tbody>

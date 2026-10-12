@@ -17,6 +17,12 @@ ESTADOS_PAGO = [
     ('Rechazado', 'Rechazado'),
 ]
 
+ORIGENES_PEDIDO = [
+    ('WEB',        'Web'),
+    ('ADMIN',      'Cargado por la empresa'),
+    ('REPARTIDOR', 'Venta en calle'),
+]
+
 
 class MetodoPago(models.Model):
     id_metodo   = models.AutoField(primary_key=True)
@@ -66,6 +72,29 @@ class Pedido(models.Model):
     )
     total              = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     notas_cliente      = models.TextField(blank=True, verbose_name='Notas de entrega')
+    origen             = models.CharField(
+        max_length=15,
+        choices=ORIGENES_PEDIDO,
+        default='WEB',
+        verbose_name='Origen del pedido'
+    )
+    fecha_estimada_entrega = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='Fecha estimada de entrega',
+        help_text='Próximo día de reparto de la zona; se confirma luego con el cliente.'
+    )
+    fecha_entrega      = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='Fecha de entrega',
+        help_text='Fecha real/confirmada cuando el pedido sale en una hoja de ruta.'
+    )
+    confirmado_por_empresa = models.BooleanField(
+        default=False,
+        verbose_name='Fecha confirmada con el cliente',
+        help_text='La empresa validó la fecha de entrega con el cliente.'
+    )
 
     class Meta:
         ordering = ['-fecha_pedido']

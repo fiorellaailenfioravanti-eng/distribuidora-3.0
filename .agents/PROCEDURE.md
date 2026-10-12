@@ -233,9 +233,9 @@ Todos verificados con `manage.py check`, `manage.py makemigrations --check` y co
 > datos objetivo, pantallas, algoritmo de generación, impacto en stock y decisiones D1–D7
 > pendientes de aprobación.
 >
-> ⚙️ **Estado (30/09/2026):** sub-fases **3A–3D ✅ implementadas y verificadas** (modelo y
+> ⚙️ **Estado (30/09/2026):** sub-fases **3A–3E ✅ implementadas y verificadas** (modelo y
 > calendario, generación de hoja «Planificar reparto», confirmación/carga/regreso, y calle,
-> envases y cobro). Pendientes **3E** (fecha estimada en el checkout) y **3F** (seed, tests
+> envases y cobro). Pendiente **3F** (seed, tests
 > integrales y cierre de docs). `check` limpio, sin migraciones pendientes, **55 tests OK**.
 
 | # | Tarea | Detalle |

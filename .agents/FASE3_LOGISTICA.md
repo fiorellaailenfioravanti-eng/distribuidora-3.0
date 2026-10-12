@@ -199,8 +199,278 @@ Permisos vía `apps/permisos/roles.py` (sin duplicar lógica).
 | **3B · Generación de hoja** | «Planificar reparto»: frecuentes + pedidos, selección y cantidades, historial | `logistica/services.py::construir_borrador()` | ✅ Hecho |
 | **3C · Confirmación y viaje** | Carga real, confirmar (→ En Camino), salida/regreso, control de capacidad | `confirmar_hoja()`, `registrar_regreso()` | ✅ Hecho |
 | **3D · Calle, envases y cobro** | Repartidor agrega parada/venta, cobra, retira/deposita envases | vistas repartidor | ✅ Hecho |
-| **3E · Checkout** | Fecha estimada por zona mostrada al cliente | `pedidos/views.py` | ⏳ Pendiente |
-| **3F · Datos y cierre** | Seed de demo, tests, docs | `apps/logistica/tests.py` | ⏳ Pendiente |
+| **3E · Checkout** | Fecha estimada por zona mostrada al cliente | `pedidos/views.py` | ✅ Hecho |
+| **3F · Datos y cierre** | Seed de demo, tests, docs | `apps/logistica/tests.py` | ✅ Hecho |
+
+> **Progreso 3A–3D (30/09/2026).** Verificación: `check` sin issues, `makemigrations --check`
+> sin cambios y **55 tests OK** (26 de `apps.logistica`). Decisión de stock: el descuento se hace
+> **al cargar el camión** (se quitó del checkout) y el regreso devuelve **solo sobrantes**;
+> el envase tiene **stock propio** (`es_envase`).
+
+---
+
+## 5. Decisiones tomadas
+
+| # | Decisión |
+|:--:|---|
+| D1 | Calendario **por zona** con días predefinidos + excepciones; la empresa confirma la fecha al cliente. |
+| D2 | Hoja **por día + zona**; combina frecuentes + pedidos; confirmación **manual del administrador**. |
+| D3 | **1 pedido = 1 parada**. |
+| D4 | El pedido pasa a **En Camino al confirmarse la hoja**. |
+| D5 | Capacidad del camión en **botellones** (default ~30); solo afecta botellones; **advierte**, no bloquea. |
+| D6 | `pedido_ref` se **conserva** como referencia manual. |
+| D7 | Los pedidos pueden pagarse **al repartidor o después**. |
+| D8 | El repartidor puede **agregar paradas/ventas** (guarda cliente + parada + venta) y marcarlo **frecuente**. |
+| D9 | Al terminar se **registra el regreso** y los sobrantes vuelven al stock. |
+| D10 | **Bidón retornable:** producto del catálogo; se entrega lleno y se retira el vacío; el envase no devuelto se **vende**. |
+| D11 | Clientes: `registrado` o `pasajero` (creado por el repartidor); ambos pueden marcarse **frecuentes**. |
+| D12 | Solo el **administrador** confirma la hoja. |
+| D13 | Los clientes frecuentes **siempre** generan `Pedido`. |
+
+---
+
+## 6. Puntos menores a confirmar durante la implementación
+
+| # | Pregunta | Recomendación |
+|:--:|---|---|
+| P1 | Precio del **envase** (bidón vacío) y del agua por separado. | Cargar ambos como productos del catálogo. |
+| P2 | Si el cliente devuelve más vacíos de los que se le entregan (stock previo). | Permitir `envases_retirados` distinto de llenos. |
+| P3 | ¿Los envases retirados vuelven al stock de inmediato o pasan por «en revisión/lavado»? | Estado intermedio opcional. |
+| P4 | ¿Se cobra el envase en el momento o queda como deuda del cliente? | En el momento, vía `PagoPedido`. |
+| P5 | Recordatorio automático de confirmación a las 7 am. | A futuro (fuera de 3A–3F). |
+
+> Nota: el control de envases **roza la Fase 5 (bidones)** del `PROCEDURE.md`; se implementa
+> lo mínimo en 3D y se profundiza en Fase 5.
+
+---
+
+## 7. Criterios de aceptación
+
+- [ ] Cada zona tiene días de reparto; el checkout muestra la **fecha estimada** correcta.
+- [x] «Planificar reparto» lista frecuentes + pedidos de la zona y permite elegir paradas y
+      cantidades; la hoja queda en **Borrador** y es editable.
+- [x] Al **confirmar** (solo admin), los pedidos pasan a **En Camino**; se registran salida y carga.
+- [x] Se puede **cargar más** de lo pedido y **registrar el regreso** (sobrantes → stock).
+- [x] Se registran **llenos entregados / vacíos retirados / envases vendidos**, con el cobro.
+- [x] El repartidor puede **agregar parada/venta**, marcar cliente frecuente y cobrar.
+- [x] Historial de hojas consultable por fecha/zona.
+- [x] `manage.py check`, `makemigrations --check` y `manage.py test` en verde.
+
+---
+
+## 8. Notas de alcance
+
+Alcance **mucho mayor** que las ~10 h del Fase 3 original: calendario, recurrencia, envases,
+carga/regreso y ventas en calle. Se implementa **por sub-fases (3A→3F)**, aprobando cada una.
+Se recomienda empezar por **3A (modelo y calendario)**, que es la base de todo.
+
+*Plan v3 — 30/09/2026. Al aprobarse, se implementa en el orden de §4 y se marca el avance en `PROCEDURE.md`.*
+
+---
+
+## 9. Plan de implementación detallado (checklist por archivo)
+
+> Convenciones: código y comentarios en español; sin comentarios salvo los ya existentes;
+> verificación obligatoria al cierre de cada sub-fase.
+
+### 3A · Modelo y calendario
+
+**`apps/logistica/models.py`**
+- [ ] `Zona.dias_reparto` (`CharField`, ej. `"1,4"`) + `get_dias_reparto()`, `set_dias_reparto()`, `incluye_dia(w)`.
+- [ ] `CalendarioExcepcion(fecha, zona=null, tipo∈{suspende,agrega}, motivo)`.
+- [ ] `Camion.capacidad_botellones` (Int, default 30).
+- [ ] `HojaRuta`: `zona` FK; `ruta_reparto` → `null=True, SET_NULL`; estados `Borrador/Confirmada/Cerrada`; `confirmada_por`, `fecha_confirmacion`, `fecha_salida`, `fecha_regreso`, `generada_automaticamente`.
+- [ ] `DetalleHojaRuta`: `pedido` FK, `cliente` FK, `es_frecuente`, `cantidad_bidones`, `envases_retirados`, `envases_vendidos`.
+- [ ] `CargaHojaRuta(hoja_ruta, producto, cantidad_cargada, cantidad_entregada, cantidad_retornada)`.
+
+**`apps/pedidos/models.py`**
+- [ ] `Pedido`: `fecha_estimada_entrega`, `fecha_entrega`, `origen∈{WEB,ADMIN,REPARTIDOR}`, `confirmado_por_empresa`.
+
+**`apps/clientes/models.py`**
+- [ ] `Cliente`: `tipo_registro∈{registrado,pasajero}`, `es_frecuente`, `cantidad_recurrente_default`.
+
+**`apps/productos/models.py`**
+- [ ] `Producto`: `es_envase`, `es_retornable`, `envase` (FK self).
+
+**`apps/logistica/services.py` (nuevo)**
+- [ ] `fecha_es_de_reparto(zona, fecha)` (weekday + excepciones).
+- [ ] `proxima_fecha_de_reparto(zona, desde=None)`.
+- [ ] `siguiente_dia_valido(zona, fecha)`.
+
+**Forms / admin**
+- [ ] `ZonaForm` con `dias_reparto` (MultipleChoice + widgets).
+- [ ] `CamionForm` con `capacidad_botellones`.
+- [ ] `admin.py`: registrar `CalendarioExcepcion`, `CargaHojaRuta`; inline/fields nuevos.
+
+**Migraciones**
+- [ ] `makemigrations logistica pedidos clientes productos`.
+
+**Tests (`apps/logistica/tests.py`)**
+- [ ] `fecha_es_de_reparto` con/sin excepciones.
+- [ ] `proxima_fecha_de_reparto` salta domingos/feriados.
+- [ ] Integridad de nuevos campos.
+
+### 3B · Generación de hoja («Planificar reparto»)
+
+- [ ] `services.construir_borrador(fecha, zona)` → lista de frecuentes + pedidos candidatos.
+- [ ] `services.crear_hoja_borrador(fecha, zona, seleccion, empleado, camion, usuario)`.
+- [ ] Vistas `planificar_reparto`, `preview_hoja`, `confirmar_borrador`.
+- [ ] URLs + templates (`planificar.html`, `preview.html`); historial en `listar_rutas`.
+- [ ] Tests: agrupación, dedup, pedido sin zona excluido.
+
+### 3C · Confirmación y viaje
+
+- [ ] `services.confirmar_hoja(hoja, usuario, cargas)` → `Confirmada`, pedidos `En Camino`, `fecha_salida`.
+- [ ] `services.registrar_regreso(hoja, cargas)` → sobrantes a stock, `fecha_regreso`, `Cerrada`.
+- [ ] Control de capacidad (advierte, no bloquea).
+- [ ] Vistas + templates de carga/confirmación/regreso. Solo admin confirma.
+- [ ] Tests de impacto en stock.
+
+### 3D · Calle, envases y cobro
+
+- [ ] Repartidor agrega parada/venta (`Pedido` origen REPARTIDOR + parada).
+- [ ] Registro de llenos entregados / vacíos retirados / envases vendidos.
+- [ ] Cobro (`PagoPedido`) efectivo/transferencia.
+- [ ] Cliente pasajero / marcar frecuente.
+- [ ] Impacto en `Pedido` y stock en `marcar_estado` (Entregado/Cancelado) atómico.
+- [ ] Tests.
+
+### 3F · Datos y cierre** | Seed de demo, tests, docs | `apps/logistica/tests.py` | ✅ Hecho |
+
+> **Progreso 3A–3D (30/09/2026).** Verificación: `check` sin issues, `makemigrations --check`
+> sin cambios y **55 tests OK** (26 de `apps.logistica`). Decisión de stock: el descuento se hace
+> **al cargar el camión** (se quitó del checkout) y el regreso devuelve **solo sobrantes**;
+> el envase tiene **stock propio** (`es_envase`).
+
+---
+
+## 5. Decisiones tomadas
+
+| # | Decisión |
+|:--:|---|
+| D1 | Calendario **por zona** con días predefinidos + excepciones; la empresa confirma la fecha al cliente. |
+| D2 | Hoja **por día + zona**; combina frecuentes + pedidos; confirmación **manual del administrador**. |
+| D3 | **1 pedido = 1 parada**. |
+| D4 | El pedido pasa a **En Camino al confirmarse la hoja**. |
+| D5 | Capacidad del camión en **botellones** (default ~30); solo afecta botellones; **advierte**, no bloquea. |
+| D6 | `pedido_ref` se **conserva** como referencia manual. |
+| D7 | Los pedidos pueden pagarse **al repartidor o después**. |
+| D8 | El repartidor puede **agregar paradas/ventas** (guarda cliente + parada + venta) y marcarlo **frecuente**. |
+| D9 | Al terminar se **registra el regreso** y los sobrantes vuelven al stock. |
+| D10 | **Bidón retornable:** producto del catálogo; se entrega lleno y se retira el vacío; el envase no devuelto se **vende**. |
+| D11 | Clientes: `registrado` o `pasajero` (creado por el repartidor); ambos pueden marcarse **frecuentes**. |
+| D12 | Solo el **administrador** confirma la hoja. |
+| D13 | Los clientes frecuentes **siempre** generan `Pedido`. |
+
+---
+
+## 6. Puntos menores a confirmar durante la implementación
+
+| # | Pregunta | Recomendación |
+|:--:|---|---|
+| P1 | Precio del **envase** (bidón vacío) y del agua por separado. | Cargar ambos como productos del catálogo. |
+| P2 | Si el cliente devuelve más vacíos de los que se le entregan (stock previo). | Permitir `envases_retirados` distinto de llenos. |
+| P3 | ¿Los envases retirados vuelven al stock de inmediato o pasan por «en revisión/lavado»? | Estado intermedio opcional. |
+| P4 | ¿Se cobra el envase en el momento o queda como deuda del cliente? | En el momento, vía `PagoPedido`. |
+| P5 | Recordatorio automático de confirmación a las 7 am. | A futuro (fuera de 3A–3F). |
+
+> Nota: el control de envases **roza la Fase 5 (bidones)** del `PROCEDURE.md`; se implementa
+> lo mínimo en 3D y se profundiza en Fase 5.
+
+---
+
+## 7. Criterios de aceptación
+
+- [ ] Cada zona tiene días de reparto; el checkout muestra la **fecha estimada** correcta.
+- [x] «Planificar reparto» lista frecuentes + pedidos de la zona y permite elegir paradas y
+      cantidades; la hoja queda en **Borrador** y es editable.
+- [x] Al **confirmar** (solo admin), los pedidos pasan a **En Camino**; se registran salida y carga.
+- [x] Se puede **cargar más** de lo pedido y **registrar el regreso** (sobrantes → stock).
+- [x] Se registran **llenos entregados / vacíos retirados / envases vendidos**, con el cobro.
+- [x] El repartidor puede **agregar parada/venta**, marcar cliente frecuente y cobrar.
+- [x] Historial de hojas consultable por fecha/zona.
+- [x] `manage.py check`, `makemigrations --check` y `manage.py test` en verde.
+
+---
+
+## 8. Notas de alcance
+
+Alcance **mucho mayor** que las ~10 h del Fase 3 original: calendario, recurrencia, envases,
+carga/regreso y ventas en calle. Se implementa **por sub-fases (3A→3F)**, aprobando cada una.
+Se recomienda empezar por **3A (modelo y calendario)**, que es la base de todo.
+
+*Plan v3 — 30/09/2026. Al aprobarse, se implementa en el orden de §4 y se marca el avance en `PROCEDURE.md`.*
+
+---
+
+## 9. Plan de implementación detallado (checklist por archivo)
+
+> Convenciones: código y comentarios en español; sin comentarios salvo los ya existentes;
+> verificación obligatoria al cierre de cada sub-fase.
+
+### 3A · Modelo y calendario
+
+**`apps/logistica/models.py`**
+- [ ] `Zona.dias_reparto` (`CharField`, ej. `"1,4"`) + `get_dias_reparto()`, `set_dias_reparto()`, `incluye_dia(w)`.
+- [ ] `CalendarioExcepcion(fecha, zona=null, tipo∈{suspende,agrega}, motivo)`.
+- [ ] `Camion.capacidad_botellones` (Int, default 30).
+- [ ] `HojaRuta`: `zona` FK; `ruta_reparto` → `null=True, SET_NULL`; estados `Borrador/Confirmada/Cerrada`; `confirmada_por`, `fecha_confirmacion`, `fecha_salida`, `fecha_regreso`, `generada_automaticamente`.
+- [ ] `DetalleHojaRuta`: `pedido` FK, `cliente` FK, `es_frecuente`, `cantidad_bidones`, `envases_retirados`, `envases_vendidos`.
+- [ ] `CargaHojaRuta(hoja_ruta, producto, cantidad_cargada, cantidad_entregada, cantidad_retornada)`.
+
+**`apps/pedidos/models.py`**
+- [ ] `Pedido`: `fecha_estimada_entrega`, `fecha_entrega`, `origen∈{WEB,ADMIN,REPARTIDOR}`, `confirmado_por_empresa`.
+
+**`apps/clientes/models.py`**
+- [ ] `Cliente`: `tipo_registro∈{registrado,pasajero}`, `es_frecuente`, `cantidad_recurrente_default`.
+
+**`apps/productos/models.py`**
+- [ ] `Producto`: `es_envase`, `es_retornable`, `envase` (FK self).
+
+**`apps/logistica/services.py` (nuevo)**
+- [ ] `fecha_es_de_reparto(zona, fecha)` (weekday + excepciones).
+- [ ] `proxima_fecha_de_reparto(zona, desde=None)`.
+- [ ] `siguiente_dia_valido(zona, fecha)`.
+
+**Forms / admin**
+- [ ] `ZonaForm` con `dias_reparto` (MultipleChoice + widgets).
+- [ ] `CamionForm` con `capacidad_botellones`.
+- [ ] `admin.py`: registrar `CalendarioExcepcion`, `CargaHojaRuta`; inline/fields nuevos.
+
+**Migraciones**
+- [ ] `makemigrations logistica pedidos clientes productos`.
+
+**Tests (`apps/logistica/tests.py`)**
+- [ ] `fecha_es_de_reparto` con/sin excepciones.
+- [ ] `proxima_fecha_de_reparto` salta domingos/feriados.
+- [ ] Integridad de nuevos campos.
+
+### 3B · Generación de hoja («Planificar reparto»)
+
+- [ ] `services.construir_borrador(fecha, zona)` → lista de frecuentes + pedidos candidatos.
+- [ ] `services.crear_hoja_borrador(fecha, zona, seleccion, empleado, camion, usuario)`.
+- [ ] Vistas `planificar_reparto`, `preview_hoja`, `confirmar_borrador`.
+- [ ] URLs + templates (`planificar.html`, `preview.html`); historial en `listar_rutas`.
+- [ ] Tests: agrupación, dedup, pedido sin zona excluido.
+
+### 3C · Confirmación y viaje
+
+- [ ] `services.confirmar_hoja(hoja, usuario, cargas)` → `Confirmada`, pedidos `En Camino`, `fecha_salida`.
+- [ ] `services.registrar_regreso(hoja, cargas)` → sobrantes a stock, `fecha_regreso`, `Cerrada`.
+- [ ] Control de capacidad (advierte, no bloquea).
+- [ ] Vistas + templates de carga/confirmación/regreso. Solo admin confirma.
+- [ ] Tests de impacto en stock.
+
+### 3D · Calle, envases y cobro
+
+- [ ] Repartidor agrega parada/venta (`Pedido` origen REPARTIDOR + parada).
+- [ ] Registro de llenos entregados / vacíos retirados / envases vendidos.
+- [ ] Cobro (`PagoPedido`) efectivo/transferencia.
+- [ ] Cliente pasajero / marcar frecuente.
+- [ ] Impacto en `Pedido` y stock en `marcar_estado` (Entregado/Cancelado) atómico.
+- [ ] Tests.
+
+### 3F · Datos y cierre** | Seed de demo, tests, docs | `apps/logistica/tests.py` | ✅ Hecho |
 
 > **Progreso 3A–3D (30/09/2026).** Verificación: `check` sin issues, `makemigrations --check`
 > sin cambios y **55 tests OK** (26 de `apps.logistica`). Decisión de stock: el descuento se hace
@@ -337,8 +607,8 @@ Se recomienda empezar por **3A (modelo y calendario)**, que es la base de todo.
 
 ### 3E · Checkout con fecha estimada
 
-- [ ] Calcular y guardar `fecha_estimada_entrega` al crear el pedido; mostrar en checkout/detalle.
-- [ ] Test.
+- [x] Calcular y guardar `fecha_estimada_entrega` al crear el pedido; mostrar en checkout/detalle.
+- [x] Test.
 
 ### 3F · Datos y cierre
 

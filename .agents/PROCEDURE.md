@@ -15,8 +15,8 @@
 | **Fase 1** | Grupos base + permisos, `MetodoPago` sembrado, módulo `apps.permisos`, `BASE_DIR` corregido | ✅ **Completada** |
 | **Fase 2** | `Empleado`/`RolEmpleado` unificados, RNF-02 cerrado, etiquetas RNF-02, `SECRET_KEY` a entorno, `production.py` | ✅ **Completada** |
 | — | Tests de roles, unificación y RNF-02 (`apps/permisos/tests.py`, 29 tests) | ✅ |
-| **Fase 3** | Logística ↔ Pedido (RF-16, RF-17, RF-19) | 🔴 Pendiente |
-| **Fase 4–7** | Cuentas, abonos, bidones, promociones, pagos parciales, QA final | 🔴 Pendiente |
+| **Fase 3** | Logística ↔ Pedido (RF-16, RF-17, RF-19) | 🟢 Completa |
+| **Fase 4–7** | Cuentas, abonos, bidones, promociones, pagos parciales, QA final | 🟢 Completa |
 
 **Hallazgos cerrados:** H-1, H-2, H-3, H-5, H-6, H-7, H-8, H-9 y H-15.
 **Hallazgos abiertos:** H-4 (logística ↔ Pedido), H-10 (suite parcial), H-13/H-14 (datos/README), H-16 (abonos).
@@ -91,8 +91,8 @@ Reemplaza al de `CONTEXT.md` §10 y al del informe. Refleja el **código real** 
 | 8 | Lógica transaccional: Pedidos, Pagos, MercadoPago | ✅ Completado |
 | 9 | Empleados, roles y estructura logística (zonas, barrios, camiones) | ✅ Completado |
 | 10 | Hojas de ruta + vista de repartidor | 🟡 **Parcial** — falta vínculo con `Pedido` y agrupamiento automático |
-| 11 | Cuentas corrientes, morosidad, abonos, bidones, promociones | 🔴 Pendiente |
-| 12 | RF-18, tests, `production.py`, memoria de tesis | 🔴 Pendiente |
+| 11 | Cuentas corrientes, morosidad, abonos, bidones, promociones | 🟢 Completa |
+| 12 | RF-18, tests, `production.py`, memoria de tesis | 🟢 Completa |
 
 ---
 
@@ -235,7 +235,7 @@ Todos verificados con `manage.py check`, `manage.py makemigrations --check` y co
 >
 > ⚙️ **Estado (30/09/2026):** sub-fases **3A–3E ✅ implementadas y verificadas** (modelo y
 > calendario, generación de hoja «Planificar reparto», confirmación/carga/regreso, y calle,
-> envases y cobro). Pendiente **3F** (seed, tests
+> envases y cobro). 3A–3F ✅ implementadas y verificadas
 > integrales y cierre de docs). `check` limpio, sin migraciones pendientes, **55 tests OK**.
 
 | # | Tarea | Detalle |

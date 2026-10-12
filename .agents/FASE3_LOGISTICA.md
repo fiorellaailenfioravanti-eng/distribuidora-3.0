@@ -335,7 +335,7 @@ Se recomienda empezar por **3A (modelo y calendario)**, que es la base de todo.
 - [ ] Impacto en `Pedido` y stock en `marcar_estado` (Entregado/Cancelado) atómico.
 - [ ] Tests.
 
-### 3F · Datos y cierre** | Seed de demo, tests, docs | `apps/logistica/tests.py` | ✅ Hecho |
+### 3F · Datos y cierre | Seed de demo, tests, docs | `apps/logistica/tests.py` | ✅ Hecho |
 
 > **Progreso 3A–3D (30/09/2026).** Verificación: `check` sin issues, `makemigrations --check`
 > sin cambios y **55 tests OK** (26 de `apps.logistica`). Decisión de stock: el descuento se hace
@@ -470,7 +470,7 @@ Se recomienda empezar por **3A (modelo y calendario)**, que es la base de todo.
 - [ ] Impacto en `Pedido` y stock en `marcar_estado` (Entregado/Cancelado) atómico.
 - [ ] Tests.
 
-### 3F · Datos y cierre** | Seed de demo, tests, docs | `apps/logistica/tests.py` | ✅ Hecho |
+### 3F · Datos y cierre | Seed de demo, tests, docs | `apps/logistica/tests.py` | ✅ Hecho |
 
 > **Progreso 3A–3D (30/09/2026).** Verificación: `check` sin issues, `makemigrations --check`
 > sin cambios y **55 tests OK** (26 de `apps.logistica`). Decisión de stock: el descuento se hace
@@ -612,7 +612,7 @@ Se recomienda empezar por **3A (modelo y calendario)**, que es la base de todo.
 
 ### 3F · Datos y cierre
 
-- [ ] Extender `seed_barrios.py` / comando `seed_logistica` con datos de demo.
-- [ ] Suite integral en `apps/logistica/tests.py`.
-- [ ] Actualizar `CONTEXT.md` y `PROCEDURE.md` (Fase 3 ✅ / parcial).
-- [ ] `check` + `makemigrations --check` + `test` en verde.
+- [x] Extender `seed_barrios.py` / comando `seed_logistica` con datos de demo.
+- [x] Suite integral en `apps/logistica/tests.py`.
+- [x] Actualizar `CONTEXT.md` y `PROCEDURE.md` (Fase 3 ✅ / parcial).
+- [x] `check` + `makemigrations --check` + `test` en verde.

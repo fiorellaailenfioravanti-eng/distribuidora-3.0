@@ -49,3 +49,22 @@ class EliminarProductoTests(TestCase):
         self.assertNotIn(self.producto, list(respuesta.context['productos']))
         detalle = self.client.get(reverse('apps.productos:ver_producto', args=[self.producto.pk]))
         self.assertEqual(detalle.status_code, 404)
+
+
+class AltaProductoTests(TestCase):
+    """El alta desde la pantalla deja el producto activo (el checkbox se muestra marcado)."""
+
+    def test_producto_nuevo_queda_activo(self):
+        from apps.productos.models import Categoria
+        Usuario = get_user_model()
+        vendedor = Usuario.objects.create_user('vend2', 'v2@x.com', 'Agua-Lluvia-2026')
+        vendedor.groups.add(Group.objects.get(name='Vendedor'))
+        self.client.force_login(vendedor)
+        categoria = Categoria.objects.create(nombre='Agua', descripcion='')
+        pantalla = self.client.get(reverse('apps.productos:crear_producto'))
+        self.assertContains(pantalla, 'name="activo"')
+        self.client.post(reverse('apps.productos:crear_producto'), {
+            'nombre': 'Bidón 12 L', 'descripcion': 'Agua', 'categoria': categoria.pk,
+            'precio': '2300', 'stock': 10, 'activo': 'on', 'es_botellon': 'on'})
+        producto = Producto.objects.get(nombre='Bidón 12 L')
+        self.assertTrue(producto.activo and producto.es_botellon)

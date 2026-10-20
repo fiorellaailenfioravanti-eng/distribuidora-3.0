@@ -1,3 +1,4 @@
+from decimal import Decimal
 from datetime import date, timedelta
 
 from django.test import TestCase
@@ -15,7 +16,7 @@ from .services import (
     construir_borrador, crear_hoja_borrador,
     confirmar_hoja, registrar_regreso,
     registrar_entrega, registrar_cobro, crear_venta_calle,
-    fecha_estimada_para_direccion,
+    fecha_estimada_para_direccion, carga_sugerida,
 )
 from apps.clientes.models import Cliente, DireccionEntrega
 from apps.pedidos.models import Pedido, DetallePedido, MetodoPago
@@ -163,9 +164,15 @@ class GeneracionBorradorTests(TestCase):
         self.assertNotIn(pedido, borrador['pedidos'])
 
     def test_crear_hoja_borrador(self):
+        from apps.pedidos.models import DetallePedido
+        from apps.productos.models import Producto
+        bidon = Producto.objects.create(nombre='Bidón 20 L', descripcion='', precio=Decimal('3000'),
+                                        stock=50, es_botellon=True, es_retornable=True)
         pedido = self._pedido(self.cliente, self.direccion)
+        DetallePedido.objects.create(pedido=pedido, producto=bidon, precio_unitario=bidon.precio,
+                                     cantidad=3, subtotal=bidon.precio * 3)
         seleccion = {
-            'pedidos': [{'pedido_id': pedido.id_pedido, 'cantidad': 3}],
+            'pedidos': [{'pedido_id': pedido.id_pedido}],
             'frecuentes': [{'cliente_id': self.cliente.id, 'direccion_id': self.direccion.id, 'cantidad': 2}],
         }
         hoja = crear_hoja_borrador(date(2026, 3, 2), self.zona, self._usuario(), seleccion)
@@ -173,9 +180,12 @@ class GeneracionBorradorTests(TestCase):
         self.assertEqual(hoja.zona, self.zona)
         self.assertEqual(hoja.total_paradas(), 2)
         parada_pedido = hoja.detalles.get(pedido=pedido)
-        self.assertEqual(parada_pedido.cantidad_bidones, 3)
+        self.assertEqual(parada_pedido.cantidad_bidones, 3)  # lo que pidió el cliente
         parada_frecuente = hoja.detalles.get(es_frecuente=True)
         self.assertEqual(parada_frecuente.cantidad_bidones, 2)
+        # El frecuente queda con un pedido real de botellones: cuenta para la carga del camión.
+        self.assertEqual(parada_frecuente.pedido.total, Decimal('6000'))
+        self.assertEqual(carga_sugerida(hoja), [{'producto': bidon, 'cantidad': 5}])
         pedido.refresh_from_db()
         self.assertEqual(pedido.fecha_entrega, date(2026, 3, 2))
 
@@ -400,10 +410,11 @@ class HojaSinChoferTests(TestCase):
 
     def test_pantallas_de_hoja_renderizan(self):
         from django.urls import reverse
-        for nombre, args in [('listar_rutas', []), ('ver_ruta', [self.hoja.pk]), ('imprimir_ruta', [self.hoja.pk])]:
+        for nombre, args, texto in [('listar_rutas', [], 'Sin asignar'), ('ver_ruta', [self.hoja.pk], 'Sin repartidor'),
+                                    ('imprimir_ruta', [self.hoja.pk], 'Sin asignar')]:
             respuesta = self.client.get(reverse(f'apps.logistica:{nombre}', args=args))
             self.assertEqual(respuesta.status_code, 200, nombre)
-            self.assertContains(respuesta, 'Sin asignar')
+            self.assertContains(respuesta, texto)
 
     def test_eliminar_zona_con_rutas_no_da_500(self):
         from django.urls import reverse
@@ -464,3 +475,117 @@ class SeedDemoTests(TestCase):
         self.assertEqual(Cliente.objects.filter(dni__isnull=True).count(), 0)  # el personal no es cliente
         self.assertTrue(all(c.cantidad_telefonos() >= 2 for c in Cliente.objects.all()))
         self.assertFalse(any(p.estado == 'Entregado' and not p.esta_pagado() for p in Pedido.objects.all()))
+
+
+
+class HojaDeRutaUXTests(TestCase):
+    """Rediseño de la hoja: paradas con pedido, orden automático, carga y regreso de botellones."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from apps.empleados.models import Empleado, RolEmpleado
+        from apps.productos.models import Producto
+        self.admin = get_user_model().objects.create_superuser('root', 'root@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(self.admin)
+        self.zona = Zona.objects.create(nombre='Centro', dias_reparto='0,1,2,3,4,5,6')
+        self.barrio = Barrio.objects.create(nombre='Centro', zona=self.zona)
+        self.envase = Producto.objects.create(nombre='Envase bidón', descripcion='', precio=Decimal('9000'),
+                                              stock=100, es_envase=True, es_retornable=True)
+        self.bidon = Producto.objects.create(nombre='Bidón 20 L', descripcion='', precio=Decimal('3000'), stock=40,
+                                             es_botellon=True, es_retornable=True, envase=self.envase)
+        Producto.objects.create(nombre='Gaseosa', descripcion='', precio=Decimal('900'), stock=10)
+        self.cliente = Cliente.objects.create(nombre='Ana', apellido='Paz')
+        self.direccion = DireccionEntrega.objects.create(cliente=self.cliente, calle='Mitre', altura='10', barrio=self.barrio)
+        self.hoja = HojaRuta.objects.create(fecha=date(2026, 10, 21), zona=self.zona)
+        rol = RolEmpleado.objects.create(nombre='Chofer', grupo_permisos='Repartidor')
+        self.chofer = Empleado.objects.create(nombre='Ramón', apellido='Acosta', dni='1', rol=rol)
+        self.camion = Camion.objects.create(patente='AD123CD', capacidad_botellones=100)
+
+    def _agregar(self, **datos):
+        return self.client.post(reverse('apps.logistica:agregar_parada', args=[self.hoja.pk]),
+                                {'producto': self.bidon.pk, 'cantidad': 2, **datos})
+
+    def test_no_se_agregan_paradas_vacias(self):
+        self._agregar(direccion='')
+        self._agregar(direccion='', nombre='Sin dirección')
+        self.assertEqual(self.hoja.detalles.count(), 0)
+
+    def test_parada_con_cliente_nuevo_y_orden_automatico(self):
+        self._agregar(direccion=self.direccion.pk)
+        self._agregar(direccion='', nombre='Kiosco Pepe', calle='Belgrano', altura='300', barrio=self.barrio.pk, cantidad=4)
+        paradas = list(self.hoja.detalles.order_by('orden'))
+        self.assertEqual([p.orden for p in paradas], [1, 2])
+        self.assertEqual(paradas[1].cliente.nombre, 'Kiosco Pepe')
+        self.assertEqual(paradas[1].cantidad_bidones, 4)
+        self.assertEqual(paradas[1].pedido.total, Decimal('12000'))
+        # Borrar la primera renumera.
+        self.client.post(reverse('apps.logistica:eliminar_parada', args=[paradas[0].pk]))
+        self.assertEqual(list(self.hoja.detalles.values_list('orden', flat=True)), [1])
+
+    def test_pedido_de_la_parada_se_edita_en_la_subfila(self):
+        self._agregar(direccion=self.direccion.pk)
+        parada = self.hoja.detalles.get()
+        self.client.post(reverse('apps.logistica:pedido_parada', args=[parada.pk]), {f'botellon_{self.bidon.pk}': 5})
+        parada.refresh_from_db()
+        self.assertEqual(parada.cantidad_bidones, 5)
+        self.assertEqual(parada.resumen_pedido(), '5 × Bidón 20 L')
+        respuesta = self.client.get(reverse('apps.logistica:ver_ruta', args=[self.hoja.pk]))
+        self.assertContains(respuesta, 'Guardar pedido')
+        self.assertContains(respuesta, 'Mitre 10')  # la dirección ya no sale vacía
+
+    def test_pedido_web_no_se_modifica_desde_la_hoja(self):
+        web = Pedido.objects.create(cliente=self.cliente, direccion_entrega=self.direccion, origen='WEB',
+                                    estado='Confirmado', metodo_pago=MetodoPago.objects.get(codigo='EFECTIVO'))
+        DetallePedido.objects.create(pedido=web, producto=self.bidon, precio_unitario=self.bidon.precio,
+                                     cantidad=3, subtotal=self.bidon.precio * 3)
+        self.client.post(reverse('apps.logistica:agregar_pedido_parada', args=[self.hoja.pk]), {'pedido_id': web.pk})
+        parada = self.hoja.detalles.get()
+        self.assertEqual(parada.cantidad_bidones, 3)
+        self.client.post(reverse('apps.logistica:pedido_parada', args=[parada.pk]), {f'botellon_{self.bidon.pk}': 9})
+        parada.refresh_from_db()
+        self.assertEqual(parada.cantidad_bidones, 3)
+
+    def test_confirmar_muestra_lo_encargado_y_asigna_equipo(self):
+        self._agregar(direccion=self.direccion.pk, cantidad=6)
+        respuesta = self.client.get(reverse('apps.logistica:confirmar_ruta', args=[self.hoja.pk]))
+        nombres = [f['producto'].nombre for f in respuesta.context['productos']]
+        self.assertEqual(nombres, ['Bidón 20 L', 'Envase bidón'])  # sólo llenos y vacíos
+        self.assertEqual(respuesta.context['productos'][0]['cantidad'], 6)
+        self.client.post(reverse('apps.logistica:confirmar_ruta', args=[self.hoja.pk]), {
+            'empleado': self.chofer.pk, 'camion': self.camion.pk, f'cantidad_producto_{self.bidon.pk}': 6})
+        self.hoja.refresh_from_db()
+        self.assertEqual((self.hoja.estado, self.hoja.empleado, self.hoja.camion), ('Confirmada', self.chofer, self.camion))
+
+    def test_regreso_con_vacios_ajusta_el_stock_del_envase(self):
+        self._agregar(direccion=self.direccion.pk, cantidad=2)
+        self.client.post(reverse('apps.logistica:confirmar_ruta', args=[self.hoja.pk]), {f'cantidad_producto_{self.bidon.pk}': 3})
+        parada = self.hoja.detalles.get()
+        registrar_entrega(parada, 'Entregado', envases_retirados=2)  # +2 al envase
+        respuesta = self.client.get(reverse('apps.logistica:registrar_regreso_ruta', args=[self.hoja.pk]))
+        self.assertEqual(respuesta.context['cargas'][0]['entregado'], 2)
+        carga = self.hoja.cargas.get()
+        self.client.post(reverse('apps.logistica:registrar_regreso_ruta', args=[self.hoja.pk]),
+                         {f'entregada_{carga.pk}': 2, 'vacios_recibidos': 3})
+        self.envase.refresh_from_db(); self.bidon.refresh_from_db(); self.hoja.refresh_from_db()
+        self.assertEqual(self.envase.stock, 103)   # 100 + 2 de la parada + 1 de diferencia
+        self.assertEqual(self.bidon.stock, 38)     # 40 − 3 cargados + 1 que volvió lleno
+        self.assertEqual((self.hoja.estado, self.hoja.vacios_recibidos), ('Cerrada', 3))
+
+    def test_reprogramar_registra_la_hora(self):
+        self._agregar(direccion=self.direccion.pk)
+        parada = self.hoja.detalles.get()
+        registrar_entrega(parada, 'Reprogramado')
+        parada.refresh_from_db()
+        self.assertIsNotNone(parada.hora_registro)
+
+    def test_planificar_asigna_camion_y_repartidor(self):
+        self.cliente.es_frecuente = True
+        self.cliente.cantidad_recurrente_default = 2
+        self.cliente.save()
+        url = reverse('apps.logistica:planificar_reparto')
+        self.client.post(url, {'fecha': '2026-10-22', 'zona': self.zona.pk, 'confirmar': '1',
+                               'empleado': self.chofer.pk, 'camion': self.camion.pk,
+                               f'frecuente_{self.cliente.pk}': 'on', f'cantidad_frecuente_{self.cliente.pk}': 3,
+                               f'producto_frecuente_{self.cliente.pk}': self.bidon.pk})
+        hoja = HojaRuta.objects.get(fecha=date(2026, 10, 22))
+        self.assertEqual((hoja.empleado, hoja.camion, hoja.total_botellones()), (self.chofer, self.camion, 3))

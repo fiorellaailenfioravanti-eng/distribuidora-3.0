@@ -233,6 +233,11 @@ class HojaRuta(models.Model):
     fecha_confirmacion = models.DateTimeField(null=True, blank=True)
     fecha_salida       = models.DateTimeField(null=True, blank=True)
     fecha_regreso      = models.DateTimeField(null=True, blank=True)
+    vacios_recibidos   = models.PositiveIntegerField(
+        null=True, blank=True,
+        verbose_name='Vacíos recibidos en depósito',
+        help_text='Envases vacíos que bajaron del camión al regresar.'
+    )
     creado_por    = models.ForeignKey(
         'autenticacion.Usuario',
         on_delete=models.SET_NULL,
@@ -369,11 +374,20 @@ class DetalleHojaRuta(models.Model):
         return f"Parada {self.orden} — {self.get_estado_display()} ({self.cliente_nombre or self.pedido_ref})"
 
     def marcar_estado(self, nuevo_estado):
-        """Actualiza el estado y registra la hora si es una acción terminal."""
+        """Actualiza el estado y registra la hora de cada novedad del repartidor."""
         self.estado = nuevo_estado
-        if nuevo_estado in ('Entregado', 'Cancelado'):
-            self.hora_registro = timezone.now()
+        self.hora_registro = timezone.now() if nuevo_estado != 'Pendiente' else None
         self.save()
+
+    def es_pedido_web(self):
+        return self.pedido_id is not None and self.pedido.origen == 'WEB'
+
+    def resumen_pedido(self):
+        """Texto corto de lo que lleva la parada: «2 × Bidón 20 L, 1 × Soda»."""
+        if self.pedido_id is None:
+            return ''
+        return ', '.join(f'{d.cantidad} × {d.producto.nombre}'
+                         for d in self.pedido.detalles.select_related('producto'))
 
 
 # ────────────────────────────────────────────────

@@ -48,90 +48,100 @@
     <input type="hidden" name="zona" value="{{ zona.id_zona }}">
     <input type="hidden" name="confirmar" value="1">
 
-    <div class="alert alert-info d-flex align-items-center">
-        <i class="fa-solid fa-circle-info me-2"></i>
-        Ruta para <strong class="mx-1">{{ zona.nombre }}</strong> el
-        <strong class="mx-1">{{ fecha|date:'d/m/Y' }}</strong>.
-        {% if borrador.ruta_default %}
-            Repartidor/camión por defecto:
-            <strong class="ms-1">{{ borrador.ruta_default.empleado_default|default:"sin asignar" }}</strong> /
-            <strong class="ms-1">{{ borrador.ruta_default.camion_default|default:"sin camión" }}</strong>.
-        {% else %}
-            No hay una ruta configurada para ese día; se creará sin repartidor asignado.
-        {% endif %}
+    {# Equipo del reparto #}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h6 class="fw-semibold mb-0"><i class="fa-solid fa-truck me-1"></i> Reparto de {{ zona.nombre }} — {{ fecha|date:'l d/m/Y' }}</h6>
+                {% if not borrador.ruta_default %}<small class="text-muted">No hay ruta configurada para este día: elegí el equipo.</small>{% endif %}
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold" for="sel-empleado">Repartidor</label>
+                    <select name="empleado" id="sel-empleado" class="form-select">
+                        <option value="">— Sin asignar —</option>
+                        {% for e in repartidores %}
+                        <option value="{{ e.pk }}" {% if e.pk == empleado_elegido %}selected{% endif %}>{{ e.nombre }} {{ e.apellido }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold" for="sel-camion">Camión</label>
+                    <select name="camion" id="sel-camion" class="form-select">
+                        <option value="">— Sin asignar —</option>
+                        {% for c in camiones %}
+                        <option value="{{ c.pk }}" {% if c.pk == camion_elegido %}selected{% endif %}>{{ c.patente }} — {{ c.descripcion|default:"sin descripción" }} ({{ c.capacidad_botellones }} botellones)</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="row g-4">
         <div class="col-lg-6">
             <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-body fw-semibold">
-                    <i class="fa-solid fa-repeat me-1"></i> Clientes frecuentes
-                    <span class="badge bg-secondary ms-1">{{ borrador.frecuentes|length }}</span>
+                <div class="card-header bg-body fw-semibold d-flex flex-wrap justify-content-between gap-1">
+                    <span><i class="fa-solid fa-repeat me-1"></i> Clientes frecuentes <span class="badge bg-secondary ms-1">{{ borrador.frecuentes|length }}</span></span>
+                    <small class="text-muted fw-normal">Se les arma un pedido con lo que indiques</small>
                 </div>
                 <div class="card-body">
-                    {% if borrador.frecuentes %}
-                        {% for f in borrador.frecuentes %}
-                        <div class="d-flex align-items-center border-bottom py-2">
-                            <div class="form-check me-3">
-                                <input class="form-check-input" type="checkbox"
-                                       name="frecuente_{{ f.cliente.pk }}" id="frec_{{ f.cliente.pk }}">
-                            </div>
+                    {% for f in borrador.frecuentes %}
+                    <div class="border-bottom py-2">
+                        <div class="d-flex align-items-start gap-2">
+                            <input class="form-check-input mt-1" type="checkbox" checked
+                                   name="frecuente_{{ f.cliente.pk }}" id="frec_{{ f.cliente.pk }}">
                             <div class="flex-grow-1">
-                                <label class="form-label mb-0 fw-semibold" for="frec_{{ f.cliente.pk }}">
-                                    {{ f.cliente.nombre_completo }}
-                                </label>
+                                <label class="form-label mb-0 fw-semibold" for="frec_{{ f.cliente.pk }}">{{ f.cliente.nombre_completo }}</label>
                                 <div><small class="text-muted">{{ f.direccion.direccion_completa }}</small></div>
-                                <input type="hidden" name="direccion_frecuente_{{ f.cliente.pk }}"
-                                       value="{{ f.direccion.pk }}">
-                            </div>
-                            <div style="width: 110px;">
-                                <input type="number" min="0" class="form-control form-control-sm"
-                                       name="cantidad_frecuente_{{ f.cliente.pk }}"
-                                       value="{{ f.cantidad_sugerida }}">
+                                <input type="hidden" name="direccion_frecuente_{{ f.cliente.pk }}" value="{{ f.direccion.pk }}">
                             </div>
                         </div>
-                        {% endfor %}
-                    {% else %}
-                        <p class="text-muted mb-0">No hay clientes frecuentes en esta zona.</p>
-                    {% endif %}
+                        <div class="d-flex flex-wrap align-items-center gap-2 mt-2 ms-4">
+                            <select name="producto_frecuente_{{ f.cliente.pk }}" class="form-select form-select-sm" style="max-width:15rem;" aria-label="Botellón">
+                                {% for p in productos_reparto %}
+                                <option value="{{ p.pk }}" {% if p.pk == botellon_defecto.pk %}selected{% endif %}>{{ p.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="input-group input-group-sm" style="width:9rem;">
+                                <button class="btn btn-outline-secondary" type="button" onclick="pasoCantidad(this,-1)">−</button>
+                                <input type="number" min="1" class="form-control text-center" aria-label="Cantidad de botellones"
+                                       name="cantidad_frecuente_{{ f.cliente.pk }}" value="{{ f.cantidad_sugerida }}">
+                                <button class="btn btn-outline-secondary" type="button" onclick="pasoCantidad(this,1)">+</button>
+                            </div>
+                            <small class="text-muted">botellones (habitual: {{ f.cantidad_sugerida }})</small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted mb-0">No hay clientes frecuentes en esta zona.</p>
+                    {% endfor %}
                 </div>
             </div>
         </div>
 
         <div class="col-lg-6">
             <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-body fw-semibold">
-                    <i class="fa-solid fa-cart-shopping me-1"></i> Pedidos de la zona
-                    <span class="badge bg-secondary ms-1">{{ borrador.pedidos|length }}</span>
+                <div class="card-header bg-body fw-semibold d-flex flex-wrap justify-content-between gap-1">
+                    <span><i class="fa-solid fa-cart-shopping me-1"></i> Pedidos de la zona <span class="badge bg-secondary ms-1">{{ borrador.pedidos|length }}</span></span>
+                    <small class="text-muted fw-normal">Van con lo que pidió el cliente</small>
                 </div>
                 <div class="card-body">
-                    {% if borrador.pedidos %}
-                        {% for p in borrador.pedidos %}
-                        <div class="d-flex align-items-center border-bottom py-2">
-                            <div class="form-check me-3">
-                                <input class="form-check-input" type="checkbox"
-                                       name="pedido_{{ p.id_pedido }}" id="ped_{{ p.id_pedido }}">
-                            </div>
-                            <div class="flex-grow-1">
-                                <label class="form-label mb-0 fw-semibold" for="ped_{{ p.id_pedido }}">
-                                    #{{ p.id_pedido }} — {{ p.cliente.nombre_completo|default:"Cliente" }}
-                                </label>
-                                <div>
-                                    <small class="text-muted">
-                                        {{ p.direccion_entrega.direccion_completa|default:"Sin dirección" }}
-                                    </small>
-                                </div>
-                                <span class="badge bg-light text-dark border">{{ p.estado }}</span>
-                            </div>
-                            <div style="width: 110px;">
-                                <input type="number" min="0" class="form-control form-control-sm"
-                                       name="cantidad_pedido_{{ p.id_pedido }}" value="">
-                            </div>
+                    {% for p in borrador.pedidos %}
+                    <div class="d-flex align-items-start gap-2 border-bottom py-2">
+                        <input class="form-check-input mt-1" type="checkbox" checked
+                               name="pedido_{{ p.id_pedido }}" id="ped_{{ p.id_pedido }}">
+                        <div class="flex-grow-1">
+                            <label class="form-label mb-0 fw-semibold" for="ped_{{ p.id_pedido }}">
+                                #{{ p.id_pedido }} — {{ p.cliente.nombre_completo|default:"Cliente" }}
+                            </label>
+                            <span class="badge bg-light text-dark border ms-1">{% if p.origen == 'WEB' %}Web{% else %}Empresa{% endif %}</span>
+                            <div><small class="text-muted">{{ p.direccion_entrega.direccion_completa|default:"Sin dirección" }}</small></div>
+                            <div class="small">{% for item in p.detalles.all %}{{ item.cantidad }} × {{ item.producto.nombre }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-warning">Sin productos</span>{% endfor %}</div>
                         </div>
-                        {% endfor %}
-                    {% else %}
-                        <p class="text-muted mb-0">No hay pedidos pendientes para esta zona y fecha.</p>
-                    {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-muted mb-0">No hay pedidos pendientes para esta zona y fecha.</p>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -143,6 +153,12 @@
         </button>
     </div>
 </form>
+<script>
+function pasoCantidad(boton, paso) {
+    const input = boton.parentElement.querySelector('input');
+    input.value = Math.max(1, (parseInt(input.value, 10) || 0) + paso);
+}
+</script>
 {% elif fecha or zona %}
 <div class="alert alert-warning">Elegí una fecha y una zona válidas para ver la previsualización.</div>
 {% endif %}

@@ -5,13 +5,12 @@
 {% block content %}
 
 {# ── Cabecera ── #}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
     <div>
         <h1 class="h3 fw-bold mb-1 text-main">Hoja de Ruta #{{ ruta.id_ruta }}</h1>
         <p class="text-muted small mb-0">
-            <i class="fa-solid fa-calendar-day me-1"></i> {{ ruta.fecha|date:"d \d\e F \d\e Y" }} &nbsp;·&nbsp;
-            <i class="fa-solid fa-map-pin me-1"></i> {{ ruta.zona.nombre }} &nbsp;·&nbsp;
-            <i class="fa-solid fa-truck me-1"></i> {{ ruta.camion.patente }}
+            <i class="fa-solid fa-calendar-day me-1"></i> {{ ruta.fecha|date:"l d \d\e F \d\e Y" }} &nbsp;·&nbsp;
+            <i class="fa-solid fa-map-pin me-1"></i> {{ ruta.zona.nombre|default:"Sin zona" }}
         </p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
@@ -41,224 +40,366 @@
 {# ── Tarjetas de resumen ── #}
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
-        <div class="card text-center border-0 shadow-sm rounded-4 bg-surface hover-lift">
+        <div class="card text-center border-0 shadow-sm rounded-4 bg-surface h-100">
             <div class="card-body p-4">
                 <div class="fs-3 fw-bold text-primary">{{ ruta.total_paradas }}</div>
-                <small class="text-muted text-uppercase fw-semibold">Total paradas</small>
+                <small class="text-muted text-uppercase fw-semibold">Paradas · {{ ruta.paradas_entregadas }} entregadas</small>
             </div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="card text-center border-0 shadow-sm rounded-4 bg-surface hover-lift">
+        <div class="card text-center border-0 shadow-sm rounded-4 bg-surface h-100">
             <div class="card-body p-4">
-                <div class="fs-3 fw-bold text-success">{{ ruta.paradas_entregadas }}</div>
-                <small class="text-muted text-uppercase fw-semibold">Entregadas</small>
+                <div class="fs-3 fw-bold {% if ruta.supera_capacidad %}text-danger{% else %}text-success{% endif %}">{{ ruta.total_botellones }}</div>
+                <small class="text-muted text-uppercase fw-semibold">Botellones a entregar{% if ruta.camion %} · capacidad {{ ruta.camion.capacidad_botellones }}{% endif %}</small>
             </div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="card text-center border-0 shadow-sm rounded-4 bg-surface hover-lift">
+        <div class="card text-center border-0 shadow-sm rounded-4 bg-surface h-100">
             <div class="card-body p-4">
-                <div class="text-muted small text-truncate fw-semibold">
-                    {% if ruta.empleado %}{{ ruta.empleado.nombre }} {{ ruta.empleado.apellido }}{% else %}Sin asignar{% endif %}
+                <div class="fw-semibold text-main text-truncate">
+                    {% if ruta.empleado %}{{ ruta.empleado.nombre }} {{ ruta.empleado.apellido }}{% else %}<span class="text-warning">Sin repartidor</span>{% endif %}
                 </div>
-                <small class="text-muted text-uppercase fw-semibold">Repartidor</small>
-                <div class="text-muted small text-truncate">{{ ruta.camion.patente|default:"Sin camión" }}</div>
+                <div class="small text-muted">{% if ruta.camion %}<i class="fa-solid fa-truck me-1"></i>{{ ruta.camion.patente }}{% else %}<span class="text-warning">Sin camión</span>{% endif %}</div>
+                <small class="text-muted text-uppercase fw-semibold">Repartidor y camión</small>
             </div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="card text-center border-0 shadow-sm rounded-4 bg-surface hover-lift">
+        <div class="card text-center border-0 shadow-sm rounded-4 bg-surface h-100">
             <div class="card-body p-4">
-                <div class="fs-4 fw-bold mb-1">
-                    {% if ruta.estado == 'Borrador' %}
-                        <span class="badge bg-info bg-opacity-25 text-info rounded-pill px-3 py-1">{{ ruta.estado }}</span>
-                    {% elif ruta.estado == 'Confirmada' %}
-                        <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-3 py-1">{{ ruta.estado }}</span>
-                    {% else %}
-                        <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-3 py-1">{{ ruta.estado }}</span>
-                    {% endif %}
+                <div class="fs-5 fw-bold mb-1">
+                    {% if ruta.estado == 'Borrador' %}<span class="badge bg-info bg-opacity-25 text-info rounded-pill px-3 py-1">Borrador</span>
+                    {% elif ruta.estado == 'Confirmada' %}<span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-3 py-1">En reparto</span>
+                    {% else %}<span class="badge bg-success bg-opacity-25 text-success rounded-pill px-3 py-1">Cerrada</span>{% endif %}
                 </div>
-                <small class="text-muted text-uppercase fw-semibold">Estado</small>
+                <small class="text-muted text-uppercase fw-semibold">{{ ruta.porcentaje_completado }}% completado</small>
             </div>
         </div>
     </div>
 </div>
 
-{# ── Progreso global ── #}
-<div class="card border-0 shadow-sm rounded-4 bg-surface mb-4">
-    <div class="card-body p-4">
-        <div class="d-flex justify-content-between mb-2">
-            <small class="fw-bold text-muted text-uppercase">Progreso de entregas</small>
-            <small class="fw-bold text-success">{{ ruta.porcentaje_completado }}%</small>
-        </div>
-        <div class="progress rounded-pill" style="height:12px; background-color: var(--bs-secondary-bg-subtle);">
-            <div class="progress-bar bg-success rounded-pill shadow-sm" style="width:{{ ruta.porcentaje_completado }}%;"></div>
-        </div>
-    </div>
-</div>
-
-{# ── Observaciones ── #}
 {% if ruta.observaciones %}
-<div class="alert alert-secondary border-0 shadow-sm rounded-4 mb-4 bg-surface">
-    <i class="fa-solid fa-note-sticky text-secondary me-2"></i>
-    <strong class="text-main">Observaciones:</strong> <span class="text-muted">{{ ruta.observaciones }}</span>
+<div class="alert alert-secondary border-0 shadow-sm rounded-4 mb-4 bg-surface small">
+    <i class="fa-solid fa-note-sticky text-secondary me-2"></i><strong class="text-main">Observaciones:</strong>
+    <span class="text-muted">{{ ruta.observaciones }}</span>
 </div>
 {% endif %}
 
-{# ── Tabla de paradas ── #}
+{# ── Paradas ── #}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="mb-0 fw-bold text-main"><i class="fa-solid fa-location-dot text-primary me-2"></i> Paradas</h5>
+    <h5 class="mb-0 fw-bold text-main"><i class="fa-solid fa-location-dot text-primary me-2"></i>Paradas</h5>
+    <small class="text-muted">Tocá una parada para ver su pedido y registrar la entrega.</small>
 </div>
 
-{% if detalles %}
 <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden mb-4">
+    {% if filas %}
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table align-middle mb-0">
             <thead class="table-light text-muted small text-uppercase">
                 <tr>
-                    <th class="ps-4 border-bottom-0 py-3">#</th>
+                    <th class="ps-4 border-bottom-0 py-3" style="width:3rem;">#</th>
                     <th class="border-bottom-0 py-3">Cliente</th>
-                    <th class="border-bottom-0 py-3">Dirección</th>
-                    <th class="border-bottom-0 py-3">Referencia</th>
-                    <th class="border-bottom-0 py-3">Estado</th>
-                    <th class="border-bottom-0 py-3">Hora registro</th>
-                    <th class="border-bottom-0 py-3">Nota</th>
-                    <th class="border-bottom-0 py-3">Alerta</th>
-                    {% if es_admin %}<th class="pe-4 border-bottom-0 py-3"></th>{% endif %}
+                    <th class="border-bottom-0 py-3 d-none d-lg-table-cell">Dirección</th>
+                    <th class="border-bottom-0 py-3">Pedido</th>
+                    <th class="border-bottom-0 py-3 text-center">Estado</th>
+                    <th class="border-bottom-0 py-3 text-center d-none d-md-table-cell">Registro</th>
+                    <th class="pe-4 border-bottom-0 py-3 text-end"></th>
                 </tr>
             </thead>
-        <tbody>
-            {% for d in detalles %}
-            <tr>
+            <tbody>
+            {% for fila in filas %}
+            {% with d=fila.parada %}
+            <tr id="parada-{{ d.id_detalle }}" class="parada-fila" role="button"
+                data-bs-toggle="collapse" data-bs-target="#detalle-{{ d.id_detalle }}"
+                aria-expanded="{% if parada_abierta == d.id_detalle|stringformat:'s' %}true{% else %}false{% endif %}">
                 <td class="ps-4 text-muted fw-bold">{{ d.orden }}</td>
-                <td class="text-main fw-semibold">{{ d.cliente_nombre|default:"—" }}</td>
-                <td class="text-muted small">{{ d.direccion|default:"—" }}</td>
-                <td><span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill">{{ d.pedido_ref|default:"—" }}</span></td>
                 <td>
-                    {% if d.estado == 'Pendiente' %}
-                        <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 py-1">{{ d.estado }}</span>
-                    {% elif d.estado == 'Entregado' %}
-                        <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1">{{ d.estado }}</span>
-                    {% elif d.estado == 'Cancelado' %}
-                        <span class="badge bg-danger bg-opacity-25 text-danger rounded-pill px-2 py-1">{{ d.estado }}</span>
+                    <div class="fw-semibold text-main">{{ d.cliente_nombre|default:"Sin cliente" }}</div>
+                    {% if d.es_frecuente %}<span class="badge bg-primary bg-opacity-10 text-primary rounded-pill small">Frecuente</span>{% endif %}
+                    {% if d.es_pedido_web %}<span class="badge bg-info bg-opacity-10 text-info rounded-pill small">Pedido web #{{ d.pedido_id }}</span>{% endif %}
+                    <div class="small text-muted d-lg-none">{{ d.direccion_texto|default:"Sin dirección" }}</div>
+                </td>
+                <td class="text-muted small d-none d-lg-table-cell">{{ d.direccion_texto|default:"Sin dirección" }}</td>
+                <td>
+                    {% if d.cantidad_bidones %}
+                        <span class="fw-bold text-main">{{ d.cantidad_bidones }}</span>
+                        <span class="text-muted small">botell{{ d.cantidad_bidones|pluralize:"ón,ones" }}</span>
+                        <div class="small text-muted text-truncate" style="max-width:16rem;">{{ d.resumen_pedido }}</div>
                     {% else %}
-                        <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-1">{{ d.estado }}</span>
+                        <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill">Sin pedido</span>
                     {% endif %}
                 </td>
-                <td>
-                    {% if d.hora_registro %}
-                        <small>{{ d.hora_registro|date:"H:i" }}</small>
-                    {% else %}
-                        <small class="text-muted">—</small>
-                    {% endif %}
+                <td class="text-center">
+                    {% if d.estado == 'Pendiente' %}<span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 py-1">Pendiente</span>
+                    {% elif d.estado == 'Entregado' %}<span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1">Entregado</span>
+                    {% elif d.estado == 'Cancelado' %}<span class="badge bg-danger bg-opacity-25 text-danger rounded-pill px-2 py-1">Cancelado</span>
+                    {% else %}<span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-1">{{ d.estado }}</span>{% endif %}
                 </td>
-                <td>
-                    {% if d.nota_entrega %}
-                        <i class="fa-solid fa-comment-dots text-info" title="{{ d.nota_entrega }}"></i>
-                    {% else %}—{% endif %}
-                </td>
-                {# RNF-02: la nota de acceso al domicilio se evalúa por parada. #}
-                <td>
+                <td class="text-center small d-none d-md-table-cell">
+                    {% if d.hora_registro %}{{ d.hora_registro|date:"H:i" }}{% else %}<span class="text-muted">—</span>{% endif %}
                     {% if d.id_detalle in paradas_con_nota_visible and d.direccion_entrega.desc_seguridad %}
-                        <i class="fa-solid fa-shield-halved text-warning" title="{{ d.direccion_entrega.desc_seguridad }}"></i>
-                    {% else %}—{% endif %}
+                        <i class="fa-solid fa-shield-halved text-warning ms-1" title="{{ d.direccion_entrega.desc_seguridad }}"></i>
+                    {% endif %}
+                    {% if d.nota_entrega %}<i class="fa-solid fa-comment-dots text-info ms-1" title="{{ d.nota_entrega }}"></i>{% endif %}
                 </td>
-                {% if es_admin %}
-                <td class="pe-4 text-end">
-                    <div class="btn-group shadow-sm">
-                        <a href="{% url 'apps.logistica:actualizar_estado_entrega' d.id_detalle %}"
-                           class="btn btn-sm btn-light border-0 text-warning hover-lift" title="Editar Estado">
-                            <i class="fa-solid fa-pen"></i>
-                        </a>
-                        <form method="post" action="{% url 'apps.logistica:eliminar_parada' d.id_detalle %}"
-                              onsubmit="return confirm('¿Eliminar esta parada?')" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-light border-0 text-danger hover-lift" title="Eliminar Parada">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </form>
+                <td class="pe-4 text-end text-nowrap">
+                    <i class="fa-solid fa-chevron-down text-muted me-2 parada-chevron"></i>
+                    {% if es_admin and ruta.estado != 'Cerrada' %}
+                    <form method="post" action="{% url 'apps.logistica:eliminar_parada' d.id_detalle %}"
+                          onsubmit="event.stopPropagation(); return confirm('¿Eliminar la parada de {{ d.cliente_nombre|default:'este cliente'|escapejs }}?')" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-light border-0 text-danger" title="Eliminar parada"
+                                onclick="event.stopPropagation();"><i class="fa-solid fa-trash"></i></button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr class="collapse {% if parada_abierta == d.id_detalle|stringformat:'s' %}show{% endif %}" id="detalle-{{ d.id_detalle }}">
+                <td colspan="7" class="bg-body-tertiary p-0">
+                    <div class="row g-3 p-3 p-md-4">
+                        {# Pedido de la parada #}
+                        <div class="col-lg-5">
+                            <h6 class="fw-bold text-main small text-uppercase mb-2"><i class="fa-solid fa-box me-1"></i> Pedido</h6>
+                            {% if fila.editable %}
+                            <form method="post" action="{% url 'apps.logistica:pedido_parada' d.id_detalle %}">
+                                {% csrf_token %}
+                                {% for b in fila.botellones %}
+                                <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                    <label class="small mb-0 text-main" for="b-{{ d.id_detalle }}-{{ b.producto.pk }}">{{ b.producto.nombre }} <span class="text-muted">(${{ b.producto.precio }})</span></label>
+                                    <div class="input-group input-group-sm" style="width:8.5rem;">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="pasoCantidad(this,-1)">−</button>
+                                        <input type="number" min="0" class="form-control text-center" id="b-{{ d.id_detalle }}-{{ b.producto.pk }}"
+                                               name="botellon_{{ b.producto.pk }}" value="{{ b.cantidad }}">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="pasoCantidad(this,1)">+</button>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <p class="small text-warning mb-2">No hay productos marcados como botellón de reparto.</p>
+                                {% endfor %}
+                                <button type="submit" class="btn btn-sm btn-primary rounded-pill fw-bold mt-1">Guardar pedido</button>
+                            </form>
+                            {% elif d.pedido %}
+                            <ul class="list-unstyled small mb-2">
+                                {% for item in d.pedido.detalles.all %}
+                                <li>{{ item.cantidad }} × {{ item.producto.nombre }}
+                                    <span class="text-muted">{% if item.precio_unitario %}${{ item.subtotal }}{% else %}(promoción prepaga){% endif %}</span></li>
+                                {% empty %}
+                                <li class="text-muted">El pedido no tiene productos.</li>
+                                {% endfor %}
+                            </ul>
+                            <div class="small text-muted">
+                                Total ${{ d.pedido.total }} ·
+                                {% if d.es_pedido_web %}hecho por la web el {{ d.pedido.fecha_pedido|date:"d/m H:i" }}{% else %}cargado por la empresa{% endif %}
+                                · <a href="{% url 'apps.pedidos:detalle_pedido' d.pedido_id %}">ver pedido</a>
+                            </div>
+                            {% if d.pedido.notas_cliente and d.es_pedido_web %}<div class="small mt-1"><i class="fa-solid fa-message me-1 text-info"></i>{{ d.pedido.notas_cliente }}</div>{% endif %}
+                            {% if ruta.estado != 'Borrador' and not d.es_pedido_web %}<div class="small text-muted mt-1">La hoja ya salió: el pedido no se modifica.</div>{% endif %}
+                            {% else %}
+                            <p class="small text-warning mb-0">Parada sin pedido{% if not d.cliente %} ni cliente: eliminala y agregala de nuevo{% endif %}.</p>
+                            {% endif %}
+                        </div>
+
+                        {# Registro de la entrega #}
+                        <div class="col-lg-7">
+                            <h6 class="fw-bold text-main small text-uppercase mb-2"><i class="fa-solid fa-clipboard-check me-1"></i> Entrega</h6>
+                            {% if ruta.estado == 'Borrador' %}
+                            <p class="small text-muted mb-0">La entrega se registra cuando la hoja sale (después de «Confirmar salida»).</p>
+                            {% elif es_admin %}
+                            <form method="post" action="{% url 'apps.logistica:actualizar_estado_entrega' d.id_detalle %}" class="row g-2">
+                                {% csrf_token %}
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1" for="e-{{ d.id_detalle }}">Estado</label>
+                                    <select name="estado" id="e-{{ d.id_detalle }}" class="form-select form-select-sm">
+                                        {% for valor, texto in form_estado.fields.estado.choices %}
+                                        <option value="{{ valor }}" {% if d.estado == valor %}selected{% endif %}>{{ texto }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <label class="form-label small mb-1" for="r-{{ d.id_detalle }}">Vacíos retirados</label>
+                                    <input type="number" min="0" name="envases_retirados" id="r-{{ d.id_detalle }}" class="form-control form-control-sm" value="{{ d.envases_retirados }}">
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <label class="form-label small mb-1" for="v-{{ d.id_detalle }}">Envases vendidos</label>
+                                    <input type="number" min="0" name="envases_vendidos" id="v-{{ d.id_detalle }}" class="form-control form-control-sm" value="{{ d.envases_vendidos }}">
+                                </div>
+                                {% if d.estado != 'Entregado' %}
+                                <div class="col-6 col-md-4">
+                                    <label class="form-label small mb-1" for="m-{{ d.id_detalle }}">Monto cobrado</label>
+                                    <input type="number" min="0" step="0.01" name="monto_cobrado" id="m-{{ d.id_detalle }}" class="form-control form-control-sm"
+                                           placeholder="{% if d.pedido %}{{ d.pedido.saldo_pendiente }}{% endif %}">
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <label class="form-label small mb-1" for="mp-{{ d.id_detalle }}">Medio de pago</label>
+                                    <select name="metodo_pago" id="mp-{{ d.id_detalle }}" class="form-select form-select-sm">
+                                        <option value="">—</option>
+                                        {% for mp in form_estado.fields.metodo_pago.queryset %}<option value="{{ mp.pk }}">{{ mp.nombre }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                                {% endif %}
+                                <div class="col-12 {% if d.estado != 'Entregado' %}col-md-4{% endif %}">
+                                    <label class="form-label small mb-1" for="n-{{ d.id_detalle }}">Nota</label>
+                                    <input type="text" name="nota_entrega" id="n-{{ d.id_detalle }}" class="form-control form-control-sm" value="{{ d.nota_entrega }}" placeholder="Ej: dejé con el vecino">
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-sm btn-success rounded-pill fw-bold">Registrar entrega</button>
+                                    {% if d.hora_registro %}<span class="small text-muted ms-2">Último registro: {{ d.hora_registro|date:"d/m H:i" }}</span>{% endif %}
+                                </div>
+                            </form>
+                            {% else %}
+                            <a href="{% url 'apps.logistica:actualizar_estado_entrega' d.id_detalle %}" class="btn btn-sm btn-success rounded-pill">Registrar entrega</a>
+                            {% endif %}
+                        </div>
                     </div>
                 </td>
-                {% endif %}
             </tr>
+            {% endwith %}
             {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% else %}
-<div class="text-center py-4 text-muted">
-    <i class="fa-solid fa-map-location-dot fa-2x mb-2 opacity-25"></i>
-    <p>No hay paradas cargadas aún.</p>
-</div>
-{% endif %}
-
-{# ── Sugerencias de clientes de la zona para este día (solo admin/vendedor) ── #}
-{% if es_admin and sugerencias %}
-<div class="card border-0 shadow-sm rounded-4 bg-surface mb-4">
-    <div class="card-header bg-transparent border-bottom p-4">
-        <h6 class="mb-0 fw-bold text-main"><i class="fa-solid fa-lightbulb text-info me-2"></i> Sugerencias para hoy en esta zona</h6>
+            </tbody>
+        </table>
     </div>
-    <div class="card-body p-0">
-        <ul class="list-group list-group-flush rounded-bottom-4 overflow-hidden">
-            {% for s in sugerencias %}
-            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center p-4 border-bottom-0 border-top text-main">
-                <div>
-                    <strong class="fw-bold">{{ s.cliente.nombre_completo }}</strong><br>
-                    <small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i> {{ s.direccion_completa }}</small>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+        <i class="fa-solid fa-map-location-dot fa-2x mb-2 opacity-25"></i>
+        <p class="mb-0">La hoja todavía no tiene paradas. Agregalas abajo.</p>
+    </div>
+    {% endif %}
+</div>
+
+{# ── Agregar a la hoja (admin/vendedor) ── #}
+{% if es_admin and ruta.estado != 'Cerrada' %}
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface h-100">
+            <div class="card-header bg-transparent border-bottom p-4">
+                <h6 class="mb-0 fw-bold text-main"><i class="fa-solid fa-cart-shopping text-info me-2"></i>Pedidos pendientes de la zona</h6>
+            </div>
+            <div class="card-body p-0">
+                {% for p in pedidos_pendientes %}
+                <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom">
+                    <div>
+                        <div class="fw-semibold text-main">#{{ p.id_pedido }} — {{ p.cliente.nombre_completo|default:"Cliente" }}
+                            <span class="badge bg-light text-dark border">{% if p.origen == 'WEB' %}Web{% else %}Empresa{% endif %}</span></div>
+                        <small class="text-muted">{{ p.direccion_entrega.direccion_completa|default:"Sin dirección" }}</small>
+                        <div class="small">{% for item in p.detalles.all %}{{ item.cantidad }} × {{ item.producto.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+                    </div>
+                    <form method="post" action="{% url 'apps.logistica:agregar_pedido_parada' ruta.id_ruta %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="pedido_id" value="{{ p.id_pedido }}">
+                        <button type="submit" class="btn btn-sm btn-light text-info fw-bold rounded-pill px-3"><i class="fa-solid fa-plus me-1"></i> Agregar</button>
+                    </form>
                 </div>
-                <form method="post" action="{% url 'apps.logistica:agregar_parada' ruta.id_ruta %}">
+                {% empty %}
+                <p class="text-muted small text-center py-4 mb-0">No hay pedidos pendientes para esta zona y fecha.</p>
+                {% endfor %}
+
+                {% if frecuentes_sugeridos %}
+                <div class="px-4 pt-3 pb-1 small fw-bold text-muted text-uppercase">Clientes frecuentes que no están en la hoja</div>
+                {% for f in frecuentes_sugeridos %}
+                <form method="post" action="{% url 'apps.logistica:agregar_parada' ruta.id_ruta %}"
+                      class="d-flex justify-content-between align-items-center gap-2 px-4 py-2 border-bottom">
                     {% csrf_token %}
-                    <input type="hidden" name="cliente_nombre" value="{{ s.cliente.nombre_completo }}">
-                    <input type="hidden" name="direccion_entrega" value="{{ s.pk }}">
-                    <input type="hidden" name="direccion_texto" value="{{ s.calle }} {{ s.altura }} {{ s.piso_depto }}">
-                    <input type="hidden" name="orden" value="0">
-                    <button type="submit" class="btn btn-sm btn-light text-info fw-bold rounded-pill px-3 shadow-sm hover-lift">
-                        <i class="fa-solid fa-plus me-1"></i> Agregar
+                    <input type="hidden" name="direccion" value="{{ f.direccion.pk }}">
+                    <input type="hidden" name="producto" value="{{ botellon_defecto.pk }}">
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold text-main">{{ f.cliente.nombre_completo }}</div>
+                        <small class="text-muted">{{ f.direccion.direccion_completa }}</small>
+                    </div>
+                    <div class="input-group input-group-sm" style="width:7.5rem;" title="Botellones de {{ botellon_defecto.nombre }}">
+                        <input type="number" min="1" name="cantidad" class="form-control text-center" value="{{ f.cantidad }}">
+                        <span class="input-group-text">bot.</span>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-light text-primary fw-bold rounded-pill px-3"><i class="fa-solid fa-plus"></i></button>
+                </form>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface h-100">
+            <div class="card-header bg-transparent border-bottom p-4">
+                <h6 class="mb-0 fw-bold text-main"><i class="fa-solid fa-plus text-primary me-2"></i>Agregar parada manual</h6>
+                <small class="text-muted">El número de parada se asigna solo, al final del recorrido.</small>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" action="{% url 'apps.logistica:agregar_parada' ruta.id_ruta %}" id="form-parada-manual">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small" for="{{ form_parada.direccion.id_for_label }}">{{ form_parada.direccion.label }}</label>
+                        {{ form_parada.direccion }}
+                    </div>
+                    <div id="cliente-nuevo" class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small" for="{{ form_parada.nombre.id_for_label }}">Nombre <span class="text-danger">*</span></label>
+                            {{ form_parada.nombre }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small" for="{{ form_parada.apellido.id_for_label }}">Apellido</label>
+                            {{ form_parada.apellido }}
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small" for="{{ form_parada.calle.id_for_label }}">Calle <span class="text-danger">*</span></label>
+                            {{ form_parada.calle }}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small" for="{{ form_parada.altura.id_for_label }}">Altura <span class="text-danger">*</span></label>
+                            {{ form_parada.altura }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small" for="{{ form_parada.barrio.id_for_label }}">Barrio <span class="text-danger">*</span></label>
+                            {{ form_parada.barrio }}
+                        </div>
+                    </div>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-7">
+                            <label class="form-label small" for="{{ form_parada.producto.id_for_label }}">Botellón</label>
+                            {{ form_parada.producto }}
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small" for="{{ form_parada.cantidad.id_for_label }}">Cantidad</label>
+                            {{ form_parada.cantidad }}
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-glow rounded-pill fw-bold mt-3 w-100">
+                        <i class="fa-solid fa-plus me-1"></i> Agregar parada
                     </button>
                 </form>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-</div>
-{% endif %}
-
-{# ── Agregar parada (solo admin/vendedor) ── #}
-{% if es_admin %}
-<div class="card border-0 shadow-sm rounded-4 bg-surface">
-    <div class="card-header bg-transparent border-bottom p-4">
-        <h6 class="mb-0 fw-bold text-main"><i class="fa-solid fa-plus text-primary me-2"></i> Agregar Parada Manual</h6>
-    </div>
-    <div class="card-body p-4">
-        <form method="post" action="{% url 'apps.logistica:agregar_parada' ruta.id_ruta %}">
-            {% csrf_token %}
-            <div class="row g-3 align-items-end">
-                <div class="col-md-1">
-                    <label class="form-label fw-bold text-muted small text-uppercase">Orden</label>
-                    {{ form_parada.orden }}
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold text-muted small text-uppercase">Cliente</label>
-                    {{ form_parada.cliente_nombre }}
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold text-muted small text-uppercase">Dirección</label>
-                    {{ form_parada.direccion_texto }}
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold text-muted small text-uppercase">Ref. Pedido</label>
-                    {{ form_parada.pedido_ref }}
-                </div>
-                <div class="col-md-1">
-                    <button type="submit" class="btn btn-primary btn-glow rounded-3 w-100" title="Agregar Parada">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-                </div>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 {% endif %}
-{% endblock %}
 
+<style>
+    .parada-fila { cursor: pointer; }
+    .parada-fila[aria-expanded="true"] .parada-chevron { transform: rotate(180deg); }
+    .parada-chevron { transition: transform .2s; }
+</style>
+<script>
+function pasoCantidad(boton, paso) {
+    const input = boton.parentElement.querySelector('input');
+    input.value = Math.max(0, (parseInt(input.value, 10) || 0) + paso);
+}
+document.addEventListener('DOMContentLoaded', function () {
+    const selector = document.getElementById('{{ form_parada.direccion.id_for_label }}');
+    const nuevo = document.getElementById('cliente-nuevo');
+    if (!selector || !nuevo) return;
+    const actualizar = () => {
+        const esNuevo = !selector.value;
+        nuevo.classList.toggle('d-none', !esNuevo);
+        nuevo.querySelectorAll('input, select').forEach(el => {
+            if (['{{ form_parada.nombre.html_name }}', '{{ form_parada.calle.html_name }}', '{{ form_parada.altura.html_name }}', '{{ form_parada.barrio.html_name }}'].includes(el.name)) {
+                el.required = esNuevo;
+            }
+        });
+    };
+    selector.addEventListener('change', actualizar);
+    actualizar();
+    {% if parada_abierta %}document.getElementById('parada-{{ parada_abierta }}')?.scrollIntoView({block: 'center'});{% endif %}
+});
+</script>
+{% endblock %}

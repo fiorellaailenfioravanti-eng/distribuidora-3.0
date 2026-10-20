@@ -13,15 +13,22 @@
     </a>
 </div>
 
-<div class="alert alert-info d-flex align-items-center">
-    <i class="fa-solid fa-circle-info me-2"></i>
-    Indicá cuánto se entregó y cuánto volvió. Si dejás la columna "Retornado" vacía, se calcula como cargado − entregado.
-    Los sobrantes se devuelven automáticamente al stock.
+{% if paradas_pendientes %}
+<div class="alert alert-warning">
+    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+    Hay {{ paradas_pendientes|length }} parada{{ paradas_pendientes|length|pluralize }} sin registrar
+    ({% for p in paradas_pendientes %}{{ p.cliente_nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}).
+    Registralas en la hoja antes de cerrar para que los números cierren.
 </div>
+{% endif %}
 
 <form method="post">
     {% csrf_token %}
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-body fw-semibold"><i class="fa-solid fa-bottle-water me-1"></i> Botellones llenos</div>
+        <div class="card-body pb-0 small text-muted">
+            «Entregado» se completa con lo que se registró en las paradas. Si dejás «Volvió lleno» vacío se calcula como cargado − entregado; los sobrantes vuelven al stock.
+        </div>
         <div class="table-responsive">
             <table class="table align-middle mb-0">
                 <thead class="table-light">
@@ -29,22 +36,22 @@
                         <th>Producto</th>
                         <th class="text-end">Cargado</th>
                         <th style="width: 150px;">Entregado</th>
-                        <th style="width: 150px;">Retornado</th>
+                        <th style="width: 150px;">Volvió lleno</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for carga in cargas %}
+                    {% for fila in cargas %}
                     <tr>
-                        <td>{{ carga.producto.nombre }}</td>
-                        <td class="text-end text-muted">{{ carga.cantidad_cargada }}</td>
+                        <td>{{ fila.carga.producto.nombre }}</td>
+                        <td class="text-end text-muted">{{ fila.carga.cantidad_cargada }}</td>
                         <td>
                             <input type="number" min="0" class="form-control form-control-sm"
-                                   name="entregada_{{ carga.id_carga }}"
-                                   value="{{ carga.cantidad_cargada }}">
+                                   name="entregada_{{ fila.carga.id_carga }}" value="{{ fila.entregado }}">
                         </td>
                         <td>
                             <input type="number" min="0" class="form-control form-control-sm"
-                                   name="retornada_{{ carga.id_carga }}" value="">
+                                   name="retornada_{{ fila.carga.id_carga }}" value=""
+                                   placeholder="automático">
                         </td>
                     </tr>
                     {% empty %}
@@ -52,6 +59,30 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-body fw-semibold"><i class="fa-solid fa-recycle me-1"></i> Botellones vacíos{% if envase %} — {{ envase.nombre }}{% endif %}</div>
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-sm-4">
+                    <div class="small text-muted">Retirados en las paradas</div>
+                    <div class="fs-4 fw-bold">{{ vacios_retirados }}</div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="small text-muted">Envases vendidos (no vuelven)</div>
+                    <div class="fs-4 fw-bold">{{ envases_vendidos }}</div>
+                </div>
+                <div class="col-sm-4">
+                    <label class="form-label small fw-semibold" for="vacios">Vacíos que bajaron del camión</label>
+                    <input type="number" min="0" id="vacios" name="vacios_recibidos" class="form-control" value="{{ vacios_retirados }}">
+                </div>
+            </div>
+            <p class="small text-muted mt-3 mb-0">
+                Cada parada ya sumó al stock los vacíos que retiró. Si al contar en el depósito hay más o menos,
+                la diferencia ajusta el stock de {{ envase.nombre|default:"envases" }}.
+            </p>
         </div>
     </div>
 

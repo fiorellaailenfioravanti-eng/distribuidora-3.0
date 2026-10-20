@@ -194,6 +194,7 @@ class Command(BaseCommand):
             producto, _ = Producto.objects.get_or_create(nombre=nombre, defaults={
                 'descripcion': desc, 'precio': Decimal(precio), 'stock': stock,
                 'es_retornable': retornable, 'es_envase': es_envase,
+                'es_botellon': nombre.startswith('Bidón'),
             })
             producto.categoria.add(self.categorias[cat])
             self.productos[nombre] = producto

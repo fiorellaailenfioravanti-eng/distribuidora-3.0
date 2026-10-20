@@ -398,6 +398,20 @@ propios; los importa de `apps.empleados`. Se eliminaron las tablas
 
 **Modelos:** `Zona`, `Barrio`, `Camion`, `RutaReparto`, `HojaRuta`, `DetalleHojaRuta`.
 
+**Rediseño de la hoja de ruta (20/10/2026):**
+- El reparto maneja sólo **botellones llenos** (`Producto.es_botellon`) y **envases vacíos** (`es_envase`).
+- **Toda parada tiene un pedido con botellones**: los frecuentes de «Planificar reparto» y las paradas manuales
+  generan un `Pedido` con su renglón; la carga sugerida del camión suma esos renglones («Encargado»).
+- `ver_ruta`: cada parada se despliega en una subfila con su pedido (editable si no es web y la hoja está en
+  Borrador: `parada/<pk>/pedido/`) y el registro de la entrega en línea. Pedidos pendientes de la zona y
+  frecuentes sugeridos se agregan con un clic (`<pk>/parada/pedido/`).
+- Alta manual: cliente existente o nuevo con **nombre, calle, altura y barrio obligatorios**; el **orden es
+  automático** (`renumerar_paradas`).
+- Planificar y Confirmar salida permiten elegir **repartidor y camión**. Registrar regreso precarga lo
+  entregado y registra los **vacíos que bajaron** (`HojaRuta.vacios_recibidos`; la diferencia con lo retirado
+  en las paradas ajusta el stock del envase).
+- `marcar_estado` anota la hora en cada novedad (también «Reprogramado»).
+
 - `Zona` con días de reparto (lunes…domingo) y `barrios` relacionados.
 - `Barrio` FK a `Zona`.
 - `Camion` (patente PK).

@@ -100,12 +100,79 @@ def pedidos_candidatos(zona, fecha=None):
     )
 
 
+# ────────────────────────────────────────────────
+# PRODUCTOS DEL REPARTO
+#   Por ahora el reparto maneja sólo botellones llenos (`es_botellon`) y
+#   envases vacíos (`es_envase`).
+# ────────────────────────────────────────────────
+def productos_de_reparto():
+    """Botellones llenos que se cargan en el camión."""
+    from apps.productos.models import Producto
+    return Producto.objects.filter(es_botellon=True, activo=True).order_by('nombre')
+
+
+def envase_de_reparto():
+    """Envase vacío de los botellones (el que se presta y se retira)."""
+    from apps.productos.models import Producto
+    lleno = productos_de_reparto().exclude(envase=None).select_related('envase').first()
+    if lleno is not None:
+        return lleno.envase
+    return Producto.objects.filter(es_envase=True, activo=True).order_by('nombre').first()
+
+
+def botellon_por_defecto():
+    """Botellón que se sugiere para clientes frecuentes y paradas manuales."""
+    botellones = list(productos_de_reparto())
+    return next((p for p in botellones if '20' in p.nombre), botellones[0] if botellones else None)
+
+
 def bidones_de_pedido(pedido):
-    """Suma de botellones (productos retornables) de un pedido."""
+    """Botellones llenos que lleva un pedido."""
     return sum(
         d.cantidad for d in pedido.detalles.select_related('producto').all()
-        if d.producto.es_retornable or d.producto.es_envase
+        if d.producto.es_botellon
     )
+
+
+def botellones_por_producto(pedido):
+    """`{producto_id: cantidad}` de los botellones del pedido."""
+    cantidades = {}
+    if pedido is None:
+        return cantidades
+    for d in pedido.detalles.select_related('producto'):
+        if d.producto.es_botellon:
+            cantidades[d.producto_id] = cantidades.get(d.producto_id, 0) + d.cantidad
+    return cantidades
+
+
+def renumerar_paradas(hoja):
+    """Deja el orden de las paradas en 1..n respetando el orden actual."""
+    for numero, parada in enumerate(hoja.detalles.order_by('orden', 'id_detalle'), start=1):
+        if parada.orden != numero:
+            DetalleHojaRuta.objects.filter(pk=parada.pk).update(orden=numero)
+
+
+def _siguiente_orden(hoja):
+    return (hoja.detalles.aggregate(m=Max('orden'))['m'] or 0) + 1
+
+
+def _fijar_botellones(pedido, cantidades):
+    """Reemplaza los renglones de botellones del pedido y recalcula el total."""
+    from apps.pedidos.models import DetallePedido
+    from apps.productos.models import Producto
+
+    pedido.detalles.filter(producto__es_botellon=True).delete()
+    for producto_id, cantidad in cantidades.items():
+        cantidad = int(cantidad or 0)
+        if cantidad <= 0:
+            continue
+        producto = Producto.objects.get(pk=producto_id)
+        DetallePedido.objects.create(
+            pedido=pedido, producto=producto, precio_unitario=producto.precio,
+            cantidad=cantidad, subtotal=producto.precio * cantidad,
+        )
+    pedido.total = sum(d.subtotal for d in pedido.detalles.all())
+    pedido.save(update_fields=['total'])
 
 
 def construir_borrador(fecha, zona):
@@ -170,7 +237,7 @@ def crear_hoja_borrador(fecha, zona, usuario, seleccion, empleado=None, camion=N
         if pedido is None:
             continue
         orden += 1
-        cantidad = item.get('cantidad') or bidones_de_pedido(pedido)
+        cantidad = bidones_de_pedido(pedido)
         DetalleHojaRuta.objects.create(
             hoja_ruta=hoja,
             orden=orden,
@@ -202,7 +269,11 @@ def crear_hoja_borrador(fecha, zona, usuario, seleccion, empleado=None, camion=N
             total=0,
             fecha_estimada_entrega=fecha,
             fecha_entrega=fecha,
+            notas_cliente='Cliente frecuente: pedido armado al planificar el reparto.',
         )
+        producto = item.get('producto_id') or getattr(botellon_por_defecto(), 'pk', None)
+        if producto:
+            _fijar_botellones(pedido, {producto: cantidad})
         orden += 1
         DetalleHojaRuta.objects.create(
             hoja_ruta=hoja,
@@ -264,12 +335,14 @@ def carga_sugerida(hoja):
     """
     from apps.productos.models import Producto
     totales = {}
-    for parada in hoja.detalles.select_related('pedido').prefetch_related(
+    for parada in hoja.detalles.exclude(estado='Cancelado').select_related('pedido').prefetch_related(
             'pedido__detalles__producto'):
         pedido = parada.pedido
         if pedido is None:
             continue
         for detalle in pedido.detalles.all():
+            if not detalle.producto.es_botellon:
+                continue
             totales[detalle.producto_id] = totales.get(detalle.producto_id, 0) + detalle.cantidad
 
     if not totales:
@@ -327,7 +400,7 @@ def confirmar_hoja(hoja, usuario, cargas=None):
 
 
 @transaction.atomic
-def registrar_regreso(hoja, cargas=None):
+def registrar_regreso(hoja, cargas=None, vacios_recibidos=None):
     """Registra el regreso del camión y devuelve el stock sobrante.
 
     `cargas` es una lista de `{'carga_id': int, 'cantidad_entregada': int,
@@ -358,11 +431,127 @@ def registrar_regreso(hoja, cargas=None):
             producto.stock += carga.cantidad_retornada
             producto.save(update_fields=['stock'])
 
+    # Vacíos: cada parada ya sumó al stock los envases que retiró. Si en el
+    # depósito se cuentan más o menos, la diferencia ajusta el stock del envase.
+    if vacios_recibidos is not None:
+        vacios_recibidos = max(0, int(vacios_recibidos))
+        diferencia = vacios_recibidos - envases_retirados_en_hoja(hoja)
+        envase = envase_de_reparto()
+        if diferencia and envase is not None:
+            producto = Producto.objects.select_for_update().get(pk=envase.pk)
+            producto.stock += diferencia
+            producto.save(update_fields=['stock'])
+        hoja.vacios_recibidos = vacios_recibidos
+
     hoja.estado = 'Cerrada'
     hoja.fecha_regreso = timezone.now()
-    hoja.save(update_fields=['estado', 'fecha_regreso'])
+    hoja.save(update_fields=['estado', 'fecha_regreso', 'vacios_recibidos'])
 
     return hoja
+
+
+def envases_retirados_en_hoja(hoja):
+    return sum(p.envases_retirados for p in hoja.detalles.all())
+
+
+def entregados_por_producto(hoja):
+    """`{producto_id: cantidad}` de botellones de las paradas entregadas."""
+    totales = {}
+    for parada in hoja.detalles.filter(estado='Entregado').select_related('pedido'):
+        for producto_id, cantidad in botellones_por_producto(parada.pedido).items():
+            totales[producto_id] = totales.get(producto_id, 0) + cantidad
+    return totales
+
+
+# ────────────────────────────────────────────────
+# PARADAS: ALTA MANUAL Y PEDIDO DE CADA PARADA
+# ────────────────────────────────────────────────
+@transaction.atomic
+def agregar_parada(hoja, cliente, direccion, cantidades):
+    """Agrega una parada con su pedido de botellones (orden automático).
+
+    `cantidades` es `{producto_id: cantidad}`; se exige al menos un botellón.
+    """
+    from apps.pedidos.models import Pedido
+
+    if not any(int(c or 0) > 0 for c in cantidades.values()):
+        raise ValueError('Indicá cuántos botellones lleva la parada.')
+    pedido = Pedido.objects.create(
+        cliente=cliente,
+        direccion_entrega=direccion,
+        metodo_pago=_metodo_pago_efectivo(),
+        estado='En Camino' if hoja.estado == 'Confirmada' else 'Confirmado',
+        origen='ADMIN',
+        total=0,
+        fecha_estimada_entrega=hoja.fecha,
+        fecha_entrega=hoja.fecha,
+        notas_cliente='Parada agregada a mano en la hoja de ruta.',
+    )
+    _fijar_botellones(pedido, cantidades)
+    renumerar_paradas(hoja)
+    return DetalleHojaRuta.objects.create(
+        hoja_ruta=hoja,
+        orden=_siguiente_orden(hoja),
+        pedido=pedido,
+        cliente=cliente,
+        es_frecuente=cliente.es_frecuente,
+        direccion_entrega=direccion,
+        cliente_nombre=cliente.nombre_completo(),
+        direccion_texto=_texto_direccion(direccion),
+        cantidad_bidones=bidones_de_pedido(pedido),
+    )
+
+
+@transaction.atomic
+def agregar_pedido_a_hoja(hoja, pedido):
+    """Suma a la hoja un pedido ya cargado (web o telefónico) como parada."""
+    if pedido.paradas.exists():
+        raise ValueError(f'El pedido #{pedido.pk} ya está en una hoja de ruta.')
+    renumerar_paradas(hoja)
+    parada = DetalleHojaRuta.objects.create(
+        hoja_ruta=hoja,
+        orden=_siguiente_orden(hoja),
+        pedido=pedido,
+        cliente=pedido.cliente,
+        direccion_entrega=pedido.direccion_entrega,
+        cliente_nombre=pedido.cliente.nombre_completo() if pedido.cliente else '',
+        direccion_texto=_texto_direccion(pedido.direccion_entrega),
+        cantidad_bidones=bidones_de_pedido(pedido),
+    )
+    pedido.fecha_entrega = hoja.fecha
+    pedido.save(update_fields=['fecha_entrega'])
+    return parada
+
+
+@transaction.atomic
+def fijar_pedido_de_parada(parada, cantidades):
+    """Carga o corrige los botellones que pide el cliente en una parada.
+
+    Sólo mientras la hoja está en Borrador (después ya se cargó el camión).
+    Los pedidos hechos por la web no se modifican desde acá.
+    """
+    from apps.pedidos.models import Pedido
+
+    if parada.hoja_ruta.estado != 'Borrador':
+        raise ValueError('La hoja ya salió: el pedido de la parada no se puede cambiar.')
+    pedido = parada.pedido
+    if pedido is not None and pedido.origen == 'WEB':
+        raise ValueError('Es un pedido hecho por la web: se modifica desde la gestión de pedidos.')
+    if not any(int(c or 0) > 0 for c in cantidades.values()):
+        raise ValueError('La parada tiene que llevar al menos un botellón.')
+    if pedido is None:
+        if parada.cliente_id is None:
+            raise ValueError('La parada no tiene cliente: eliminala y agregala de nuevo.')
+        pedido = Pedido.objects.create(
+            cliente=parada.cliente, direccion_entrega=parada.direccion_entrega,
+            metodo_pago=_metodo_pago_efectivo(), estado='Confirmado', origen='ADMIN', total=0,
+            fecha_estimada_entrega=parada.hoja_ruta.fecha, fecha_entrega=parada.hoja_ruta.fecha,
+        )
+        parada.pedido = pedido
+    _fijar_botellones(pedido, cantidades)
+    parada.cantidad_bidones = bidones_de_pedido(pedido)
+    parada.save(update_fields=['pedido', 'cantidad_bidones'])
+    return parada
 
 
 # ────────────────────────────────────────────────

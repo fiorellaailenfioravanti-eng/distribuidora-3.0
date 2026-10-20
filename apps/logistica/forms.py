@@ -34,30 +34,67 @@ class HojaRutaForm(forms.ModelForm):
         self.fields['camion'].queryset = Camion.objects.filter(activo=True)
 
 
-class DetalleRutaForm(forms.ModelForm):
-    class Meta:
-        model  = DetalleHojaRuta
-        fields = ['orden', 'cliente_nombre', 'direccion_entrega', 'direccion_texto', 'pedido_ref']
-        widgets = {
-            'orden': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': 0,
-                'placeholder': 'Nro. de parada'
-            }),
-            'cliente_nombre': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nombre del cliente'
-            }),
-            'direccion_entrega': forms.Select(attrs={'class': 'form-select'}),
-            'direccion_texto': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Ej: San Martín 450, Barrio Norte'
-            }),
-            'pedido_ref': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Referencia de pedido (opcional)'
-            }),
-        }
+def _etiqueta_direccion_cliente(direccion):
+    barrio = f' (B° {direccion.barrio.nombre})' if direccion.barrio_id else ''
+    return f'{direccion.cliente.nombre_completo()} — {direccion.calle} {direccion.altura}{barrio}'
+
+
+class AgregarParadaForm(forms.Form):
+    """Alta manual de una parada con su pedido de botellones.
+
+    O se elige un cliente existente (por su domicilio) o se carga uno nuevo:
+    en ese caso el nombre y la dirección son obligatorios. El orden de la
+    parada lo pone el sistema.
+    """
+    direccion = forms.ModelChoiceField(
+        queryset=None, required=False, label='Cliente existente',
+        empty_label='— Cliente nuevo —', widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    nombre = forms.CharField(required=False, max_length=100, label='Nombre',
+                             widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre o razón social'}))
+    apellido = forms.CharField(required=False, max_length=100, label='Apellido',
+                               widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apellido (opcional)'}))
+    calle = forms.CharField(required=False, max_length=150, label='Calle',
+                            widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: San Martín'}))
+    altura = forms.CharField(required=False, max_length=20, label='Altura',
+                             widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 450'}))
+    barrio = forms.ModelChoiceField(queryset=None, required=False, label='Barrio',
+                                    widget=forms.Select(attrs={'class': 'form-select'}))
+    producto = forms.ModelChoiceField(queryset=None, label='Botellón', empty_label=None,
+                                      widget=forms.Select(attrs={'class': 'form-select'}))
+    cantidad = forms.IntegerField(min_value=1, initial=1, label='Cantidad',
+                                  widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1}))
+
+    def __init__(self, *args, hoja=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        from apps.clientes.models import DireccionEntrega
+        from .services import botellon_por_defecto, productos_de_reparto
+
+        direcciones = DireccionEntrega.objects.select_related('cliente', 'barrio').order_by(
+            'cliente__apellido', 'cliente__nombre')
+        barrios = Barrio.objects.order_by('nombre')
+        if hoja is not None and hoja.zona_id:
+            direcciones = direcciones.filter(barrio__zona=hoja.zona)
+            barrios = barrios.filter(zona=hoja.zona)
+        self.fields['direccion'].queryset = direcciones
+        self.fields['direccion'].label_from_instance = _etiqueta_direccion_cliente
+        self.fields['barrio'].queryset = barrios
+        self.fields['producto'].queryset = productos_de_reparto()
+        defecto = botellon_por_defecto()
+        if defecto is not None:
+            self.fields['producto'].initial = defecto.pk
+
+    def clean(self):
+        datos = super().clean()
+        if datos.get('direccion'):
+            return datos
+        for campo, mensaje in (('nombre', 'El nombre del cliente es obligatorio.'),
+                               ('calle', 'La calle es obligatoria.'),
+                               ('altura', 'La altura es obligatoria (o S/N).'),
+                               ('barrio', 'Elegí el barrio.')):
+            if not datos.get(campo):
+                self.add_error(campo, mensaje)
+        return datos
 
 
 class ActualizarEstadoForm(forms.ModelForm):

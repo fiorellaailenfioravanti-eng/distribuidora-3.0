@@ -25,6 +25,12 @@ class Producto(models.Model):
         verbose_name='Es envase',
         help_text='Marca el producto que representa al bidón vacío (envase retornable).'
     )
+    es_botellon = models.BooleanField(
+        default=False,
+        verbose_name='Botellón lleno de reparto',
+        help_text='Bidón lleno que se carga en el camión y se entrega en las paradas. '
+                  'Por ahora el reparto sólo maneja botellones llenos y envases vacíos.'
+    )
     es_retornable = models.BooleanField(
         default=False,
         verbose_name='Es retornable',

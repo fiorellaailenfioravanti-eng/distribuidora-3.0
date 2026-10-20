@@ -6,11 +6,17 @@ from django.utils import timezone
 from datetime import datetime
 
 from .models import HojaRuta, DetalleHojaRuta, Zona, Barrio, Camion, RutaReparto
-from .forms  import HojaRutaForm, DetalleRutaForm, ActualizarEstadoForm, ZonaForm, CamionForm
+from django.urls import reverse
+
+from .forms  import HojaRutaForm, AgregarParadaForm, ActualizarEstadoForm, ZonaForm, CamionForm
 from .services import (
     construir_borrador, crear_hoja_borrador,
     carga_sugerida, confirmar_hoja, registrar_regreso,
     registrar_entrega, registrar_cobro, crear_venta_calle,
+    agregar_parada as agregar_parada_servicio, agregar_pedido_a_hoja, botellon_por_defecto,
+    botellones_por_producto, clientes_frecuentes_de_zona, direccion_en_zona, entregados_por_producto,
+    envase_de_reparto, envases_retirados_en_hoja, fijar_pedido_de_parada, pedidos_candidatos,
+    productos_de_reparto, renumerar_paradas,
 )
 from apps.clientes.models import DireccionEntrega
 from apps.permisos.roles import (
@@ -114,7 +120,8 @@ def ver_ruta(request, pk):
         messages.error(request, 'No tenés permiso para ver esta ruta.')
         return redirect('inicio')
 
-    ruta = get_object_or_404(HojaRuta.objects.select_related('ruta_reparto__zona'), id_ruta=pk)
+    ruta = get_object_or_404(
+        HojaRuta.objects.select_related('ruta_reparto__zona', 'zona', 'camion', 'empleado'), id_ruta=pk)
 
     # Repartidor solo puede ver sus propias rutas
     if es_repartidor(request.user) and not es_admin_o_vendedor(request.user):
@@ -123,34 +130,46 @@ def ver_ruta(request, pk):
             messages.error(request, 'No tenés permiso para ver esta ruta.')
             return redirect('apps.logistica:mi_ruta_hoy')
 
-    detalles     = ruta.detalles.all()
-    form_parada  = DetalleRutaForm()
+    es_admin = es_admin_o_vendedor(request.user)
+    detalles = list(ruta.detalles.select_related(
+        'pedido', 'cliente', 'direccion_entrega__barrio').prefetch_related('pedido__detalles__producto').order_by('orden', 'id_detalle'))
+    productos = list(productos_de_reparto())
 
-    # Sugerencias: clientes de la zona
-    dia_semana = ruta.fecha.weekday()  # 0=Lunes, 6=Domingo
-    ruta_reparto = ruta.ruta_reparto
-    zona = ruta.zona or (ruta_reparto.zona if ruta_reparto else None)
+    # Cada parada se despliega en una subfila con su pedido y el registro de la entrega.
+    filas = []
+    for d in detalles:
+        cantidades = botellones_por_producto(d.pedido)
+        filas.append({
+            'parada': d,
+            'botellones': [{'producto': p, 'cantidad': cantidades.get(p.pk, 0)} for p in productos],
+            'otros_items': [x for x in (d.pedido.detalles.all() if d.pedido_id else []) if not x.producto.es_botellon],
+            'editable': es_admin and ruta.estado == 'Borrador' and not d.es_pedido_web(),
+        })
 
-    coincide_dia = bool(ruta_reparto) and (dia_semana == ruta_reparto.dia_semana)
-
-    sugerencias = []
-    if zona is not None and es_admin_o_vendedor(request.user):
-        direcciones_zona = DireccionEntrega.objects.filter(barrio__zona=zona).select_related('cliente', 'barrio')
-        # Filtramos para no sugerir a clientes que ya están en la hoja (aproximación por nombre o direccion)
-        nombres_ya_agregados = set(d.cliente_nombre for d in detalles)
-        direcciones_agregadas = set(d.direccion_entrega_id for d in detalles if d.direccion_entrega_id)
-        
-        for d in direcciones_zona:
-            if d.pk not in direcciones_agregadas and d.cliente.nombre_completo() not in nombres_ya_agregados:
-                sugerencias.append(d)
+    zona = ruta.zona or (ruta.ruta_reparto.zona if ruta.ruta_reparto_id else None)
+    pedidos_pendientes, frecuentes_sugeridos = [], []
+    if zona is not None and es_admin and ruta.estado != 'Cerrada':
+        pedidos_pendientes = list(pedidos_candidatos(zona, ruta.fecha))
+        en_hoja = {d.cliente_id for d in detalles if d.cliente_id}
+        for cliente in clientes_frecuentes_de_zona(zona):
+            direccion = direccion_en_zona(cliente, zona)
+            if direccion is not None and cliente.pk not in en_hoja:
+                frecuentes_sugeridos.append({'cliente': cliente, 'direccion': direccion,
+                                             'cantidad': cliente.cantidad_recurrente_default or 1})
 
     contexto = {
         'ruta':        ruta,
+        'filas':       filas,
         'detalles':    detalles,
-        'form_parada': form_parada,
-        'sugerencias': sugerencias,
-        'es_admin':    es_admin_o_vendedor(request.user),
+        'productos_reparto': productos,
+        'form_parada': AgregarParadaForm(hoja=ruta),
+        'form_estado': ActualizarEstadoForm(),
+        'pedidos_pendientes': pedidos_pendientes,
+        'frecuentes_sugeridos': frecuentes_sugeridos,
+        'botellon_defecto': botellon_por_defecto(),
+        'es_admin':    es_admin,
         'paradas_con_nota_visible': _ids_de_paradas_con_nota(request.user, detalles),
+        'parada_abierta': request.GET.get('parada'),
     }
     return render(request, 'logistica/ver_ruta.html', contexto)
 
@@ -208,31 +227,91 @@ def editar_ruta(request, pk):
 # ─────────────────────────────────────────────────────────────
 # PARADAS — AGREGAR
 # ─────────────────────────────────────────────────────────────
+def _volver_a_hoja(hoja_pk, parada_pk=None):
+    url = reverse('apps.logistica:ver_ruta', kwargs={'pk': hoja_pk})
+    return redirect(f'{url}?parada={parada_pk}#parada-{parada_pk}' if parada_pk else url)
+
+
 @login_required
 def agregar_parada(request, pk):
+    """Alta manual de parada: cliente existente o nuevo (nombre y dirección obligatorios)."""
     if not es_admin_o_vendedor(request.user):
         messages.error(request, 'No tenés permiso para agregar paradas.')
         return redirect('apps.logistica:listar_rutas')
 
     ruta = get_object_or_404(HojaRuta, id_ruta=pk)
+    if request.method != 'POST':
+        return _volver_a_hoja(pk)
+    if ruta.estado == 'Cerrada':
+        messages.error(request, 'La hoja ya está cerrada.')
+        return _volver_a_hoja(pk)
 
+    form = AgregarParadaForm(request.POST, hoja=ruta)
+    if not form.is_valid():
+        errores = '; '.join(e for lista in form.errors.values() for e in lista)
+        messages.error(request, f'No se agregó la parada: {errores}')
+        return _volver_a_hoja(pk)
+
+    from apps.clientes.models import Cliente, DireccionEntrega
+    datos = form.cleaned_data
+    direccion = datos['direccion']
+    if direccion is not None:
+        cliente = direccion.cliente
+    else:
+        cliente = Cliente.objects.create(nombre=datos['nombre'].strip(), apellido=(datos['apellido'] or '').strip(),
+                                         tipo_registro='pasajero')
+        direccion = DireccionEntrega.objects.create(
+            cliente=cliente, calle=datos['calle'].strip(), altura=datos['altura'].strip(),
+            barrio=datos['barrio'], es_principal=True)
+    try:
+        parada = agregar_parada_servicio(ruta, cliente, direccion, {datos['producto'].pk: datos['cantidad']})
+    except ValueError as error:
+        messages.error(request, str(error))
+        return _volver_a_hoja(pk)
+    messages.success(request, f'Parada {parada.orden} agregada: {cliente.nombre_completo()} '
+                              f'({datos["cantidad"]} × {datos["producto"].nombre}).')
+    if ruta.estado == 'Confirmada':
+        messages.warning(request, 'La hoja ya salió: esos botellones no estaban en la carga del camión.')
+    return _volver_a_hoja(pk, parada.pk)
+
+
+@login_required
+def agregar_pedido_parada(request, pk):
+    """Suma a la hoja un pedido pendiente de la zona (web o telefónico)."""
+    if not es_admin_o_vendedor(request.user):
+        messages.error(request, 'No tenés permiso para modificar la hoja.')
+        return redirect('apps.logistica:listar_rutas')
+    ruta = get_object_or_404(HojaRuta, id_ruta=pk)
     if request.method == 'POST':
-        form = DetalleRutaForm(request.POST)
-        if form.is_valid():
-            parada = form.save(commit=False)
-            parada.hoja_ruta = ruta
-            # Si se elige una direccion_entrega, poblamos el texto de direccion de respaldo
-            if parada.direccion_entrega:
-                if not parada.direccion_texto:
-                    parada.direccion_texto = parada.direccion_entrega.direccion_completa()
-                if not parada.cliente_nombre:
-                    parada.cliente_nombre = parada.direccion_entrega.cliente.nombre_completo()
-            parada.save()
-            messages.success(request, f'Parada {parada.orden} agregada a la ruta #{ruta.id_ruta}.')
-        else:
-            messages.error(request, 'Error al agregar la parada. Revisá los datos.')
+        from apps.pedidos.models import Pedido
+        pedido = get_object_or_404(Pedido, pk=request.POST.get('pedido_id'))
+        try:
+            parada = agregar_pedido_a_hoja(ruta, pedido)
+            messages.success(request, f'Pedido #{pedido.pk} agregado como parada {parada.orden}.')
+            return _volver_a_hoja(pk, parada.pk)
+        except ValueError as error:
+            messages.error(request, str(error))
+    return _volver_a_hoja(pk)
 
-    return redirect('apps.logistica:ver_ruta', pk=pk)
+
+@login_required
+def pedido_parada(request, pk):
+    """Carga o corrige los botellones que pide el cliente en una parada (subfila)."""
+    if not es_admin_o_vendedor(request.user):
+        messages.error(request, 'No tenés permiso para modificar pedidos.')
+        return redirect('apps.logistica:listar_rutas')
+    parada = get_object_or_404(DetalleHojaRuta.objects.select_related('hoja_ruta', 'pedido'), id_detalle=pk)
+    if request.method == 'POST':
+        cantidades = {}
+        for clave, valor in request.POST.items():
+            if clave.startswith('botellon_') and clave[len('botellon_'):].isdigit():
+                cantidades[int(clave[len('botellon_'):])] = _int_o_none(valor) or 0
+        try:
+            fijar_pedido_de_parada(parada, cantidades)
+            messages.success(request, f'Pedido de {parada.cliente_nombre} actualizado: {parada.resumen_pedido()}.')
+        except ValueError as error:
+            messages.error(request, str(error))
+    return _volver_a_hoja(parada.hoja_ruta_id, parada.pk)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -248,7 +327,13 @@ def eliminar_parada(request, pk):
     ruta_pk = parada.hoja_ruta.id_ruta
 
     if request.method == 'POST':
+        hoja = parada.hoja_ruta
+        pedido = parada.pedido
         parada.delete()
+        # Un pedido armado sólo para esta parada (no web) se cancela con ella.
+        if pedido is not None and pedido.origen != 'WEB' and pedido.estado in ('Pendiente', 'Confirmado'):
+            pedido.cambiar_estado_manual('Cancelado')
+        renumerar_paradas(hoja)
         messages.success(request, 'Parada eliminada.')
 
     return redirect('apps.logistica:ver_ruta', pk=ruta_pk)
@@ -298,7 +383,7 @@ def actualizar_estado_entrega(request, pk):
                     registrar_cobro(parada.pedido, monto, form.cleaned_data.get('metodo_pago'))
             messages.success(request, f'Estado actualizado a "{nuevo_estado}" correctamente.')
             if es_admin:
-                return redirect('apps.logistica:ver_ruta', pk=parada.hoja_ruta.id_ruta)
+                return _volver_a_hoja(parada.hoja_ruta_id, parada.pk)
             return redirect('apps.logistica:mi_ruta_hoy')
     else:
         form = ActualizarEstadoForm(instance=parada)
@@ -548,6 +633,7 @@ def _seleccion_desde_post(post):
                     'cliente_id': int(cid),
                     'direccion_id': int(dir_id) if dir_id and dir_id.isdigit() else None,
                     'cantidad': _int_o_none(post.get(f'cantidad_frecuente_{cid}')),
+                    'producto_id': _int_o_none(post.get(f'producto_frecuente_{cid}')),
                 })
     return seleccion
 
@@ -571,7 +657,10 @@ def planificar_reparto(request):
             if not seleccion['pedidos'] and not seleccion['frecuentes']:
                 messages.error(request, 'Seleccioná al menos un cliente o pedido para la ruta.')
             else:
-                hoja = crear_hoja_borrador(fecha, zona, request.user, seleccion)
+                from apps.empleados.models import Empleado
+                empleado = Empleado.objects.filter(pk=_int_o_none(request.POST.get('empleado')), activo=True).first()
+                camion = Camion.objects.filter(pk=request.POST.get('camion') or None, activo=True).first()
+                hoja = crear_hoja_borrador(fecha, zona, request.user, seleccion, empleado=empleado, camion=camion)
                 messages.success(
                     request,
                     f'Hoja de ruta #{hoja.id_ruta} creada en borrador con '
@@ -586,7 +675,23 @@ def planificar_reparto(request):
         'fecha': fecha,
         'zona': zona,
         'borrador': borrador,
+        'productos_reparto': productos_de_reparto(),
+        'botellon_defecto': botellon_por_defecto(),
+        **_opciones_equipo(borrador['ruta_default'] if borrador else None),
     })
+
+
+def _opciones_equipo(ruta_default=None, hoja=None):
+    """Repartidores y camiones disponibles, con el valor preseleccionado."""
+    from apps.empleados.models import Empleado
+    empleado = getattr(hoja, 'empleado', None) or getattr(ruta_default, 'empleado_default', None)
+    camion = getattr(hoja, 'camion', None) or getattr(ruta_default, 'camion_default', None)
+    return {
+        'repartidores': Empleado.objects.filter(activo=True, rol__grupo_permisos='Repartidor').order_by('apellido', 'nombre'),
+        'camiones': Camion.objects.filter(activo=True).order_by('patente'),
+        'empleado_elegido': getattr(empleado, 'pk', None),
+        'camion_elegido': getattr(camion, 'pk', None),
+    }
 
 
 # ─────────────────────────────────────────────────────────────
@@ -622,13 +727,16 @@ def _regreso_desde_post(post, hoja):
 
 
 def _productos_para_carga(ruta):
-    """Productos del catálogo con la cantidad sugerida a cargar en la hoja."""
-    from apps.productos.models import Producto
-    sugeridas = {c['producto'].pk: c['cantidad'] for c in carga_sugerida(ruta)}
-    return [
-        {'producto': p, 'cantidad': sugeridas.get(p.pk, 0)}
-        for p in Producto.objects.all().order_by('nombre')
+    """Botellones llenos (con lo encargado en las paradas) y el envase vacío."""
+    encargados = {c['producto'].pk: c['cantidad'] for c in carga_sugerida(ruta)}
+    filas = [
+        {'producto': p, 'encargado': encargados.get(p.pk, 0), 'cantidad': encargados.get(p.pk, 0)}
+        for p in productos_de_reparto()
     ]
+    envase = envase_de_reparto()
+    if envase is not None:
+        filas.append({'producto': envase, 'encargado': None, 'cantidad': 0, 'es_vacio': True})
+    return filas
 
 
 @login_required
@@ -643,17 +751,26 @@ def confirmar_ruta(request, pk):
         if ruta.estado != 'Borrador':
             messages.error(request, 'Esta hoja ya fue confirmada o cerrada.')
             return redirect('apps.logistica:ver_ruta', pk=ruta.id_ruta)
+        from apps.empleados.models import Empleado
+        ruta.empleado = Empleado.objects.filter(pk=_int_o_none(request.POST.get('empleado')), activo=True).first()
+        ruta.camion = Camion.objects.filter(pk=request.POST.get('camion') or None, activo=True).first()
+        ruta.save(update_fields=['empleado', 'camion'])
         cargas = _cargas_confirmacion_desde_post(request.POST)
         confirmar_hoja(ruta, request.user, cargas)
         messages.success(
             request,
             f'Hoja #{ruta.id_ruta} confirmada. Los pedidos pasaron a "En Camino".'
         )
+        if ruta.empleado is None or ruta.camion is None:
+            messages.warning(request, 'La hoja salió sin repartidor o sin camión asignado.')
         return redirect('apps.logistica:ver_ruta', pk=ruta.id_ruta)
 
+    productos = _productos_para_carga(ruta)
     return render(request, 'logistica/confirmar_ruta.html', {
         'ruta': ruta,
-        'productos': _productos_para_carga(ruta),
+        'productos': productos,
+        'falta_stock': [f for f in productos if f['encargado'] and f['encargado'] > f['producto'].stock],
+        **_opciones_equipo(ruta.ruta_reparto, hoja=ruta),
     })
 
 
@@ -669,13 +786,24 @@ def registrar_regreso_ruta(request, pk):
         if ruta.estado != 'Confirmada':
             messages.error(request, 'Solo se puede registrar el regreso de una hoja confirmada.')
             return redirect('apps.logistica:ver_ruta', pk=ruta.id_ruta)
-        registrar_regreso(ruta, _regreso_desde_post(request.POST, ruta))
-        messages.success(request, f'Regreso de la hoja #{ruta.id_ruta} registrado. Sobrantes devueltos al stock.')
+        registrar_regreso(ruta, _regreso_desde_post(request.POST, ruta),
+                          vacios_recibidos=_int_o_none(request.POST.get('vacios_recibidos')))
+        messages.success(request, f'Regreso de la hoja #{ruta.id_ruta} registrado. Sobrantes y vacíos devueltos al stock.')
         return redirect('apps.logistica:ver_ruta', pk=ruta.id_ruta)
 
+    entregados = entregados_por_producto(ruta)
+    cargas = [
+        {'carga': c, 'entregado': entregados.get(c.producto_id, 0)}
+        for c in ruta.cargas.select_related('producto')
+    ]
+    paradas = ruta.detalles.all()
     return render(request, 'logistica/registrar_regreso.html', {
         'ruta': ruta,
-        'cargas': ruta.cargas.select_related('producto'),
+        'cargas': cargas,
+        'envase': envase_de_reparto(),
+        'vacios_retirados': envases_retirados_en_hoja(ruta),
+        'envases_vendidos': sum(p.envases_vendidos for p in paradas),
+        'paradas_pendientes': [p for p in paradas if p.estado == 'Pendiente'],
     })
 
 

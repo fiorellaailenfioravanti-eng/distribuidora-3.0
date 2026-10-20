@@ -16,36 +16,59 @@
 {% if ruta.supera_capacidad %}
 <div class="alert alert-warning d-flex align-items-center">
     <i class="fa-solid fa-triangle-exclamation me-2"></i>
-    La carga supera la capacidad del camión ({{ ruta.total_botellones }} botellones). Podés continuar igual.
+    La hoja lleva {{ ruta.total_botellones }} botellones y supera la capacidad del camión ({{ ruta.camion.capacidad_botellones }}). Podés continuar igual.
+</div>
+{% endif %}
+{% if falta_stock %}
+<div class="alert alert-danger">
+    <i class="fa-solid fa-boxes-stacked me-2"></i>No alcanza el stock para lo encargado:
+    {% for f in falta_stock %}{{ f.producto.nombre }} (encargado {{ f.encargado }}, stock {{ f.producto.stock }}){% if not forloop.last %}; {% endif %}{% endfor %}.
 </div>
 {% endif %}
 
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body">
-        <p class="mb-1">
-            <strong>{{ ruta.total_paradas }}</strong> paradas ·
-            <strong>{{ ruta.total_botellones }}</strong> botellones ·
-            Camión: <strong>{{ ruta.camion|default:"sin asignar" }}</strong> ·
-            Repartidor: <strong>{{ ruta.empleado|default:"sin asignar" }}</strong>
-        </p>
-        <p class="text-muted mb-0 small">
-            Al confirmar, se descuenta del stock lo cargado y los pedidos pasan a <strong>En Camino</strong>.
-        </p>
-    </div>
-</div>
-
 <form method="post">
     {% csrf_token %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <p class="mb-3">
+                <strong>{{ ruta.total_paradas }}</strong> paradas · <strong>{{ ruta.total_botellones }}</strong> botellones encargados.
+                <span class="text-muted small">Al confirmar se descuenta del stock lo cargado y los pedidos pasan a <strong>En Camino</strong>.</span>
+            </p>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold" for="sel-empleado">Repartidor</label>
+                    <select name="empleado" id="sel-empleado" class="form-select">
+                        <option value="">— Sin asignar —</option>
+                        {% for e in repartidores %}
+                        <option value="{{ e.pk }}" {% if e.pk == empleado_elegido %}selected{% endif %}>{{ e.nombre }} {{ e.apellido }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold" for="sel-camion">Camión</label>
+                    <select name="camion" id="sel-camion" class="form-select">
+                        <option value="">— Sin asignar —</option>
+                        {% for c in camiones %}
+                        <option value="{{ c.pk }}" {% if c.pk == camion_elegido %}selected{% endif %}>{{ c.patente }} — capacidad {{ c.capacidad_botellones }} botellones</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-body fw-semibold">
             <i class="fa-solid fa-boxes-stacked me-1"></i> Carga del camión
+            <small class="text-muted fw-normal ms-2">Lo encargado se precarga; podés sumar de más para ventas en la calle.</small>
         </div>
         <div class="table-responsive">
             <table class="table align-middle mb-0">
                 <thead class="table-light">
                     <tr>
                         <th>Producto</th>
-                        <th class="text-end">Stock actual</th>
+                        <th class="text-end">Encargado en las paradas</th>
+                        <th class="text-end">Stock</th>
                         <th style="width: 160px;">Cantidad a cargar</th>
                     </tr>
                 </thead>
@@ -54,18 +77,17 @@
                     <tr>
                         <td>
                             {{ item.producto.nombre }}
-                            {% if item.producto.es_envase %}<span class="badge bg-light text-dark border">envase</span>{% endif %}
-                            {% if item.producto.es_retornable %}<span class="badge bg-light text-dark border">retornable</span>{% endif %}
+                            {% if item.es_vacio %}<span class="badge bg-light text-dark border">vacío</span>{% else %}<span class="badge bg-primary bg-opacity-10 text-primary">lleno</span>{% endif %}
                         </td>
-                        <td class="text-end text-muted">{{ item.producto.stock }}</td>
+                        <td class="text-end fw-bold">{% if item.es_vacio %}<span class="text-muted fw-normal small">para préstamo/venta</span>{% else %}{{ item.encargado }}{% endif %}</td>
+                        <td class="text-end {% if item.encargado and item.encargado > item.producto.stock %}text-danger fw-bold{% else %}text-muted{% endif %}">{{ item.producto.stock }}</td>
                         <td>
                             <input type="number" min="0" class="form-control form-control-sm"
-                                   name="cantidad_producto_{{ item.producto.pk }}"
-                                   value="{{ item.cantidad }}">
+                                   name="cantidad_producto_{{ item.producto.pk }}" value="{{ item.cantidad }}">
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="3" class="text-muted text-center py-3">No hay productos en el catálogo.</td></tr>
+                    <tr><td colspan="4" class="text-muted text-center py-3">No hay productos marcados como botellón de reparto. Marcalos en Productos.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

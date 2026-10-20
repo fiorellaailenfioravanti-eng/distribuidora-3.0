@@ -1,0 +1,81 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Confirmar Salida — Hoja #{{ ruta.id_ruta }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-0">🚚 Confirmar Salida</h1>
+        <small class="text-muted">Hoja #{{ ruta.id_ruta }} · {{ ruta.fecha|date:'d/m/Y' }} · {{ ruta.zona.nombre|default:"sin zona" }}</small>
+    </div>
+    <a href="{% url 'apps.logistica:ver_ruta' ruta.id_ruta %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i> Volver a la hoja
+    </a>
+</div>
+
+{% if ruta.supera_capacidad %}
+<div class="alert alert-warning d-flex align-items-center">
+    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+    La carga supera la capacidad del camión ({{ ruta.total_botellones }} botellones). Podés continuar igual.
+</div>
+{% endif %}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <p class="mb-1">
+            <strong>{{ ruta.total_paradas }}</strong> paradas ·
+            <strong>{{ ruta.total_botellones }}</strong> botellones ·
+            Camión: <strong>{{ ruta.camion|default:"sin asignar" }}</strong> ·
+            Repartidor: <strong>{{ ruta.empleado|default:"sin asignar" }}</strong>
+        </p>
+        <p class="text-muted mb-0 small">
+            Al confirmar, se descuenta del stock lo cargado y los pedidos pasan a <strong>En Camino</strong>.
+        </p>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-body fw-semibold">
+            <i class="fa-solid fa-boxes-stacked me-1"></i> Carga del camión
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Producto</th>
+                        <th class="text-end">Stock actual</th>
+                        <th style="width: 160px;">Cantidad a cargar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in productos %}
+                    <tr>
+                        <td>
+                            {{ item.producto.nombre }}
+                            {% if item.producto.es_envase %}<span class="badge bg-light text-dark border">envase</span>{% endif %}
+                            {% if item.producto.es_retornable %}<span class="badge bg-light text-dark border">retornable</span>{% endif %}
+                        </td>
+                        <td class="text-end text-muted">{{ item.producto.stock }}</td>
+                        <td>
+                            <input type="number" min="0" class="form-control form-control-sm"
+                                   name="cantidad_producto_{{ item.producto.pk }}"
+                                   value="{{ item.cantidad }}">
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-muted text-center py-3">No hay productos en el catálogo.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end mt-4">
+        <button type="submit" class="btn btn-success">
+            <i class="fa-solid fa-truck-fast me-1"></i> Confirmar salida
+        </button>
+    </div>
+</form>
+{% endblock %}

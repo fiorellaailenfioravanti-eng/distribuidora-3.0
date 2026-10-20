@@ -1,0 +1,149 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Planificar Reparto{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-0">🗓️ Planificar Reparto</h1>
+        <small class="text-muted">Elegí un día y una zona para armar la hoja de ruta en borrador</small>
+    </div>
+    <a href="{% url 'apps.logistica:listar_rutas' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i> Volver a Rutas
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Fecha de reparto</label>
+                <input type="date" name="fecha" class="form-control"
+                       value="{{ fecha|date:'Y-m-d' }}" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Zona</label>
+                <select name="zona" class="form-select" required>
+                    <option value="">— Elegí una zona —</option>
+                    {% for z in zonas %}
+                        <option value="{{ z.id_zona }}" {% if zona and zona.id_zona == z.id_zona %}selected{% endif %}>
+                            {{ z.nombre }}{% if z.dias_reparto_display %} ({{ z.dias_reparto_display }}){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fa-solid fa-magnifying-glass me-1"></i> Ver clientes y pedidos
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if borrador %}
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="fecha" value="{{ fecha|date:'Y-m-d' }}">
+    <input type="hidden" name="zona" value="{{ zona.id_zona }}">
+    <input type="hidden" name="confirmar" value="1">
+
+    <div class="alert alert-info d-flex align-items-center">
+        <i class="fa-solid fa-circle-info me-2"></i>
+        Ruta para <strong class="mx-1">{{ zona.nombre }}</strong> el
+        <strong class="mx-1">{{ fecha|date:'d/m/Y' }}</strong>.
+        {% if borrador.ruta_default %}
+            Repartidor/camión por defecto:
+            <strong class="ms-1">{{ borrador.ruta_default.empleado_default|default:"sin asignar" }}</strong> /
+            <strong class="ms-1">{{ borrador.ruta_default.camion_default|default:"sin camión" }}</strong>.
+        {% else %}
+            No hay una ruta configurada para ese día; se creará sin repartidor asignado.
+        {% endif %}
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-body fw-semibold">
+                    <i class="fa-solid fa-repeat me-1"></i> Clientes frecuentes
+                    <span class="badge bg-secondary ms-1">{{ borrador.frecuentes|length }}</span>
+                </div>
+                <div class="card-body">
+                    {% if borrador.frecuentes %}
+                        {% for f in borrador.frecuentes %}
+                        <div class="d-flex align-items-center border-bottom py-2">
+                            <div class="form-check me-3">
+                                <input class="form-check-input" type="checkbox"
+                                       name="frecuente_{{ f.cliente.pk }}" id="frec_{{ f.cliente.pk }}">
+                            </div>
+                            <div class="flex-grow-1">
+                                <label class="form-label mb-0 fw-semibold" for="frec_{{ f.cliente.pk }}">
+                                    {{ f.cliente.nombre_completo }}
+                                </label>
+                                <div><small class="text-muted">{{ f.direccion.direccion_completa }}</small></div>
+                                <input type="hidden" name="direccion_frecuente_{{ f.cliente.pk }}"
+                                       value="{{ f.direccion.pk }}">
+                            </div>
+                            <div style="width: 110px;">
+                                <input type="number" min="0" class="form-control form-control-sm"
+                                       name="cantidad_frecuente_{{ f.cliente.pk }}"
+                                       value="{{ f.cantidad_sugerida }}">
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted mb-0">No hay clientes frecuentes en esta zona.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-body fw-semibold">
+                    <i class="fa-solid fa-cart-shopping me-1"></i> Pedidos de la zona
+                    <span class="badge bg-secondary ms-1">{{ borrador.pedidos|length }}</span>
+                </div>
+                <div class="card-body">
+                    {% if borrador.pedidos %}
+                        {% for p in borrador.pedidos %}
+                        <div class="d-flex align-items-center border-bottom py-2">
+                            <div class="form-check me-3">
+                                <input class="form-check-input" type="checkbox"
+                                       name="pedido_{{ p.id_pedido }}" id="ped_{{ p.id_pedido }}">
+                            </div>
+                            <div class="flex-grow-1">
+                                <label class="form-label mb-0 fw-semibold" for="ped_{{ p.id_pedido }}">
+                                    #{{ p.id_pedido }} — {{ p.cliente.nombre_completo|default:"Cliente" }}
+                                </label>
+                                <div>
+                                    <small class="text-muted">
+                                        {{ p.direccion_entrega.direccion_completa|default:"Sin dirección" }}
+                                    </small>
+                                </div>
+                                <span class="badge bg-light text-dark border">{{ p.estado }}</span>
+                            </div>
+                            <div style="width: 110px;">
+                                <input type="number" min="0" class="form-control form-control-sm"
+                                       name="cantidad_pedido_{{ p.id_pedido }}" value="">
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted mb-0">No hay pedidos pendientes para esta zona y fecha.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end mt-4">
+        <button type="submit" class="btn btn-success">
+            <i class="fa-solid fa-file-circle-plus me-1"></i> Crear hoja de ruta (borrador)
+        </button>
+    </div>
+</form>
+{% elif fecha or zona %}
+<div class="alert alert-warning">Elegí una fecha y una zona válidas para ver la previsualización.</div>
+{% endif %}
+{% endblock %}

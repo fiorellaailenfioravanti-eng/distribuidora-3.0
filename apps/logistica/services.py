@@ -5,6 +5,9 @@ from django.db import transaction
 from django.db.models import Q, Max
 from django.utils import timezone
 
+from apps.pedidos.services import metodo_pago_efectivo as _metodo_pago_efectivo
+from apps.pedidos.services import registrar_cobro  # noqa: F401 (API de logística)
+
 from .models import CalendarioExcepcion, HojaRuta, DetalleHojaRuta, CargaHojaRuta
 
 
@@ -124,14 +127,6 @@ def construir_borrador(fecha, zona):
         'pedidos': list(pedidos_candidatos(zona, fecha)),
         'ruta_default': ruta_default(zona, fecha),
     }
-
-
-def _metodo_pago_efectivo():
-    from apps.pedidos.models import MetodoPago
-    return (
-        MetodoPago.objects.filter(codigo='EFECTIVO').first()
-        or MetodoPago.objects.first()
-    )
 
 
 def _texto_direccion(direccion):
@@ -385,23 +380,6 @@ def registrar_entrega(parada, estado, envases_retirados=0, envases_vendidos=0, n
             pedido.save(update_fields=['estado'])
 
     return parada
-
-
-@transaction.atomic
-def registrar_cobro(pedido, monto, metodo_pago=None):
-    """Registra un pago aprobado (cobro en calle o posterior)."""
-    from apps.pedidos.models import PagoPedido
-
-    metodo_pago = metodo_pago or _metodo_pago_efectivo()
-    if not pedido.total:
-        pedido.total = monto
-        pedido.save(update_fields=['total'])
-    return PagoPedido.objects.create(
-        pedido=pedido,
-        monto=monto,
-        metodo_pago=metodo_pago,
-        estado_pago='Aprobado',
-    )
 
 
 @transaction.atomic

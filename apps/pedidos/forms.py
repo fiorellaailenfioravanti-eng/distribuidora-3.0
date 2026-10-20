@@ -13,6 +13,22 @@ def _etiqueta_direccion_con_fecha(direccion):
     return etiqueta
 
 
+# Métodos que no se ofrecen en el checkout web. La tarjeta se cobra por
+# MercadoPago o con posnet al entregar (decisión A-D1): el sistema no procesa
+# datos de tarjetas.
+CODIGOS_FUERA_DEL_CHECKOUT_WEB = ('TARJETA',)
+
+
+def metodos_pago_checkout_web():
+    """Métodos activos ofrecidos al cliente en la web."""
+    from django.conf import settings
+    excluidos = list(CODIGOS_FUERA_DEL_CHECKOUT_WEB)
+    if not getattr(settings, 'MERCADOPAGO_ACCESS_TOKEN', ''):
+        # Sin token el checkout online fallaría; no se ofrece (sin desactivarlo).
+        excluidos.append('MERCADOPAGO')
+    return MetodoPago.objects.filter(activo=True).exclude(codigo__in=excluidos)
+
+
 class CheckoutForm(forms.Form):
     direccion_entrega = forms.ModelChoiceField(
         queryset=DireccionEntrega.objects.none(),
@@ -28,43 +44,6 @@ class CheckoutForm(forms.Form):
         required=True,
         label="Método de Pago"
     )
-    # Campos opcionales para Tarjeta de Crédito / Débito
-    tarjeta_numero = forms.CharField(
-        required=False,
-        max_length=19,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control bg-dark-subtle border-secondary text-white',
-            'placeholder': '4500 1234 5678 9010',
-            'id': 'inputTarjetaNumero'
-        })
-    )
-    tarjeta_titular = forms.CharField(
-        required=False,
-        max_length=100,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control bg-dark-subtle border-secondary text-white',
-            'placeholder': 'Como figura en la tarjeta',
-            'id': 'inputTarjetaTitular'
-        })
-    )
-    tarjeta_vencimiento = forms.CharField(
-        required=False,
-        max_length=7,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control bg-dark-subtle border-secondary text-white',
-            'placeholder': 'MM/AA',
-            'id': 'inputTarjetaVencimiento'
-        })
-    )
-    tarjeta_cvv = forms.CharField(
-        required=False,
-        max_length=4,
-        widget=forms.PasswordInput(attrs={
-            'class': 'form-control bg-dark-subtle border-secondary text-white',
-            'placeholder': '123',
-            'id': 'inputTarjetaCVV'
-        })
-    )
     notas_cliente = forms.CharField(
         widget=forms.Textarea(attrs={
             'class': 'form-control',
@@ -79,6 +58,7 @@ class CheckoutForm(forms.Form):
         cliente = kwargs.pop('cliente', None)
         super().__init__(*args, **kwargs)
         self.fields['direccion_entrega'].label_from_instance = _etiqueta_direccion_con_fecha
+        self.fields['metodo_pago'].queryset = metodos_pago_checkout_web()
         if cliente:
             self.fields['direccion_entrega'].queryset = cliente.direcciones.all()
             # Si tiene direcciones, seleccionar la principal por defecto

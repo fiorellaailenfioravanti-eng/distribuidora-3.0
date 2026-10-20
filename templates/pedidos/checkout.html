@@ -74,9 +74,6 @@
                                     {% if 'MercadoPago' in radio.choice_label or 'QR' in radio.choice_label %}
                                         <i class="fa-solid fa-bolt text-info me-2 fs-5"></i>{{ radio.choice_label }}
                                         <span class="badge bg-info bg-opacity-25 text-info ms-2 fs-6">Pago Online Directo</span>
-                                    {% elif 'Tarjeta' in radio.choice_label or 'Débito' in radio.choice_label %}
-                                        <i class="fa-solid fa-credit-card text-warning me-2 fs-5"></i>{{ radio.choice_label }}
-                                        <span class="badge bg-warning bg-opacity-25 text-warning ms-2 fs-6">Pago Inmediato</span>
                                     {% else %}
                                         <i class="fa-solid fa-money-bill-wave text-success me-2 fs-5"></i>{{ radio.choice_label }}
                                         <span class="badge bg-success bg-opacity-25 text-success ms-2 fs-6">Pago al Recibir</span>
@@ -84,31 +81,6 @@
                                 </label>
                             </div>
                             {% endfor %}
-                        </div>
-
-                        <!-- Formulario de Tarjeta (visible al seleccionar Tarjeta) -->
-                        <div id="seccionTarjetaForm" class="mt-4 p-3 border rounded-3 bg-body-tertiary" style="display: none;">
-                            <h6 class="fw-bold mb-3 text-warning">
-                                <i class="fa-solid fa-credit-card me-2"></i>Ingrese los datos de la Tarjeta
-                            </h6>
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label small fw-semibold text-white">Número de Tarjeta</label>
-                                    {{ form.tarjeta_numero }}
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label small fw-semibold text-white">Nombre del Titular</label>
-                                    {{ form.tarjeta_titular }}
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small fw-semibold text-white">Vencimiento (MM/AA)</label>
-                                    {{ form.tarjeta_vencimiento }}
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small fw-semibold text-white">Código (CVV)</label>
-                                    {{ form.tarjeta_cvv }}
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -165,29 +137,5 @@
     </form>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const radioMetodos = document.querySelectorAll('input[name="metodo_pago"]');
-    const seccionTarjeta = document.getElementById('seccionTarjetaForm');
-
-    function actualizarVisibilidadTarjeta() {
-        let seleccionado = document.querySelector('input[name="metodo_pago"]:checked');
-        if (seleccionado) {
-            let labelText = seleccionado.parentElement ? seleccionado.parentElement.innerText : '';
-            if (labelText.includes('Tarjeta') || labelText.includes('Débito')) {
-                seccionTarjeta.style.display = 'block';
-            } else {
-                seccionTarjeta.style.display = 'none';
-            }
-        }
-    }
-
-    radioMetodos.forEach(radio => {
-        radio.addEventListener('change', actualizarVisibilidadTarjeta);
-    });
-
-    actualizarVisibilidadTarjeta();
-});
-</script>
 {% endblock %}
 

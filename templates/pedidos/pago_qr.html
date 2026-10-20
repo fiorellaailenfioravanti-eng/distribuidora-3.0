@@ -43,9 +43,12 @@
                                 <a href="{{ web_init_point }}" target="_blank" class="btn btn-outline-info rounded-pill fw-semibold">
                                     <i class="fa-solid fa-globe me-2"></i>Pagar vía Web MercadoPago
                                 </a>
-                                <a href="{% url 'apps.pedidos:confirmar_pago_qr' pedido.id_pedido %}" class="btn btn-success rounded-pill fw-bold">
-                                    <i class="fa-solid fa-check-circle me-2"></i>Confirmar Pago Realizado
-                                </a>
+                                <form method="post" action="{% url 'apps.pedidos:confirmar_pago_qr' pedido.id_pedido %}" class="d-grid">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success rounded-pill fw-bold">
+                                        <i class="fa-solid fa-check-circle me-2"></i>Ya realicé el pago
+                                    </button>
+                                </form>
                                 <a href="{% url 'apps.pedidos:detalle_pedido' pedido.id_pedido %}" class="btn btn-outline-secondary rounded-pill">
                                     <i class="fa-solid fa-eye me-2"></i>Ver Detalle del Pedido
                                 </a>
@@ -55,7 +58,7 @@
                 </div>
 
                 <div class="card-footer bg-body-tertiary p-3 text-center">
-                    <small class="text-muted">Una vez completado el pago, tu pedido cambiará automáticamente al estado <strong>Confirmado</strong>.</small>
+                    <small class="text-muted">Tu pedido pasará a <strong>Confirmado</strong> cuando MercadoPago acredite el pago.</small>
                 </div>
             </div>
         </div>

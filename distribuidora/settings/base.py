@@ -144,3 +144,5 @@ LOGOUT_REDIRECT_URL = '/auth/ingresar/'  # Redirige al inicio de sesión despué
 # En desarrollo funciona sin configurar nada (queda inactivo el checkout QR).
 # En producción `production.py` exige el token real.
 MERCADOPAGO_ACCESS_TOKEN = config('MERCADOPAGO_ACCESS_TOKEN', default='')
+# Sin secreto no se valida la firma del webhook (sólo aceptable en desarrollo).
+MERCADOPAGO_WEBHOOK_SECRET = config('MERCADOPAGO_WEBHOOK_SECRET', default='')

@@ -300,9 +300,9 @@
     "semantic_hash": "fddbb88f6f242d772f5f7b171bc45323"
   },
   "apps/clientes/models.py": {
-    "mtime": 1792508323.7339406,
-    "seen": 1792508459.814965,
-    "ast_hash": "5ac320d8358960450bbc97daa9f0d4ff",
+    "mtime": 1792510580.375916,
+    "seen": 1792510827.763825,
+    "ast_hash": "57f15fd9947b6b1709250c83b7a30f03",
     "semantic_hash": ""
   },
   "apps/clientes/signals.py": {
@@ -312,9 +312,9 @@
     "semantic_hash": ""
   },
   "apps/clientes/tests.py": {
-    "mtime": 1792508371.2298186,
-    "seen": 1792508459.814965,
-    "ast_hash": "3e7fea440bf72c04d3a6d5e253e9f41b",
+    "mtime": 1792510681.5613894,
+    "seen": 1792510827.763825,
+    "ast_hash": "69fa30fe862bccedcd498d1c692b9fb4",
     "semantic_hash": ""
   },
   "apps/clientes/urls.py": {
@@ -324,9 +324,9 @@
     "semantic_hash": "419a2064dda7822425502e09165885bc"
   },
   "apps/clientes/views.py": {
-    "mtime": 1792492555.4435637,
-    "seen": 1792492789.023524,
-    "ast_hash": "4de35ddff38828eed62800bf1b7bfe3f",
+    "mtime": 1792510681.5613894,
+    "seen": 1792510827.763825,
+    "ast_hash": "4282552cf9825363df4fbc73a911f986",
     "semantic_hash": ""
   },
   "apps/cuentas/__init__.py": {
@@ -534,15 +534,15 @@
     "semantic_hash": "39c266f2389ea3a89c19c461ed898994"
   },
   "apps/logistica/services.py": {
-    "mtime": 1792492143.2419715,
-    "seen": 1792492789.023524,
-    "ast_hash": "396fadb444eede9e3f854bb86aba04fd",
+    "mtime": 1792510477.2937014,
+    "seen": 1792510827.763825,
+    "ast_hash": "24a30bc0ece7561e62b6aa0831824032",
     "semantic_hash": ""
   },
   "apps/logistica/tests.py": {
-    "mtime": 1792492579.184766,
-    "seen": 1792492789.023524,
-    "ast_hash": "733edb0099867a574a7f184117ef34e1",
+    "mtime": 1792510611.2241776,
+    "seen": 1792510827.763825,
+    "ast_hash": "0c9d5033652da7557221e712d3772d1e",
     "semantic_hash": ""
   },
   "apps/logistica/urls.py": {
@@ -804,9 +804,9 @@
     "semantic_hash": ""
   },
   ".agents/CONTEXT.md": {
-    "mtime": 1792508413.175956,
-    "seen": 1792508459.814965,
-    "ast_hash": "870132d93ee390acff8709b440995530",
+    "mtime": 1792510778.8241827,
+    "seen": 1792510827.763825,
+    "ast_hash": "a58315e8254be65ebc70bb3736e3a76c",
     "semantic_hash": ""
   },
   ".agents/DESIGN.md": {
@@ -822,9 +822,9 @@
     "semantic_hash": ""
   },
   ".agents/PROCEDURE.md": {
-    "mtime": 1792508404.7159126,
-    "seen": 1792508459.814965,
-    "ast_hash": "78221f33e7af28e56ab0305d53155e31",
+    "mtime": 1792510765.8718405,
+    "seen": 1792510827.763825,
+    "ast_hash": "6106be43891a6303a29a7c52837d44f2",
     "semantic_hash": ""
   },
   "templates/abonos/form_abono.html": {
@@ -936,10 +936,10 @@
     "semantic_hash": ""
   },
   "templates/clientes/mi_perfil_cliente.html": {
-    "mtime": 1790803370.886264,
-    "seen": 1792492789.023524,
-    "ast_hash": "9f0b4b3635b58a05eaf9bd3ecc69f6b6",
-    "semantic_hash": "9f0b4b3635b58a05eaf9bd3ecc69f6b6"
+    "mtime": 1792510563.930408,
+    "seen": 1792510827.763825,
+    "ast_hash": "10e0485f4010c2899b868aae847f18d0",
+    "semantic_hash": ""
   },
   "templates/clientes/ver_cliente.html": {
     "mtime": 1792491862.9055974,
@@ -1314,9 +1314,9 @@
     "semantic_hash": ""
   },
   ".agents/AUDITORIA.md": {
-    "mtime": 1792492773.0987473,
-    "seen": 1792492789.023524,
-    "ast_hash": "9f6a090442e1d9c9ab5644a9381ed95e",
+    "mtime": 1792510778.7889295,
+    "seen": 1792510827.763825,
+    "ast_hash": "2f2bc69eb954e5a481a75e7d3020a6b7",
     "semantic_hash": ""
   },
   ".agents/PLAN_CIERRE.md": {
@@ -1476,9 +1476,21 @@
     "semantic_hash": ""
   },
   ".agents/CONTROL_REQUISITOS.md": {
-    "mtime": 1792508404.7854466,
-    "seen": 1792508459.814965,
-    "ast_hash": "1158b2c2962d3a6e529ab6aedcb1934d",
+    "mtime": 1792510778.8033433,
+    "seen": 1792510827.763825,
+    "ast_hash": "ed67f5ccbb174df5d96fa84b79c6c6fc",
+    "semantic_hash": ""
+  },
+  "apps/clientes/migrations/0008_ayuda_permite_fiado.py": {
+    "mtime": 1792510581.00728,
+    "seen": 1792510827.763825,
+    "ast_hash": "9ba83d84a26fe618de09b427d1c36fb9",
+    "semantic_hash": ""
+  },
+  "apps/logistica/management/commands/generar_borradores_reparto.py": {
+    "mtime": 1792510477.3147383,
+    "seen": 1792510827.763825,
+    "ast_hash": "e0612b1164a90337fab30df42b2cd3e7",
     "semantic_hash": ""
   }
 }

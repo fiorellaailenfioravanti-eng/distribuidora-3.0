@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import Cliente, TelefonoContacto, DireccionEntrega
 from .forms  import (ClienteForm, ClienteSinCuentaForm, AltaClienteConCuentaForm, TelefonoContactoForm,
@@ -243,13 +243,15 @@ def cambiar_tipo_cliente(request, pk):
     if request.method == 'POST':
         nuevo_tipo = request.POST.get('tipo_cliente')
         if nuevo_tipo in ('Normal', 'Premium'):
+            tenia_fiado = cliente.permite_fiado
             cliente.tipo_cliente = nuevo_tipo
             cliente.save()
-            messages.success(
-                request,
-                f'Cliente actualizado a {nuevo_tipo}.'
-                + (' Fiado habilitado.' if nuevo_tipo == 'Premium' else '')
-            )
+            aviso = ''
+            if cliente.permite_fiado and not tenia_fiado:
+                aviso = ' Fiado habilitado.'
+            elif tenia_fiado and not cliente.permite_fiado:
+                aviso = ' Se quitó el fiado.'
+            messages.success(request, f'Cliente actualizado a {nuevo_tipo}.{aviso}')
         else:
             messages.error(request, 'Tipo de cliente inválido.')
 
@@ -312,18 +314,11 @@ def agregar_direccion(request, pk):
         messages.error(request, 'Sin permiso para agregar direcciones a este perfil.')
         return redirect('inicio')
 
-    # Regla de Negocio: Cada cliente solo puede tener 1 dirección de entrega.
-    # Si ya posee una registrada, se redirige a editar esa única dirección.
-    direccion_existente = cliente.direcciones.first()
-    if direccion_existente:
-        messages.info(request, 'Ya tienes un domicilio registrado. Puedes editar tus datos de entrega a continuación.')
-        url_editar = reverse('apps.clientes:editar_direccion', kwargs={'pk': direccion_existente.pk})
-        next_param = request.GET.get('next') or request.POST.get('next')
-        if next_param:
-            url_editar += f"?next={next_param}"
-        return redirect(url_editar)
-
+    # RF-03 (decisión A-D4): el cliente puede tener varias direcciones; en el
+    # checkout elige a cuál se le entrega.
     next_url = request.GET.get('next') or request.POST.get('next') or ''
+    if next_url and not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        next_url = ''
 
     is_staff = es_admin_o_vendedor(request.user)
 
@@ -341,7 +336,9 @@ def agregar_direccion(request, pk):
                 )
                 dir_.barrio.zona = zona_default
                 dir_.barrio.save()
-            dir_.es_principal = True
+            # La primera dirección siempre es la principal; las siguientes, si se marcó.
+            if not cliente.direcciones.exists():
+                dir_.es_principal = True
             dir_.save()
             messages.success(request, f'Dirección "{dir_}" agregada con éxito.')
 
@@ -354,6 +351,8 @@ def agregar_direccion(request, pk):
             messages.error(request, 'Error al agregar la dirección. Revisá los campos.')
     else:
         form = DireccionEntregaForm(is_staff_or_admin=is_staff)
+        # Sólo la primera dirección se sugiere como principal.
+        form.initial['es_principal'] = not cliente.direcciones.exists()
 
     return render(request, 'clientes/agregar_direccion.html', {
         'form': form,

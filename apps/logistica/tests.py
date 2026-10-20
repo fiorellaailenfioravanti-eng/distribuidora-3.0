@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from django.test import TestCase
 from django.urls import reverse
@@ -413,3 +413,36 @@ class HojaSinChoferTests(TestCase):
         respuesta = self.client.post(reverse('apps.logistica:eliminar_zona', args=[zona.pk]))
         self.assertEqual(respuesta.status_code, 302)
         self.assertTrue(Zona.objects.filter(pk=zona.pk).exists())
+
+
+class GeneracionQuincenalTests(TestCase):
+    """RF-17 (decisión A-D5): borradores de reparto para los próximos 15 días."""
+
+    def setUp(self):
+        from apps.clientes.models import Cliente, DireccionEntrega
+        from apps.pedidos.models import MetodoPago, Pedido
+        self.lunes = date(2026, 11, 2)  # lunes
+        self.zona = Zona.objects.create(nombre='Lunes y jueves', dias_reparto='0,3')
+        barrio = Barrio.objects.create(nombre='Centro', zona=self.zona)
+        cliente = Cliente.objects.create(nombre='Ana', apellido='Paz')
+        direccion = DireccionEntrega.objects.create(cliente=cliente, calle='Mitre', altura='1', barrio=barrio)
+        efectivo = MetodoPago.objects.get(codigo='EFECTIVO')
+        self.p_lunes = Pedido.objects.create(cliente=cliente, direccion_entrega=direccion, metodo_pago=efectivo,
+                                             estado='Confirmado', fecha_estimada_entrega=self.lunes)
+        self.p_jueves = Pedido.objects.create(cliente=cliente, direccion_entrega=direccion, metodo_pago=efectivo,
+                                              estado='Confirmado', fecha_estimada_entrega=self.lunes + timedelta(days=3))
+
+    def test_crea_borradores_por_dia_de_reparto(self):
+        from apps.logistica.services import generar_borradores_periodo
+        hojas = generar_borradores_periodo(desde=self.lunes, dias=15)
+        self.assertEqual([h.fecha for h in hojas], [self.lunes, self.lunes + timedelta(days=3)])
+        self.assertTrue(all(h.estado == 'Borrador' for h in hojas))
+        self.assertEqual(self.p_lunes.paradas.get().hoja_ruta, hojas[0])
+        self.assertEqual(self.p_jueves.paradas.get().hoja_ruta, hojas[1])
+
+    def test_es_idempotente(self):
+        from django.core.management import call_command
+        from io import StringIO
+        call_command('generar_borradores_reparto', desde=self.lunes.isoformat(), stdout=StringIO())
+        call_command('generar_borradores_reparto', desde=self.lunes.isoformat(), stdout=StringIO())
+        self.assertEqual(HojaRuta.objects.count(), 2)

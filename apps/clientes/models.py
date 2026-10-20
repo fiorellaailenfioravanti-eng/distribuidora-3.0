@@ -80,7 +80,8 @@ class Cliente(models.Model):
     permite_fiado    = models.BooleanField(
         default=False,
         verbose_name='Permite fiado',
-        help_text='Habilitado automáticamente para clientes Premium'
+        help_text='Automático para Premium. A un cliente Normal sólo se le habilita '
+                  'como excepción autorizada (RF-05, decisión A-D6).'
     )
     notas_internas   = models.TextField(
         blank=True,
@@ -146,9 +147,17 @@ class Cliente(models.Model):
         return self.cantidad_telefonos() >= 2 and self.cantidad_direcciones() >= 1
 
     def save(self, *args, **kwargs):
-        # Si se cambia a Premium, habilitar fiado automáticamente
+        # RF-05 (decisión A-D6): el Premium siempre tiene fiado; un Normal sólo
+        # como excepción manual. Al bajar de Premium a Normal se quita el
+        # fiado automático (H-41); si corresponde, se vuelve a habilitar aparte.
         if self.tipo_cliente == 'Premium':
             self.permite_fiado = True
+        elif self.pk:
+            tipo_anterior = (
+                Cliente.objects.filter(pk=self.pk).values_list('tipo_cliente', flat=True).first()
+            )
+            if tipo_anterior == 'Premium':
+                self.permite_fiado = False
         super().save(*args, **kwargs)
 
 

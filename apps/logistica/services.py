@@ -218,6 +218,40 @@ def crear_hoja_borrador(fecha, zona, usuario, seleccion, empleado=None, camion=N
     return hoja
 
 
+def generar_borradores_periodo(desde=None, dias=15, usuario=None):
+    """RF-17 (decisión A-D5): borradores de reparto para los próximos `dias`.
+
+    Recorre cada zona y cada día de reparto del período en orden y crea una
+    hoja en **Borrador** con los pedidos agendables que todavía no están en
+    ninguna hoja. Cada pedido queda en el primer día de reparto que le toca.
+
+    Respeta la decisión D2: no confirma nada ni agrega clientes frecuentes
+    (agregarlos crea pedidos, así que se eligen a mano en «Planificar
+    reparto»). Es idempotente: si ya hay una hoja para esa fecha y zona, no
+    la toca. Devuelve la lista de hojas creadas.
+    """
+    from .models import Zona
+
+    desde = desde or timezone.localdate()
+    creadas = []
+    for offset in range(dias):
+        fecha = desde + timedelta(days=offset)
+        for zona in Zona.objects.order_by('nombre'):
+            if not fecha_es_de_reparto(zona, fecha):
+                continue
+            if HojaRuta.objects.filter(fecha=fecha, zona=zona).exists():
+                continue
+            pedidos = list(pedidos_candidatos(zona, fecha))
+            if not pedidos:
+                continue
+            seleccion = {'pedidos': [{'pedido_id': p.pk, 'cantidad': None} for p in pedidos]}
+            creadas.append(crear_hoja_borrador(
+                fecha, zona, usuario, seleccion,
+                observaciones=f'Generada automáticamente para el período de {dias} días desde {desde:%d/%m/%Y}.',
+            ))
+    return creadas
+
+
 # ────────────────────────────────────────────────
 # CONFIRMACIÓN, CARGA Y REGRESO DEL CAMIÓN (3C)
 # ────────────────────────────────────────────────

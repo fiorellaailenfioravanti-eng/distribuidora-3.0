@@ -23,7 +23,7 @@
 | H-38 (nuevo) | ✅ | 4.6.5 — smoke de rutas |
 | H-30 (`esta_pagado`) | ⏳ | Fase 6A |
 | H-34 (buscador RF-07) | ⏳ | Fase 7 |
-| H-39 (nuevo, una dirección por cliente) | ❓ | Decisión A-D4 |
+| H-39 (nuevo, una dirección por cliente) | ✅ | A-D4 aplicada: varias direcciones |
 | R-4 (`celular1/2`, D-6), R-7 (skills en la raíz) | ⏳ | Fase 7 |
 
 Decisiones aplicadas con la recomendación de este documento: **A-D1, A-D2, A-D3**.
@@ -39,7 +39,7 @@ Verificación: `check` 0 issues · sin migraciones pendientes · **128 tests OK*
 
 | # | Pregunta | Recomendación |
 |:--:|---|---|
-| A-D4 | ¿El cliente puede tener varias direcciones de entrega (RF-03) o una sola? | **Varias**, como dice RF-03 y como ya soporta el modelo: quitar la restricción de la vista y elegir la dirección en el checkout (ya existe el selector) |
+| A-D4 ✅ varias | ¿El cliente puede tener varias direcciones de entrega (RF-03) o una sola? | **Varias**, como dice RF-03 y como ya soporta el modelo: quitar la restricción de la vista y elegir la dirección en el checkout (ya existe el selector) |
 
 ---
 

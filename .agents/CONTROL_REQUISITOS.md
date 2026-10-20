@@ -13,11 +13,13 @@
 | RF-01 | ⚠️ | ✅ | El registro exige 2 celulares distintos (≥8 dígitos) y la relación de cada uno (H-40) |
 | RF-04 | 🟡 | ✅ | Checkout y confirmación del pedido exigen 2 teléfonos; redirige a «Mi perfil» |
 | RF-13 | 🟡 | 🟡 | `esta_pagado()` compara lo cobrado con el total (H-30); falta la vista de cobro manual (6A) |
-| RF-05 | ⚠️ | ⚠️ | **Sin cambios: requiere la decisión A-D6** (ver abajo) |
+| RF-05 | ⚠️ | ✅ | A-D6 = **Premium + excepción manual**: al bajar de Premium a Normal se quita el fiado (H-41); la excepción se habilita aparte |
+| RF-03 | 🟡 | ✅ | A-D4 = **varias direcciones**: sin la restricción de una sola; la primera es principal, las siguientes si se marca |
+| RF-17 | 🟡 | ✅ | A-D5 = **comando `generar_borradores_reparto`**: borradores por zona y día de reparto para 15 días, idempotente, sin confirmar (D2) |
 
-Balance actualizado: **12 ✅ · 5 🟡 · 1 ⚠️ · 4 🔴**.
+Balance actualizado: **15 ✅ · 3 🟡 (RF-07, RF-12, RF-13) · 4 🔴 (RF-08, RF-09, RF-10, RF-18)**.
 
-### A-D6 — ¿El fiado es sólo Premium o admite excepciones?
+### A-D6 — ¿El fiado es sólo Premium o admite excepciones? → **Decidido: (b)**
 
 La Fase 4 implementó a propósito «Premium **o** `permite_fiado` activado a mano», y la
 facturación de abonos (RF-15) **sólo genera el cargo mensual a clientes con fiado**: con la regla
@@ -28,7 +30,9 @@ estricta, a un cliente Normal que alquila un dispenser nunca se le facturaría.
 | (a) Estricto, como dice RF-05 | `permite_fiado = es_premium()`; el cargo mensual del abono deja de depender del fiado (es un contrato, no una compra a crédito). Toca `clientes`, `abonos/services.py` y 10 tests |
 | (b) Premium + excepción manual (diseño actual) | Se documenta RF-05 así en la tesis; sólo se corrige que al bajar de Premium a Normal se quite el fiado salvo que se active de nuevo |
 
-**Recomendación: (a)**, que cumple RF-05 al pie de la letra y separa dos conceptos que hoy están mezclados (fiar una compra y facturar un alquiler).
+El equipo eligió **(b)**: RF-05 se documenta en la tesis como «fiado para Premium y, como
+excepción autorizada por la empresa, para clientes Normal». La excepción sólo se activa desde el
+admin de Django; los abonos de clientes Normal siguen requiriendo esa excepción para facturarse.
 
 ## Resumen (control original)
 
@@ -83,7 +87,7 @@ RF-19, RNF-02. **Sin test:** RF-01, RF-03, RF-04, RF-06, RF-07, RF-11, RF-13, RN
 
 | # | Pregunta | Recomendación |
 |:--:|---|---|
-| A-D5 | RF-17 pide **generación quincenal**; la Fase 3 la reemplazó por planificación asistida (D2). ¿Se implementa o se justifica? | Agregar un comando `generar_borradores_reparto` que cree los **borradores** de los próximos 15 días por zona (sin confirmarlos, respetando D2). Es poco trabajo y cumple el enunciado |
+| A-D5 ✅ comando | RF-17 pide **generación quincenal**; la Fase 3 la reemplazó por planificación asistida (D2). ¿Se implementa o se justifica? | Agregar un comando `generar_borradores_reparto` que cree los **borradores** de los próximos 15 días por zona (sin confirmarlos, respetando D2). Es poco trabajo y cumple el enunciado |
 
 ## Cómo se reparte en el plan
 

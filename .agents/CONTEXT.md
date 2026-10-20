@@ -295,7 +295,7 @@ class Cliente(models.Model):
     fecha_nacimiento = DateField(null=True, blank=True)
     tipo_cliente     = CharField(choices=['Normal','Premium'], default='Normal')
     bidones_prestados = PositiveIntegerField(default=0)
-    permite_fiado    = BooleanField(default=False)  # auto True para Premium
+    permite_fiado    = BooleanField(default=False)  # Premium: siempre; Normal: excepción manual (A-D6)
     notas_internas   = TextField(blank=True)
     # Métodos: nombre_completo(), email_display(), tiene_cuenta(),
     #          es_premium(), tiene_datos_completos()
@@ -413,7 +413,8 @@ propios; los importa de `apps.empleados`. Se eliminaron las tablas
 > ✅ **Fase 3 completada (3A–3F):** `DetalleHojaRuta.pedido` vincula cada parada con
 > `pedidos.Pedido`; `logistica/services.py` agrupa frecuentes + pedidos por zona, confirma
 > la hoja (→ `En Camino`), registra carga/regreso (sobrantes a stock) y las ventas en calle.
-> Comando de demo `seed_logistica`. **Detalle:** [`.agents/FASE3_LOGISTICA.md`](FASE3_LOGISTICA.md).
+> Comando `generar_borradores_reparto [--desde AAAA-MM-DD] [--dias 15]` (RF-17, A-D5): borradores por zona
+> para el período, sin confirmar. Comando de demo `seed_logistica`. **Detalle:** [`.agents/FASE3_LOGISTICA.md`](FASE3_LOGISTICA.md).
 
 ---
 
@@ -704,7 +705,7 @@ Camion ← RutaReparto → Zona
 | Pagos aprobables desde la URL / por el propio cliente (H-18/H-19) | 🔴 Crítica | ✅ Resuelto (Fase 4.6.1) |
 | Tres sistemas de roles desconectados (H-24/H-25) | 🟠 Alta | ✅ Resuelto (`RolEmpleado.grupo_permisos`) |
 | Errores 500 en roles, rutas, zonas, direcciones, clientes y productos | 🟠 Alta | ✅ Resueltos (Fases 4.6.3 y 4.6.5) |
-| Una sola dirección por cliente vs RF-03 multidirección (H-39) | 🟠 Media | 🔴 Decisión pendiente |
+| Una sola dirección por cliente vs RF-03 multidirección (H-39) | 🟠 Media | ✅ Resuelto (A-D4: varias direcciones) |
 | RNF-02 sin filtro por repartidor asignado | 🟠 Media | ✅ Resuelto (`puede_ver_nota_seguridad`) |
 | Cero tests | 🟠 Media | 🟢 Avanzado (128 tests; buscador sin suite propia) |
 | Carrito no descuenta stock ni genera Pedido | 🟠 Media | 🟡 Pedidos ya descuentan; falta reserva en carrito (RF-12) |

@@ -34,6 +34,8 @@ Este archivo contiene:
 
 👉 [`.agents/AUDITORIA.md`](.agents/AUDITORIA.md) — auditoría de coherencia (H-18…H-39, R-1…R-8) y su estado.
 
+👉 [`.agents/CONTROL_REQUISITOS.md`](.agents/CONTROL_REQUISITOS.md) — control ejecutado de los 22 requisitos (20/10/2026).
+
 
 ---
 

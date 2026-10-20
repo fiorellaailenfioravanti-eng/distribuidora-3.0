@@ -109,13 +109,13 @@ Leyenda: ✅ completo · 🟡 parcial · 🔴 no implementado · ⚠️ implemen
 
 | ID | Requerimiento | Ubicación en código | Estado | Tarea |
 |:--:|---|---|:--:|---|
-| RF-01 | Registro con ≥2 celulares y descripción de relación | `autenticacion/models.py`, `clientes/signals.py` | ✅ | — |
+| RF-01 | Registro con ≥2 celulares y descripción de relación | `autenticacion/models.py`, `clientes/signals.py` | ⚠️ | H-40 (acepta registro sin teléfonos) |
 | RF-02 | Validación de contraseñas (4 validadores Django) | `settings/base.py`, `empleados/forms.py` | ✅ | H-36 ✅ |
 | RF-03 | Multidirección: calle, altura, zona, seguridad, coordenadas | `clientes/models.py:172-245` | 🟡 | H-39 (la vista limita a 1 dirección) |
-| RF-04 | ≥2 teléfonos con relación explícita | `clientes/models.py:133-165` | 🟡 | T-6.1 |
-| RF-05 | Normal/Premium; solo Premium con fiado | `clientes/models.py:7-10,122-126`; `cuentas/models.py` | ✅ | — |
+| RF-04 | ≥2 teléfonos con relación explícita | `clientes/models.py:133-165` | 🟡 | T-6.1 (hoy compra con 0 teléfonos) |
+| RF-05 | Normal/Premium; solo Premium con fiado | `clientes/models.py:7-10,122-126`; `cuentas/models.py` | ⚠️ | H-41 (ex-Premium conserva el fiado) |
 | RF-06 | Catálogo agrupado por categorías | `productos/` | ✅ | — |
-| RF-07 | Buscador tolerante a tildes/errores | `buscador/` | 🟡 | H-34 (SQLite distingue tildes) |
+| RF-07 | Buscador tolerante a tildes/errores | `buscador/` | 🟡 | H-34 (resultados con ruido; no busca en la descripción) |
 | RF-08 | **Control de envases prestados** (entrada/salida) | solo `Cliente.bidones_prestados` (entero) | 🔴 | T-5.1 |
 | RF-09 | **Promociones prepago** "paga 3 lleva 4" | — | 🔴 | T-5.2 |
 | RF-10 | **Caducidad 30 días corridos** | — | 🔴 | T-5.3 |
@@ -125,14 +125,14 @@ Leyenda: ✅ completo · 🟡 parcial · 🔴 no implementado · ⚠️ implemen
 | RF-14 | **Semaforización de deuda** (🟡/🟠/🔴) | `cuentas/models.py`, `cuentas/services.py` | ✅ | — |
 | RF-15 | **Contratos de alquiler de dispensers** | `abonos/models.py`, `abonos/services.py` | ✅ | — |
 | RF-16 | Hojas de ruta diarias (fecha, zona, camión, chofer) | `logistica/models.py:155-207` | ✅ | — |
-| RF-17 | **Agrupación automática + generación quincenal** | `logistica/services.py` | ✅ | — |
+| RF-17 | **Agrupación automática + generación quincenal** | `logistica/services.py` | 🟡 | A-D5 (sin generación quincenal) |
 | RF-18 | **Pedido automático quincenal activable** | — (ausente incluso del roadmap) | 🔴 | T-6.3 |
 | RF-19 | Confirmación de entrega en campo por repartidor | `logistica/views.py:244-307` | ✅ | — |
 | RNF-01 | Escalabilidad multi-camión/multi-zona/multi-chofer | `logistica/models.py` | ✅ | T-2.1 ✅ (Empleado unificado) |
 | RNF-02 | Ocultación de info sensible | `permisos/roles.py::puede_ver_nota_seguridad`, templates | ✅ | T-2.4 ✅, T-2.5 ✅ |
 | RNF-03 | Dark mode sin autenticación | `base_tienda.html`, `base_dashboard.html` | ✅ | — |
 
-**Balance (20/10/2026): 13 completos · 5 parciales · 4 no implementados — 9 de 22 requisitos requieren trabajo.**
+**Balance (20/10/2026, control ejecutado — ver [`CONTROL_REQUISITOS.md`](CONTROL_REQUISITOS.md)): 10 completos · 6 parciales · 2 con defecto · 4 no implementados — 12 de 22 requisitos requieren trabajo.**
 
 ---
 
@@ -374,7 +374,7 @@ Estas **no** son técnicas: cambian el alcance de la tesis y las debe decidir el
 - [x] `makemigrations --check --dry-run` → sin cambios
 - [x] `manage.py test` → todas las suites en verde *(hoy: 128 tests)*
 - [x] `manage.py check --deploy --settings=distribuidora.settings.production` → limpio
-- [ ] RF-01 … RF-19 + RNF-01 … RNF-03 con estado ✅ en la matriz de §4 *(13/22 ✅; faltan RF-08/09/10/18 y pulir RF-03/04/07/12/13)*
+- [ ] RF-01 … RF-19 + RNF-01 … RNF-03 con estado ✅ en la matriz de §4 *(10/22 ✅; faltan RF-08/09/10/18, corregir RF-01/05 y pulir RF-03/04/07/12/13/17)*
 - [ ] Cada RF tiene **al menos un test** que lo cubra
 - [x] `SECRET_KEY` fuera del repositorio
 - [ ] `CONTEXT.md` v5.0 refleja el código final *(hoy: v4.1 tras Fase 4)*

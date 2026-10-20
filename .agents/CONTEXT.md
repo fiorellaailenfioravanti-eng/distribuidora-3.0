@@ -661,7 +661,7 @@ Camion ← RutaReparto → Zona
 
 | HU | Como | Quiero | Estado |
 |---|---|---|---|
-| HU-01 | Cliente nuevo | Registrarme con ≥2 teléfonos y relación explícita | ✅ Completa |
+| HU-01 | Cliente nuevo | Registrarme con ≥2 teléfonos y relación explícita | ⚠️ El registro no los exige (H-40) |
 | HU-02 | Cliente registrado | Guardar múltiples domicilios con zona y nota de seguridad | ✅ Completa |
 | HU-03 | Visitante | Buscar sin tildes ni mayúsculas | ✅ Completa |
 | HU-04 | Usuario no logueado | Al intentar agregar al carrito → redirige a login con alerta | ✅ Completa |

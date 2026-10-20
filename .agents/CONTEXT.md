@@ -89,6 +89,8 @@ DISTRIBUIDORA-3.0/
 │   ├── pedidos/                     # ✅ Checkout, Pedido, Pagos, MercadoPago, webhook
 │   ├── logistica/                   # ✅ Zonas, barrios, camiones, rutas y hojas de ruta
 │   ├── empleados/                   # ✅ Empleados y roles (FUENTE ÚNICA del personal)
+│   ├── cuentas/                     # ✅ Cuentas corrientes, fiado y semaforización (RF-14)
+│   ├── abonos/                      # ✅ Alquiler de dispensers y facturación (RF-15)
 │   └── permisos/                    # ✅ Módulo central de roles + sincronización de grupos
 ├── templates/
 ├── static/
@@ -379,12 +381,67 @@ propios; los importa de `apps.empleados`. Se eliminaron las tablas
 - `DetalleHojaRuta`: orden, `direccion_entrega` (FK opcional), `direccion_texto`,
   `cliente_nombre`, `pedido_ref` (CharField temporal), estado de entrega y nota.
 
-**Vistas:** `listar_rutas`, `crear/ver/editar/imprimir_ruta`, `agregar/eliminar_parada`,
-`actualizar_estado_entrega`, `mi_ruta_hoy`, CRUD de zonas y camiones,
-`direcciones_sin_zona`.
+**Vistas:** `listar_rutas`, `planificar_reparto`, `crear/ver/editar/imprimir_ruta`,
+`confirmar_ruta`, `registrar_regreso_ruta`, `venta_calle`, `agregar/eliminar_parada`,
+`actualizar_estado_entrega`, `mi_ruta_hoy`, CRUD de zonas y camiones, `direcciones_sin_zona`.
 
-> ⏳ **Pendiente de Fase 3:** vincular `DetalleHojaRuta` con `pedidos.Pedido`,
-> agrupar pedidos confirmados por zona y generar hojas de ruta quincenales.
+> ✅ **Fase 3 completada (3A–3F):** `DetalleHojaRuta.pedido` vincula cada parada con
+> `pedidos.Pedido`; `logistica/services.py` agrupa frecuentes + pedidos por zona, confirma
+> la hoja (→ `En Camino`), registra carga/regreso (sobrantes a stock) y las ventas en calle.
+> Comando de demo `seed_logistica`. **Detalle:** [`.agents/FASE3_LOGISTICA.md`](FASE3_LOGISTICA.md).
+
+---
+
+### Módulo `apps.cuentas` ✅ — Fase 4
+
+**Modelos:**
+
+```python
+class CuentaCorriente(models.Model):
+    cliente        = OneToOneField(Cliente, related_name='cuenta_corriente')
+    saldo          = DecimalField(12, 2, default=0)   # positivo = debe
+    limite_credito = DecimalField(12, 2, default=0)   # 0 = sin límite
+    activa         = BooleanField(default=True)
+    fecha_apertura = DateField(auto_now_add=True)
+    # Métodos: calcular_saldo(), recalcular_saldo(), permite_fiado(),
+    #          dias_de_atraso(), nivel_morosidad(), estado_morosidad(), tiene_deuda()
+
+class MovimientoCuenta(models.Model):
+    cuenta            = ForeignKey(CuentaCorriente, related_name='movimientos')
+    tipo              = CharField(['Cargo', 'Pago'])
+    monto             = DecimalField(12, 2)
+    descripcion       = CharField(200, blank=True)
+    fecha             = DateTimeField(auto_now_add=True)
+    fecha_vencimiento = DateField(null=True, blank=True)
+    pedido            = ForeignKey('pedidos.Pedido', null=True, SET_NULL)
+    abono             = ForeignKey('abonos.Abono', null=True, SET_NULL)
+    # clean() aplica RF-05; save()/delete() recalcula el saldo de la cuenta
+```
+
+**Semaforización (RF-14):** `nivel_morosidad()` devuelve `al-dia` 🟢 · `amarillo` 🟡
+(en plazo) · `naranja` 🟠 (≥ 10 días desde el primer cargo) · `rojo` 🔴 (≥ 15 días).
+`apps/cuentas/services.py`: `obtener_o_crear_cuenta`, `registrar_cargo` (valida RF-05),
+`registrar_pago`, `clientes_morosos`, `resumen_morosidad`.
+
+**Vistas:** `listar_cuentas`, `ver_cuenta`, `cuenta_de_cliente`, `registrar_cargo`,
+`registrar_pago`. URL base `/cuentas/`.
+
+---
+
+### Módulo `apps.abonos` ✅ — Fase 4
+
+**Modelo `Abono`** (RF-15): `cliente`, `producto` (dispenser), `fecha_inicio`,
+`fecha_fin`, `costo_mensual`, `dia_facturacion` (1-28), `estado`
+(`Activo`/`Suspendido`/`Finalizado`), `ultima_facturacion`, `observaciones`.
+
+- **RF-05:** `costo_para_cliente()` aplica `DESCUENTO_PREMIUM` (10 %) a los clientes `Premium`.
+- **Facturación:** `services.generar_cargos_mensuales(anio, mes)` crea un `MovimientoCuenta`
+  de tipo `Cargo` por cada abono activo en la cuenta del cliente y actualiza
+  `ultima_facturacion`; omite los que no tienen fiado. Comando
+  `python manage.py generar_cargos_abonos [--anio --mes]`.
+
+**Vistas:** `listar_abonos`, `crear/editar/ver_abono`, `cambiar_estado_abono`,
+`generar_cargos`. URL base `/abonos/`.
 
 ---
 
@@ -399,17 +456,18 @@ El nombre de usuario en la navbar es un **link** a `/clientes/mi-perfil/`.
 
 ## 5. 🔲 LO QUE ESTÁ PENDIENTE (Fases 3–7)
 
-### Fase 3 — Logística ↔ Pedido 🔴
-- [ ] Vincular `DetalleHojaRuta` → `pedidos.Pedido` (FK) y migrar `pedido_ref` (H-4)
-- [ ] Agrupar pedidos `Confirmado` por zona y proponer carga (RF-17)
-- [ ] Comando de generación quincenal de hojas de ruta (RF-17)
-- [ ] Al marcar entrega: actualizar `Pedido.estado` y stock en `transaction.atomic` (RF-19)
+### Fase 3 — Logística ↔ Pedido ✅
+- [x] Vincular `DetalleHojaRuta` → `pedidos.Pedido` (FK); `pedido_ref` se conserva (H-4)
+- [x] Agrupar pedidos `Confirmado` por zona y proponer carga (RF-17)
+- [x] Generación de hojas de ruta (planificar + comando de datos de demo) (RF-17)
+- [x] Al marcar entrega: actualizar `Pedido.estado` y stock en `transaction.atomic` (RF-19)
 
-### Fase 4 — Cuentas corrientes, morosidad y abonos 🔴
-- [ ] `apps.cuentas`: `CuentaCorriente`, `MovimientoCuenta` (RF-14)
-- [ ] Regla de fiado solo para clientes `Premium`/`permite_fiado` (RF-05)
-- [ ] Semaforización 🟡 inicio de mes · 🟠 10 días · 🔴 15 días
-- [ ] `apps.abonos`: alquiler de dispensers (RF-15)
+### Fase 4 — Cuentas corrientes, morosidad y abonos ✅
+- [x] `apps.cuentas`: `CuentaCorriente`, `MovimientoCuenta` (RF-14)
+- [x] Regla de fiado solo para clientes `Premium`/`permite_fiado` (RF-05)
+- [x] Semaforización 🟡 en plazo · 🟠 10 días · 🔴 15 días
+- [x] `apps.abonos`: alquiler de dispensers + facturación mensual (RF-15)
+- [ ] Resolver C-9 (RF-20 gastos por proveedor: dentro o fuera de alcance)
 
 ### Fase 5 — Bidones y promociones prepago 🔴
 - [ ] Historial `MovimientoBidon` (entrada/salida) — reemplaza `bidones_prestados` (RF-08)
@@ -454,8 +512,13 @@ logistica.Zona
     └── Barrio [FK→Zona]
 logistica.Camion
 logistica.RutaReparto [FK→Zona, FK→Empleado, FK→Camion]
-    └── HojaRuta [FK→RutaReparto, FK→Empleado, FK→Camion, FK→Usuario(creado_por)]
-            └── DetalleHojaRuta [FK→DireccionEntrega opcional; pedido_ref temporal]
+    └── HojaRuta [FK→RutaReparto, FK→Zona, FK→Empleado, FK→Camion, FK→Usuario(creado_por)]
+            ├── DetalleHojaRuta [FK→pedidos.Pedido, FK→Cliente, FK→DireccionEntrega; pedido_ref manual]
+            └── CargaHojaRuta [FK→Producto] → cantidad_cargada/entregada/retornada
+
+cuentas.CuentaCorriente [OneToOne→Cliente]
+    └── MovimientoCuenta [FK→Pedido?, FK→abonos.Abono?] → tipo Cargo/Pago, saldo (RF-14)
+abonos.Abono [FK→Cliente, FK→Producto] → costo mensual, estado (RF-15)
 ```
 
 ---
@@ -552,6 +615,19 @@ Camion ← RutaReparto → Zona
 /empleados/<pk>/eliminar/      → eliminar_empleado     [🔒 Admin/Vendedor]
 /empleados/roles/              → listar_roles          [🔒 Admin/Vendedor]
 /empleados/roles/nuevo/        → crear_rol             [🔒 Admin/Vendedor]
+
+/cuentas/                      → listar_cuentas        [🔒 Admin/Vendedor]
+/cuentas/<pk>/                 → ver_cuenta            [🔒 Admin/Vendedor]
+/cuentas/cliente/<pk>/         → cuenta_de_cliente     [🔒 Admin/Vendedor]
+/cuentas/<pk>/cargo/           → registrar_cargo       [🔒 Admin/Vendedor]
+/cuentas/<pk>/pago/            → registrar_pago        [🔒 Admin/Vendedor]
+
+/abonos/                       → listar_abonos         [🔒 Admin/Vendedor]
+/abonos/nuevo/                 → crear_abono           [🔒 Admin/Vendedor]
+/abonos/<pk>/                  → ver_abono             [🔒 Admin/Vendedor]
+/abonos/<pk>/editar/           → editar_abono          [🔒 Admin/Vendedor]
+/abonos/<pk>/estado/           → cambiar_estado_abono  [🔒 Admin/Vendedor]
+/abonos/generar-cargos/        → generar_cargos        [🔒 Admin/Vendedor]
 ```
 
 ---
@@ -565,7 +641,7 @@ Camion ← RutaReparto → Zona
 | HU-03 | Visitante | Buscar sin tildes ni mayúsculas | ✅ Completa |
 | HU-04 | Usuario no logueado | Al intentar agregar al carrito → redirige a login con alerta | ✅ Completa |
 | HU-05 | Vendedor | Registrar pagos parciales → auto-actualiza estado pedido | 🔲 Pendiente |
-| HU-06 | Repartidor | Marcar estado de entrega desde la app | 🟡 Parcial (sin impacto en `Pedido`) |
+| HU-06 | Repartidor | Marcar estado de entrega desde la app | ✅ Completa (impacta `Pedido`) |
 | HU-07 | Vendedor | Dar de alta un cliente sin cuenta web para pedidos telefónicos | ✅ Completa |
 | HU-08 | Admin | Ver ficha completa de cliente con teléfonos, domicilios y seguridad | ✅ Completa |
 
@@ -582,8 +658,8 @@ Camion ← RutaReparto → Zona
 | 7 | Segmentación y gestión de clientes | ✅ Completado |
 | 8 | Lógica transaccional: Pedidos, Pagos, MercadoPago | ✅ Completado |
 | 9 | Empleados, roles y estructura logística | ✅ Completado |
-| 10 | Hojas de ruta + vista de repartidor | 🟡 Parcial |
-| 11 | Cuentas corrientes, morosidad, abonos, bidones, promociones | 🔴 Pendiente |
+| 10 | Hojas de ruta + vista de repartidor | ✅ Completado |
+| 11 | Cuentas corrientes, morosidad, abonos; bidones, promociones | 🟡 Parcial (cuentas y abonos ✅) |
 | 12 | RF-18, tests restantes, memoria de tesis | 🔴 Pendiente |
 
 > Este cronograma reemplaza al del Informe de Avances (Julio 2026), que describe 4 apps
@@ -601,12 +677,12 @@ Camion ← RutaReparto → Zona
 | `Empleado`/`RolEmpleado` duplicados | 🔴 Crítica | ✅ Resuelto (fuente única en `apps.empleados`) |
 | `groups.all.0` en templates | 🔴 Alta | ✅ Resuelto (`has_group` + `apps.permisos`) |
 | RNF-02 sin filtro por repartidor asignado | 🟠 Media | ✅ Resuelto (`puede_ver_nota_seguridad`) |
-| Cero tests | 🟠 Media | 🟡 Parcial (suite de permisos/RNF-02) |
+| Cero tests | 🟠 Media | 🟢 Avanzado (86 tests: permisos, cuentas, abonos, etc.) |
 | Carrito no descuenta stock ni genera Pedido | 🟠 Media | 🟡 Pedidos ya descuentan; falta reserva en carrito (RF-12) |
 | `celular1/celular2` en `Usuario` redundantes | 🟡 Baja | 🟡 Se migran vía señal |
-| `DetalleHojaRuta` no vinculado a `Pedido` | 🔴 Alta | 🔴 Pendiente (Fase 3) |
+| `DetalleHojaRuta` no vinculado a `Pedido` | 🔴 Alta | ✅ Resuelto (Fase 3) |
 
 ---
 
-*Contexto actualizado: 30/09/2026 — Versión 4.0.*
+*Contexto actualizado: 14/10/2026 — Versión 4.1 (Fase 4: cuentas corrientes y abonos).*
 *Actualizar este archivo ante cualquier cambio estructural significativo.*

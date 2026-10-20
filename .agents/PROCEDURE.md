@@ -8,28 +8,32 @@
 
 ---
 
-## ▶️ Estado de ejecución — 30/09/2026
+## ▶️ Estado de ejecución — 14/10/2026
 
 | Fase | Alcance ejecutado | Estado |
 |:--:|---|:--:|
 | **Fase 1** | Grupos base + permisos, `MetodoPago` sembrado, módulo `apps.permisos`, `BASE_DIR` corregido | ✅ **Completada** |
 | **Fase 2** | `Empleado`/`RolEmpleado` unificados, RNF-02 cerrado, etiquetas RNF-02, `SECRET_KEY` a entorno, `production.py` | ✅ **Completada** |
 | — | Tests de roles, unificación y RNF-02 (`apps/permisos/tests.py`, 29 tests) | ✅ |
-| **Fase 3** | Logística ↔ Pedido (RF-16, RF-17, RF-19) | 🟢 Completa |
-| **Fase 4–7** | Cuentas, abonos, bidones, promociones, pagos parciales, QA final | 🟢 Completa |
+| **Fase 3** | Logística ↔ Pedido (RF-16, RF-17, RF-19) | ✅ **Completada** |
+| **Fase 4** | Cuentas corrientes, morosidad y abonos (RF-14, RF-15, RF-05) | ✅ **Completada** |
+| **Fase 5–7** | Bidones/promociones (RF-08/09/10), pagos parciales/RF-18, QA final | 🔴 **Pendiente** — plan detallado en [`PLAN_CIERRE.md`](PLAN_CIERRE.md) |
 
-**Hallazgos cerrados:** H-1, H-2, H-3, H-5, H-6, H-7, H-8, H-9 y H-15.
-**Hallazgos abiertos:** H-4 (logística ↔ Pedido), H-10 (suite parcial), H-13/H-14 (datos/README), H-16 (abonos).
-**Además se corrigió un agujero no catalogado:** `ver_ruta` y `actualizar_estado_entrega`
+**Hallazgos cerrados:** H-1, H-2, H-3, H-4, H-5, H-6, H-7, H-8, H-9, H-15 y H-16.
+**Hallazgos abiertos:** H-10 (suite parcial), H-13/H-14 (datos/README) y H-18…H-37 / R-1…R-8 de la
+auditoría del 20/10/2026 ([`AUDITORIA.md`](AUDITORIA.md)).
+**Decisión abierta:** C-9 (RF-20 gastos por proveedor: dentro o fuera de alcance).
+
+**Además, en la Fase 2 se corrigió un agujero no catalogado:** `ver_ruta` y `actualizar_estado_entrega`
 permitían a **cualquier usuario autenticado** (incluido un cliente registrado) abrir o
 modificar hojas de ruta ajenas. Se agregó el guard `es_admin_vendedor_o_repartidor`
 y la restricción por asignación.
 
-**Comandos verificados (30/09/2026):**
+**Comandos verificados (14/10/2026):**
 ```powershell
 .\venv\Scripts\python.exe manage.py check --settings=distribuidora.settings.local          # 0 issues
 .\venv\Scripts\python.exe manage.py makemigrations --check --dry-run --settings=...local   # No changes detected
-.\venv\Scripts\python.exe manage.py test --settings=distribuidora.settings.local            # 29 OK
+.\venv\Scripts\python.exe manage.py test --settings=distribuidora.settings.local            # 86 OK
 .\venv\Scripts\python.exe manage.py check --deploy --settings=distribuidora.settings.production  # 0 issues
 ```
 
@@ -79,7 +83,7 @@ Estas no son errores de código: son inconsistencias que **un jurado va a detect
 
 ## 3. 🗓️ Cronograma canónico reconciliado (propuesta)
 
-Reemplaza al de `CONTEXT.md` §10 y al del informe. Refleja el **código real** a 30/09/2026.
+Reemplaza al de `CONTEXT.md` §10 y al del informe. Refleja el **código real** a 14/10/2026.
 
 | Mes | Hito | Estado real |
 |:--:|---|---|
@@ -90,9 +94,9 @@ Reemplaza al de `CONTEXT.md` §10 y al del informe. Refleja el **código real** 
 | 7 | Segmentación y gestión de clientes | ✅ Completado |
 | 8 | Lógica transaccional: Pedidos, Pagos, MercadoPago | ✅ Completado |
 | 9 | Empleados, roles y estructura logística (zonas, barrios, camiones) | ✅ Completado |
-| 10 | Hojas de ruta + vista de repartidor | 🟡 **Parcial** — falta vínculo con `Pedido` y agrupamiento automático |
-| 11 | Cuentas corrientes, morosidad, abonos, bidones, promociones | 🟢 Completa |
-| 12 | RF-18, tests, `production.py`, memoria de tesis | 🟢 Completa |
+| 10 | Hojas de ruta + vista de repartidor | ✅ Completado (`DetalleHojaRuta` ↔ `Pedido`, agrupamiento por zona) |
+| 11 | Cuentas corrientes, morosidad, abonos, bidones, promociones | 🟡 **Parcial** — cuentas y abonos ✅; bidones/promociones pendientes |
+| 12 | RF-18, tests, `production.py`, memoria de tesis | 🔴 Pendiente |
 
 ---
 
@@ -103,29 +107,29 @@ Leyenda: ✅ completo · 🟡 parcial · 🔴 no implementado · ⚠️ implemen
 | ID | Requerimiento | Ubicación en código | Estado | Tarea |
 |:--:|---|---|:--:|---|
 | RF-01 | Registro con ≥2 celulares y descripción de relación | `autenticacion/models.py`, `clientes/signals.py` | ✅ | — |
-| RF-02 | Validación de contraseñas (4 validadores Django) | `settings/base.py:82-92` | ✅ | — |
+| RF-02 | Validación de contraseñas (4 validadores Django) | `settings/base.py:82-92` | 🟡 | H-36 (alta de empleado no valida) |
 | RF-03 | Multidirección: calle, altura, zona, seguridad, coordenadas | `clientes/models.py:172-245` | ✅ | — |
 | RF-04 | ≥2 teléfonos con relación explícita | `clientes/models.py:133-165` | 🟡 | T-6.1 |
-| RF-05 | Normal/Premium; solo Premium con fiado | `clientes/models.py:7-10,122-126` | 🟡 | T-4.2 |
+| RF-05 | Normal/Premium; solo Premium con fiado | `clientes/models.py:7-10,122-126`; `cuentas/models.py` | ✅ | — |
 | RF-06 | Catálogo agrupado por categorías | `productos/` | ✅ | — |
-| RF-07 | Buscador tolerante a tildes/errores | `buscador/` | ✅ | — |
+| RF-07 | Buscador tolerante a tildes/errores | `buscador/` | 🟡 | H-34 (SQLite distingue tildes) |
 | RF-08 | **Control de envases prestados** (entrada/salida) | solo `Cliente.bidones_prestados` (entero) | 🔴 | T-5.1 |
 | RF-09 | **Promociones prepago** "paga 3 lleva 4" | — | 🔴 | T-5.2 |
 | RF-10 | **Caducidad 30 días corridos** | — | 🔴 | T-5.3 |
 | RF-11 | Pedido: fecha, total, estado, dirección, desglose | `pedidos/models.py:36-107` | ✅ | — |
 | RF-12 | Carrito no excede stock | `carrito/views.py` | 🟡 | T-1.6 |
 | RF-13 | **Pagos parciales** y múltiples métodos | `PagoPedido` existe; **no hay vista de cobro manual** | 🟡 | T-6.2 |
-| RF-14 | **Semaforización de deuda** (🟡/🟠/🔴) | — (no hay modelo de cuenta corriente) | 🔴 | T-4.1 |
-| RF-15 | **Contratos de alquiler de dispensers** | — (`apps.abonos` solo planificado) | 🔴 | T-4.3 |
-| RF-16 | Hojas de ruta diarias (fecha, zona, camión, chofer) | `logistica/models.py:155-207` | 🟡 | T-3.1 |
-| RF-17 | **Agrupación automática + generación quincenal** | — (`pedido_ref` es `CharField` temporal) | 🔴 | T-3.2, T-3.3 |
+| RF-14 | **Semaforización de deuda** (🟡/🟠/🔴) | `cuentas/models.py`, `cuentas/services.py` | ✅ | — |
+| RF-15 | **Contratos de alquiler de dispensers** | `abonos/models.py`, `abonos/services.py` | ✅ | — |
+| RF-16 | Hojas de ruta diarias (fecha, zona, camión, chofer) | `logistica/models.py:155-207` | ✅ | — |
+| RF-17 | **Agrupación automática + generación quincenal** | `logistica/services.py` | ✅ | — |
 | RF-18 | **Pedido automático quincenal activable** | — (ausente incluso del roadmap) | 🔴 | T-6.3 |
-| RF-19 | Confirmación de entrega en campo por repartidor | `logistica/views.py:244-307` | 🟡 | T-3.4 |
-| RNF-01 | Escalabilidad multi-camión/multi-zona/multi-chofer | `logistica/models.py` | ⚠️ | T-2.1 |
-| RNF-02 | Ocultación de info sensible | `clientes/views.py:91`, templates | ⚠️ | T-2.4, T-2.5 |
+| RF-19 | Confirmación de entrega en campo por repartidor | `logistica/views.py:244-307` | ✅ | — |
+| RNF-01 | Escalabilidad multi-camión/multi-zona/multi-chofer | `logistica/models.py` | ✅ | T-2.1 ✅ (Empleado unificado) |
+| RNF-02 | Ocultación de info sensible | `permisos/roles.py::puede_ver_nota_seguridad`, templates | ✅ | T-2.4 ✅, T-2.5 ✅ |
 | RNF-03 | Dark mode sin autenticación | `base_tienda.html`, `base_dashboard.html` | ✅ | — |
 
-**Balance: 9 completos · 8 parciales · 5 no implementados · 2 con defecto — 20 de 22 requisitos requieren trabajo.**
+**Balance (20/10/2026): 13 completos · 5 parciales · 4 no implementados — 9 de 22 requisitos requieren trabajo.**
 
 ---
 
@@ -138,19 +142,19 @@ Todos verificados con `manage.py check`, `manage.py makemigrations --check` y co
 | H-1 | 🔴 Crítica | **El grupo `Vendedor` NO EXISTE en la base.** `auth_group` contiene únicamente `('Repartidor',)`. Como `es_vendedor_o_admin()` se evalúa con `groups.filter(name='Vendedor').exists()`, **todo usuario no-superusuario pierde el acceso de Vendedor**: no puede crear productos, clientes, pedidos, rutas ni zonas. El sistema queda usable solo como superusuario. | `db.sqlite3` → `auth_group` = `['Repartidor']`; `apps/productos/views.py:15`, `apps/clientes/views.py:17`, `apps/pedidos/views.py:27`, `apps/logistica/views.py:15` |
 | H-2 | 🔴 Crítica | **Modelos `Empleado` y `RolEmpleado` DUPLICADOS** en dos apps. Existen `empleados_empleado`, `empleados_rolempleado`, `logistica_empleado` **y** `logistica_rolempleado`. Además `logistica.Empleado.descripcion` es un rol descrito como texto libre, no como FK. | `apps/empleados/models.py:4,17` vs `apps/logistica/models.py:48,63` |
 | H-3 | 🔴 Crítica | **La logística no puede asignar repartidor.** `logistica_empleado` tiene **0 filas** mientras `empleados_empleado` tiene 1. El formulario de `crear_ruta` ofrece `logistica.Empleado` → nunca hay repartidores seleccionables → **ninguna hoja de ruta puede crearse**. | `db.sqlite3`; `templates/logistica/crear_ruta.html:39` |
-| H-4 | 🔴 Alta | **`DetalleHojaRuta.pedido_ref` es un `CharField` de relleno** ("hasta que exista el modelo `Pedido`"). El modelo `Pedido` **ya existe** (`apps/pedidos/`). La hoja de ruta **no está relacionada con el pedido** → RF-17 y RF-19 no cierran el circuito; el repartidor marca entregas que no actualizan ningún `Pedido`. | `apps/logistica/models.py:226-230` |
+| H-4 | ✅ Resuelto (Fase 3) | **`DetalleHojaRuta.pedido_ref` es un `CharField` de relleno** ("hasta que exista el modelo `Pedido`"). El modelo `Pedido` **ya existe** (`apps/pedidos/`). La hoja de ruta **no está relacionada con el pedido** → RF-17 y RF-19 no cierran el circuito; el repartidor marca entregas que no actualizan ningún `Pedido`. | `apps/logistica/models.py:226-230` |
 | H-5 | 🔴 Alta | **Control de permisos roto en templates por `groups.all.0`.** La expresión `user.groups.all.0.name == 'Vendedor'` solo mira el **primer** grupo del usuario. Con 2+ grupos el resultado es arbitrario. El filtro correcto `has_group` ya existe (`autenticacion/templatetags/grupos.py`) pero **no se usa ahí**. | `templates/pedidos/detalle_pedido.html:16,128`; `templates/clientes/agregar_direccion.html:42` |
 | H-6 | ⚠️ Media | **Fuga potencial de RNF-02.** El template muestra `desc_seguridad` a **cualquier** usuario del grupo `Repartidor`, sin verificar que esté **asignado a la hoja de ruta** de esa dirección — algo que RNF-02 exige explícitamente. | `templates/clientes/ver_cliente.html:303`; `templates/pedidos/detalle_pedido.html:128` |
 | H-7 | ⚠️ Media | **Precedencia de operadores mezclada** en `detalle_pedido.html:128`: `if pedido.direccion_entrega.desc_seguridad and request.user.is_superuser or request.user.groups.all.0.name == 'Vendedor' or ...` — el `and` liga más que el `or`, con lo que un Vendedor ve la nota **aunque `desc_seguridad` esté vacía**, y la lógica de visibilidad es incorrecta. | `templates/pedidos/detalle_pedido.html:128` |
 | H-8 | ⚠️ Media | **`SECRET_KEY` hardcodeada** en el settings base. | `distribuidora/settings/base.py:24` |
 | H-9 | ⚠️ Media | **`settings/production.py` tiene 0 bytes.** | `distribuidora/settings/production.py` |
-| H-10 | ⚠️ Media | **Cero tests.** `manage.py test` → *"Found 0 test(s). NO TESTS RAN"*. `tests.py` en los 8 apps están vacíos. | `apps/*/tests.py` |
+| H-10 | 🟡 Baja | **Suite parcial.** Al 14/10/2026 hay **86 tests** (permisos, cuentas, abonos, logística, etc.); aún faltan suites de carrito y buscador. `manage.py test` → OK. | `apps/*/tests.py` |
 | H-11 | 🟡 Baja | **Lógica de permisos duplicada 5 veces:** `es_admin_o_vendedor` / `es_vendedor_o_admin` reimplementados en `clientes`, `logistica`, `productos`, `pedidos`, `carrito`. | `clientes/views.py:16`, `logistica/views.py:14`, `productos/views.py:14`, `pedidos/views.py:26`, `carrito/views.py:11` |
 | H-12 | 🟡 Baja | **`Pedido.metodo_pago` es obligatorio** (`on_delete=PROTECT`, no `null`). Sin una fila `MetodoPago` activa, **ningún pedido puede crearse**. Hoy solo `EFECTIVO` está `activo=1`; `MERCADOPAGO` y `TARJETA` están `activo=0`. | `apps/pedidos/models.py:61-66`; `db.sqlite3` → `pedidos_metodopago` |
 | H-13 | 🟡 Baja | **Logística sin datos de prueba**: `logistica_rutareparto`, `logistica_hojaruta`, `logistica_detallehojaruta` = **0 filas**. El módulo nunca se ejecutó de punta a punta. | `db.sqlite3` |
 | H-14 | 🟡 Baja | **`README.md` vacío** (solo la línea `# dis-agua`). Los scripts `fix_icons.py` y `seed_barrios.py` están en la raíz sin documentar. | raíz del repo |
 | H-15 | 🟡 Baja | **`base.py` vs `local.py` desalineados**: `BASE_DIR` en `base.py:17` es un nivel más arriba que el cálculo de `DATABASES`/`STATIC_ROOT` en `local.py`, que asume `dirname(BASE_DIR)`. Funciona por casualidad; es frágil ante mover archivos. | `settings/base.py:17`, `settings/local.py` |
-| H-16 | 🟡 Baja | **El RF-15 es "abonos" pero no existe `apps/abonos`.** `CONTEXT.md` §5 lo lista como planificado; nada en el repo. | `.agents/CONTEXT.md:361` |
+| H-16 | ✅ Resuelto (Fase 4) | **El RF-15 es "abonos" pero no existe `apps/abonos`.** `CONTEXT.md` §5 lo lista como planificado; nada en el repo. | `.agents/CONTEXT.md:361` |
 | H-17 | ℹ️ Info | **Buen estado base:** `manage.py check` → 0 issues; `makemigrations --check` → sin cambios pendientes. El diseño de `Cliente` (datos propios + `OneToOne` opcional a `Usuario`) y de `Barrio → Zona` son **sólidos y defendibles** en la tesis. Mantener. | verificado |
 
 ---
@@ -230,44 +234,48 @@ Todos verificados con `manage.py check`, `manage.py makemigrations --check` y co
 **Esfuerzo:** ~10 h · **Riesgo:** medio · **Dependencias:** Fase 2
 
 > 📄 **Plan detallado:** ver [`.agents/FASE3_LOGISTICA.md`](FASE3_LOGISTICA.md) — modelo de
-> datos objetivo, pantallas, algoritmo de generación, impacto en stock y decisiones D1–D7
-> pendientes de aprobación.
+> datos objetivo, pantallas, algoritmo de generación, impacto en stock y decisiones D1–D9.
 >
-> ⚙️ **Estado (30/09/2026):** sub-fases **3A–3E ✅ implementadas y verificadas** (modelo y
-> calendario, generación de hoja «Planificar reparto», confirmación/carga/regreso, y calle,
-> envases y cobro). 3A–3F ✅ implementadas y verificadas
-> integrales y cierre de docs). `check` limpio, sin migraciones pendientes, **55 tests OK**.
+> ⚙️ **Estado (12/10/2026):** sub-fases **3A–3F ✅ implementadas y verificadas** (modelo y
+> calendario, «Planificar reparto», confirmación/carga/regreso, calle/envases/cobro, fecha
+> estimada en checkout, seed de demo y tests). `check` limpio, sin migraciones pendientes.
+>
+> La tabla siguiente es el plan **original**; dos tareas se resolvieron distinto según las
+> decisiones de `FASE3_LOGISTICA.md`: la generación es **asistida** desde «Planificar reparto»
+> con confirmación manual (D2) en lugar del comando `generar_hojas_ruta`, y el stock se
+> descuenta **al cargar el camión** y vuelve **al registrar el regreso** (D9) en lugar de
+> devolverse al cancelar cada parada (🔁 = resuelta con otro enfoque).
 
 | # | Tarea | Detalle |
 |:--:|---|---|
-| 3.1 | **Vincular `DetalleHojaRuta` → `Pedido`** con `ForeignKey('pedidos.Pedido', null=True, on_delete=SET_NULL, related_name='paradas')`. Migrar `pedido_ref` con un script de datos | `logistica/models.py:226-230` |
-| 3.2 | **Generador de hojas de ruta (RF-17, parte 1):** agrupar `Pedido` con `estado='Confirmado'` por `zona` (vía `DireccionEntrega.barrio.zona`) y proposing carga | `logistica/services.py` (nuevo) |
-| 3.3 | **Generación quincenal automática (RF-17, parte 2):** comando `python manage.py generar_hojas_ruta --fecha=YYYY-MM-DD` invocable desde cron/Task Scheduler | `logistica/management/commands/` (nuevo) |
-| 3.4 | **Impacto en `Pedido` (cierre de RF-19):** al marcar `Entregado` → `Pedido.estado='Entregado'` + `fecha_entrega`; al marcar `Cancelado` → `Pedido.estado='Cancelado'` + **devolución del stock** dentro de `transaction.atomic` | `logistica/views.py:244` |
-| 3.5 | Validar `HojaRuta` con zona/camión/chofer coherentes con `RutaReparto` | `logistica/forms.py` |
-| 3.6 | Confirmar que `imprimir_ruta` (`logistica/urls.py:12`) y `mi_ruta_hoy` funcionan **mobile-first** (HU-6, pág. 7 del informe) | `templates/logistica/mi_ruta_hoy.html` |
-| 3.7 | Cargar datos de demostración: 2 rutas, 2 camiones, 1 hoja de ruta con paradas (H-13) | extender `seed_barrios.py` |
+| 3.1 ✅ | **Vincular `DetalleHojaRuta` → `Pedido`** con `ForeignKey('pedidos.Pedido', null=True, on_delete=SET_NULL, related_name='paradas')`. Migrar `pedido_ref` con un script de datos | `logistica/models.py:226-230` |
+| 3.2 ✅ | **Generador de hojas de ruta (RF-17, parte 1):** agrupar `Pedido` con `estado='Confirmado'` por `zona` (vía `DireccionEntrega.barrio.zona`) y proposing carga | `logistica/services.py` (nuevo) |
+| 3.3 🔁 | **Generación quincenal automática (RF-17, parte 2):** comando `python manage.py generar_hojas_ruta --fecha=YYYY-MM-DD` invocable desde cron/Task Scheduler | `logistica/management/commands/` (nuevo) |
+| 3.4 🔁 | **Impacto en `Pedido` (cierre de RF-19):** al marcar `Entregado` → `Pedido.estado='Entregado'` + `fecha_entrega`; al marcar `Cancelado` → `Pedido.estado='Cancelado'` + **devolución del stock** dentro de `transaction.atomic` | `logistica/views.py:244` |
+| 3.5 ✅ | Validar `HojaRuta` con zona/camión/chofer coherentes con `RutaReparto` | `logistica/forms.py` |
+| 3.6 ✅ | Confirmar que `imprimir_ruta` (`logistica/urls.py:12`) y `mi_ruta_hoy` funcionan **mobile-first** (HU-6, pág. 7 del informe) | `templates/logistica/mi_ruta_hoy.html` |
+| 3.7 ✅ | Cargar datos de demostración: 2 rutas, 2 camiones, 1 hoja de ruta con paradas (H-13) | extender `seed_barrios.py` |
 
 ✅ **Aceptación:** un pedido `Confirmado` en la Zona A aparece como parada en la hoja de ruta de la Zona A; el repartidor marca `Entregado`; el `Pedido` pasa a `Entregado` y el stock queda consistente.
 
 ---
 
-### FASE 4 — Cuentas corrientes, morosidad y abonos 💰
+### FASE 4 — Cuentas corrientes, morosidad y abonos 💰 ✅ **COMPLETADA (14/10/2026)**
 **Objetivo:** RF-14 (semaforización) y RF-15 (alquiler de dispensers).
 **Esfuerzo:** ~14 h · **Riesgo:** medio · **Dependencias:** Fase 3
 
-| # | Tarea | Detalle |
-|:--:|---|---|
-| 4.1 | **App `apps/cuentas`:** `CuentaCorriente` (saldo), `MovimientoCuenta` (`Cargo`/`Abono`, origen FK a `Pedido`/`Abono`) | nuevo app |
-| 4.2 | **Regla de negocio RF-05/RF-14:** un `Cargo` a cuenta corriente solo se permite si `Cliente.permite_fiado=True` (validación en modelo y en vista) | `cuentas/models.py` |
-| 4.3 | **Semaforización:** campo calculado `nivel_morosidad` → 🟡 deuda al inicio de mes · 🟠 a 10 días · 🔴 a 15 días. **Zona horaria `America/Argentina/Buenos_Aires`** (regla 5 de `AGENTS.md`) | `cuentas/models.py` |
-| 4.4 | **Panel de morosidad** en el dashboard (`templates/dashboard/resumen.html`) con los tres colores de `DESIGN.md` | `templates/` |
-| 4.5 | **App `apps.abonos`:** `Abono` (`Cliente_alquila_producto`): `fecha_inicio`, `costo_mensual`, `estado ∈ {Activo, Suspendido, Finalizado}`, FK a `Cliente` y `Producto` | nuevo app |
-| 4.6 | Generación automática del **cargo mensual** de cada abono activo y sus **facturas** | `cuentas/services.py` |
-| 4.7 | Validar que un cliente **Premium** obtiene costo preferencial (RF-05) | `cuentas/services.py` |
-| 4.8 | Resolver **C-9**: agregar RF-20 (gastos por proveedor) al alcance, o declararlo fuera de alcance en el informe | este archivo |
+| # | Tarea | Detalle | Estado |
+|:--:|---|---|:--:|
+| 4.1 | **App `apps/cuentas`:** `CuentaCorriente` (saldo), `MovimientoCuenta` (`Cargo`/`Pago`, origen FK a `Pedido`/`Abono`) | nuevo app | ✅ |
+| 4.2 | **Regla de negocio RF-05/RF-14:** un `Cargo` a cuenta corriente solo se permite si `Cliente.permite_fiado=True` (validación en modelo y en servicio) | `cuentas/models.py` | ✅ |
+| 4.3 | **Semaforización:** `nivel_morosidad` → 🟡 en plazo · 🟠 a 10 días · 🔴 a 15 días (zona horaria AR) | `cuentas/models.py` | ✅ |
+| 4.4 | **Panel de morosidad** en el dashboard (`templates/dashboard/resumen.html`) con los tres colores de `DESIGN.md` | `templates/` | ✅ |
+| 4.5 | **App `apps.abonos`:** `Abono`: `fecha_inicio`, `costo_mensual`, `estado ∈ {Activo, Suspendido, Finalizado}`, FK a `Cliente` y `Producto` | nuevo app | ✅ |
+| 4.6 | Generación automática del **cargo mensual** de cada abono activo (`abonos/services.py` + comando `generar_cargos_abonos`) | `abonos/services.py` | ✅ |
+| 4.7 | Validar que un cliente **Premium** obtiene costo preferencial (RF-05) — descuento 10 % | `abonos/models.py` | ✅ |
+| 4.8 | Resolver **C-9**: agregar RF-20 (gastos por proveedor) al alcance, o declararlo fuera de alcance en el informe | este archivo | ⏳ Pendiente |
 
-✅ **Aceptación:** un cliente `Normal` con `permite_fiado=False` es rechazado al generar cargo; un `Premium` con deuda de 11 días aparece en 🟠 y a 16 días en 🔴.
+✅ **Aceptación:** un cliente `Normal` con `permite_fiado=False` es rechazado al generar cargo; un `Premium` con deuda de 11 días aparece en 🟠 y a 16 días en 🔴. ✔ Verificado en `apps/cuentas/tests.py` y `apps/abonos/tests.py`.
 
 ---
 
@@ -361,18 +369,19 @@ Estas **no** son técnicas: cambian el alcance de la tesis y las debe decidir el
 
 - [x] `manage.py check` → 0 issues
 - [x] `makemigrations --check --dry-run` → sin cambios
-- [ ] `manage.py test` → todas las suites en verde *(hoy: 29 tests de permisos/RNF-02)*
+- [x] `manage.py test` → todas las suites en verde *(hoy: 86 tests)*
 - [x] `manage.py check --deploy --settings=distribuidora.settings.production` → limpio
-- [ ] RF-01 … RF-19 + RNF-01 … RNF-03 con estado ✅ en la matriz de §4
+- [ ] RF-01 … RF-19 + RNF-01 … RNF-03 con estado ✅ en la matriz de §4 *(13/22 ✅; faltan RF-08/09/10/18 y pulir RF-02/04/07/12/13)*
 - [ ] Cada RF tiene **al menos un test** que lo cubra
 - [x] `SECRET_KEY` fuera del repositorio
-- [ ] `CONTEXT.md` v5.0 refleja el código final *(hoy: v4.0)*
-- [ ] Los 9 `tests.py` tienen contenido *(hoy: solo `apps/permisos/tests.py`)*
+- [ ] `CONTEXT.md` v5.0 refleja el código final *(hoy: v4.1 tras Fase 4)*
+- [ ] Los `tests.py` de carrito y buscador tienen contenido *(hechos: permisos, cuentas, abonos, logística)*
 - [ ] El informe de avances usa el cronograma de §3 y no contradice al código
 - [ ] El DER del informe fue verificado contra el esquema real (§0)
-- [ ] Ningún hallazgo **H-1 … H-16** sigue abierto *(cerrados: H-1, H-2, H-3, H-5, H-6, H-7, H-8, H-9, H-15)*
+- [ ] Ningún hallazgo **H-1 … H-16** sigue abierto *(cerrados: H-1…H-9, H-15, H-16; abiertos: H-10, H-13/H-14)*
 
 ---
 
 *Documento generado el 30/09/2026 a partir del commit `5362ab1`, del texto extraído del Informe de Avances (Julio 2026) de MASSON Lucas (L.U. 37492) y de `.agents/CONTEXT.md` v3.1.*
+*Actualizado el 14/10/2026 tras completar la Fase 4 (cuentas corrientes, morosidad y abonos).*
 *Actualizar este archivo tras cada fase completada.*

@@ -6,7 +6,31 @@
 > registrarse, comprar, buscar, cobrar, repartir. Las definiciones salen de la matriz de
 > [`PROCEDURE.md`](PROCEDURE.md) §4; el informe de tesis no está en el repositorio.
 
-## Resumen
+## ▶️ Actualización (20/10/2026, después del control)
+
+| Requisito | Antes | Ahora | Cambio |
+|---|:--:|:--:|---|
+| RF-01 | ⚠️ | ✅ | El registro exige 2 celulares distintos (≥8 dígitos) y la relación de cada uno (H-40) |
+| RF-04 | 🟡 | ✅ | Checkout y confirmación del pedido exigen 2 teléfonos; redirige a «Mi perfil» |
+| RF-13 | 🟡 | 🟡 | `esta_pagado()` compara lo cobrado con el total (H-30); falta la vista de cobro manual (6A) |
+| RF-05 | ⚠️ | ⚠️ | **Sin cambios: requiere la decisión A-D6** (ver abajo) |
+
+Balance actualizado: **12 ✅ · 5 🟡 · 1 ⚠️ · 4 🔴**.
+
+### A-D6 — ¿El fiado es sólo Premium o admite excepciones?
+
+La Fase 4 implementó a propósito «Premium **o** `permite_fiado` activado a mano», y la
+facturación de abonos (RF-15) **sólo genera el cargo mensual a clientes con fiado**: con la regla
+estricta, a un cliente Normal que alquila un dispenser nunca se le facturaría.
+
+| Opción | Efecto |
+|---|---|
+| (a) Estricto, como dice RF-05 | `permite_fiado = es_premium()`; el cargo mensual del abono deja de depender del fiado (es un contrato, no una compra a crédito). Toca `clientes`, `abonos/services.py` y 10 tests |
+| (b) Premium + excepción manual (diseño actual) | Se documenta RF-05 así en la tesis; sólo se corrige que al bajar de Premium a Normal se quite el fiado salvo que se active de nuevo |
+
+**Recomendación: (a)**, que cumple RF-05 al pie de la letra y separa dos conceptos que hoy están mezclados (fiar una compra y facturar un alquiler).
+
+## Resumen (control original)
 
 | Resultado | Cant. | Requisitos |
 |---|:--:|---|

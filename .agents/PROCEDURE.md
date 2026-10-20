@@ -109,10 +109,10 @@ Leyenda: ✅ completo · 🟡 parcial · 🔴 no implementado · ⚠️ implemen
 
 | ID | Requerimiento | Ubicación en código | Estado | Tarea |
 |:--:|---|---|:--:|---|
-| RF-01 | Registro con ≥2 celulares y descripción de relación | `autenticacion/models.py`, `clientes/signals.py` | ⚠️ | H-40 (acepta registro sin teléfonos) |
+| RF-01 | Registro con ≥2 celulares y descripción de relación | `autenticacion/models.py`, `clientes/signals.py` | ✅ | H-40 ✅ (2 celulares distintos + relación) |
 | RF-02 | Validación de contraseñas (4 validadores Django) | `settings/base.py`, `empleados/forms.py` | ✅ | H-36 ✅ |
 | RF-03 | Multidirección: calle, altura, zona, seguridad, coordenadas | `clientes/models.py:172-245` | 🟡 | H-39 (la vista limita a 1 dirección) |
-| RF-04 | ≥2 teléfonos con relación explícita | `clientes/models.py:133-165` | 🟡 | T-6.1 (hoy compra con 0 teléfonos) |
+| RF-04 | ≥2 teléfonos con relación explícita | `clientes/models.py:133-165` | ✅ | T-6.1 ✅ (checkout exige 2 teléfonos) |
 | RF-05 | Normal/Premium; solo Premium con fiado | `clientes/models.py:7-10,122-126`; `cuentas/models.py` | ⚠️ | H-41 (ex-Premium conserva el fiado) |
 | RF-06 | Catálogo agrupado por categorías | `productos/` | ✅ | — |
 | RF-07 | Buscador tolerante a tildes/errores | `buscador/` | 🟡 | H-34 (resultados con ruido; no busca en la descripción) |
@@ -121,7 +121,7 @@ Leyenda: ✅ completo · 🟡 parcial · 🔴 no implementado · ⚠️ implemen
 | RF-10 | **Caducidad 30 días corridos** | — | 🔴 | T-5.3 |
 | RF-11 | Pedido: fecha, total, estado, dirección, desglose | `pedidos/models.py:36-107` | ✅ | — |
 | RF-12 | Carrito no excede stock | `carrito/views.py` | 🟡 | T-1.6 |
-| RF-13 | **Pagos parciales** y múltiples métodos | `PagoPedido` existe; **no hay vista de cobro manual** | 🟡 | T-6.2 |
+| RF-13 | **Pagos parciales** y múltiples métodos | `PagoPedido` existe; **no hay vista de cobro manual** | 🟡 | T-6.2 (H-30 ✅; falta vista de cobro manual) |
 | RF-14 | **Semaforización de deuda** (🟡/🟠/🔴) | `cuentas/models.py`, `cuentas/services.py` | ✅ | — |
 | RF-15 | **Contratos de alquiler de dispensers** | `abonos/models.py`, `abonos/services.py` | ✅ | — |
 | RF-16 | Hojas de ruta diarias (fecha, zona, camión, chofer) | `logistica/models.py:155-207` | ✅ | — |
@@ -132,7 +132,7 @@ Leyenda: ✅ completo · 🟡 parcial · 🔴 no implementado · ⚠️ implemen
 | RNF-02 | Ocultación de info sensible | `permisos/roles.py::puede_ver_nota_seguridad`, templates | ✅ | T-2.4 ✅, T-2.5 ✅ |
 | RNF-03 | Dark mode sin autenticación | `base_tienda.html`, `base_dashboard.html` | ✅ | — |
 
-**Balance (20/10/2026, control ejecutado — ver [`CONTROL_REQUISITOS.md`](CONTROL_REQUISITOS.md)): 10 completos · 6 parciales · 2 con defecto · 4 no implementados — 12 de 22 requisitos requieren trabajo.**
+**Balance (20/10/2026, control ejecutado — ver [`CONTROL_REQUISITOS.md`](CONTROL_REQUISITOS.md)): 12 completos · 5 parciales · 1 con defecto · 4 no implementados — 10 de 22 requisitos requieren trabajo.**
 
 ---
 
@@ -374,7 +374,7 @@ Estas **no** son técnicas: cambian el alcance de la tesis y las debe decidir el
 - [x] `makemigrations --check --dry-run` → sin cambios
 - [x] `manage.py test` → todas las suites en verde *(hoy: 128 tests)*
 - [x] `manage.py check --deploy --settings=distribuidora.settings.production` → limpio
-- [ ] RF-01 … RF-19 + RNF-01 … RNF-03 con estado ✅ en la matriz de §4 *(10/22 ✅; faltan RF-08/09/10/18, corregir RF-01/05 y pulir RF-03/04/07/12/13/17)*
+- [ ] RF-01 … RF-19 + RNF-01 … RNF-03 con estado ✅ en la matriz de §4 *(12/22 ✅; faltan RF-08/09/10/18, decidir RF-05 (A-D6) y pulir RF-03/07/12/13/17)*
 - [ ] Cada RF tiene **al menos un test** que lo cubra
 - [x] `SECRET_KEY` fuera del repositorio
 - [ ] `CONTEXT.md` v5.0 refleja el código final *(hoy: v4.1 tras Fase 4)*

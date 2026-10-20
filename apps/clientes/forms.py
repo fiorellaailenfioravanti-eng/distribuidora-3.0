@@ -70,7 +70,10 @@ class AltaClienteConCuentaForm(RegistroUsuarioForm):
     fecha_nacimiento = forms.DateField(label='Fecha de nacimiento', required=False, widget=forms.DateInput(attrs={'type': 'date', 'class': _INPUT}))
     tipo_cliente = forms.ChoiceField(label='Tipo de cliente', choices=[('Normal', 'Normal'), ('Premium', 'VIP / Premium')], widget=forms.Select(attrs={'class': _SELECT}))
     notas_internas = forms.CharField(label='Notas internas', required=False, widget=forms.Textarea(attrs={'class': _INPUT, 'rows': 3, 'placeholder': 'Notas internas...'}))
-    
+    # Los teléfonos se cargan con la lista dinámica de la pantalla del vendedor.
+    relacion1 = None
+    relacion2 = None
+
     class Meta(RegistroUsuarioForm.Meta):
         fields = ('first_name', 'last_name', 'username', 'email', 'password1', 'password2')
         # password1/2 vienen de UserCreationForm, username/email etc.

@@ -142,8 +142,17 @@ class Pedido(models.Model):
         self.save(update_fields=campos)
         return True
 
+    def total_pagado(self):
+        """Suma de los pagos aprobados."""
+        from django.db.models import Sum
+        return self.pagos.filter(estado_pago='Aprobado').aggregate(t=Sum('monto'))['t'] or 0
+
+    def saldo_pendiente(self):
+        return max(self.total - self.total_pagado(), 0)
+
     def esta_pagado(self):
-        return self.pagos.filter(estado_pago='Aprobado').exists()
+        """Pagado sólo si los pagos aprobados cubren el total (H-30, RF-13)."""
+        return self.total_pagado() >= self.total
 
 
 class DetallePedido(models.Model):

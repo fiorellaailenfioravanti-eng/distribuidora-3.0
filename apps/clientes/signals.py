@@ -40,7 +40,7 @@ def crear_perfil_cliente(sender, instance, created, **kwargs):
         TelefonoContacto.objects.create(
             cliente=cliente,
             numero=instance.celular1,
-            desc_relacion='Titular',
+            desc_relacion=getattr(instance, '_relacion_celular1', '') or 'Titular',
             es_principal=True,
         )
 
@@ -49,6 +49,6 @@ def crear_perfil_cliente(sender, instance, created, **kwargs):
         TelefonoContacto.objects.create(
             cliente=cliente,
             numero=instance.celular2,
-            desc_relacion='Alternativo',
+            desc_relacion=getattr(instance, '_relacion_celular2', '') or 'Alternativo',
             es_principal=False,
         )

@@ -188,3 +188,50 @@ class TransicionesManualesTests(TestCase):
         DetalleHojaRuta.objects.create(hoja_ruta=hoja, pedido=self.pedido, orden=1)
         self.assertNotIn('Entregado', self.pedido.estados_manuales_posibles())
         self.assertFalse(self.pedido.cambiar_estado_manual('Entregado'))
+
+
+class CheckoutRequiereTelefonosTests(TestCase):
+    """RF-04: sin 2 teléfonos de contacto no se puede comprar."""
+
+    def setUp(self):
+        from apps.carrito.models import Carrito
+        from apps.clientes.models import DireccionEntrega, TelefonoContacto
+        from apps.productos.models import Producto
+        self.usuario = get_user_model().objects.create_user('compra', 'c@x.com', 'Agua-Lluvia-2026')
+        self.cliente = self.usuario.perfil_cliente
+        self.direccion = DireccionEntrega.objects.create(cliente=self.cliente, calle='Mitre', altura='1')
+        TelefonoContacto.objects.create(cliente=self.cliente, numero='3624111111', desc_relacion='Titular')
+        producto = Producto.objects.create(nombre='Bidón', descripcion='', precio=Decimal('10'), stock=5)
+        Carrito.objects.create(usuario=self.usuario).items.create(producto=producto, cantidad=1)
+        self.client.force_login(self.usuario)
+        self.TelefonoContacto = TelefonoContacto
+
+    def _confirmar(self):
+        return self.client.post(reverse('apps.pedidos:confirmar_pedido'), {
+            'direccion_entrega': self.direccion.pk,
+            'metodo_pago': MetodoPago.objects.get(codigo='EFECTIVO').pk,
+        })
+
+    def test_con_un_telefono_no_compra(self):
+        self.assertEqual(self.client.get(reverse('apps.pedidos:checkout')).url, reverse('apps.clientes:mi_perfil'))
+        self._confirmar()
+        self.assertFalse(Pedido.objects.filter(cliente=self.cliente).exists())
+
+    def test_con_dos_telefonos_compra(self):
+        self.TelefonoContacto.objects.create(cliente=self.cliente, numero='3624222222', desc_relacion='Esposa')
+        self._confirmar()
+        self.assertTrue(Pedido.objects.filter(cliente=self.cliente).exists())
+
+
+class PagosParcialesTests(TestCase):
+    """H-30 / RF-13: un pago parcial no marca el pedido como pagado."""
+
+    def test_pagos_parciales(self):
+        efectivo = MetodoPago.objects.get(codigo='EFECTIVO')
+        pedido = Pedido.objects.create(metodo_pago=efectivo, total=Decimal('25000'))
+        for _ in range(2):
+            PagoPedido.objects.create(pedido=pedido, monto=Decimal('10000'), metodo_pago=efectivo, estado_pago='Aprobado')
+        self.assertFalse(pedido.esta_pagado())
+        self.assertEqual(pedido.saldo_pendiente(), Decimal('5000'))
+        PagoPedido.objects.create(pedido=pedido, monto=Decimal('5000'), metodo_pago=efectivo, estado_pago='Aprobado')
+        self.assertTrue(pedido.esta_pagado())

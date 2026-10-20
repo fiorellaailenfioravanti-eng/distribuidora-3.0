@@ -1,0 +1,82 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}{{ titulo }} — Panel de Gestión{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="{% url 'apps.abonos:listar_abonos' %}" class="btn btn-light border-0 shadow-sm rounded-3 hover-lift">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div>
+            <h1 class="h3 fw-bold mb-0 text-main">{{ titulo }}</h1>
+            <p class="text-muted small mb-0">Contrato de alquiler de dispenser (RF-15).</p>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 bg-surface">
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger rounded-3">{{ form.non_field_errors }}</div>
+                        {% endif %}
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Cliente</label>
+                                {{ form.cliente }}
+                                {% if form.cliente.errors %}<div class="text-danger small">{{ form.cliente.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Producto alquilado</label>
+                                {{ form.producto }}
+                                {% if form.producto.errors %}<div class="text-danger small">{{ form.producto.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Inicio del contrato</label>
+                                {{ form.fecha_inicio }}
+                                {% if form.fecha_inicio.errors %}<div class="text-danger small">{{ form.fecha_inicio.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Fin (opcional)</label>
+                                {{ form.fecha_fin }}
+                                {% if form.fecha_fin.errors %}<div class="text-danger small">{{ form.fecha_fin.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Costo mensual</label>
+                                {{ form.costo_mensual }}
+                                {% if form.costo_mensual.errors %}<div class="text-danger small">{{ form.costo_mensual.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Día de facturación (1-28)</label>
+                                {{ form.dia_facturacion }}
+                                {% if form.dia_facturacion.errors %}<div class="text-danger small">{{ form.dia_facturacion.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Estado</label>
+                                {{ form.estado }}
+                                {% if form.estado.errors %}<div class="text-danger small">{{ form.estado.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small">Observaciones</label>
+                                {{ form.observaciones }}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="{% if abono %}{% url 'apps.abonos:ver_abono' abono.pk %}{% else %}{% url 'apps.abonos:listar_abonos' %}{% endif %}" class="btn btn-light fw-bold px-4 hover-lift">Cancelar</a>
+                            <button type="submit" class="btn btn-primary rounded-3 btn-glow fw-bold px-4">
+                                <i class="fa-solid fa-floppy-disk me-2"></i> Guardar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

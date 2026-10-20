@@ -60,6 +60,16 @@
                         <i class="fa-solid fa-id-badge"></i> Empleados
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="{% url 'apps.cuentas:listar_cuentas' %}" class="sidebar-link {% if 'cuentas' in request.resolver_match.view_name %}active{% endif %}">
+                        <i class="fa-solid fa-file-invoice-dollar"></i> Cuentas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'apps.abonos:listar_abonos' %}" class="sidebar-link {% if 'abonos' in request.resolver_match.view_name %}active{% endif %}">
+                        <i class="fa-solid fa-snowflake"></i> Abonos
+                    </a>
+                </li>
                 {% endif %}
                 {% if user.is_superuser or user|has_group:"Vendedor" or user|has_group:"Repartidor" %}
                 <li class="nav-item">
@@ -109,6 +119,12 @@
                     </li>
                     <li class="nav-item">
                         <a href="{% url 'apps.empleados:listar_empleados' %}" class="sidebar-link"><i class="fa-solid fa-id-badge"></i> Empleados</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'apps.cuentas:listar_cuentas' %}" class="sidebar-link"><i class="fa-solid fa-file-invoice-dollar"></i> Cuentas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'apps.abonos:listar_abonos' %}" class="sidebar-link"><i class="fa-solid fa-snowflake"></i> Abonos</a>
                     </li>
                     {% endif %}
                     {% if user.is_superuser or user|has_group:"Vendedor" or user|has_group:"Repartidor" %}

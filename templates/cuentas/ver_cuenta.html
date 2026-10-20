@@ -1,0 +1,141 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Cuenta de {{ cuenta.cliente.nombre_completo }} — Panel de Gestión{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item"><a href="{% url 'apps.cuentas:listar_cuentas' %}" class="text-decoration-none text-muted">Cuentas</a></li>
+                    <li class="breadcrumb-item active">{{ cuenta.cliente.nombre_completo }}</li>
+                </ol>
+            </nav>
+            <h1 class="h3 fw-bold mb-0 text-main">Cuenta de {{ cuenta.cliente.nombre_completo }}</h1>
+        </div>
+        <a href="{% url 'apps.clientes:ver_cliente' cuenta.cliente.pk %}" class="btn btn-outline-secondary rounded-3 fw-bold px-4">
+            <i class="fa-solid fa-user me-2"></i> Ver cliente
+        </a>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 bg-surface h-100">
+                <div class="card-body p-4">
+                    <h6 class="text-muted small text-uppercase fw-bold mb-2">Saldo actual</h6>
+                    <div class="h2 fw-bold mb-3 {% if cuenta.saldo > 0 %}text-danger{% else %}text-success{% endif %}">
+                        ${{ cuenta.saldo }}
+                    </div>
+                    <span class="badge bg-{{ estado.clase }} bg-opacity-25 text-{{ estado.clase }} rounded-pill px-3 py-2">
+                        <i class="fa-solid {{ estado.icono }} me-1"></i>{{ estado.etiqueta }}
+                    </span>
+                    {% if cuenta.saldo > 0 %}
+                        <p class="text-muted small mt-3 mb-0">Días desde el primer cargo: <strong>{{ dias_atraso }}</strong></p>
+                    {% endif %}
+                    {% if cuenta.limite_credito %}
+                        <p class="text-muted small mb-0">Límite de crédito: <strong>${{ cuenta.limite_credito }}</strong></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 bg-surface h-100">
+                <div class="card-body p-4">
+                    <h6 class="text-muted small text-uppercase fw-bold mb-3">
+                        <i class="fa-solid fa-plus-circle text-danger me-1"></i> Registrar cargo
+                    </h6>
+                    {% if cuenta.permite_fiado %}
+                    <form method="post" action="{% url 'apps.cuentas:registrar_cargo' cuenta.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-2">{{ cargo_form.monto }}</div>
+                        <div class="mb-2">{{ cargo_form.descripcion }}</div>
+                        <div class="mb-2">{{ cargo_form.fecha_vencimiento }}</div>
+                        <button type="submit" class="btn btn-danger rounded-3 fw-bold w-100 hover-lift">
+                            <i class="fa-solid fa-file-invoice-dollar me-1"></i> Agregar cargo
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-warning rounded-3 small mb-0">
+                        <i class="fa-solid fa-lock me-1"></i> Este cliente no tiene fiado habilitado (RF-05).
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 bg-surface h-100">
+                <div class="card-body p-4">
+                    <h6 class="text-muted small text-uppercase fw-bold mb-3">
+                        <i class="fa-solid fa-hand-holding-dollar text-success me-1"></i> Registrar pago
+                    </h6>
+                    <form method="post" action="{% url 'apps.cuentas:registrar_pago' cuenta.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-2">{{ pago_form.monto }}</div>
+                        <div class="mb-3">{{ pago_form.descripcion }}</div>
+                        <button type="submit" class="btn btn-success rounded-3 fw-bold w-100 hover-lift">
+                            <i class="fa-solid fa-check me-1"></i> Registrar pago
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Movimientos ── #}
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-surface">
+        <div class="card-body pb-0">
+            <h6 class="fw-bold text-main mb-0"><i class="fa-solid fa-list-ul me-2 text-primary"></i>Movimientos</h6>
+        </div>
+        {% if movimientos %}
+        <div class="table-responsive mt-3">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4 py-3 border-bottom-0">Fecha</th>
+                        <th class="py-3 border-bottom-0">Tipo</th>
+                        <th class="py-3 border-bottom-0">Descripción</th>
+                        <th class="py-3 border-bottom-0">Origen</th>
+                        <th class="pe-4 py-3 border-bottom-0 text-end">Monto</th>
+                    </tr>
+                </thead>
+                <tbody class="border-top-0">
+                    {% for mov in movimientos %}
+                    <tr>
+                        <td class="ps-4"><span class="text-muted small">{{ mov.fecha|date:"d/m/Y H:i" }}</span></td>
+                        <td>
+                            {% if mov.tipo == 'Cargo' %}
+                                <span class="badge bg-danger bg-opacity-25 text-danger rounded-pill px-2">Cargo</span>
+                            {% else %}
+                                <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2">Pago</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="text-main small">{{ mov.descripcion|default:"—" }}</span></td>
+                        <td>
+                            {% if mov.pedido %}
+                                <a href="{% url 'apps.pedidos:detalle_pedido' mov.pedido.pk %}" class="text-decoration-none small">Pedido #{{ mov.pedido.pk }}</a>
+                            {% elif mov.abono %}
+                                <a href="{% url 'apps.abonos:ver_abono' mov.abono.pk %}" class="text-decoration-none small">Abono #{{ mov.abono.pk }}</a>
+                            {% else %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="pe-4 text-end fw-bold {% if mov.tipo == 'Cargo' %}text-danger{% else %}text-success{% endif %}">
+                            {% if mov.tipo == 'Cargo' %}+{% else %}-{% endif %}${{ mov.monto }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="card-body text-center py-5">
+            <i class="fa-solid fa-receipt fs-1 mb-3 text-secondary opacity-50"></i>
+            <p class="text-muted mb-0">Sin movimientos registrados.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -29,6 +29,9 @@
         <a href="{% url 'apps.clientes:editar_cliente' cliente.pk %}" class="btn btn-primary btn-glow rounded-pill shadow-sm fw-bold px-4">
             <i class="fa-solid fa-pen me-1"></i> Editar
         </a>
+        <a href="{% url 'apps.cuentas:cuenta_de_cliente' cliente.pk %}" class="btn btn-outline-danger rounded-pill shadow-sm fw-bold px-4">
+            <i class="fa-solid fa-file-invoice-dollar me-1"></i> Cuenta corriente
+        </a>
         <a href="{% url 'apps.clientes:listar_clientes' %}" class="btn btn-light rounded-pill shadow-sm fw-bold px-4">
             <i class="fa-solid fa-arrow-left me-1"></i> Volver
         </a>

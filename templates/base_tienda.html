@@ -141,7 +141,12 @@
                                             <li><a class="dropdown-item py-3 py-lg-2" href="{% url 'apps.pedidos:mis_pedidos' %}"><i class="fa-solid fa-boxes-packing me-2 text-muted"></i> Mis Pedidos</a></li>
                                         {% endif %}
                                         <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item py-3 py-lg-2 text-danger fw-bold" href="{% url 'apps.autenticacion:cerrar_sesion' %}"><i class="fa-solid fa-right-from-bracket me-2"></i> Cerrar Sesión</a></li>
+                                        <li>
+                                            <form method="post" action="{% url 'apps.autenticacion:cerrar_sesion' %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="dropdown-item py-3 py-lg-2 text-danger fw-bold"><i class="fa-solid fa-right-from-bracket me-2"></i> Cerrar Sesión</button>
+                                            </form>
+                                        </li>
                                     </ul>
                                 </div>
                             {% else %}

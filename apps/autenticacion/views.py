@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout, decorators
+from django.contrib.auth import authenticate, login, logout
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib.auth.decorators import login_required
 from .forms import RegistroUsuarioForm, IngresarUsuarioForm
 
@@ -31,14 +32,22 @@ def ingresar_usuario(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, 'Ingreso exitoso.')
-                return redirect('inicio')  # Redirigir a la página principal u otra página
+                destino = request.POST.get('next') or next_url
+                if destino and url_has_allowed_host_and_scheme(
+                    destino, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+                ):
+                    return redirect(destino)
+                return redirect('inicio')
             else:
                 messages.error(request, 'Credenciales inválidas. Por favor, intente de nuevo.')
     else:
         form = IngresarUsuarioForm()
     return render(request, 'autenticacion/ingresar.html', {'form': form})
 
-def cerrar_sesion(request): 
+def cerrar_sesion(request):
+    if request.method != 'POST':
+        # Cerrar sesión por GET permitiría desloguear con un simple enlace (H-31).
+        return redirect('inicio')
     logout(request)
     messages.success(request, 'Sesión cerrada exitosamente.')
     return redirect('apps.autenticacion:ingresar')

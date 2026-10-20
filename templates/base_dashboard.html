@@ -203,7 +203,12 @@
                                         <li><a class="dropdown-item py-2" href="{% url 'apps.autenticacion:perfil' %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi Perfil</a></li>
                                     {% endif %}
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item py-2 text-danger" href="{% url 'apps.autenticacion:cerrar_sesion' %}"><i class="fa-solid fa-right-from-bracket me-2"></i> Cerrar Sesión</a></li>
+                                    <li>
+                                        <form method="post" action="{% url 'apps.autenticacion:cerrar_sesion' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item py-2 text-danger"><i class="fa-solid fa-right-from-bracket me-2"></i> Cerrar Sesión</button>
+                                        </form>
+                                    </li>
                                 </ul>
                             </div>
                         {% else %}

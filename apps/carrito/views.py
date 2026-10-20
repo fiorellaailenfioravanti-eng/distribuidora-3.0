@@ -4,6 +4,7 @@ from .models import Carrito, ItemCarrito
 from apps.productos.models import Producto
 from django.urls import reverse
 from django.contrib import messages
+from distribuidora.utils import redirigir_a_origen
 from apps.permisos.roles import es_admin_o_vendedor
 
 
@@ -14,21 +15,16 @@ def agregar_al_carrito(request, producto_id):
         return redirect('dashboard')
 
     producto = get_object_or_404(Producto, id_producto=producto_id, activo=True)
+    if request.method != 'POST':
+        # Agregar modifica datos: sólo por POST (H-31).
+        return redirect('apps.productos:ver_producto', pk=producto.id_producto)
     carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
     item_carrito, creado = ItemCarrito.objects.get_or_create(carrito=carrito, producto=producto)
 
-    cantidad_a_agregar = 1
-    if request.method == 'POST':
-        cantidad_str = request.POST.get('cantidad', '1')
-        try:
-            cantidad_a_agregar = int(cantidad_str)
-        except ValueError:
-            pass
-    elif 'cantidad' in request.GET:
-        try:
-            cantidad_a_agregar = int(request.GET.get('cantidad', '1'))
-        except ValueError:
-            pass
+    try:
+        cantidad_a_agregar = int(request.POST.get('cantidad', '1'))
+    except ValueError:
+        cantidad_a_agregar = 1
             
     if cantidad_a_agregar <= 0:
         cantidad_a_agregar = 1
@@ -47,10 +43,7 @@ def agregar_al_carrito(request, producto_id):
         if creado:
             item_carrito.delete()
     
-    referer = request.META.get('HTTP_REFERER')
-    if referer:
-        return redirect(referer)
-    return redirect('apps.productos:listar_productos')
+    return redirigir_a_origen(request, 'apps.productos:listar_productos')
 
 
 @login_required
@@ -69,6 +62,8 @@ def ver_carrito(request):
 
 @login_required
 def eliminar_del_carrito(request, item_id):
+    if request.method != 'POST':
+        return redirect('apps.carrito:ver_carrito')
     carrito= get_object_or_404(Carrito, usuario=request.user)
     item = carrito.items.filter(id=item_id).first()
    
@@ -87,6 +82,8 @@ def eliminar_del_carrito(request, item_id):
 
 @login_required
 def vaciar_carrito(request):
+    if request.method != 'POST':
+        return redirect('apps.carrito:ver_carrito')
     carrito = get_object_or_404(Carrito, usuario=request.user)
     carrito.items.all().delete()
     return redirect('apps.carrito:ver_carrito')

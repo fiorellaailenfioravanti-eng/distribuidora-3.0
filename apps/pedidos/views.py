@@ -20,6 +20,7 @@ from .services import (
 )
 from apps.carrito.models import Carrito
 from apps.clientes.models import Cliente
+from distribuidora.utils import redirigir_a_origen
 from apps.permisos.roles import (
     es_admin_o_vendedor,
     puede_ver_nota_seguridad,
@@ -411,7 +412,7 @@ def cambiar_estado_pedido(request, pk):
                     "Las salidas y entregas en reparto se registran desde Logística."
                 )
 
-    return redirect(request.META.get('HTTP_REFERER') or 'apps.pedidos:listar_pedidos')
+    return redirigir_a_origen(request, 'apps.pedidos:listar_pedidos')
 
 
 @login_required
@@ -434,7 +435,7 @@ def cambiar_estado_pago(request, pk):
         else:
             messages.error(request, "Estado de pago no válido.")
 
-    return redirect(request.META.get('HTTP_REFERER') or 'apps.pedidos:listar_pedidos')
+    return redirigir_a_origen(request, 'apps.pedidos:listar_pedidos')
 
 
 @login_required

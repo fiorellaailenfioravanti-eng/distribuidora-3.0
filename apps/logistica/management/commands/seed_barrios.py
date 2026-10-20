@@ -1,6 +1,17 @@
-from apps.logistica.models import Zona, Barrio
+"""
+Carga los barrios de Resistencia (Chaco) en la zona "Sin Asignar".
 
-barrios = [
+Reemplaza al script suelto `seed_barrios.py` de la raíz (auditoría R-6).
+Idempotente: se puede correr varias veces.
+
+    python manage.py seed_barrios --settings=distribuidora.settings.local
+"""
+from django.core.management.base import BaseCommand
+from django.db import transaction
+
+from apps.logistica.models import Barrio, Zona
+
+BARRIOS = [
     "VILLA DON SANTIAGO", "PARQUE AUTODROMO", "CRISTO REY", "VILLA ELBA", "VILLA GHIO", "VILLA LUISA",
     "PICCILLI", "VILLA CORTES", "VILLA ODORICO", "PERRANDO", "VILLA ALTA", "VILLA MARIA",
     "VILLA 25 DE MAYO Y PEZZINI", "VILLA ADELANTE", "VILLA ALVEAR", "BARRIO SAN JAVIER", "VILLA JUAN DE GARAY",
@@ -29,17 +40,24 @@ barrios = [
     "PAPA FRANCISCO"
 ]
 
-# Create a default zone for unassigned barrios
-zona_default, _ = Zona.objects.get_or_create(
-    nombre="Sin Asignar",
-    defaults={'descripcion': 'Zona por defecto para barrios sin asignar'}
-)
 
-for b_name in barrios:
-    Barrio.objects.get_or_create(
-        nombre=b_name,
-        ciudad="Resistencia",
-        defaults={'zona': zona_default}
-    )
+class Command(BaseCommand):
+    help = 'Carga los barrios de Resistencia en la zona "Sin Asignar". Idempotente.'
 
-print(f"Se crearon o actualizaron {len(barrios)} barrios con éxito.")
+    @transaction.atomic
+    def handle(self, *args, **options):
+        zona_default, _ = Zona.objects.get_or_create(
+            nombre='Sin Asignar',
+            defaults={'descripcion': 'Zona por defecto para barrios sin asignar'},
+        )
+        creados = 0
+        for nombre in BARRIOS:
+            _, creado = Barrio.objects.get_or_create(
+                nombre=nombre,
+                ciudad='Resistencia',
+                defaults={'zona': zona_default},
+            )
+            creados += creado
+        self.stdout.write(self.style.SUCCESS(
+            f'{len(BARRIOS)} barrios procesados ({creados} nuevos).'
+        ))

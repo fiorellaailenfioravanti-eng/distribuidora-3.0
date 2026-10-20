@@ -2,7 +2,7 @@
 > **Distribuidora 3.0** · Sistema de Gestión Operativa, Logística y E-Commerce
 >
 > **⚠️ LEER PRIMERO:** Este archivo provee todo el contexto necesario para trabajar en este proyecto.
-> Última actualización: 30/09/2026 — Versión 4.0.
+> Última actualización: 20/10/2026 — Versión 4.2 (Fases 4.5 y 4.6: consolidación y auditoría).
 
 ---
 
@@ -81,7 +81,7 @@ DISTRIBUIDORA-3.0/
 │       ├── local.py                 # Dev: DEBUG=True, SQLite, hosts abiertos
 │       └── production.py            # ✅ Despliegue: DEBUG=False, HTTPS, hosts y credenciales
 ├── apps/
-│   ├── autenticacion/               # ✅ Usuarios, login, perfil, templatetag has_group
+│   ├── autenticacion/               # ✅ Usuarios, login (respeta ?next=), perfil
 │   ├── buscador/                    # ✅ Búsqueda tolerante a tildes
 │   ├── carrito/                     # ✅ Carrito transaccional + validación stock
 │   ├── productos/                   # ✅ CRUD catálogo y categorías
@@ -91,7 +91,7 @@ DISTRIBUIDORA-3.0/
 │   ├── empleados/                   # ✅ Empleados y roles (FUENTE ÚNICA del personal)
 │   ├── cuentas/                     # ✅ Cuentas corrientes, fiado y semaforización (RF-14)
 │   ├── abonos/                      # ✅ Alquiler de dispensers y facturación (RF-15)
-│   └── permisos/                    # ✅ Módulo central de roles + sincronización de grupos
+│   └── permisos/                    # ✅ Roles, sincronización rol→grupo, context processor
 ├── templates/
 ├── static/
 └── media/
@@ -108,8 +108,12 @@ LOGOUT_REDIRECT_URL = '/auth/ingresar/'
 LANGUAGE_CODE       = 'es-AR'
 TIME_ZONE           = 'America/Argentina/Buenos_Aires'
 SECRET_KEY          = config('SECRET_KEY', default=SECRET_KEY_FALLBACK)  # fallback solo dev
-MERCADOPAGO_ACCESS_TOKEN = config('MERCADOPAGO_ACCESS_TOKEN', default='')
+MERCADOPAGO_ACCESS_TOKEN   = config('MERCADOPAGO_ACCESS_TOKEN', default='')
+MERCADOPAGO_WEBHOOK_SECRET = config('MERCADOPAGO_WEBHOOK_SECRET', default='')  # sin él no se valida la firma
 ```
+
+Utilidades compartidas en `distribuidora/utils.py`: `normalizar_texto()` (búsquedas
+tolerantes a tildes) y `redirigir_a_origen()` (vuelve a la página previa sólo si es del sitio).
 
 > `production.py` **no** admite defaults: si falta `SECRET_KEY`, `ALLOWED_HOSTS`,
 > `MERCADOPAGO_ACCESS_TOKEN` o `MERCADOPAGO_WEBHOOK_SECRET`, el arranque falla.
@@ -117,7 +121,8 @@ MERCADOPAGO_ACCESS_TOKEN = config('MERCADOPAGO_ACCESS_TOKEN', default='')
 ### Context Processors habilitados
 
 ```python
-'apps.carrito.context_processors.carrito_total'  # Inyecta carrito_total_items globalmente
+'apps.carrito.context_processors.carrito_total'    # Inyecta carrito_total_items globalmente
+'apps.permisos.context_processors.roles_usuario'  # es_vendedor, es_repartidor, es_personal_interno
 ```
 
 ### Cómo correr el proyecto
@@ -128,6 +133,8 @@ pip install -r requirements.txt
 copy .env.example .env          # completar SECRET_KEY, ALLOWED_HOSTS y credenciales MP
 python manage.py migrate --settings=distribuidora.settings.local
 python manage.py createsuperuser --settings=distribuidora.settings.local
+python manage.py seed_barrios --settings=distribuidora.settings.local     # barrios de Resistencia
+python manage.py seed_logistica --settings=distribuidora.settings.local   # datos de demo de reparto
 python manage.py runserver --settings=distribuidora.settings.local
 # → http://127.0.0.1:8000/
 ```
@@ -150,15 +157,11 @@ class Usuario(AbstractUser):
 > ⚠️ `celular1`/`celular2` se conservan por compatibilidad. La señal de `apps.clientes`
 > los migra automáticamente a `TelefonoContacto` al crear el perfil.
 
-**Vistas:** `registrar_usuario`, `ingresar_usuario`, `cerrar_sesion`, `perfil_usuario`
+**Vistas:** `registrar_usuario`, `ingresar_usuario` (respeta `?next=` interno),
+`cerrar_sesion` (**sólo POST**), `perfil_usuario`.
 
-**Template tag** (`autenticacion/templatetags/grupos.py`):
-```python
-@register.filter(name='has_group')
-def has_group(user, group_name):
-    return user.groups.filter(name=group_name).exists()
-# Uso en templates: {% if user|has_group:"Vendedor" %}
-```
+> El filtro `has_group` se eliminó (auditoría R-5): los templates usan las variables
+> del context processor `roles_usuario`, por ejemplo `{% if es_vendedor %}`.
 
 **Migración de grupos base** (`autenticacion/migrations/0003_grupos_base.py`):
 crea los grupos `Vendedor` y `Repartidor` en cada base nueva. La asignación de
@@ -184,9 +187,13 @@ class Producto(models.Model):
     fecha_creacion      = DateTimeField(auto_now_add=True)
     fecha_actualizacion = DateTimeField(auto_now=True)
     imagen              = ImageField(upload_to='productos/', nullable)
+    activo              = BooleanField(default=True)   # oculto en tienda/buscador/carrito si False
+    es_envase, es_retornable, envase (FK self)          # envases retornables (Fase 3)
 ```
 
-CRUD completo: listar (paginado 6/pág + filtro categoría), ver, crear, editar, eliminar.
+CRUD completo: listar (paginado 6/pág + filtro categoría), ver (404 real), crear, editar,
+eliminar. Si el producto ya tiene pedidos (`DetallePedido` con `PROTECT`) **se desactiva**
+en lugar de borrarse.
 
 ---
 
@@ -207,6 +214,13 @@ def puede_ver_nota_seguridad(user, direccion)  # RNF-02
 `apps/permisos/signals.py` sincroniza los permisos de los grupos en `post_migrate`
 (aditivo, idempotente): Vendedor administra productos, clientes, pedidos,
 empleados y logística; Repartidor solo hojas de ruta y sus paradas.
+
+**Un único sistema de roles (Fase 4.6.2):** `RolEmpleado.grupo_permisos`
+(vacío / `Vendedor` / `Repartidor`) define el grupo de Django del empleado. Al crear o
+editar un empleado o un rol, `sincronizar_grupo_empleado()` deja al usuario sólo en
+ese grupo (o en ninguno si está inactivo). Ningún rol otorga superusuario.
+En vistas: funciones de `roles.py` + `apps.permisos.views.sin_permiso()`.
+En templates: `es_vendedor`, `es_repartidor`, `es_personal_interno`.
 
 | Rol | Acceso |
 |---|---|
@@ -242,7 +256,8 @@ class ItemCarrito(models.Model):
 3. Si no hay stock → elimina item si fue recién creado → `messages.error`
 4. Redirección inteligente: vuelve al detalle del producto o al listado
 
-**Vistas:** `ver_carrito`, `agregar_al_carrito`, `eliminar_del_carrito`, `vaciar_carrito`
+**Vistas:** `ver_carrito`, `agregar_al_carrito`, `eliminar_del_carrito`, `vaciar_carrito`.
+Las tres que modifican el carrito aceptan **sólo POST**; los productos inactivos no se agregan.
 
 ---
 
@@ -336,9 +351,18 @@ de logística (`mi_ruta_hoy`, `ver_ruta`, `imprimir_ruta`) reciben la lista
   (sembrados por `pedidos/migrations/0003_sembrar_metodos_pago.py`).
 
 **Checkout & transaccionalidad:**
-- Operación en `@transaction.atomic` con validación y descuento de stock.
-- Integración del SDK `mercadopago` con preferencias, callbacks y webhook
-  (`/pedidos/webhook/mercadopago/`). El **token se lee del entorno** (no está en el código).
+- `confirmar_pedido` en `@transaction.atomic` valida stock; el stock se **descuenta al cargar
+  el camión** (logística) y vuelve con el regreso.
+- El checkout web ofrece los métodos activos salvo `TARJETA` (decisión A-D1: el sistema no
+  procesa tarjetas) y `MERCADOPAGO` si no hay token. No modifica el catálogo de métodos.
+- **`pedidos/services.py`** concentra los pagos: `pago_en_curso`, `registrar_cobro` (cobro
+  presencial, usado por logística), `aplicar_pago_mercadopago` (aprueba sólo si el monto
+  acreditado cubre lo esperado) y `firma_webhook_valida` (`x-signature`).
+- Regla de seguridad: un pago pasa a `Aprobado` sólo por el webhook firmado, por consulta a
+  la API de MercadoPago o por un Vendedor. El callback `pago_exitoso` y el aviso del cliente
+  `confirmar_pago_qr` **no** aprueban (auditoría H-18/H-19).
+- `Pedido.cambiar_estado_manual()` / `estados_manuales_posibles()`: transiciones permitidas
+  desde la gestión; `En Camino`/`Entregado` de pedidos en hoja de ruta los fija logística.
 - Panel de gestión para Vendedores (`/pedidos/gestion/`) e historial (`/pedidos/mis-pedidos/`).
 
 ---
@@ -347,9 +371,10 @@ de logística (`mi_ruta_hoy`, `ver_ruta`, `imprimir_ruta`) reciben la lista
 
 ```python
 class RolEmpleado(models.Model):
-    id_rol      = AutoField(primary_key=True)
-    nombre      = CharField(max_length=60, unique=True)
-    descripcion = TextField(blank=True)
+    id_rol         = AutoField(primary_key=True)
+    nombre         = CharField(max_length=60, unique=True)
+    descripcion    = TextField(blank=True)
+    grupo_permisos = CharField(choices=['', 'Vendedor', 'Repartidor'])  # grupo que otorga
 
 class Empleado(models.Model):
     id_empleado = AutoField(primary_key=True)
@@ -675,14 +700,18 @@ Camion ← RutaReparto → Zona
 | `production.py` vacío | 🔴 Alta | ✅ Resuelto (`DEBUG=False`, HTTPS, hosts, MP) |
 | Grupo `Vendedor` inexistente | 🔴 Crítica | ✅ Resuelto (migración `0003_grupos_base`) |
 | `Empleado`/`RolEmpleado` duplicados | 🔴 Crítica | ✅ Resuelto (fuente única en `apps.empleados`) |
-| `groups.all.0` en templates | 🔴 Alta | ✅ Resuelto (`has_group` + `apps.permisos`) |
+| `groups.all.0` en templates | 🔴 Alta | ✅ Resuelto (context processor `roles_usuario`) |
+| Pagos aprobables desde la URL / por el propio cliente (H-18/H-19) | 🔴 Crítica | ✅ Resuelto (Fase 4.6.1) |
+| Tres sistemas de roles desconectados (H-24/H-25) | 🟠 Alta | ✅ Resuelto (`RolEmpleado.grupo_permisos`) |
+| Errores 500 en roles, rutas, zonas, direcciones, clientes y productos | 🟠 Alta | ✅ Resueltos (Fases 4.6.3 y 4.6.5) |
+| Una sola dirección por cliente vs RF-03 multidirección (H-39) | 🟠 Media | 🔴 Decisión pendiente |
 | RNF-02 sin filtro por repartidor asignado | 🟠 Media | ✅ Resuelto (`puede_ver_nota_seguridad`) |
-| Cero tests | 🟠 Media | 🟢 Avanzado (86 tests: permisos, cuentas, abonos, etc.) |
+| Cero tests | 🟠 Media | 🟢 Avanzado (128 tests; buscador sin suite propia) |
 | Carrito no descuenta stock ni genera Pedido | 🟠 Media | 🟡 Pedidos ya descuentan; falta reserva en carrito (RF-12) |
 | `celular1/celular2` en `Usuario` redundantes | 🟡 Baja | 🟡 Se migran vía señal |
 | `DetalleHojaRuta` no vinculado a `Pedido` | 🔴 Alta | ✅ Resuelto (Fase 3) |
 
 ---
 
-*Contexto actualizado: 14/10/2026 — Versión 4.1 (Fase 4: cuentas corrientes y abonos).*
+*Contexto actualizado: 20/10/2026 — Versión 4.2 (Fases 4.5 y 4.6: consolidación y auditoría).*
 *Actualizar este archivo ante cualquier cambio estructural significativo.*

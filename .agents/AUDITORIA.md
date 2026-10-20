@@ -12,6 +12,37 @@
 
 ---
 
+## ▶️ Estado al 20/10/2026 (rama `cierre/fase-4.5-4.6`)
+
+| Hallazgos | Estado | Commit |
+|---|:--:|---|
+| H-18, H-19, H-20, H-21, H-33, R-3 | ✅ | 4.6.1 — pagos seguros |
+| H-23, H-24, H-25, H-26, H-36, R-2, R-5 | ✅ | 4.6.2 — roles unificados |
+| H-22, H-27, H-28, H-29, R-1, H-37 (productos) | ✅ | 4.6.3 — errores 500 y datos |
+| H-31, H-32, H-35, H-37, R-6, R-8 | ✅ | 4.6.4 — higiene |
+| H-38 (nuevo) | ✅ | 4.6.5 — smoke de rutas |
+| H-30 (`esta_pagado`) | ⏳ | Fase 6A |
+| H-34 (buscador RF-07) | ⏳ | Fase 7 |
+| H-39 (nuevo, una dirección por cliente) | ❓ | Decisión A-D4 |
+| R-4 (`celular1/2`, D-6), R-7 (skills en la raíz) | ⏳ | Fase 7 |
+
+Decisiones aplicadas con la recomendación de este documento: **A-D1, A-D2, A-D3**.
+Verificación: `check` 0 issues · sin migraciones pendientes · **128 tests OK** ·
+`check --deploy` limpio · las 86 rutas GET responden sin 500 como administrador.
+
+### Hallazgos nuevos
+
+| ID | Severidad | Hallazgo | Estado |
+|:--:|:--:|---|:--:|
+| H-38 | 🟠 Alta | **Cinco errores 500 que el análisis estático no detectó** (sólo se ven con datos reales): `listar_roles` usaba `rol.id` (la PK es `id_rol`) y daba siempre 500; `listar_rutas`, `ver_ruta` e `imprimir_ruta` rompían con hojas sin chofer; `eliminar_zona` pasaba `url_cancelar` cuando el template espera `volver`, y una zona con rutas daba `ProtectedError`; `agregar_direccion` usaba `reverse()` sin importarlo. También `csrf_fallo.html` llenaba un bloque inexistente y se mostraba vacía. | ✅ |
+| H-39 | 🟠 Media | **Incoherencia con RF-03 (multidirección):** `agregar_direccion` aplica la regla "cada cliente sólo puede tener 1 dirección" y redirige a editar la existente, pero la matriz marca RF-03 ✅ y el modelo admite varias (`es_principal`). | ❓ A-D4 |
+
+| # | Pregunta | Recomendación |
+|:--:|---|---|
+| A-D4 | ¿El cliente puede tener varias direcciones de entrega (RF-03) o una sola? | **Varias**, como dice RF-03 y como ya soporta el modelo: quitar la restricción de la vista y elegir la dirección en el checkout (ya existe el selector) |
+
+---
+
 ## 1. 🔴 Críticos — seguridad y dinero
 
 | ID | Hallazgo | Evidencia | Arreglo |

@@ -12,8 +12,8 @@
 
 | Bloque | Requisitos / hallazgos | Esfuerzo | Riesgo |
 |---|---|:--:|:--:|
-| **Fase 4.5 — Consolidación** | Commits pendientes, `db.sqlite3`, webhook MP, docs | ~3 h | Bajo |
-| **Fase 4.6 — Correcciones de auditoría** | H-18…H-37, R-1…R-8 de [`AUDITORIA.md`](AUDITORIA.md): pagos, roles, errores 500 | ~15 h | Medio |
+| **Fase 4.5 — Consolidación** ✅ | Commits pendientes, `db.sqlite3`, webhook MP, docs | ~3 h | Bajo |
+| **Fase 4.6 — Correcciones de auditoría** ✅ | H-18…H-37, R-1…R-8 de [`AUDITORIA.md`](AUDITORIA.md): pagos, roles, errores 500 | ~15 h | Medio |
 | **Fase 5 — Bidones y promociones** | RF-08, RF-09, RF-10 | ~14 h | Medio |
 | **Fase 6 — Pagos, checkout y pedido automático** | RF-04, RF-12, RF-13, RF-18 | ~12 h | Medio |
 | **Fase 7 — QA, producción y tesis** | H-10, H-13, H-14, C-9, DER | ~16 h | Bajo |
@@ -24,7 +24,10 @@ paralelizan, 5 es dueña de `logistica/services.py` y 6 de `pedidos/views.py`.
 
 ---
 
-## FASE 4.5 — Consolidación 🧹 (antes de escribir código nuevo)
+## FASE 4.5 — Consolidación 🧹 ✅ **COMPLETADA (20/10/2026)**
+
+> Ejecutada en la rama `cierre/fase-4.5-4.6`. 4.5.3 (webhook) se hizo dentro de 4.6.1 y 4.5.5
+> (alias de guards) dentro de 4.6.2. Decisión F-D1 aplicada: `db.sqlite3` fuera de git.
 
 **Por qué primero:** hoy `apps/cuentas`, `apps/abonos`, `apps/permisos` y 12 migraciones están **sin
 versionar**. Cualquier accidente las pierde, y las migraciones de Fase 5 van a depender de ellas.
@@ -41,7 +44,11 @@ versionar**. Cualquier accidente las pierde, y las migraciones de Fase 5 van a d
 
 ---
 
-## FASE 4.6 — Correcciones de auditoría 🛠️
+## FASE 4.6 — Correcciones de auditoría 🛠️ ✅ **COMPLETADA (20/10/2026)**
+
+Estado por hallazgo en [`AUDITORIA.md`](AUDITORIA.md) «Estado al 20/10/2026». Suma 4.6.5: cinco
+errores 500 previos detectados con un smoke test de las 86 rutas (H-38). Queda abierta la
+decisión **A-D4** (una o varias direcciones por cliente, RF-03).
 
 Detalle, evidencia y arreglo de cada hallazgo en [`AUDITORIA.md`](AUDITORIA.md) §7. Va **antes** de la Fase 5
 porque 5B y 6A construyen sobre `pedidos/services.py` (R-3) y los pagos seguros (H-18…H-21).

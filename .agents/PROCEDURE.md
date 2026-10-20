@@ -8,7 +8,7 @@
 
 ---
 
-## ▶️ Estado de ejecución — 14/10/2026
+## ▶️ Estado de ejecución — 20/10/2026
 
 | Fase | Alcance ejecutado | Estado |
 |:--:|---|:--:|
@@ -17,11 +17,14 @@
 | — | Tests de roles, unificación y RNF-02 (`apps/permisos/tests.py`, 29 tests) | ✅ |
 | **Fase 3** | Logística ↔ Pedido (RF-16, RF-17, RF-19) | ✅ **Completada** |
 | **Fase 4** | Cuentas corrientes, morosidad y abonos (RF-14, RF-15, RF-05) | ✅ **Completada** |
+| **Fase 4.5** | Commits de Fases 1–4, `db.sqlite3` fuera de git, limpieza de docs | ✅ **Completada** |
+| **Fase 4.6** | Correcciones de la auditoría ([`AUDITORIA.md`](AUDITORIA.md)): pagos, roles, errores 500, higiene | ✅ **Completada** |
 | **Fase 5–7** | Bidones/promociones (RF-08/09/10), pagos parciales/RF-18, QA final | 🔴 **Pendiente** — plan detallado en [`PLAN_CIERRE.md`](PLAN_CIERRE.md) |
 
 **Hallazgos cerrados:** H-1, H-2, H-3, H-4, H-5, H-6, H-7, H-8, H-9, H-15 y H-16.
-**Hallazgos abiertos:** H-10 (suite parcial), H-13/H-14 (datos/README) y H-18…H-37 / R-1…R-8 de la
-auditoría del 20/10/2026 ([`AUDITORIA.md`](AUDITORIA.md)).
+**Hallazgos abiertos:** H-10 (suite parcial), H-13/H-14 (datos/README); de la auditoría
+([`AUDITORIA.md`](AUDITORIA.md)) quedan H-30 (Fase 6), H-34, R-4 y R-7 (Fase 7) y H-39 (decisión A-D4).
+Resueltos en la Fase 4.6: H-18…H-29, H-31…H-33, H-35…H-38, R-1…R-3, R-5, R-6 y R-8.
 **Decisión abierta:** C-9 (RF-20 gastos por proveedor: dentro o fuera de alcance).
 
 **Además, en la Fase 2 se corrigió un agujero no catalogado:** `ver_ruta` y `actualizar_estado_entrega`
@@ -29,11 +32,11 @@ permitían a **cualquier usuario autenticado** (incluido un cliente registrado) 
 modificar hojas de ruta ajenas. Se agregó el guard `es_admin_vendedor_o_repartidor`
 y la restricción por asignación.
 
-**Comandos verificados (14/10/2026):**
+**Comandos verificados (20/10/2026):**
 ```powershell
 .\venv\Scripts\python.exe manage.py check --settings=distribuidora.settings.local          # 0 issues
 .\venv\Scripts\python.exe manage.py makemigrations --check --dry-run --settings=...local   # No changes detected
-.\venv\Scripts\python.exe manage.py test --settings=distribuidora.settings.local            # 86 OK
+.\venv\Scripts\python.exe manage.py test --settings=distribuidora.settings.local            # 128 OK
 .\venv\Scripts\python.exe manage.py check --deploy --settings=distribuidora.settings.production  # 0 issues
 ```
 
@@ -107,8 +110,8 @@ Leyenda: ✅ completo · 🟡 parcial · 🔴 no implementado · ⚠️ implemen
 | ID | Requerimiento | Ubicación en código | Estado | Tarea |
 |:--:|---|---|:--:|---|
 | RF-01 | Registro con ≥2 celulares y descripción de relación | `autenticacion/models.py`, `clientes/signals.py` | ✅ | — |
-| RF-02 | Validación de contraseñas (4 validadores Django) | `settings/base.py:82-92` | 🟡 | H-36 (alta de empleado no valida) |
-| RF-03 | Multidirección: calle, altura, zona, seguridad, coordenadas | `clientes/models.py:172-245` | ✅ | — |
+| RF-02 | Validación de contraseñas (4 validadores Django) | `settings/base.py`, `empleados/forms.py` | ✅ | H-36 ✅ |
+| RF-03 | Multidirección: calle, altura, zona, seguridad, coordenadas | `clientes/models.py:172-245` | 🟡 | H-39 (la vista limita a 1 dirección) |
 | RF-04 | ≥2 teléfonos con relación explícita | `clientes/models.py:133-165` | 🟡 | T-6.1 |
 | RF-05 | Normal/Premium; solo Premium con fiado | `clientes/models.py:7-10,122-126`; `cuentas/models.py` | ✅ | — |
 | RF-06 | Catálogo agrupado por categorías | `productos/` | ✅ | — |
@@ -369,9 +372,9 @@ Estas **no** son técnicas: cambian el alcance de la tesis y las debe decidir el
 
 - [x] `manage.py check` → 0 issues
 - [x] `makemigrations --check --dry-run` → sin cambios
-- [x] `manage.py test` → todas las suites en verde *(hoy: 86 tests)*
+- [x] `manage.py test` → todas las suites en verde *(hoy: 128 tests)*
 - [x] `manage.py check --deploy --settings=distribuidora.settings.production` → limpio
-- [ ] RF-01 … RF-19 + RNF-01 … RNF-03 con estado ✅ en la matriz de §4 *(13/22 ✅; faltan RF-08/09/10/18 y pulir RF-02/04/07/12/13)*
+- [ ] RF-01 … RF-19 + RNF-01 … RNF-03 con estado ✅ en la matriz de §4 *(13/22 ✅; faltan RF-08/09/10/18 y pulir RF-03/04/07/12/13)*
 - [ ] Cada RF tiene **al menos un test** que lo cubra
 - [x] `SECRET_KEY` fuera del repositorio
 - [ ] `CONTEXT.md` v5.0 refleja el código final *(hoy: v4.1 tras Fase 4)*

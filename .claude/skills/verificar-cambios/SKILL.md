@@ -20,7 +20,7 @@ Correr los tres comandos, en este orden, y no seguir si alguno falla:
 
 - `check` debe dar `0 issues`.
 - `makemigrations --check` debe decir `No changes detected`. Si detecta cambios y el cambio de modelo era intencional, crear la migración con nombre descriptivo en español (`makemigrations <app> --name <descripcion>`) y volver a correr los tres comandos.
-- `test` debe terminar en `OK`. Informar cuántos tests corrieron (la base al 14/10/2026 era 86).
+- `test` debe terminar en `OK`. Informar cuántos tests corrieron (la base al 20/10/2026 es 128).
 
 Si el cambio toca despliegue o settings, correr además:
 
@@ -31,11 +31,11 @@ Si el cambio toca despliegue o settings, correr además:
 ## 2. Revisar convenciones del proyecto en lo que cambió
 
 - Vistas como funciones (FBV), no clases.
-- Chequeos de rol solo con `apps/permisos/roles.py`; en templates, el filtro `has_group`, nunca `user.groups.all.0`.
+- Chequeos de rol solo con `apps/permisos/roles.py`; en templates, las variables `es_vendedor`, `es_repartidor` y `es_personal_interno` del context processor `roles_usuario` (nunca `user.groups`).
 - `desc_seguridad` (RNF-02) solo visible vía `puede_ver_nota_seguridad()`.
 - Operaciones que mueven stock, pedidos o cuentas dentro de `transaction.atomic`.
 - Textos, nombres y mensajes en español.
-- Si se agregó lógica nueva, agregar tests en `apps/<app>/tests.py` (pendientes conocidos: carrito y buscador, hallazgo H-10).
+- Si se agregó lógica nueva, agregar tests en `apps/<app>/tests.py` (pendiente conocido: buscador, hallazgo H-10).
 
 ## 3. Actualizar documentación y grafo
 

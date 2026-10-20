@@ -30,6 +30,10 @@ Este archivo contiene:
 - **Plan de procedimiento por fases (Fase 0 → Fase 7)** con tareas, dependencias y criterios de aceptación
 - Decisiones de alcance pendientes de resolver por el equipo
 
+👉 [`.agents/PLAN_CIERRE.md`](.agents/PLAN_CIERRE.md) — procedimiento detallado de las Fases 4.5 a 7.
+
+👉 [`.agents/AUDITORIA.md`](.agents/AUDITORIA.md) — auditoría de coherencia (H-18…H-39, R-1…R-8) y su estado.
+
 
 ---
 

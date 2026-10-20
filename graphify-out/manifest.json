@@ -528,27 +528,27 @@
     "semantic_hash": ""
   },
   "apps/logistica/services.py": {
-    "mtime": 1792514486.0734818,
-    "seen": 1792514818.5226493,
-    "ast_hash": "eb62da549d3c9778c73e3624f1ee0be8",
+    "mtime": 1792514878.0573523,
+    "seen": 1792515264.244675,
+    "ast_hash": "7cbe78c8fd615fcbd06ee5c1501ede5e",
     "semantic_hash": ""
   },
   "apps/logistica/tests.py": {
-    "mtime": 1792513354.9237218,
-    "seen": 1792513625.2351482,
-    "ast_hash": "3f2d7540a2d2774dfb10ca08c862c0a5",
+    "mtime": 1792515002.2765584,
+    "seen": 1792515264.244675,
+    "ast_hash": "9ed4b60535954d9f1f8a7e052c1415d3",
     "semantic_hash": ""
   },
   "apps/logistica/urls.py": {
-    "mtime": 1792512920.6501794,
-    "seen": 1792513625.2351482,
-    "ast_hash": "5f4a92c213d283e7e6ce90d18e047e90",
+    "mtime": 1792514908.9463184,
+    "seen": 1792515264.244675,
+    "ast_hash": "8c839abf085c930628ca8318c370d2c1",
     "semantic_hash": ""
   },
   "apps/logistica/views.py": {
-    "mtime": 1792513092.1266477,
-    "seen": 1792513625.2351482,
-    "ast_hash": "3d89487bf6284f98e123054b7311af16",
+    "mtime": 1792515159.8423123,
+    "seen": 1792515264.244675,
+    "ast_hash": "e9ca56da3c0c27bec78e8c10bc7b93da",
     "semantic_hash": ""
   },
   "apps/pedidos/__init__.py": {
@@ -798,9 +798,9 @@
     "semantic_hash": ""
   },
   ".agents/CONTEXT.md": {
-    "mtime": 1792514812.3565328,
-    "seen": 1792514818.5226493,
-    "ast_hash": "8ec0bc2695fe7dd57021eddd2d731459",
+    "mtime": 1792515259.4482515,
+    "seen": 1792515264.244675,
+    "ast_hash": "f862da83e13a3fb2c19472eec9237067",
     "semantic_hash": ""
   },
   ".agents/DESIGN.md": {
@@ -816,9 +816,9 @@
     "semantic_hash": ""
   },
   ".agents/PROCEDURE.md": {
-    "mtime": 1792514812.3553016,
-    "seen": 1792514818.5226493,
-    "ast_hash": "316f274cf790d7b436c6328bcfb6d47f",
+    "mtime": 1792515259.4482515,
+    "seen": 1792515264.244675,
+    "ast_hash": "75aa5cbef7377b4dc15b03f49cead6ce",
     "semantic_hash": ""
   },
   "templates/abonos/form_abono.html": {
@@ -1074,9 +1074,9 @@
     "semantic_hash": "4987f048cbd87edeb2c99fc090b5d080"
   },
   "templates/logistica/mi_ruta_hoy.html": {
-    "mtime": 1792513145.491232,
-    "seen": 1792513625.2351482,
-    "ast_hash": "3532c66a2f5f91c2c47b5949487f0e65",
+    "mtime": 1792515136.8675354,
+    "seen": 1792515264.244675,
+    "ast_hash": "b9f0a699f9f328f0e5fc5545396c80f2",
     "semantic_hash": ""
   },
   "templates/logistica/planificar_reparto.html": {
@@ -1086,9 +1086,9 @@
     "semantic_hash": ""
   },
   "templates/logistica/registrar_regreso.html": {
-    "mtime": 1792513128.1357858,
-    "seen": 1792513625.2351482,
-    "ast_hash": "52899d76bb6fb661e79724d4fc296780",
+    "mtime": 1792514977.7962582,
+    "seen": 1792515264.244675,
+    "ast_hash": "e1a1567e5135994ea6e8e8edb04d5a36",
     "semantic_hash": ""
   },
   "templates/logistica/venta_calle.html": {
@@ -1272,9 +1272,9 @@
     "semantic_hash": ""
   },
   "apps/pedidos/services.py": {
-    "mtime": 1792514466.7365637,
-    "seen": 1792514818.5226493,
-    "ast_hash": "c4735a797dd6edb91f57b1563ecdf1e7",
+    "mtime": 1792514878.056341,
+    "seen": 1792515264.244675,
+    "ast_hash": "ebc47dc306988ff644292c619aa424f9",
     "semantic_hash": ""
   },
   "apps/permisos/context_processors.py": {
@@ -1320,9 +1320,9 @@
     "semantic_hash": ""
   },
   ".claude/skills/verificar-cambios/SKILL.md": {
-    "mtime": 1792514812.3575354,
-    "seen": 1792514818.5226493,
-    "ast_hash": "697c81328f3107604f021f0a18602232",
+    "mtime": 1792515259.4482515,
+    "seen": 1792515264.244675,
+    "ast_hash": "c619dd276e2ef77d05aa56e8a841b5de",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -1398,9 +1398,9 @@
     "semantic_hash": ""
   },
   "skills-claude/verificar-cambios/SKILL.md": {
-    "mtime": 1792514812.3575354,
-    "seen": 1792514818.5226493,
-    "ast_hash": "697c81328f3107604f021f0a18602232",
+    "mtime": 1792515259.4499931,
+    "seen": 1792515264.244675,
+    "ast_hash": "c619dd276e2ef77d05aa56e8a841b5de",
     "semantic_hash": ""
   },
   "templates/404.html": {

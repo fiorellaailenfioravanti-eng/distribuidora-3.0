@@ -20,6 +20,7 @@ urlpatterns = [
     path('parada/<int:pk>/eliminar/',    views.eliminar_parada,         name='eliminar_parada'),
     path('parada/<int:pk>/estado/',      views.actualizar_estado_entrega, name='actualizar_estado_entrega'),
     path('parada/<int:pk>/pedido/',      views.pedido_parada,           name='pedido_parada'),
+    path('parada/<int:pk>/confirmar/',   views.confirmar_entrega,       name='confirmar_entrega'),
     path('<int:pk>/parada/pedido/',      views.agregar_pedido_parada,   name='agregar_pedido_parada'),
 
     # ── Vista repartidor ───────────────────────────────────────

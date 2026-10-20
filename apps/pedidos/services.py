@@ -53,7 +53,7 @@ def metodo_pago_efectivo():
 
 
 @transaction.atomic
-def registrar_cobro(pedido, monto, metodo_pago=None):
+def registrar_cobro(pedido, monto, metodo_pago=None, referencia=''):
     """Registra un pago presencial **aprobado** (cobro en calle o en mostrador)."""
     metodo_pago = metodo_pago or metodo_pago_efectivo()
     if not pedido.total:
@@ -64,6 +64,7 @@ def registrar_cobro(pedido, monto, metodo_pago=None):
         monto=monto,
         metodo_pago=metodo_pago,
         estado_pago='Aprobado',
+        referencia_comprobante=referencia,
     )
 
 

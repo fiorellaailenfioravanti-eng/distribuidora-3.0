@@ -418,6 +418,14 @@ propios; los importa de `apps.empleados`. Se eliminaron las tablas
   en las paradas ajusta el stock del envase).
 - `marcar_estado` anota la hora en cada novedad (también «Reprogramado»).
 
+**Recorrido del repartidor (`/logistica/mi-ruta/`, mobile-first):** muestra las hojas de hoy y cualquier hoja en
+reparto. Siguiente parada destacada con «Cómo llegar» (Google Maps por coordenadas o dirección), «Llamar», nota de
+seguridad (RNF-02), lo que se entrega, el saldo a cobrar y los envases en préstamo del cliente. Cada parada se
+confirma en la tarjeta (`parada/<pk>/confirmar/`, `confirmar_entrega_en_calle`): **Entregado** (vacíos retirados +
+cobro total / parcial / a cuenta con fiado / no pagó) o **No se pudo** (motivo; reprogramar o cancelar). Totales del
+día (botellones, vacíos, efectivo a rendir) en `resumen_recorrido`, que también muestra la rendición en
+«Registrar regreso».
+
 - `Zona` con días de reparto (lunes…domingo) y `barrios` relacionados.
 - `Barrio` FK a `Zona`.
 - `Camion` (patente PK).

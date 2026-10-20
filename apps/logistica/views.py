@@ -17,9 +17,11 @@ from .services import (
     botellones_por_producto, clientes_frecuentes_de_zona, direccion_en_zona, entregados_por_producto,
     envase_de_reparto, envases_retirados_en_hoja, fijar_pedido_de_parada, pedidos_candidatos,
     productos_de_reparto, renumerar_paradas,
+    confirmar_entrega_en_calle, resumen_recorrido, MOTIVOS_NO_ENTREGA,
 )
 from apps.clientes.models import DireccionEntrega
 from apps.permisos.roles import (
+    es_repartidor_asignado,
     es_admin_o_vendedor,
     es_repartidor,
     es_admin_vendedor_o_repartidor,
@@ -394,33 +396,132 @@ def actualizar_estado_entrega(request, pk):
 # ─────────────────────────────────────────────────────────────
 # MI RUTA HOY — Vista para repartidor
 # ─────────────────────────────────────────────────────────────
+def _link_mapa(direccion, texto):
+    """Link a Google Maps: por coordenadas si las hay, si no por la dirección."""
+    from urllib.parse import quote
+    destino = (direccion.coordenadas if direccion is not None and direccion.coordenadas
+               else f'{texto}, Resistencia, Chaco')
+    return f'https://www.google.com/maps/dir/?api=1&destination={quote(destino)}'
+
+
+def _ficha_de_parada(parada, user):
+    """Lo que el repartidor necesita ver de cada parada en la calle."""
+    cliente = parada.cliente or (parada.pedido.cliente if parada.pedido_id else None)
+    telefono = cliente.telefonos.order_by('-es_principal').first() if cliente else None
+    pedido = parada.pedido
+    return {
+        'parada': parada,
+        'cliente': cliente,
+        'telefono': telefono,
+        'mapa': _link_mapa(parada.direccion_entrega, parada.direccion_texto),
+        'items': list(pedido.detalles.select_related('producto')) if pedido else [],
+        'saldo': pedido.saldo_pendiente() if pedido else 0,
+        'pagado': pedido.esta_pagado() if pedido else False,
+        'puede_fiar': bool(cliente and cliente.permite_fiado),
+        'nota_seguridad': (parada.direccion_entrega.desc_seguridad
+                           if parada.direccion_entrega_id and puede_ver_nota_seguridad(user, parada.direccion_entrega)
+                           else ''),
+    }
+
+
 @login_required
 def mi_ruta_hoy(request):
+    """Recorrido del día del repartidor: confirma cada entrega a medida que avanza."""
     if not (es_repartidor(request.user) or es_admin_o_vendedor(request.user)):
         messages.error(request, 'No tenés permiso para acceder a esta sección.')
         return redirect('inicio')
 
     hoy = timezone.localdate()
-    ruta = None
-    detalles = []
-
+    es_admin = es_admin_o_vendedor(request.user)
     empleado = obtener_empleado(request.user)
+
+    # Las de hoy y cualquier hoja en reparto (el camión ya salió aunque sea de otra fecha).
+    from django.db.models import Q
+    visibles = HojaRuta.objects.exclude(estado='Cerrada').select_related('zona', 'camion', 'empleado')
+    if not es_admin:
+        visibles = visibles.filter(empleado=empleado) if empleado else HojaRuta.objects.none()
+    hojas_hoy = list(visibles.filter(Q(fecha=hoy) | Q(estado='Confirmada')).order_by('-estado', 'fecha', 'id_ruta'))
+
+    pedida = _int_o_none(request.GET.get('hoja'))
+    ruta = next((h for h in hojas_hoy if h.pk == pedida), None)
+    if ruta is None and pedida:  # vista previa de un recorrido próximo
+        ruta = visibles.filter(pk=pedida).first()
+    if ruta is None:
+        ruta = next((h for h in hojas_hoy if h.estado == 'Confirmada'), hojas_hoy[0] if hojas_hoy else None)
+
+    pendientes, hechas, resumen = [], [], None
+    if ruta is not None:
+        for parada in ruta.detalles.select_related(
+                'pedido__cliente', 'cliente', 'direccion_entrega').order_by('orden', 'id_detalle'):
+            ficha = _ficha_de_parada(parada, request.user)
+            (pendientes if parada.estado == 'Pendiente' else hechas).append(ficha)
+        resumen = resumen_recorrido(ruta)
+
+    proximas = []
     if empleado is not None:
-        ruta = HojaRuta.objects.filter(
-            empleado=empleado,
-            fecha=hoy
-        ).select_related('camion', 'ruta_reparto__zona').first()
+        proximas = [h for h in HojaRuta.objects.filter(empleado=empleado, fecha__gt=hoy)
+                    .exclude(estado='Cerrada').select_related('zona').order_by('fecha')[:6] if h not in hojas_hoy][:5]
 
-        if ruta:
-            detalles = ruta.detalles.all()
+    from apps.pedidos.models import MetodoPago
+    return render(request, 'logistica/mi_ruta_hoy.html', {
+        'ruta': ruta,
+        'hojas_hoy': hojas_hoy,
+        'pendientes': pendientes,
+        'hechas': hechas,
+        'resumen': resumen,
+        'proximas': proximas,
+        'hoy': hoy,
+        'es_admin': es_admin,
+        'motivos': MOTIVOS_NO_ENTREGA,
+        'metodos_cobro': sorted(
+            MetodoPago.objects.filter(activo=True, codigo__in=['EFECTIVO', 'TRANSFERENCIA', 'MERCADOPAGO', 'BILLETERA']),
+            key=lambda m: ['EFECTIVO', 'TRANSFERENCIA', 'MERCADOPAGO', 'BILLETERA'].index(m.codigo)),
+    })
 
-    contexto = {
-        'ruta':    ruta,
-        'detalles': detalles,
-        'hoy':     hoy,
-        'paradas_con_nota_visible': _ids_de_paradas_con_nota(request.user, detalles),
-    }
-    return render(request, 'logistica/mi_ruta_hoy.html', contexto)
+
+@login_required
+def confirmar_entrega(request, pk):
+    """El repartidor registra la entrega (o el problema) de una parada desde su recorrido."""
+    from decimal import Decimal, InvalidOperation
+    from django.core.exceptions import ValidationError
+    from apps.pedidos.models import MetodoPago
+
+    parada = get_object_or_404(DetalleHojaRuta.objects.select_related('hoja_ruta', 'pedido'), id_detalle=pk)
+    destino = reverse('apps.logistica:mi_ruta_hoy') + f'?hoja={parada.hoja_ruta_id}'
+    if not (es_admin_o_vendedor(request.user) or es_repartidor_asignado(request.user, parada.hoja_ruta)):
+        messages.error(request, 'Esta parada no es de tu recorrido.')
+        return redirect('apps.logistica:mi_ruta_hoy')
+    if request.method != 'POST':
+        return redirect(destino)
+
+    post = request.POST
+    try:
+        monto = Decimal(post.get('monto') or '0')
+    except InvalidOperation:
+        monto = Decimal('0')
+    try:
+        confirmar_entrega_en_calle(
+            parada,
+            entregado=post.get('resultado') == 'entregado',
+            envases_retirados=_int_o_none(post.get('envases_retirados')) or 0,
+            envases_vendidos=_int_o_none(post.get('envases_vendidos')) or 0,
+            cobro=post.get('cobro') or 'ninguno',
+            monto=monto,
+            metodo_pago=MetodoPago.objects.filter(pk=_int_o_none(post.get('metodo_pago'))).first(),
+            motivo=post.get('motivo') or '',
+            reprogramar=post.get('accion') != 'cancelar',
+            nota=(post.get('nota') or '').strip(),
+        )
+    except ValidationError as error:
+        messages.error(request, ' '.join(error.messages))
+        return redirect(destino)
+
+    parada.refresh_from_db()
+    if parada.estado == 'Entregado':
+        messages.success(request, f'✔ Entregado a {parada.cliente_nombre}.')
+    else:
+        messages.warning(request, f'{parada.cliente_nombre}: {parada.estado.lower()}.')
+    return redirect(destino)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -804,6 +905,7 @@ def registrar_regreso_ruta(request, pk):
         'vacios_retirados': envases_retirados_en_hoja(ruta),
         'envases_vendidos': sum(p.envases_vendidos for p in paradas),
         'paradas_pendientes': [p for p in paradas if p.estado == 'Pendiente'],
+        'resumen': resumen_recorrido(ruta),
     })
 
 

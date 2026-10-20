@@ -589,3 +589,91 @@ class HojaDeRutaUXTests(TestCase):
                                f'producto_frecuente_{self.cliente.pk}': self.bidon.pk})
         hoja = HojaRuta.objects.get(fecha=date(2026, 10, 22))
         self.assertEqual((hoja.empleado, hoja.camion, hoja.total_botellones()), (self.chofer, self.camion, 3))
+
+
+
+class RecorridoRepartidorTests(TestCase):
+    """El repartidor confirma cada entrega desde su recorrido del día."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from django.contrib.auth.models import Group
+        from apps.clientes.models import TelefonoContacto
+        from apps.empleados.models import Empleado, RolEmpleado
+        from apps.productos.models import Producto
+        from .services import agregar_parada
+        Usuario = get_user_model()
+        self.hoy = timezone.localdate()
+        self.usuario = Usuario.objects.create_user('chofer', 'ch@x.com', 'Agua-Lluvia-2026')
+        self.usuario._es_empleado = True
+        rol = RolEmpleado.objects.create(nombre='Chofer', grupo_permisos='Repartidor')
+        self.empleado = Empleado.objects.create(usuario=self.usuario, nombre='Ramón', apellido='Acosta', dni='9', rol=rol)
+        zona = Zona.objects.create(nombre='Centro', dias_reparto='0,1,2,3,4,5,6')
+        barrio = Barrio.objects.create(nombre='Centro', zona=zona)
+        envase = Producto.objects.create(nombre='Envase', descripcion='', precio=Decimal('9000'), stock=50, es_envase=True)
+        self.bidon = Producto.objects.create(nombre='Bidón 20 L', descripcion='', precio=Decimal('3000'), stock=40,
+                                             es_botellon=True, es_retornable=True, envase=envase)
+        self.cliente = Cliente.objects.create(nombre='Ana', apellido='Paz', tipo_cliente='Premium')
+        TelefonoContacto.objects.create(cliente=self.cliente, numero='3624111111', desc_relacion='Titular', es_principal=True)
+        direccion = DireccionEntrega.objects.create(cliente=self.cliente, calle='Mitre', altura='10', barrio=barrio,
+                                                    desc_seguridad='Perro suelto', coordenadas='-27.45,-58.98')
+        self.hoja = HojaRuta.objects.create(fecha=self.hoy, zona=zona, empleado=self.empleado)
+        self.parada = agregar_parada(self.hoja, self.cliente, direccion, {self.bidon.pk: 2})
+        confirmar_hoja(self.hoja, None, [{'producto_id': self.bidon.pk, 'cantidad': 2}])
+        self.client.force_login(self.usuario)
+        self.url = reverse('apps.logistica:confirmar_entrega', args=[self.parada.pk])
+
+    def test_recorrido_muestra_la_siguiente_parada_con_mapa_telefono_y_nota(self):
+        respuesta = self.client.get(reverse('apps.logistica:mi_ruta_hoy'))
+        self.assertContains(respuesta, 'Siguiente parada')
+        self.assertContains(respuesta, 'tel:3624111111')
+        self.assertContains(respuesta, 'google.com/maps')
+        self.assertContains(respuesta, 'Perro suelto')  # RNF-02: es el repartidor asignado
+        self.assertContains(respuesta, '$6000')
+
+    def test_entregado_y_pagado(self):
+        efectivo = MetodoPago.objects.get(codigo='EFECTIVO')
+        self.client.post(self.url, {'resultado': 'entregado', 'envases_retirados': 2, 'cobro': 'total',
+                                    'metodo_pago': efectivo.pk})
+        self.parada.refresh_from_db()
+        self.assertEqual(self.parada.estado, 'Entregado')
+        self.assertTrue(self.parada.pedido.esta_pagado())
+        self.cliente.refresh_from_db()
+        self.assertEqual(self.cliente.bidones_prestados, 0)  # +2 prestados, −2 retirados
+        from .services import resumen_recorrido
+        self.assertEqual(resumen_recorrido(self.hoja)['efectivo'], Decimal('6000'))
+
+    def test_pago_parcial_y_a_cuenta(self):
+        efectivo = MetodoPago.objects.get(codigo='EFECTIVO')
+        self.client.post(self.url, {'resultado': 'entregado', 'envases_retirados': 0, 'cobro': 'parcial',
+                                    'monto': '2000', 'metodo_pago': efectivo.pk})
+        pedido = self.parada.pedido
+        self.assertEqual(pedido.saldo_pendiente(), Decimal('4000'))
+        self.client.post(self.url, {'resultado': 'entregado', 'envases_retirados': 0, 'cobro': 'cuenta'})
+        self.assertTrue(pedido.esta_pagado())
+        self.assertEqual(self.cliente.cuenta_corriente.saldo, Decimal('4000'))
+
+    def test_no_se_pudo_entregar(self):
+        self.client.post(self.url, {'resultado': 'problema', 'motivo': 'No había nadie', 'accion': 'reprogramar'})
+        self.parada.refresh_from_db()
+        self.assertEqual(self.parada.estado, 'Reprogramado')
+        self.assertIn('No había nadie', self.parada.nota_entrega)
+        self.assertIsNotNone(self.parada.hora_registro)
+        self.assertEqual(self.parada.pedido.total_pagado(), 0)
+
+    def test_otro_repartidor_no_puede_confirmar(self):
+        from django.contrib.auth import get_user_model
+        otro = get_user_model().objects.create_user('otro', 'o@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(otro)
+        self.client.post(self.url, {'resultado': 'entregado', 'cobro': 'ninguno'})
+        self.parada.refresh_from_db()
+        self.assertEqual(self.parada.estado, 'Pendiente')
+
+    def test_hoja_en_borrador_no_admite_entregas(self):
+        from .services import agregar_parada
+        borrador = HojaRuta.objects.create(fecha=self.hoy, zona=self.hoja.zona, empleado=self.empleado)
+        parada = agregar_parada(borrador, self.cliente, self.parada.direccion_entrega, {self.bidon.pk: 1})
+        self.client.post(reverse('apps.logistica:confirmar_entrega', args=[parada.pk]),
+                         {'resultado': 'entregado', 'cobro': 'ninguno'})
+        parada.refresh_from_db()
+        self.assertEqual(parada.estado, 'Pendiente')

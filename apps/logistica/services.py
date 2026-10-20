@@ -722,7 +722,92 @@ def crear_venta_calle(hoja, datos):
     )
 
     if total > 0:
-        registrar_cobro(pedido, total, metodo)
+        registrar_cobro(pedido, total, metodo, referencia=f'Cobro en calle — venta, hoja #{hoja.pk}')
 
     sincronizar_bidones_de_parada(parada)
     return parada
+
+
+
+# ────────────────────────────────────────────────
+# RECORRIDO DEL REPARTIDOR
+# ────────────────────────────────────────────────
+MOTIVOS_NO_ENTREGA = [
+    ('No había nadie', 'No había nadie'),
+    ('Dirección incorrecta', 'Dirección incorrecta o no encontrada'),
+    ('Rechazó el pedido', 'El cliente rechazó el pedido'),
+    ('Sin acceso', 'No se pudo acceder (portón, perro, etc.)'),
+    ('Otro', 'Otro motivo'),
+]
+
+FORMAS_DE_COBRO = ('total', 'parcial', 'cuenta', 'ninguno')
+
+
+@transaction.atomic
+def confirmar_entrega_en_calle(parada, entregado, *, envases_retirados=0, envases_vendidos=0,
+                               cobro='ninguno', monto=None, metodo_pago=None, motivo='', reprogramar=True,
+                               nota=''):
+    """Registra lo que pasó en una parada, como lo informa el repartidor.
+
+    - `entregado=True`: la parada pasa a Entregado (envases al historial y al
+      stock) y se registra el cobro: `total` (el saldo del pedido), `parcial`
+      (`monto`), `cuenta` (a la cuenta corriente, sólo con fiado) o `ninguno`.
+    - `entregado=False`: Reprogramado o Cancelado según `reprogramar`, con el
+      motivo en la nota.
+
+    Corregir una parada ya registrada no vuelve a cobrar lo que ya se cobró.
+    """
+    from django.core.exceptions import ValidationError
+    from apps.pedidos.models import CODIGO_CUENTA_CORRIENTE, MetodoPago
+    from apps.pedidos.services import registrar_pago_manual
+
+    if parada.hoja_ruta.estado != 'Confirmada':
+        raise ValidationError('La hoja no está en reparto: no se pueden registrar entregas.')
+
+    if not entregado:
+        texto = ' — '.join(t for t in (motivo, nota) if t)
+        return registrar_entrega(parada, 'Reprogramado' if reprogramar else 'Cancelado',
+                                 envases_retirados=envases_retirados, envases_vendidos=0, nota=texto)
+
+    registrar_entrega(parada, 'Entregado', envases_retirados=envases_retirados,
+                      envases_vendidos=envases_vendidos, nota=nota)
+
+    pedido = parada.pedido
+    if pedido is None or cobro not in FORMAS_DE_COBRO or cobro == 'ninguno':
+        return parada
+    saldo = pedido.saldo_pendiente()
+    if saldo <= 0:
+        return parada
+    if cobro == 'total':
+        importe, metodo = saldo, metodo_pago
+    elif cobro == 'parcial':
+        importe, metodo = monto, metodo_pago
+    else:  # cuenta
+        importe, metodo = saldo, MetodoPago.objects.get(codigo=CODIGO_CUENTA_CORRIENTE)
+    metodo = metodo or MetodoPago.objects.get(codigo='EFECTIVO')
+    registrar_pago_manual(pedido, importe, metodo, referencia=f'Cobro en calle — hoja #{parada.hoja_ruta_id}')
+    return parada
+
+
+def resumen_recorrido(hoja):
+    """Totales del día para el repartidor y para rendir al volver."""
+    from django.db.models import Sum
+    from apps.pedidos.models import CODIGO_CUENTA_CORRIENTE, PagoPedido
+
+    paradas = list(hoja.detalles.all())
+    pagos = PagoPedido.objects.filter(
+        pedido__paradas__hoja_ruta=hoja, estado_pago='Aprobado',
+        referencia_comprobante__startswith='Cobro en calle',
+    ).exclude(metodo_pago__codigo=CODIGO_CUENTA_CORRIENTE)
+    por_metodo = {f['metodo_pago__nombre']: f['total']
+                  for f in pagos.values('metodo_pago__nombre').annotate(total=Sum('monto'))}
+    return {
+        'pendientes': sum(1 for p in paradas if p.estado == 'Pendiente'),
+        'hechas': sum(1 for p in paradas if p.estado != 'Pendiente'),
+        'botellones_entregados': sum(p.cantidad_bidones for p in paradas if p.estado == 'Entregado'),
+        'botellones_total': sum(p.cantidad_bidones for p in paradas),
+        'vacios_retirados': sum(p.envases_retirados for p in paradas),
+        'cobrado_por_metodo': por_metodo,
+        'cobrado_total': sum(por_metodo.values()),
+        'efectivo': por_metodo.get('Efectivo en Entrega', 0),
+    }

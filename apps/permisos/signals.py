@@ -37,6 +37,10 @@ MODELOS_VENDEDOR = [
     ('logistica', 'rutareparto'),
     ('logistica', 'hojaruta'),
     ('logistica', 'detallehojaruta'),
+    ('clientes', 'movimientobidon'),
+    ('promociones', 'promocion'),
+    ('promociones', 'comprapromocion'),
+    ('promociones', 'consumopromocion'),
 ]
 
 # El Repartidor solo necesita registrar entregas en campo y ver su hoja de ruta.

@@ -240,10 +240,10 @@
     "semantic_hash": "a00eb2fec7fe08f2e8c144e347196556"
   },
   "apps/clientes/admin.py": {
-    "mtime": 1792508323.7334268,
-    "seen": 1792508459.814965,
-    "ast_hash": "8f01541a4fbf32fb938af9fd4e92d756",
-    "semantic_hash": "8f01541a4fbf32fb938af9fd4e92d756"
+    "mtime": 1792511319.2159486,
+    "seen": 1792511798.5807722,
+    "ast_hash": "0a3ee5afb396f7de7878e23a7e8a7866",
+    "semantic_hash": ""
   },
   "apps/clientes/apps.py": {
     "mtime": 1790803370.825077,
@@ -252,9 +252,9 @@
     "semantic_hash": "8b30f647a9d1755e740dcb6942fa2515"
   },
   "apps/clientes/forms.py": {
-    "mtime": 1792508188.4570484,
-    "seen": 1792508459.814965,
-    "ast_hash": "edb261e2420c7d2c1c1d861fd87ad88c",
+    "mtime": 1792511337.601167,
+    "seen": 1792511798.5807722,
+    "ast_hash": "eb238e1f6fad9b5f4075a28ef36f61d5",
     "semantic_hash": ""
   },
   "apps/clientes/migrations/0001_initial.py": {
@@ -300,9 +300,9 @@
     "semantic_hash": "fddbb88f6f242d772f5f7b171bc45323"
   },
   "apps/clientes/models.py": {
-    "mtime": 1792510580.375916,
-    "seen": 1792510827.763825,
-    "ast_hash": "57f15fd9947b6b1709250c83b7a30f03",
+    "mtime": 1792511284.1066856,
+    "seen": 1792511798.5807722,
+    "ast_hash": "2be6011cc4d1e83bc5075fabac98838b",
     "semantic_hash": ""
   },
   "apps/clientes/signals.py": {
@@ -312,21 +312,21 @@
     "semantic_hash": ""
   },
   "apps/clientes/tests.py": {
-    "mtime": 1792510681.5613894,
-    "seen": 1792510827.763825,
-    "ast_hash": "69fa30fe862bccedcd498d1c692b9fb4",
+    "mtime": 1792511412.2563357,
+    "seen": 1792511798.5807722,
+    "ast_hash": "435cc044bb4cd9ea48430d30dea0d059",
     "semantic_hash": ""
   },
   "apps/clientes/urls.py": {
-    "mtime": 1790803370.8287294,
-    "seen": 1792492789.023524,
-    "ast_hash": "419a2064dda7822425502e09165885bc",
-    "semantic_hash": "419a2064dda7822425502e09165885bc"
+    "mtime": 1792511337.6394935,
+    "seen": 1792511798.5807722,
+    "ast_hash": "07bfb4780037602c7b54f18f028eb1d4",
+    "semantic_hash": ""
   },
   "apps/clientes/views.py": {
-    "mtime": 1792510681.5613894,
-    "seen": 1792510827.763825,
-    "ast_hash": "4282552cf9825363df4fbc73a911f986",
+    "mtime": 1792511345.7018354,
+    "seen": 1792511798.5807722,
+    "ast_hash": "11a374b6606ad6ceaf1e3cbbc459e8c2",
     "semantic_hash": ""
   },
   "apps/cuentas/__init__.py": {
@@ -467,12 +467,6 @@
     "ast_hash": "ef5f3429b5ecfaf4dd1705d2346fc66b",
     "semantic_hash": "ef5f3429b5ecfaf4dd1705d2346fc66b"
   },
-  "apps/logistica/management/commands/seed_logistica.py": {
-    "mtime": 1792491826.0246255,
-    "seen": 1792492789.023524,
-    "ast_hash": "7d9bf74050a621580aba4d6205eca6f1",
-    "semantic_hash": ""
-  },
   "apps/logistica/migrations/0001_initial.py": {
     "mtime": 1790803370.834452,
     "seen": 1792492789.023524,
@@ -534,15 +528,15 @@
     "semantic_hash": "39c266f2389ea3a89c19c461ed898994"
   },
   "apps/logistica/services.py": {
-    "mtime": 1792510477.2937014,
-    "seen": 1792510827.763825,
-    "ast_hash": "24a30bc0ece7561e62b6aa0831824032",
+    "mtime": 1792511314.1945484,
+    "seen": 1792511798.5807722,
+    "ast_hash": "bdce3aa56011f95098f9955e12fdd8f1",
     "semantic_hash": ""
   },
   "apps/logistica/tests.py": {
-    "mtime": 1792510611.2241776,
-    "seen": 1792510827.763825,
-    "ast_hash": "0c9d5033652da7557221e712d3772d1e",
+    "mtime": 1792511729.3710747,
+    "seen": 1792511798.5807722,
+    "ast_hash": "aa4640be0345bc07c77301b69415c6ae",
     "semantic_hash": ""
   },
   "apps/logistica/urls.py": {
@@ -804,9 +798,9 @@
     "semantic_hash": ""
   },
   ".agents/CONTEXT.md": {
-    "mtime": 1792510778.8241827,
-    "seen": 1792510827.763825,
-    "ast_hash": "a58315e8254be65ebc70bb3736e3a76c",
+    "mtime": 1792511729.4104955,
+    "seen": 1792511798.5807722,
+    "ast_hash": "25766e44880ec8678d1417b58399123f",
     "semantic_hash": ""
   },
   ".agents/DESIGN.md": {
@@ -1320,9 +1314,9 @@
     "semantic_hash": ""
   },
   ".agents/PLAN_CIERRE.md": {
-    "mtime": 1792492773.1125965,
-    "seen": 1792492789.023524,
-    "ast_hash": "c18df5313f9f571568f86bbc6e32a3a6",
+    "mtime": 1792511729.4112868,
+    "seen": 1792511798.5807722,
+    "ast_hash": "52c8ce30931a9107e4834a0d90ed16cd",
     "semantic_hash": ""
   },
   ".claude/skills/verificar-cambios/SKILL.md": {
@@ -1491,6 +1485,30 @@
     "mtime": 1792510477.3147383,
     "seen": 1792510827.763825,
     "ast_hash": "e0612b1164a90337fab30df42b2cd3e7",
+    "semantic_hash": ""
+  },
+  "apps/clientes/migrations/0009_movimiento_bidon.py": {
+    "mtime": 1792511284.731559,
+    "seen": 1792511798.5807722,
+    "ast_hash": "dc8746e4a410194138e0e91dc613fc57",
+    "semantic_hash": ""
+  },
+  "apps/clientes/migrations/0010_saldo_inicial_bidones.py": {
+    "mtime": 1792511303.6491537,
+    "seen": 1792511798.5807722,
+    "ast_hash": "82ea6d7bb376c54829e5d7cce084e40b",
+    "semantic_hash": ""
+  },
+  "apps/clientes/services.py": {
+    "mtime": 1792511303.6957858,
+    "seen": 1792511798.5807722,
+    "ast_hash": "04e8af8b731fcb400ba172d117c167af",
+    "semantic_hash": ""
+  },
+  "apps/logistica/management/commands/seed_demo.py": {
+    "mtime": 1792511703.6874156,
+    "seen": 1792511798.5807722,
+    "ast_hash": "e11e588b538a03fdfd2b665608f23479",
     "semantic_hash": ""
   }
 }

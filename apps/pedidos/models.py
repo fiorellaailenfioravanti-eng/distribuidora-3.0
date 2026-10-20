@@ -140,6 +140,10 @@ class Pedido(models.Model):
             self.fecha_entrega = timezone.localdate()
             campos.append('fecha_entrega')
         self.save(update_fields=campos)
+        if nuevo_estado == 'Cancelado':
+            # RF-09: las unidades prepagas usadas vuelven al saldo (si no venció).
+            from apps.promociones.services import revertir_consumos
+            revertir_consumos(self)
         return True
 
     def total_pagado(self):

@@ -69,6 +69,11 @@
                         <i class="fa-solid fa-snowflake"></i> Abonos
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="{% url 'apps.promociones:listar_promociones' %}" class="sidebar-link {% if 'promociones' in request.resolver_match.view_name %}active{% endif %}">
+                        <i class="fa-solid fa-tags"></i> Promociones
+                    </a>
+                </li>
                 {% endif %}
                 {% if es_personal_interno %}
                 <li class="nav-item">
@@ -124,6 +129,9 @@
                     </li>
                     <li class="nav-item">
                         <a href="{% url 'apps.abonos:listar_abonos' %}" class="sidebar-link"><i class="fa-solid fa-snowflake"></i> Abonos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'apps.promociones:listar_promociones' %}" class="sidebar-link"><i class="fa-solid fa-tags"></i> Promociones</a>
                     </li>
                     {% endif %}
                     {% if es_personal_interno %}

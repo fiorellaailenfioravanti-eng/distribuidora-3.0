@@ -91,6 +91,7 @@ DISTRIBUIDORA-3.0/
 │   ├── empleados/                   # ✅ Empleados y roles (FUENTE ÚNICA del personal)
 │   ├── cuentas/                     # ✅ Cuentas corrientes, fiado y semaforización (RF-14)
 │   ├── abonos/                      # ✅ Alquiler de dispensers y facturación (RF-15)
+│   ├── promociones/                 # ✅ Packs prepagos y caducidad a 30 días (RF-09, RF-10)
 │   └── permisos/                    # ✅ Roles, sincronización rol→grupo, context processor
 ├── templates/
 ├── static/
@@ -469,6 +470,32 @@ class MovimientoCuenta(models.Model):
 **Vistas:** `listar_abonos`, `crear/editar/ver_abono`, `cambiar_estado_abono`,
 `generar_cargos`. URL base `/abonos/`.
 
+### Envases prestados (RF-08) ✅ — Fase 5A, en `apps.clientes`
+
+**Modelo `MovimientoBidon`:** `cliente`, `tipo` (`Prestamo`/`Devolucion`/`Venta`/`Ajuste`),
+`cantidad` (efecto con signo sobre el saldo), `fecha`, `pedido`, `parada`, `registrado_por`, `nota`.
+`Cliente.bidones_prestados` es la **suma del historial** (caché, decisión F-D2) y ya no se edita a mano.
+
+- `clientes/services.py::sincronizar_bidones_de_parada(parada)`: lo llaman `registrar_entrega` y
+  `crear_venta_calle`. Entregado → Préstamo de `cantidad_bidones`; vacíos retirados → Devolución;
+  envases vendidos → Venta. Reconcilia por parada (idempotente).
+- `registrar_movimiento_bidon(...)`: alta manual desde la ficha (`/clientes/<pk>/envases/movimiento/`);
+  no deja el saldo negativo salvo en el registro de campo.
+
+### Módulo `apps.promociones` ✅ — Fase 5B/5C (RF-09, RF-10)
+
+- **`Promocion`:** `nombre`, `producto`, `cant_paga`, `cant_lleva`, `precio` (del pack), `dias_validez` (30), `activa`.
+- **`CompraPromocion`:** pack de un cliente; `unid_totales` = `cant_lleva`, `unid_restantes`,
+  `fecha_caducidad` = compra + 30 días corridos, `estado` (`Vigente`/`Agotada`/`Vencida`), `pedido` del pago.
+- **`ConsumoPromocion`:** unidades usadas por cada pedido.
+- `services.py`: `vender_promocion` (cobro o cargo a cuenta, valida fiado), `consumir_saldo` (FIFO por
+  vencimiento; ignora lo vencido aunque no haya corrido el comando), `revertir_consumos` (al cancelar;
+  lo vencido no se reintegra, F-D5), `vencer_promociones`, `promociones_por_vencer`.
+- **Checkout web:** las unidades cubiertas van en un renglón a $0; si cubre todo, el pedido queda
+  `Confirmado` sin cobro. El checkout y «Mi perfil» muestran el saldo vigente.
+- Comando diario `python manage.py vencer_promociones`. Dashboard: alerta de packs que vencen en ≤ 5 días.
+- **Vistas:** `listar_promociones`, `crear/editar_promocion`, `vender_promocion` (desde la ficha del cliente).
+
 ---
 
 ### Frontend y Templates ✅
@@ -495,10 +522,10 @@ El nombre de usuario en la navbar es un **link** a `/clientes/mi-perfil/`.
 - [x] `apps.abonos`: alquiler de dispensers + facturación mensual (RF-15)
 - [ ] Resolver C-9 (RF-20 gastos por proveedor: dentro o fuera de alcance)
 
-### Fase 5 — Bidones y promociones prepago 🔴
-- [ ] Historial `MovimientoBidon` (entrada/salida) — reemplaza `bidones_prestados` (RF-08)
-- [ ] `Promocion` / saldo de promoción "Paga 3 Lleva 4" (RF-09)
-- [ ] Caducidad estricta a 30 días corridos (RF-10)
+### Fase 5 — Bidones y promociones prepago ✅
+- [x] Historial `MovimientoBidon` (entrada/salida) — `bidones_prestados` pasa a ser su saldo (RF-08)
+- [x] `Promocion` / saldo de promoción "Paga 3 Lleva 4" (RF-09)
+- [x] Caducidad estricta a 30 días corridos (RF-10)
 
 ### Fase 6 — Pagos parciales y pedido automático 🔴
 - [ ] Bloquear checkout con <2 teléfonos o 0 direcciones (RF-04)
@@ -654,6 +681,12 @@ Camion ← RutaReparto → Zona
 /abonos/<pk>/editar/           → editar_abono          [🔒 Admin/Vendedor]
 /abonos/<pk>/estado/           → cambiar_estado_abono  [🔒 Admin/Vendedor]
 /abonos/generar-cargos/        → generar_cargos        [🔒 Admin/Vendedor]
+
+/promociones/                  → listar_promociones    [🔒 Admin/Vendedor]
+/promociones/nueva/            → crear_promocion       [🔒 Admin/Vendedor]
+/promociones/<pk>/editar/      → editar_promocion      [🔒 Admin/Vendedor]
+/promociones/vender/<cliente>/ → vender_promocion      [🔒 Admin/Vendedor, POST]
+/clientes/<pk>/envases/movimiento/ → registrar_movimiento_bidon [🔒 Admin/Vendedor, POST]
 ```
 
 ---
@@ -707,7 +740,7 @@ Camion ← RutaReparto → Zona
 | Errores 500 en roles, rutas, zonas, direcciones, clientes y productos | 🟠 Alta | ✅ Resueltos (Fases 4.6.3 y 4.6.5) |
 | Una sola dirección por cliente vs RF-03 multidirección (H-39) | 🟠 Media | ✅ Resuelto (A-D4: varias direcciones) |
 | RNF-02 sin filtro por repartidor asignado | 🟠 Media | ✅ Resuelto (`puede_ver_nota_seguridad`) |
-| Cero tests | 🟠 Media | 🟢 Avanzado (128 tests; buscador sin suite propia) |
+| Cero tests | 🟠 Media | 🟢 Avanzado (160 tests; buscador sin suite propia) |
 | Carrito no descuenta stock ni genera Pedido | 🟠 Media | 🟡 Pedidos ya descuentan; falta reserva en carrito (RF-12) |
 | `celular1/celular2` en `Usuario` redundantes | 🟡 Baja | 🟡 Se migran vía señal |
 | `DetalleHojaRuta` no vinculado a `Pedido` | 🔴 Alta | ✅ Resuelto (Fase 3) |

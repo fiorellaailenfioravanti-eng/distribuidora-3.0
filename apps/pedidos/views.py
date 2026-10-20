@@ -88,10 +88,21 @@ def checkout(request):
     # `CheckoutForm` sin modificar la base.
     form = CheckoutForm(request.POST or None, cliente=cliente)
 
+    # RF-09: cuánto cubre el saldo prepago vigente del cliente.
+    from apps.promociones.services import saldo_vigente
+    cobertura = []
+    descuento = 0
+    for item in items:
+        cubiertas = min(item.cantidad, saldo_vigente(cliente, item.producto))
+        if cubiertas:
+            cobertura.append({'producto': item.producto, 'cantidad': cubiertas})
+            descuento += item.producto.precio * cubiertas
+
     contexto = {
         'carrito': carrito,
         'items': items,
-        'total_precio': carrito.total_precio(),
+        'cobertura_promocion': cobertura,
+        'total_precio': carrito.total_precio() - descuento,
         'cliente': cliente,
         'direcciones': direcciones,
         'form': form,
@@ -154,17 +165,41 @@ def confirmar_pedido(request):
     # 3. Crear DetallePedido. El stock NO se descuenta aquí: el descuento
     #    ocurre en logística al cargar el camión (confirmar la hoja de ruta),
     #    de modo que el regreso devuelva los sobrantes sin contar dos veces.
+    #    RF-09: las unidades cubiertas por un pack prepago vigente van en un
+    #    renglón a $0 y se descuentan del saldo (primero lo que vence antes).
+    from apps.promociones.services import consumir_saldo
+    unidades_promocion = 0
     for item in items:
-        DetallePedido.objects.create(
-            pedido=pedido,
-            producto=item.producto,
-            precio_unitario=item.producto.precio,
-            cantidad=item.cantidad,
-            subtotal=item.subtotal()
-        )
+        cubiertas = consumir_saldo(cliente, item.producto, item.cantidad, pedido)
+        unidades_promocion += cubiertas
+        if cubiertas:
+            DetallePedido.objects.create(
+                pedido=pedido, producto=item.producto, precio_unitario=0,
+                cantidad=cubiertas, subtotal=0,
+            )
+        restantes = item.cantidad - cubiertas
+        if restantes:
+            DetallePedido.objects.create(
+                pedido=pedido, producto=item.producto, precio_unitario=item.producto.precio,
+                cantidad=restantes, subtotal=item.producto.precio * restantes,
+            )
+    if unidades_promocion:
+        pedido.total = sum(d.subtotal for d in pedido.detalles.all())
+        pedido.save(update_fields=['total'])
 
     # 4. Vaciar Carrito
     carrito.items.all().delete()
+
+    # Pedido cubierto por completo con el saldo prepago: no hay nada que cobrar.
+    if pedido.total == 0:
+        pedido.estado = 'Confirmado'
+        pedido.save(update_fields=['estado'])
+        messages.success(
+            request,
+            f"¡Listo! Tu pedido #{pedido.id_pedido} se cubrió con tu promoción prepaga "
+            f"({unidades_promocion} unidades)."
+        )
+        return redirect('apps.pedidos:detalle_pedido', pk=pedido.id_pedido)
 
     # 5. Lógica según el método de pago elegido
     if metodo_pago.codigo in ['MERCADOPAGO', 'PAGO_VIRTUAL']:
@@ -173,7 +208,7 @@ def confirmar_pedido(request):
         try:
             sdk = mercadopago.SDK(MERCADOPAGO_ACCESS_TOKEN)
             mp_items = []
-            for detalle in pedido.detalles.all():
+            for detalle in pedido.detalles.filter(precio_unitario__gt=0):
                 mp_items.append({
                     "title": detalle.producto.nombre,
                     "quantity": int(detalle.cantidad),

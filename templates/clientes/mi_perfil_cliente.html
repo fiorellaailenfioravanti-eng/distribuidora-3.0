@@ -42,6 +42,17 @@
         </div>
     </div>
 
+    {% if saldos_promocion %}
+    <div class="alert alert-success rounded-4 border-0 shadow-sm">
+        <div class="fw-bold mb-1"><i class="fa-solid fa-tags me-2"></i>Tus promociones prepagas</div>
+        <ul class="mb-0 small">
+            {% for compra in saldos_promocion %}
+            <li>{{ compra.unid_restantes }} × {{ compra.promocion.producto.nombre }} disponibles hasta el {{ compra.fecha_caducidad|date:"d/m/Y" }}. Se descuentan solas en tu próximo pedido.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
     <!-- Tarjetas de resumen -->
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">

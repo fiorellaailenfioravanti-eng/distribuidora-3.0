@@ -11,6 +11,8 @@ from apps.pedidos.models import Pedido
 from django.core.exceptions import ValidationError
 
 from distribuidora.utils import normalizar_texto
+from apps.promociones.forms import VenderPromocionForm
+from apps.promociones.services import compras_vigentes
 from . import services as servicios_clientes
 from apps.permisos.roles import es_admin_o_vendedor, puede_ver_nota_seguridad
 
@@ -103,6 +105,9 @@ def ver_cliente(request, pk):
         'form_tel':            form_tel,
         'form_dir':            form_dir,
         'form_bidon':          MovimientoBidonForm(),
+        'form_promocion':      VenderPromocionForm(),
+        'compras_promocion':   cliente.compras_promocion.select_related('promocion').order_by('-fecha_compra', '-id_compra')[:10],
+        'saldos_promocion':    compras_vigentes(cliente),
         'movimientos_bidon':   movimientos_bidon,
         'es_personal':         es_personal,
         # Lista de IDs de dirección cuya nota de seguridad puede ver este usuario.
@@ -481,6 +486,7 @@ def mi_perfil_cliente(request):
         'telefonos':   telefonos,
         'direcciones': direcciones,
         'pedidos':     pedidos,
+        'saldos_promocion': compras_vigentes(cliente),
     })
 
 

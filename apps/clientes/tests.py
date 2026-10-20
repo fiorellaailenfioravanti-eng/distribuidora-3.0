@@ -128,3 +128,28 @@ class HistorialBidonesTests(TestCase):
         registrar_movimiento_bidon(self.cliente, 'Ajuste', -1, nota='Conteo físico')
         self.cliente.refresh_from_db()
         self.assertEqual(self.cliente.bidones_prestados, 1)
+
+
+class VistaMovimientoBidonTests(TestCase):
+    """RF-08: el vendedor registra envases desde la ficha; el cliente no puede."""
+
+    def setUp(self):
+        Usuario = get_user_model()
+        self.vendedor = Usuario.objects.create_user('vend', 'v@x.com', 'Agua-Lluvia-2026')
+        self.vendedor.groups.add(Group.objects.get(name='Vendedor'))
+        self.cliente = Cliente.objects.create(nombre='Ana', apellido='Paz')
+        self.url = reverse('apps.clientes:registrar_movimiento_bidon', args=[self.cliente.pk])
+
+    def test_vendedor_registra_y_la_ficha_lo_muestra(self):
+        self.client.force_login(self.vendedor)
+        self.client.post(self.url, {'tipo': 'Prestamo', 'cantidad': 3, 'nota': 'Retiró en el local'})
+        self.client.post(self.url, {'tipo': 'Devolucion', 'cantidad': 1})
+        self.cliente.refresh_from_db()
+        self.assertEqual(self.cliente.bidones_prestados, 2)
+        self.assertContains(self.client.get(reverse('apps.clientes:ver_cliente', args=[self.cliente.pk])), 'Retiró en el local')
+
+    def test_cliente_web_no_registra(self):
+        otro = get_user_model().objects.create_user('cli', 'c@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(otro)
+        self.client.post(self.url, {'tipo': 'Prestamo', 'cantidad': 3})
+        self.assertFalse(self.cliente.movimientos_bidon.exists())

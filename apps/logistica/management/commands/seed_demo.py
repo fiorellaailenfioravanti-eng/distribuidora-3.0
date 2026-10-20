@@ -13,7 +13,8 @@ Qué carga (todo con valores fijos, sin aleatoriedad):
   hojas de ruta confirmadas, entregas, cobros, envases (RF-08) y regreso del
   camión; pedidos pendientes para los próximos días; cuentas corrientes con
   deudas en los tres colores del semáforo (RF-14); abonos de dispensers con su
-  cargo mensual (RF-15); un feriado en el calendario.
+  cargo mensual (RF-15); packs prepagos vigentes, por vencer y vencidos
+  (RF-09/RF-10); un feriado en el calendario.
 
 Es idempotente: el catálogo, el personal y los clientes se buscan antes de
 crearse, y el historial sólo se genera si todavía no existe (marca: el pedido
@@ -50,6 +51,8 @@ from apps.logistica.services import (
 from apps.pedidos.models import DetallePedido, MetodoPago, PagoPedido, Pedido
 from apps.pedidos.services import registrar_cobro
 from apps.productos.models import Categoria, Producto
+from apps.promociones.models import CompraPromocion, Promocion
+from apps.promociones.services import consumir_saldo, vencer_promociones, vender_promocion
 
 CLAVE_DEMO = 'Demo-Aquadelluvia-2026'
 MARCA_HISTORIAL = '[demo]'
@@ -177,6 +180,7 @@ class Command(BaseCommand):
                 self._pedidos_proximos()
                 self._cuentas_corrientes()
                 self._abonos()
+            self._promociones()
         self._resumen()
 
     # ── Catálogo ──────────────────────────────────────────────
@@ -466,6 +470,36 @@ class Command(BaseCommand):
                 'estado': 'Activo', 'observaciones': 'Incluye mantenimiento y sanitización trimestral.'})
         generados, omitidos = generar_cargos_mensuales(self.hoy.year, self.hoy.month)
         self.stdout.write(f'  Abonos: {len(generados)} cargos mensuales generados, {len(omitidos)} omitidos.')
+
+    # ── Promociones prepagas (RF-09 / RF-10) ──────────────────
+    def _promociones(self):
+        bidon = self.productos['Bidón 20 L agua de mesa']
+        soda = self.productos['Sifón de soda 1,5 L']
+        p_bidon, _ = Promocion.objects.get_or_create(nombre='Paga 3, lleva 4 — Bidón 20 L', defaults={
+            'producto': bidon, 'cant_paga': 3, 'cant_lleva': 4, 'precio': bidon.precio * 3,
+            'descripcion': 'Pack prepago: se retira en entregas parciales dentro de los 30 días.'})
+        p_soda, _ = Promocion.objects.get_or_create(nombre='Paga 5, lleva 6 — Sifón de soda', defaults={
+            'producto': soda, 'cant_paga': 5, 'cant_lleva': 6, 'precio': soda.precio * 5})
+        if CompraPromocion.objects.exists():
+            return
+        # Vigente con una entrega ya usada, una por vencer (alerta) y una vencida.
+        compras = [
+            (self.clientes[0], p_bidon, self.hoy - timedelta(days=6), 1),
+            (self.clientes[11], p_bidon, self.hoy - timedelta(days=27), 2),
+            (self.clientes[3], p_soda, self.hoy - timedelta(days=12), 0),
+            (self.clientes[8], p_bidon, self.hoy - timedelta(days=40), 1),
+        ]
+        for cliente, promo, fecha, usadas in compras:
+            compra = vender_promocion(cliente, promo, metodo_pago=self.metodos['EFECTIVO'], fecha=fecha)
+            Pedido.objects.filter(pk=compra.pedido_id).update(fecha_pedido=_a_dt(fecha, 11))
+            if usadas:
+                pedido = self._crear_pedido(cliente, [], fecha + timedelta(days=2), estado='Entregado',
+                                            origen='ADMIN', nota='Retiro de promoción prepaga')
+                consumir_saldo(cliente, promo.producto, usadas, pedido, fecha=fecha + timedelta(days=2))
+                DetallePedido.objects.create(pedido=pedido, producto=promo.producto, precio_unitario=0,
+                                             cantidad=usadas, subtotal=0)
+        vencidas = vencer_promociones()
+        self.stdout.write(f'  Promociones: 2 en catálogo, {len(compras)} packs vendidos ({vencidas} vencido).')
 
     def _resumen(self):
         self.stdout.write(self.style.SUCCESS(

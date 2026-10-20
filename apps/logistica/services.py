@@ -428,6 +428,8 @@ def registrar_entrega(parada, estado, envases_retirados=0, envases_vendidos=0, n
         elif estado == 'Cancelado':
             pedido.estado = 'Cancelado'
             pedido.save(update_fields=['estado'])
+            from apps.promociones.services import revertir_consumos
+            revertir_consumos(pedido)
 
     # RF-08: historial de envases del cliente (idempotente por parada).
     sincronizar_bidones_de_parada(parada)

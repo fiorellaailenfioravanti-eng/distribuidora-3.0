@@ -19,7 +19,8 @@
 | **Fase 4** | Cuentas corrientes, morosidad y abonos (RF-14, RF-15, RF-05) | ✅ **Completada** |
 | **Fase 4.5** | Commits de Fases 1–4, `db.sqlite3` fuera de git, limpieza de docs | ✅ **Completada** |
 | **Fase 4.6** | Correcciones de la auditoría ([`AUDITORIA.md`](AUDITORIA.md)): pagos, roles, errores 500, higiene | ✅ **Completada** |
-| **Fase 5–7** | Bidones/promociones (RF-08/09/10), pagos parciales/RF-18, QA final | 🔴 **Pendiente** — plan detallado en [`PLAN_CIERRE.md`](PLAN_CIERRE.md) |
+| **Fase 5** | Historial de envases, promociones prepagas y caducidad (RF-08/09/10) + `seed_demo` | ✅ **Completada** |
+| **Fase 6–7** | Pagos parciales (vista de cobro), RF-18, QA final | 🔴 **Pendiente** — plan detallado en [`PLAN_CIERRE.md`](PLAN_CIERRE.md) |
 
 **Hallazgos cerrados:** H-1, H-2, H-3, H-4, H-5, H-6, H-7, H-8, H-9, H-15 y H-16.
 **Hallazgos abiertos:** H-10 (suite parcial), H-13/H-14 (datos/README); de la auditoría
@@ -36,7 +37,7 @@ y la restricción por asignación.
 ```powershell
 .\venv\Scripts\python.exe manage.py check --settings=distribuidora.settings.local          # 0 issues
 .\venv\Scripts\python.exe manage.py makemigrations --check --dry-run --settings=...local   # No changes detected
-.\venv\Scripts\python.exe manage.py test --settings=distribuidora.settings.local            # 128 OK
+.\venv\Scripts\python.exe manage.py test --settings=distribuidora.settings.local            # 160 OK
 .\venv\Scripts\python.exe manage.py check --deploy --settings=distribuidora.settings.production  # 0 issues
 ```
 
@@ -116,9 +117,9 @@ Leyenda: ✅ completo · 🟡 parcial · 🔴 no implementado · ⚠️ implemen
 | RF-05 | Normal/Premium; fiado para Premium (+ excepción autorizada, A-D6) | `clientes/models.py::Cliente.save`; `cuentas/services.py` | ✅ | H-41 ✅ (al bajar de Premium se quita el fiado) |
 | RF-06 | Catálogo agrupado por categorías | `productos/` | ✅ | — |
 | RF-07 | Buscador tolerante a tildes/errores | `buscador/` | 🟡 | H-34 (resultados con ruido; no busca en la descripción) |
-| RF-08 | **Control de envases prestados** (entrada/salida) | solo `Cliente.bidones_prestados` (entero) | 🔴 | T-5.1 |
-| RF-09 | **Promociones prepago** "paga 3 lleva 4" | — | 🔴 | T-5.2 |
-| RF-10 | **Caducidad 30 días corridos** | — | 🔴 | T-5.3 |
+| RF-08 | **Control de envases prestados** (entrada/salida) | `clientes.MovimientoBidon`, `clientes/services.py` | ✅ | T-5.1 ✅ |
+| RF-09 | **Promociones prepago** "paga 3 lleva 4" | `apps/promociones` (`Promocion`, `CompraPromocion`, `ConsumoPromocion`) | ✅ | T-5.2 ✅ |
+| RF-10 | **Caducidad 30 días corridos** | `promociones/services.py::vencer_promociones`, comando `vencer_promociones` | ✅ | T-5.3 ✅ |
 | RF-11 | Pedido: fecha, total, estado, dirección, desglose | `pedidos/models.py:36-107` | ✅ | — |
 | RF-12 | Carrito no excede stock | `carrito/views.py` | 🟡 | T-1.6 |
 | RF-13 | **Pagos parciales** y múltiples métodos | `PagoPedido` existe; **no hay vista de cobro manual** | 🟡 | T-6.2 (H-30 ✅; falta vista de cobro manual) |
@@ -132,7 +133,7 @@ Leyenda: ✅ completo · 🟡 parcial · 🔴 no implementado · ⚠️ implemen
 | RNF-02 | Ocultación de info sensible | `permisos/roles.py::puede_ver_nota_seguridad`, templates | ✅ | T-2.4 ✅, T-2.5 ✅ |
 | RNF-03 | Dark mode sin autenticación | `base_tienda.html`, `base_dashboard.html` | ✅ | — |
 
-**Balance (20/10/2026, control ejecutado — ver [`CONTROL_REQUISITOS.md`](CONTROL_REQUISITOS.md)): 15 completos · 3 parciales · 4 no implementados — 7 de 22 requisitos requieren trabajo.**
+**Balance (20/10/2026, control ejecutado — ver [`CONTROL_REQUISITOS.md`](CONTROL_REQUISITOS.md)): 18 completos · 3 parciales · 1 no implementado — 4 de 22 requisitos requieren trabajo.**
 
 ---
 
@@ -294,7 +295,7 @@ Todos verificados con `manage.py check`, `manage.py makemigrations --check` y co
 | 5.4 | Entregas parciales: cada pedido de reposición consume saldo de promoción y actualiza `unid_restantes` | `pedidos/services.py` |
 | 5.5 | Descontar bidones del `Cliente` al entregar y sumarlos al devolver (integrado con T-3.4) | `logistica/services.py` |
 
-✅ **Aceptación:** comprar "Paga 3 Lleva 4" crea un saldo de 1 bidón con vencimiento a 30 días; tres pedidos parciales lo consumen; al día 31 el comando lo expira.
+✅ **Aceptación (corregida):** comprar "Paga 3 Lleva 4" crea un saldo de **4** bidones (paga 3, retira 4) con vencimiento a 30 días; tres pedidos parciales (1 + 2 + 1) lo consumen; al día 31 el comando lo expira. El texto original decía "saldo de 1 bidón", que contradice las tres entregas parciales. ✔ `apps/promociones/tests.py::EscenarioAceptacionTests`.
 
 ---
 
@@ -374,7 +375,7 @@ Estas **no** son técnicas: cambian el alcance de la tesis y las debe decidir el
 - [x] `makemigrations --check --dry-run` → sin cambios
 - [x] `manage.py test` → todas las suites en verde *(hoy: 128 tests)*
 - [x] `manage.py check --deploy --settings=distribuidora.settings.production` → limpio
-- [ ] RF-01 … RF-19 + RNF-01 … RNF-03 con estado ✅ en la matriz de §4 *(15/22 ✅; faltan RF-08/09/10/18 y pulir RF-07/12/13)*
+- [ ] RF-01 … RF-19 + RNF-01 … RNF-03 con estado ✅ en la matriz de §4 *(18/22 ✅; falta RF-18 y pulir RF-07/12/13)*
 - [ ] Cada RF tiene **al menos un test** que lo cubra
 - [x] `SECRET_KEY` fuera del repositorio
 - [ ] `CONTEXT.md` v5.0 refleja el código final *(hoy: v4.1 tras Fase 4)*

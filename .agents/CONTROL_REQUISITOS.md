@@ -19,6 +19,8 @@
 
 Balance actualizado: **15 ✅ · 3 🟡 (RF-07, RF-12, RF-13) · 4 🔴 (RF-08, RF-09, RF-10, RF-18)**.
 
+**Fase 5 (20/10/2026):** RF-08, RF-09 y RF-10 pasan a ✅ → **18 ✅ · 3 🟡 · 1 🔴 (RF-18)**.
+
 ### A-D6 — ¿El fiado es sólo Premium o admite excepciones? → **Decidido: (b)**
 
 La Fase 4 implementó a propósito «Premium **o** `permite_fiado` activado a mano», y la

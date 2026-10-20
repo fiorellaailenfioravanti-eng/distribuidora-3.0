@@ -55,7 +55,15 @@ porque 5B y 6A construyen sobre `pedidos/services.py` (R-3) y los pagos seguros 
 
 ---
 
-## FASE 5 — Bidones y promociones prepago 📦 (RF-08, RF-09, RF-10)
+## FASE 5 — Bidones y promociones prepago 📦 (RF-08, RF-09, RF-10) ✅ **COMPLETADA (20/10/2026)**
+
+> Decisiones aplicadas con la recomendación: **F-D2** (`bidones_prestados` = caché del historial),
+> **F-D5** (lo vencido no se reintegra) y **F-D6** (la promoción va atada a su producto).
+> Diferencias con el plan: el saldo de envases admite negativos cuando lo registra el reparto
+> (el cliente devolvió de más; se avisa en la ficha) y la compra del pack se documenta como un
+> `Pedido` `Entregado` sin dirección (no genera reparto: lo generan los pedidos que consumen el saldo).
+> Pendiente menor: los pedidos de clientes frecuentes que arma «Planificar reparto» (total $0, sin
+> detalle) no consumen saldo prepago; el consumo ocurre en el checkout web.
 
 ### Punto de partida real
 - `Cliente.bidones_prestados` es un `PositiveIntegerField` editable a mano (`clientes/models.py:76`).

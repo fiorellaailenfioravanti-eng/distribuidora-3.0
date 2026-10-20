@@ -333,6 +333,151 @@
     </div>
 </div>
 
+<!-- Envases prestados (RF-08) -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden">
+            <div class="card-header border-0 bg-transparent fw-bold text-main d-flex justify-content-between align-items-center pt-4 px-4 fs-5">
+                <span><i class="fa-solid fa-bottle-water me-2 text-primary"></i>Envases prestados</span>
+                <span class="badge {% if cliente.bidones_prestados < 0 %}bg-warning text-warning{% else %}bg-info text-info{% endif %} bg-opacity-25 rounded-pill">
+                    Saldo: {{ cliente.bidones_prestados }}
+                </span>
+            </div>
+            <div class="card-body p-4">
+                {% if cliente.bidones_prestados < 0 %}
+                <div class="alert alert-warning small py-2">El cliente devolvió más envases de los registrados como prestados. Revisá el historial y, si corresponde, registrá un ajuste.</div>
+                {% endif %}
+                <form method="post" action="{% url 'apps.clientes:registrar_movimiento_bidon' cliente.pk %}" class="row g-2 align-items-end mb-4">
+                    {% csrf_token %}
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold" for="{{ form_bidon.tipo.id_for_label }}">{{ form_bidon.tipo.label }}</label>
+                        {{ form_bidon.tipo }}
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small fw-semibold" for="{{ form_bidon.cantidad.id_for_label }}">{{ form_bidon.cantidad.label }}</label>
+                        {{ form_bidon.cantidad }}
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <label class="form-label small fw-semibold" for="{{ form_bidon.nota.id_for_label }}">{{ form_bidon.nota.label }}</label>
+                        {{ form_bidon.nota }}
+                    </div>
+                    <div class="col-12 col-md-2 d-grid">
+                        <button type="submit" class="btn btn-primary rounded-pill fw-bold">Registrar</button>
+                    </div>
+                    <div class="col-12"><small class="text-muted">{{ form_bidon.cantidad.help_text }} Las entregas del reparto se registran solas.</small></div>
+                </form>
+
+                {% if movimientos_bidon %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light text-muted text-uppercase">
+                            <tr>
+                                <th class="ps-3">Fecha</th>
+                                <th>Movimiento</th>
+                                <th class="text-end">Efecto</th>
+                                <th>Origen</th>
+                                <th class="pe-3">Nota</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mov in movimientos_bidon %}
+                            <tr>
+                                <td class="ps-3 text-nowrap">{{ mov.fecha|date:"d/m/Y H:i" }}</td>
+                                <td>{{ mov.get_tipo_display }}</td>
+                                <td class="text-end fw-bold {% if mov.cantidad > 0 %}text-primary{% else %}text-success{% endif %}">{% if mov.cantidad > 0 %}+{% endif %}{{ mov.cantidad }}</td>
+                                <td>
+                                    {% if mov.pedido %}<a href="{% url 'apps.pedidos:detalle_pedido' mov.pedido.pk %}">Pedido #{{ mov.pedido.pk }}</a>
+                                    {% elif mov.registrado_por %}{{ mov.registrado_por.get_full_name|default:mov.registrado_por.username }}
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="pe-3 text-muted">{{ mov.nota|default:"" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted small mt-2 mb-0">Se muestran los últimos 15 movimientos.</p>
+                {% else %}
+                <p class="text-muted text-center small mb-0">Sin movimientos de envases registrados.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Promociones prepagas (RF-09 / RF-10) -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden">
+            <div class="card-header border-0 bg-transparent fw-bold text-main d-flex justify-content-between align-items-center pt-4 px-4 fs-5">
+                <span><i class="fa-solid fa-tags me-2 text-primary"></i>Promociones prepagas</span>
+                {% if saldos_promocion %}<span class="badge bg-success bg-opacity-25 text-success rounded-pill">{{ saldos_promocion|length }} vigente(s)</span>{% endif %}
+            </div>
+            <div class="card-body p-4">
+                {% if form_promocion.fields.promocion.queryset %}
+                <form method="post" action="{% url 'apps.promociones:vender_promocion' cliente.pk %}" class="row g-2 align-items-end mb-4">
+                    {% csrf_token %}
+                    <div class="col-12 col-md-5">
+                        <label class="form-label small fw-semibold" for="{{ form_promocion.promocion.id_for_label }}">Vender promoción</label>
+                        {{ form_promocion.promocion }}
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label small fw-semibold" for="{{ form_promocion.metodo_pago.id_for_label }}">Medio de pago</label>
+                        {{ form_promocion.metodo_pago }}
+                    </div>
+                    <div class="col-12 col-md-2">
+                        {% if cliente.permite_fiado %}
+                        <div class="form-check mb-2">
+                            {{ form_promocion.a_cuenta }}
+                            <label class="form-check-label small" for="{{ form_promocion.a_cuenta.id_for_label }}">A cuenta</label>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-12 col-md-2 d-grid">
+                        <button type="submit" class="btn btn-primary rounded-pill fw-bold">Vender</button>
+                    </div>
+                </form>
+                {% else %}
+                <p class="small text-muted">No hay promociones activas. <a href="{% url 'apps.promociones:listar_promociones' %}">Cargar una</a>.</p>
+                {% endif %}
+
+                {% if compras_promocion %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light text-muted text-uppercase">
+                            <tr>
+                                <th class="ps-3">Promoción</th>
+                                <th>Compra</th>
+                                <th>Vence</th>
+                                <th class="text-center">Restan</th>
+                                <th class="text-center pe-3">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for compra in compras_promocion %}
+                            <tr>
+                                <td class="ps-3 fw-semibold">{{ compra.promocion.nombre }}</td>
+                                <td>{{ compra.fecha_compra|date:"d/m/Y" }}</td>
+                                <td>{{ compra.fecha_caducidad|date:"d/m/Y" }}</td>
+                                <td class="text-center fw-bold">{{ compra.unid_restantes }} / {{ compra.unid_totales }}</td>
+                                <td class="text-center pe-3">
+                                    {% if compra.estado == 'Vigente' %}<span class="badge bg-success bg-opacity-25 text-success rounded-pill">Vigente</span>
+                                    {% elif compra.estado == 'Agotada' %}<span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill">Agotada</span>
+                                    {% else %}<span class="badge bg-danger bg-opacity-25 text-danger rounded-pill">Vencida</span>{% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center small mb-0">El cliente no compró promociones.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Historial de Pedidos del Cliente -->
 <div class="row mt-4 mb-4">
     <div class="col-12">

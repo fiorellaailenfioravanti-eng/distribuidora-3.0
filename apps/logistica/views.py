@@ -1,3 +1,4 @@
+from django.db.models import ProtectedError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -387,14 +388,20 @@ def eliminar_zona(request, pk):
 
     zona = get_object_or_404(Zona, id_zona=pk)
     if request.method == 'POST':
-        zona.delete()
-        messages.success(request, 'Zona eliminada.')
+        try:
+            zona.delete()
+            messages.success(request, 'Zona eliminada.')
+        except ProtectedError:
+            messages.error(
+                request,
+                f'La zona "{zona.nombre}" tiene rutas de reparto asociadas: reasignalas antes de eliminarla.'
+            )
         return redirect('apps.logistica:listar_zonas')
 
     return render(request, 'logistica/confirmar_eliminar.html', {
         'objeto': zona,
         'tipo': 'zona',
-        'url_cancelar': 'apps.logistica:listar_zonas'
+        'volver': 'apps.logistica:listar_zonas',
     })
 
 

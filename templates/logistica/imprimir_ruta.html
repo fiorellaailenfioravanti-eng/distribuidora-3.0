@@ -76,7 +76,7 @@
     <div class="row mb-4">
         <div class="col-6">
             <div class="info-box">
-                <strong>👤 Repartidor:</strong> {{ ruta.empleado.usuario.get_full_name|default:ruta.empleado.usuario.username }}<br>
+                <strong>👤 Repartidor:</strong> {% if ruta.empleado %}{{ ruta.empleado.nombre }} {{ ruta.empleado.apellido }}{% else %}Sin asignar{% endif %}<br>
                 <strong>🚚 Vehículo:</strong> {{ ruta.camion.descripcion }} ({{ ruta.camion.patente }})
             </div>
         </div>

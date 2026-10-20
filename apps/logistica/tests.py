@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from .forms import ZonaForm
 from .models import (
+    RutaReparto,
     Zona, CalendarioExcepcion, Camion, HojaRuta, DetalleHojaRuta, Barrio,
     CargaHojaRuta,
 )
@@ -386,3 +387,29 @@ class EntregaCalleTests(TestCase):
 
 
 
+
+
+class HojaSinChoferTests(TestCase):
+    """Una hoja sin chofer asignado rompía el listado, el detalle y la impresión."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        self.hoja = HojaRuta.objects.create(fecha=date(2026, 10, 20))
+        admin = get_user_model().objects.create_superuser('root', 'root@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(admin)
+
+    def test_pantallas_de_hoja_renderizan(self):
+        from django.urls import reverse
+        for nombre, args in [('listar_rutas', []), ('ver_ruta', [self.hoja.pk]), ('imprimir_ruta', [self.hoja.pk])]:
+            respuesta = self.client.get(reverse(f'apps.logistica:{nombre}', args=args))
+            self.assertEqual(respuesta.status_code, 200, nombre)
+            self.assertContains(respuesta, 'Sin asignar')
+
+    def test_eliminar_zona_con_rutas_no_da_500(self):
+        from django.urls import reverse
+        zona = Zona.objects.create(nombre='Con rutas', dias_reparto='0')
+        RutaReparto.objects.create(nombre='Ruta Lunes', zona=zona, dia_semana=0)
+        self.assertEqual(self.client.get(reverse('apps.logistica:eliminar_zona', args=[zona.pk])).status_code, 200)
+        respuesta = self.client.post(reverse('apps.logistica:eliminar_zona', args=[zona.pk]))
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertTrue(Zona.objects.filter(pk=zona.pk).exists())

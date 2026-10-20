@@ -106,3 +106,14 @@ class GuardsUnificadosTests(TestCase):
         self.client.force_login(cliente)
         respuesta = self.client.get(reverse('apps.empleados:listar_empleados'))
         self.assertEqual(respuesta.status_code, 302)
+
+
+class PantallasDeRolesTests(TestCase):
+    def test_listado_de_roles_renderiza(self):
+        """El template usaba `rol.id` (la PK es `id_rol`) y daba 500."""
+        RolEmpleado.objects.create(nombre='Chofer', grupo_permisos='Repartidor')
+        admin = get_user_model().objects.create_superuser('root', 'root@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(admin)
+        respuesta = self.client.get(reverse('apps.empleados:listar_roles'))
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, 'Chofer')

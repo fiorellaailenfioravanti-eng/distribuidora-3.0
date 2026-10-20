@@ -60,7 +60,7 @@
         <div class="card text-center border-0 shadow-sm rounded-4 bg-surface hover-lift">
             <div class="card-body p-4">
                 <div class="text-muted small text-truncate fw-semibold">
-                    {{ ruta.empleado.usuario.get_full_name|default:ruta.empleado.usuario.username|default:"Sin asignar" }}
+                    {% if ruta.empleado %}{{ ruta.empleado.nombre }} {{ ruta.empleado.apellido }}{% else %}Sin asignar{% endif %}
                 </div>
                 <small class="text-muted text-uppercase fw-semibold">Repartidor</small>
                 <div class="text-muted small text-truncate">{{ ruta.camion.patente|default:"Sin camión" }}</div>

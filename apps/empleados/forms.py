@@ -1,4 +1,6 @@
 from django import forms
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from .models import Empleado, RolEmpleado
 from apps.autenticacion.models import Usuario
 
@@ -68,6 +70,17 @@ class EmpleadoForm(forms.ModelForm):
                 
             if not password:
                 self.add_error('password', 'La contraseña es obligatoria para crear la cuenta de usuario.')
+            else:
+                # RF-02: mismos validadores que el registro de clientes (H-36).
+                usuario_tentativo = Usuario(
+                    username=username or '', email=email or '',
+                    first_name=cleaned_data.get('nombre') or '',
+                    last_name=cleaned_data.get('apellido') or '',
+                )
+                try:
+                    validate_password(password, user=usuario_tentativo)
+                except ValidationError as error:
+                    self.add_error('password', error)
                 
         return cleaned_data
 
@@ -102,8 +115,9 @@ class EmpleadoForm(forms.ModelForm):
 class RolEmpleadoForm(forms.ModelForm):
     class Meta:
         model = RolEmpleado
-        fields = ['nombre', 'descripcion']
+        fields = ['nombre', 'descripcion', 'grupo_permisos']
         widgets = {
+            'grupo_permisos': forms.Select(attrs={'class': _SELECT}),
             'nombre': forms.TextInput(attrs={'class': _INPUT}),
             'descripcion': forms.Textarea(attrs={'class': _INPUT, 'rows': 3}),
         }

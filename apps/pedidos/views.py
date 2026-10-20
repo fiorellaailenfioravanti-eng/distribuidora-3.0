@@ -21,7 +21,7 @@ from .services import (
 from apps.carrito.models import Carrito
 from apps.clientes.models import Cliente
 from apps.permisos.roles import (
-    es_admin_o_vendedor as es_vendedor_o_admin,
+    es_admin_o_vendedor,
     puede_ver_nota_seguridad,
 )
 
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 @login_required
 def checkout(request):
     """Pantalla de selección de dirección y método de pago antes de confirmar."""
-    if es_vendedor_o_admin(request.user):
+    if es_admin_o_vendedor(request.user):
         messages.info(request, "Los usuarios administradores y vendedores gestionan los pedidos desde la consola.")
         return redirect('apps.pedidos:listar_pedidos')
 
@@ -331,7 +331,7 @@ def detalle_pedido(request, pk):
     pedido = get_object_or_404(Pedido, pk=pk)
 
     # Permitir ver si es el cliente dueño del pedido o si es Vendedor/Admin
-    if not (request.user.is_superuser or es_vendedor_o_admin(request.user)):
+    if not (request.user.is_superuser or es_admin_o_vendedor(request.user)):
         if not (pedido.cliente and pedido.cliente.usuario == request.user):
             messages.error(request, "No tienes permiso para ver este pedido.")
             return redirect('apps.pedidos:mis_pedidos')
@@ -352,7 +352,7 @@ def detalle_pedido(request, pk):
 @login_required
 def mis_pedidos(request):
     """Listado de compras/pedidos realizas por el cliente logueado."""
-    if es_vendedor_o_admin(request.user):
+    if es_admin_o_vendedor(request.user):
         messages.info(request, "Los usuarios administradores y vendedores gestionan la totalidad de pedidos de la distribuidora.")
         return redirect('apps.pedidos:listar_pedidos')
 
@@ -369,7 +369,7 @@ def mis_pedidos(request):
 
 
 @login_required
-@user_passes_test(es_vendedor_o_admin)
+@user_passes_test(es_admin_o_vendedor)
 def listar_pedidos(request):
     """Panel de administración/vendedor para gestionar todos los pedidos recibidos."""
     pedidos = Pedido.objects.all().select_related('cliente', 'direccion_entrega', 'metodo_pago').prefetch_related('detalles__producto', 'pagos')
@@ -394,7 +394,7 @@ def listar_pedidos(request):
 
 
 @login_required
-@user_passes_test(es_vendedor_o_admin)
+@user_passes_test(es_admin_o_vendedor)
 def cambiar_estado_pedido(request, pk):
     """Permite al staff actualizar el estado de un pedido."""
     if request.method == 'POST':
@@ -411,7 +411,7 @@ def cambiar_estado_pedido(request, pk):
 
 
 @login_required
-@user_passes_test(es_vendedor_o_admin)
+@user_passes_test(es_admin_o_vendedor)
 def cambiar_estado_pago(request, pk):
     """Permite al staff actualizar el estado del pago de un pedido (ej. de Pendiente a Aprobado)."""
     if request.method == 'POST':

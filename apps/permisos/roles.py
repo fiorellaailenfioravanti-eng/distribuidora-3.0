@@ -106,3 +106,29 @@ def puede_ver_nota_seguridad(user, direccion):
         direccion_entrega=direccion,
         hoja_ruta__empleado__usuario=user,
     ).exists()
+
+
+# ─────────────────────────────────────────────────────────────
+# ROL DEL EMPLEADO → GRUPO (auditoría H-25, decisión A-D3)
+# ─────────────────────────────────────────────────────────────
+GRUPOS_GESTIONADOS = (GRUPO_VENDEDOR, GRUPO_REPARTIDOR)
+
+
+def sincronizar_grupo_empleado(empleado):
+    """Deja al usuario del empleado sólo en el grupo que indica su rol.
+
+    Un empleado inactivo o con un rol sin permisos queda fuera de los grupos
+    gestionados. Nunca toca `is_superuser` ni otros grupos del usuario.
+    """
+    from django.contrib.auth.models import Group
+
+    usuario = getattr(empleado, 'usuario', None)
+    if usuario is None:
+        return
+
+    grupos = {nombre: Group.objects.get_or_create(name=nombre)[0] for nombre in GRUPOS_GESTIONADOS}
+    usuario.groups.remove(*grupos.values())
+
+    grupo = empleado.rol.grupo_permisos if empleado.rol_id else ''
+    if empleado.activo and grupo in grupos:
+        usuario.groups.add(grupos[grupo])

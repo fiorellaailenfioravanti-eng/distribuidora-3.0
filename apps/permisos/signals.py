@@ -11,14 +11,14 @@ ejecutar las veces que haga falta sin duplicar permisos.
 """
 
 from django.contrib.auth.models import Group
-from django.db.models.signals import post_migrate
+from django.db.models.signals import post_migrate, post_save
 from django.dispatch import receiver
 
-from .roles import GRUPO_REPARTIDOR, GRUPO_VENDEDOR
+from .roles import GRUPO_REPARTIDOR, GRUPO_VENDEDOR, sincronizar_grupo_empleado
 
 # Modelos que el grupo Vendedor administra desde el panel de administración.
 # El acceso a las vistas del proyecto se controla aparte, con las funciones de
-# `roles.py` y el filtro de template `has_group`.
+# `roles.py` (vistas) y su context processor `roles_usuario` (templates).
 MODELOS_VENDEDOR = [
     ('productos', 'categoria'),
     ('productos', 'producto'),
@@ -85,3 +85,18 @@ def sincronizar_permisos_grupos(sender, **kwargs):
     """Crea los grupos base y les asigna sus permisos tras cada `migrate`."""
     _sincronizar(GRUPO_VENDEDOR, MODELOS_VENDEDOR, PERMISOS_VENDEDOR)
     _sincronizar(GRUPO_REPARTIDOR, MODELOS_REPARTIDOR, PERMISOS_REPARTIDOR)
+
+
+@receiver(post_save, sender='empleados.Empleado')
+def sincronizar_grupo_al_guardar_empleado(sender, instance, **kwargs):
+    """Alta, edición, cambio de rol o de estado del empleado → grupo correcto."""
+    sincronizar_grupo_empleado(instance)
+
+
+@receiver(post_save, sender='empleados.RolEmpleado')
+def sincronizar_grupo_al_cambiar_rol(sender, instance, created, **kwargs):
+    """Si cambian los permisos de un rol, se re-sincronizan sus empleados."""
+    if created:
+        return
+    for empleado in instance.empleados.select_related('usuario', 'rol'):
+        sincronizar_grupo_empleado(empleado)

@@ -1,5 +1,9 @@
 """
-Vista de error para tokens CSRF inválidos (usada por `production.py`).
+Respuestas comunes de permisos.
+
+- `sin_permiso(request)`: mensaje + redirección cuando un guard de
+  `roles.py` rechaza al usuario (antes copiado en cada app, auditoría R-2).
+- `csrf_failure`: vista de error para tokens CSRF inválidos (usada por `production.py`).
 
 Devuelve un mensaje entendible en lugar de la página de error genérica de
 Django, cuyo texto en inglés es confuso para el usuario final de la
@@ -7,9 +11,16 @@ distribuidora. Los formularios de pago y el cierre de sesión son los casos más
 frecuentes: caducan por inactividad y el usuario cree que la operación falló.
 """
 
+from django.contrib import messages
 from django.http import HttpResponseForbidden
+from django.shortcuts import redirect
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
+
+
+def sin_permiso(request, destino='inicio'):
+    messages.error(request, 'No tenés permiso para acceder a esta sección.')
+    return redirect(destino)
 
 
 def csrf_failure(request, reason=''):

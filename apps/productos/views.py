@@ -9,7 +9,7 @@ from .forms import ProductoForm, CategoriaForm
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render, redirect, get_object_or_404 # Agrega get_object_or_404 aquí
-from apps.permisos.roles import es_admin_o_vendedor as es_vendedor_o_admin
+from apps.permisos.roles import es_admin_o_vendedor
 
 #CRUD
 #Aca empeiza Read
@@ -34,7 +34,7 @@ def listar_productos(request):
     }
     return render(request, 'productos/listar_productos.html', contexto)
 
-@user_passes_test(es_vendedor_o_admin)
+@user_passes_test(es_admin_o_vendedor)
 def listar_productos_admin(request):
     listar_productos = Producto.objects.all()
     parametro_categoria = request.GET.get('categoria',"").strip()
@@ -74,7 +74,7 @@ def ver_producto(request, pk):
 
 #Create
 #MI DECORADOR SERIA ESTE PARA QUE VERIFIQUE SI ES VENDEDOR
-@user_passes_test(es_vendedor_o_admin)
+@user_passes_test(es_admin_o_vendedor)
 def crear_producto(request):   
     if request.method == 'POST':
         form = ProductoForm(request.POST, request.FILES)
@@ -86,7 +86,7 @@ def crear_producto(request):
     return render(request, 'productos/crear_producto.html', {'form': form})
 
 
-@user_passes_test(es_vendedor_o_admin)
+@user_passes_test(es_admin_o_vendedor)
 def crear_categoria(request):
     if request.method == 'POST':
         form = CategoriaForm(request.POST)
@@ -99,7 +99,7 @@ def crear_categoria(request):
 
 
 #Update
-@user_passes_test(es_vendedor_o_admin)
+@user_passes_test(es_admin_o_vendedor)
 def editar_producto(request, pk):
     producto = get_object_or_404(Producto, id_producto=pk)
     if request.method == 'POST':
@@ -116,7 +116,7 @@ def editar_producto(request, pk):
 
 
 #Delete 
-@user_passes_test(es_vendedor_o_admin)
+@user_passes_test(es_admin_o_vendedor)
 def eliminar_producto(request, pk):
     producto = get_object_or_404(Producto, id_producto=pk)
     if request.method == 'POST':

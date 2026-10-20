@@ -21,7 +21,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write(self.style.NOTICE('Iniciando seed_logistica...'))
 
-        Group.objects.get_or_create(name='Admin')
         Group.objects.get_or_create(name='Vendedor')
         g_repartidor, _ = Group.objects.get_or_create(name='Repartidor')
 
@@ -41,8 +40,11 @@ class Command(BaseCommand):
 
         rol_rep, _ = RolEmpleado.objects.get_or_create(
             nombre='Repartidor',
-            defaults={'descripcion': 'Repartidor de entregas'},
+            defaults={'descripcion': 'Repartidor de entregas', 'grupo_permisos': 'Repartidor'},
         )
+        if rol_rep.grupo_permisos != 'Repartidor':
+            rol_rep.grupo_permisos = 'Repartidor'
+            rol_rep.save(update_fields=['grupo_permisos'])
 
         Empleado.objects.get_or_create(
             usuario=u_rep,

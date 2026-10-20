@@ -4,12 +4,12 @@ from .models import Carrito, ItemCarrito
 from apps.productos.models import Producto
 from django.urls import reverse
 from django.contrib import messages
-from apps.permisos.roles import es_admin_o_vendedor as es_staff_or_admin
+from apps.permisos.roles import es_admin_o_vendedor
 
 
 @login_required
 def agregar_al_carrito(request, producto_id):
-    if es_staff_or_admin(request.user):
+    if es_admin_o_vendedor(request.user):
         messages.info(request, "Los usuarios administradores y vendedores gestionan la tienda y no realizan compras desde el carrito.")
         return redirect('dashboard')
 
@@ -55,7 +55,7 @@ def agregar_al_carrito(request, producto_id):
 
 @login_required
 def ver_carrito(request):
-    if es_staff_or_admin(request.user):
+    if es_admin_o_vendedor(request.user):
         messages.info(request, "Los usuarios administradores y vendedores gestionan los pedidos desde la consola.")
         return redirect('dashboard')
 

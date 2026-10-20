@@ -1,5 +1,4 @@
 {% extends 'base_dashboard.html' %}
-{% load grupos %}
 
 {% block title %}{{ titulo }} — Aquadelluvia{% endblock %}
 
@@ -36,6 +35,15 @@
                         {{ form.descripcion }}
                         {% if form.descripcion.errors %}
                         <div class="invalid-feedback d-block">{{ form.descripcion.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.grupo_permisos.id_for_label }}" class="form-label fw-semibold">Permisos del rol</label>
+                        {{ form.grupo_permisos }}
+                        <div class="form-text">{{ form.grupo_permisos.help_text }}</div>
+                        {% if form.grupo_permisos.errors %}
+                        <div class="invalid-feedback d-block">{{ form.grupo_permisos.errors|striptags }}</div>
                         {% endif %}
                     </div>
 

@@ -1,5 +1,4 @@
 {% extends 'base_dashboard.html' %}
-{% load grupos %}
 
 {% block title %}Hojas de Ruta — Logística{% endblock %}
 
@@ -10,7 +9,7 @@
             <h1 class="h3 fw-bold mb-0 text-main">Hojas de Ruta</h1>
             <p class="text-muted small mb-0 mt-1">Gestión de rutas de reparto y entregas diarias</p>
         </div>
-        {% if user.is_superuser or user|has_group:"Vendedor" %}
+        {% if es_vendedor %}
         <div class="d-flex flex-column flex-md-row gap-2">
             <a href="{% url 'apps.logistica:planificar_reparto' %}" class="btn btn-success rounded-3 fw-bold px-4 text-center">
                 <i class="fa-solid fa-calendar-plus me-2"></i> Planificar Reparto
@@ -135,7 +134,7 @@
     <div class="card-body text-center py-5">
         <i class="fa-solid fa-route fs-1 mb-3 text-secondary opacity-50"></i>
         <p class="text-muted">No hay rutas registradas para los filtros seleccionados.</p>
-        {% if user.is_superuser or user|has_group:"Vendedor" %}
+        {% if es_vendedor %}
         <a href="{% url 'apps.logistica:crear_ruta' %}" class="btn btn-primary rounded-pill btn-glow fw-bold mt-2">
             <i class="fa-solid fa-plus me-1"></i> Crear primera ruta
         </a>
@@ -145,7 +144,7 @@
 {% endif %}
 
 {# ── Accesos rápidos ── #}
-{% if user.is_superuser or user|has_group:"Vendedor" %}
+{% if es_vendedor %}
 <div class="d-flex flex-column flex-md-row gap-2 mt-2 pb-4">
     <a href="{% url 'apps.logistica:listar_zonas' %}" class="btn btn-outline-primary rounded-3 fw-bold px-4 text-center">
         <i class="fa-solid fa-map-pin me-2"></i> Gestionar Zonas

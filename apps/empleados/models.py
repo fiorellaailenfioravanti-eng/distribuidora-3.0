@@ -1,10 +1,27 @@
 from django.db import models
 from django.conf import settings
 
+# Grupo de Django que otorga cada rol (decisión A-D3). El rol del empleado es
+# la fuente de verdad en la UI y el grupo se sincroniza solo
+# (`apps/permisos/signals.py`). Ningún rol otorga superusuario.
+GRUPOS_PERMISOS_CHOICES = [
+    ('', 'Sin acceso al panel'),
+    ('Vendedor', 'Vendedor / Administración'),
+    ('Repartidor', 'Repartidor'),
+]
+
 class RolEmpleado(models.Model):
     id_rol = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=60, unique=True, verbose_name="Nombre")
     descripcion = models.TextField(blank=True, verbose_name="Descripción")
+    grupo_permisos = models.CharField(
+        max_length=20,
+        choices=GRUPOS_PERMISOS_CHOICES,
+        blank=True,
+        default='',
+        verbose_name='Permisos del rol',
+        help_text='Qué puede hacer en el sistema un empleado con este rol.',
+    )
 
     class Meta:
         ordering = ['nombre']

@@ -20,7 +20,7 @@ def _normalizar(texto):
 def listar_empleados(request):
     if not es_admin_o_vendedor(request.user):
         messages.error(request, 'No tienes permisos para acceder a esta sección.')
-        return redirect('home')
+        return redirect('inicio')
 
     query = request.GET.get('q', '')
     rol_id = request.GET.get('rol', '')

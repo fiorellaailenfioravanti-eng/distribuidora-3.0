@@ -1,4 +1,3 @@
-{% load grupos %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="es" data-bs-theme="dark">
@@ -44,7 +43,7 @@
                         <i class="fa-solid fa-wallet"></i> Productos
                     </a>
                 </li>
-                {% if user.is_superuser or user|has_group:"Vendedor" %}
+                {% if es_vendedor %}
                 <li class="nav-item">
                     <a href="{% url 'apps.pedidos:listar_pedidos' %}" class="sidebar-link {% if 'pedidos' in request.resolver_match.view_name %}active{% endif %}">
                         <i class="fa-solid fa-box-open"></i> Pedidos
@@ -71,14 +70,14 @@
                     </a>
                 </li>
                 {% endif %}
-                {% if user.is_superuser or user|has_group:"Vendedor" or user|has_group:"Repartidor" %}
+                {% if es_personal_interno %}
                 <li class="nav-item">
                     <a href="{% url 'apps.logistica:listar_rutas' %}" class="sidebar-link {% if 'logistica' in request.resolver_match.view_name %}active{% endif %}">
                         <i class="fa-solid fa-route"></i> Logística
                     </a>
                 </li>
                 {% endif %}
-                {% if user|has_group:"Repartidor" %}
+                {% if es_repartidor %}
                 <li class="nav-item">
                     <a href="{% url 'apps.logistica:mi_ruta_hoy' %}" class="sidebar-link {% if request.resolver_match.view_name == 'apps.logistica:mi_ruta_hoy' %}active{% endif %}">
                         <i class="fa-solid fa-truck-fast"></i> Mi Ruta
@@ -110,7 +109,7 @@
                     <li class="nav-item">
                         <a href="{% url 'apps.productos:listar_productos_admin' %}" class="sidebar-link"><i class="fa-solid fa-wallet"></i> Productos</a>
                     </li>
-                    {% if user.is_superuser or user|has_group:"Vendedor" %}
+                    {% if es_vendedor %}
                     <li class="nav-item">
                         <a href="{% url 'apps.pedidos:listar_pedidos' %}" class="sidebar-link"><i class="fa-solid fa-box-open"></i> Pedidos</a>
                     </li>
@@ -127,12 +126,12 @@
                         <a href="{% url 'apps.abonos:listar_abonos' %}" class="sidebar-link"><i class="fa-solid fa-snowflake"></i> Abonos</a>
                     </li>
                     {% endif %}
-                    {% if user.is_superuser or user|has_group:"Vendedor" or user|has_group:"Repartidor" %}
+                    {% if es_personal_interno %}
                     <li class="nav-item">
                         <a href="{% url 'apps.logistica:listar_rutas' %}" class="sidebar-link"><i class="fa-solid fa-route"></i> Logística</a>
                     </li>
                     {% endif %}
-                    {% if user|has_group:"Repartidor" %}
+                    {% if es_repartidor %}
                     <li class="nav-item">
                         <a href="{% url 'apps.logistica:mi_ruta_hoy' %}" class="sidebar-link"><i class="fa-solid fa-truck-fast"></i> Mi Ruta</a>
                     </li>
@@ -172,7 +171,7 @@
                         <i class="fa-solid fa-moon"></i>
                     </button>
                     
-                    {% if not user.is_superuser and not user|has_group:"Vendedor" %}
+                    {% if not es_vendedor %}
                     <!-- Carrito -->
                     <a href="{% url 'apps.carrito:ver_carrito' %}" class="btn btn-light rounded-circle border-0 shadow-sm position-relative text-muted" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-shopping-cart"></i>

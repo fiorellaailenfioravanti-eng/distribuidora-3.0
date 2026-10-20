@@ -125,7 +125,7 @@ class NotaDeSeguridadTests(TestCase):
     def setUp(self):
         from apps.autenticacion.models import Usuario
 
-        self.rol = RolEmpleado.objects.create(nombre='Repartidor')
+        self.rol = RolEmpleado.objects.create(nombre='Repartidor', grupo_permisos='Repartidor')
 
         self.admin = Usuario.objects.create_superuser(
             username='admin', password='x', email='admin@test.com'
@@ -244,7 +244,7 @@ class ModeloEmpleadoUnicoTests(TestCase):
         usuario = Usuario.objects.create_user(
             username='chofer', password='x', email='chofer@test.com'
         )
-        rol = RolEmpleado.objects.create(nombre='Chofer')
+        rol = RolEmpleado.objects.create(nombre='Chofer', grupo_permisos='Repartidor')
         empleado = Empleado.objects.create(
             usuario=usuario, nombre='Juan', apellido='Perez',
             dni='33333333', rol=rol,
@@ -281,7 +281,7 @@ class AccesoAVistasLogisticasTests(TestCase):
         )
         self.repartidor.groups.add(Group.objects.get(name=GRUPO_REPARTIDOR))
 
-        rol = RolEmpleado.objects.create(nombre='Chofer Logistica')
+        rol = RolEmpleado.objects.create(nombre='Chofer Logistica', grupo_permisos='Repartidor')
         self.empleado = Empleado.objects.create(
             usuario=self.repartidor, nombre='Ana', apellido='Gomez',
             dni='44444444', rol=rol,
@@ -322,7 +322,7 @@ class AccesoAVistasLogisticasTests(TestCase):
             username='otro_rep', password='x', email='otro_rep@test.com'
         )
         otro.groups.add(Group.objects.get(name=GRUPO_REPARTIDOR))
-        rol = RolEmpleado.objects.create(nombre='Otro chofer')
+        rol = RolEmpleado.objects.create(nombre='Otro chofer', grupo_permisos='Repartidor')
         Empleado.objects.create(
             usuario=otro, nombre='Leo', apellido='Diaz', dni='55555555', rol=rol,
         )
@@ -352,7 +352,7 @@ class AccesoAVistasLogisticasTests(TestCase):
             username='otro_rep2', password='x', email='otro_rep2@test.com'
         )
         otro.groups.add(Group.objects.get(name=GRUPO_REPARTIDOR))
-        rol = RolEmpleado.objects.create(nombre='Otro chofer 2')
+        rol = RolEmpleado.objects.create(nombre='Otro chofer 2', grupo_permisos='Repartidor')
         Empleado.objects.create(
             usuario=otro, nombre='Sofia', apellido='Ruiz', dni='66666666', rol=rol,
         )
@@ -379,7 +379,7 @@ class AccesoAVistasLogisticasTests(TestCase):
             username='otro_rep3', password='x', email='otro_rep3@test.com'
         )
         otro.groups.add(Group.objects.get(name=GRUPO_REPARTIDOR))
-        rol = RolEmpleado.objects.create(nombre='Otro chofer 3')
+        rol = RolEmpleado.objects.create(nombre='Otro chofer 3', grupo_permisos='Repartidor')
         Empleado.objects.create(
             usuario=otro, nombre='Pablo', apellido='Lopez', dni='77777777', rol=rol,
         )

@@ -5,20 +5,17 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from apps.permisos.roles import es_admin_o_vendedor
+from apps.permisos.views import sin_permiso
 from . import services
 from .forms import AbonoForm
 from .models import Abono
 
 
-def _sin_permiso(request):
-    messages.error(request, 'No tenés permiso para acceder a esta sección.')
-    return redirect('inicio')
-
 
 @login_required
 def listar_abonos(request):
     if not es_admin_o_vendedor(request.user):
-        return _sin_permiso(request)
+        return sin_permiso(request)
 
     estado = request.GET.get('estado', '').strip()
     abonos = Abono.objects.select_related('cliente', 'producto').all()
@@ -39,7 +36,7 @@ def listar_abonos(request):
 @login_required
 def ver_abono(request, pk):
     if not es_admin_o_vendedor(request.user):
-        return _sin_permiso(request)
+        return sin_permiso(request)
 
     abono = get_object_or_404(
         Abono.objects.select_related('cliente', 'producto'), pk=pk
@@ -56,7 +53,7 @@ def ver_abono(request, pk):
 @login_required
 def crear_abono(request):
     if not es_admin_o_vendedor(request.user):
-        return _sin_permiso(request)
+        return sin_permiso(request)
 
     if request.method == 'POST':
         form = AbonoForm(request.POST)
@@ -74,7 +71,7 @@ def crear_abono(request):
 @login_required
 def editar_abono(request, pk):
     if not es_admin_o_vendedor(request.user):
-        return _sin_permiso(request)
+        return sin_permiso(request)
 
     abono = get_object_or_404(Abono, pk=pk)
     if request.method == 'POST':
@@ -95,7 +92,7 @@ def editar_abono(request, pk):
 @login_required
 def cambiar_estado_abono(request, pk):
     if not es_admin_o_vendedor(request.user):
-        return _sin_permiso(request)
+        return sin_permiso(request)
     if request.method != 'POST':
         return redirect('apps.abonos:ver_abono', pk=pk)
 
@@ -114,7 +111,7 @@ def cambiar_estado_abono(request, pk):
 def generar_cargos(request):
     """Dispara manualmente la facturación mensual de los abonos activos."""
     if not es_admin_o_vendedor(request.user):
-        return _sin_permiso(request)
+        return sin_permiso(request)
     if request.method != 'POST':
         return redirect('apps.abonos:listar_abonos')
 

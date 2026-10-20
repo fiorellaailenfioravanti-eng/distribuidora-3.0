@@ -6,14 +6,11 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.clientes.models import Cliente
 from apps.permisos.roles import es_admin_o_vendedor
+from apps.permisos.views import sin_permiso
 from . import services
 from .forms import CargoCuentaForm, PagoCuentaForm
 from .models import CuentaCorriente, NIVELES_MOROSIDAD
 
-
-def _sin_permiso(request):
-    messages.error(request, 'No tenés permiso para acceder a esta sección.')
-    return redirect('inicio')
 
 
 def _cuentas_con_morosidad():
@@ -36,7 +33,7 @@ def _cuentas_con_morosidad():
 @login_required
 def listar_cuentas(request):
     if not es_admin_o_vendedor(request.user):
-        return _sin_permiso(request)
+        return sin_permiso(request)
 
     nivel = request.GET.get('nivel', '').strip()
     q = request.GET.get('q', '').strip().lower()
@@ -68,7 +65,7 @@ def listar_cuentas(request):
 @login_required
 def ver_cuenta(request, pk):
     if not es_admin_o_vendedor(request.user):
-        return _sin_permiso(request)
+        return sin_permiso(request)
 
     cuenta = get_object_or_404(
         CuentaCorriente.objects.select_related('cliente'), pk=pk
@@ -90,7 +87,7 @@ def ver_cuenta(request, pk):
 def cuenta_de_cliente(request, cliente_pk):
     """Abre (o crea) la cuenta corriente de un cliente y redirige a su detalle."""
     if not es_admin_o_vendedor(request.user):
-        return _sin_permiso(request)
+        return sin_permiso(request)
 
     cliente = get_object_or_404(Cliente, pk=cliente_pk)
     cuenta = services.obtener_o_crear_cuenta(cliente)
@@ -103,7 +100,7 @@ def cuenta_de_cliente(request, cliente_pk):
 @login_required
 def registrar_cargo(request, pk):
     if not es_admin_o_vendedor(request.user):
-        return _sin_permiso(request)
+        return sin_permiso(request)
     if request.method != 'POST':
         return redirect('apps.cuentas:ver_cuenta', pk=pk)
 
@@ -129,7 +126,7 @@ def registrar_cargo(request, pk):
 @login_required
 def registrar_pago(request, pk):
     if not es_admin_o_vendedor(request.user):
-        return _sin_permiso(request)
+        return sin_permiso(request)
     if request.method != 'POST':
         return redirect('apps.cuentas:ver_cuenta', pk=pk)
 

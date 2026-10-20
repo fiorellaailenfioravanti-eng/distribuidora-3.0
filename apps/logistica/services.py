@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models import Q, Max
 from django.utils import timezone
 
+from apps.clientes.services import sincronizar_bidones_de_parada
 from apps.pedidos.services import metodo_pago_efectivo as _metodo_pago_efectivo
 from apps.pedidos.services import registrar_cobro  # noqa: F401 (API de logística)
 
@@ -428,6 +429,8 @@ def registrar_entrega(parada, estado, envases_retirados=0, envases_vendidos=0, n
             pedido.estado = 'Cancelado'
             pedido.save(update_fields=['estado'])
 
+    # RF-08: historial de envases del cliente (idempotente por parada).
+    sincronizar_bidones_de_parada(parada)
     return parada
 
 
@@ -522,4 +525,5 @@ def crear_venta_calle(hoja, datos):
     if total > 0:
         registrar_cobro(pedido, total, metodo)
 
+    sincronizar_bidones_de_parada(parada)
     return parada

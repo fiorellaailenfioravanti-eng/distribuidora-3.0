@@ -27,6 +27,9 @@ urlpatterns = [
     path('direccion/<int:pk>/editar/',    views.editar_direccion,         name='editar_direccion'),
     path('direccion/<int:pk>/eliminar/',  views.eliminar_direccion,       name='eliminar_direccion'),
 
+    # Envases (RF-08)
+    path('<int:pk>/envases/movimiento/',  views.registrar_movimiento_bidon, name='registrar_movimiento_bidon'),
+
     # ── Perfil propio del cliente ──────────────────────────────
     path('mi-perfil/',                    views.mi_perfil_cliente,        name='mi_perfil'),
     path('mi-perfil/editar/',             views.editar_mi_perfil,         name='editar_mi_perfil'),

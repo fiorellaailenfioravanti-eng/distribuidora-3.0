@@ -99,3 +99,32 @@ class FiadoPremiumYExcepcionTests(TestCase):
         cliente.save()
         cliente.refresh_from_db()
         self.assertTrue(cliente.permite_fiado)
+
+
+class HistorialBidonesTests(TestCase):
+    """RF-08: historial de envases y saldo derivado."""
+
+    def setUp(self):
+        from datetime import date
+        from apps.logistica.models import DetalleHojaRuta, HojaRuta
+        self.cliente = Cliente.objects.create(nombre='Ana', apellido='Paz')
+        hoja = HojaRuta.objects.create(fecha=date(2026, 10, 20))
+        self.parada = DetalleHojaRuta.objects.create(hoja_ruta=hoja, cliente=self.cliente, orden=1, cantidad_bidones=3)
+
+    def test_entrega_registra_prestamo_y_devolucion_sin_duplicar(self):
+        from apps.logistica.services import registrar_entrega
+        registrar_entrega(self.parada, 'Entregado', envases_retirados=2)
+        registrar_entrega(self.parada, 'Entregado', envases_retirados=2)
+        self.cliente.refresh_from_db()
+        self.assertEqual(self.cliente.bidones_prestados, 1)
+        self.assertEqual(self.cliente.movimientos_bidon.count(), 2)
+
+    def test_devolucion_manual_no_deja_saldo_negativo(self):
+        from django.core.exceptions import ValidationError
+        from .services import registrar_movimiento_bidon
+        registrar_movimiento_bidon(self.cliente, 'Prestamo', 2)
+        with self.assertRaises(ValidationError):
+            registrar_movimiento_bidon(self.cliente, 'Devolucion', 3)
+        registrar_movimiento_bidon(self.cliente, 'Ajuste', -1, nota='Conteo físico')
+        self.cliente.refresh_from_db()
+        self.assertEqual(self.cliente.bidones_prestados, 1)

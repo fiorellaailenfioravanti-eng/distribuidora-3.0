@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Cliente, TelefonoContacto, DireccionEntrega
+from .models import Cliente, TelefonoContacto, DireccionEntrega, MovimientoBidon
 
 
 class TelefonoContactoInline(admin.TabularInline):
@@ -22,7 +22,7 @@ class ClienteAdmin(admin.ModelAdmin):
     list_filter    = ('tipo_cliente', 'permite_fiado')
     search_fields  = ('usuario__username', 'usuario__first_name',
                       'usuario__last_name', 'usuario__email', 'dni')
-    readonly_fields = ('fecha_alta',)
+    readonly_fields = ('fecha_alta', 'bidones_prestados')  # RF-08: se calcula del historial
     inlines        = [TelefonoContactoInline, DireccionEntregaInline]
 
     fieldsets = (
@@ -61,3 +61,17 @@ class DireccionEntregaAdmin(admin.ModelAdmin):
     list_display  = ('cliente', 'calle', 'altura', 'piso_depto', 'barrio', 'es_principal')
     list_filter   = ('barrio__zona', 'barrio', 'es_principal')
     search_fields = ('cliente__usuario__username', 'calle')
+
+
+@admin.register(MovimientoBidon)
+class MovimientoBidonAdmin(admin.ModelAdmin):
+    """Historial de envases (RF-08). Sólo lectura: se registra desde la ficha o el reparto."""
+    list_display  = ('fecha', 'cliente', 'tipo', 'cantidad', 'pedido', 'parada', 'registrado_por')
+    list_filter   = ('tipo',)
+    search_fields = ('cliente__nombre', 'cliente__apellido', 'nota')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

@@ -99,7 +99,7 @@ class ClienteForm(forms.ModelForm):
     class Meta:
         model  = Cliente
         fields = ['nombre', 'apellido', 'email_contacto', 'dni',
-                  'fecha_nacimiento', 'tipo_cliente', 'bidones_prestados', 'notas_internas']
+                  'fecha_nacimiento', 'tipo_cliente', 'notas_internas']
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'class': _INPUT,
@@ -122,10 +122,6 @@ class ClienteForm(forms.ModelForm):
                 'class': _INPUT
             }),
             'tipo_cliente': forms.Select(attrs={'class': _SELECT}),
-            'bidones_prestados': forms.NumberInput(attrs={
-                'class': _INPUT,
-                'min': 0
-            }),
             'notas_internas': forms.Textarea(attrs={
                 'class': _INPUT,
                 'rows': 3,
@@ -242,4 +238,24 @@ class EditarMiPerfilForm(forms.Form):
         label='Eliminar foto actual',
         required=False,
         widget=forms.CheckboxInput(attrs={'class': _CHECK})
+    )
+
+
+class MovimientoBidonForm(forms.Form):
+    """Registro manual de envases desde la ficha del cliente (RF-08)."""
+    TIPOS = [
+        ('Devolucion', 'Devolución de vacíos'),
+        ('Prestamo', 'Préstamo (entrega fuera de reparto)'),
+        ('Venta', 'Envase vendido al cliente'),
+        ('Ajuste', 'Ajuste manual (+/-)'),
+    ]
+    tipo = forms.ChoiceField(choices=TIPOS, label='Movimiento', widget=forms.Select(attrs={'class': _SELECT}))
+    cantidad = forms.IntegerField(
+        label='Cantidad',
+        help_text='En los ajustes, negativo descuenta envases.',
+        widget=forms.NumberInput(attrs={'class': _INPUT, 'placeholder': 'Ej: 2'}),
+    )
+    nota = forms.CharField(
+        label='Nota', required=False, max_length=200,
+        widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Opcional'}),
     )

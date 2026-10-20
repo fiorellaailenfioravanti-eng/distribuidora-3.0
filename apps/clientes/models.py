@@ -1,4 +1,6 @@
+from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 # ────────────────────────────────────────────────
@@ -73,9 +75,11 @@ class Cliente(models.Model):
         default='Normal',
         verbose_name='Tipo de cliente'
     )
-    bidones_prestados = models.PositiveIntegerField(
+    bidones_prestados = models.IntegerField(
         default=0,
-        verbose_name='Bidones prestados'
+        verbose_name='Bidones prestados',
+        help_text='Saldo calculado del historial de envases (RF-08). No se edita a mano: '
+                  'se registra un movimiento. Negativo = devolvió más de los prestados.'
     )
     permite_fiado    = models.BooleanField(
         default=False,
@@ -282,3 +286,69 @@ class DireccionEntrega(models.Model):
                 cliente=self.cliente, es_principal=True
             ).exclude(pk=self.pk).update(es_principal=False)
         super().save(*args, **kwargs)
+
+
+
+# ────────────────────────────────────────────────
+# 4. MOVIMIENTO DE BIDONES  — RF-08
+#    Historial de envases prestados y devueltos. El saldo del cliente
+#    (`Cliente.bidones_prestados`) es la suma de `cantidad`.
+# ────────────────────────────────────────────────
+TIPOS_MOVIMIENTO_BIDON = [
+    ('Prestamo',   'Préstamo (entrega de llenos)'),
+    ('Devolucion', 'Devolución de vacíos'),
+    ('Venta',      'Envase vendido al cliente'),
+    ('Ajuste',     'Ajuste manual'),
+]
+
+
+class MovimientoBidon(models.Model):
+    id_movimiento = models.AutoField(primary_key=True)
+    cliente       = models.ForeignKey(
+        Cliente,
+        on_delete=models.CASCADE,
+        related_name='movimientos_bidon',
+        verbose_name='Cliente'
+    )
+    tipo          = models.CharField(max_length=12, choices=TIPOS_MOVIMIENTO_BIDON, verbose_name='Tipo')
+    cantidad      = models.IntegerField(
+        verbose_name='Efecto en el saldo',
+        help_text='Positivo suma envases prestados; negativo los descuenta.'
+    )
+    fecha         = models.DateTimeField(default=timezone.now, verbose_name='Fecha')
+    pedido        = models.ForeignKey(
+        'pedidos.Pedido',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='movimientos_bidon',
+        verbose_name='Pedido'
+    )
+    parada        = models.ForeignKey(
+        'logistica.DetalleHojaRuta',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='movimientos_bidon',
+        verbose_name='Parada de reparto'
+    )
+    registrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='movimientos_bidon',
+        verbose_name='Registrado por'
+    )
+    nota          = models.CharField(max_length=200, blank=True, verbose_name='Nota')
+
+    class Meta:
+        ordering = ['-fecha', '-id_movimiento']
+        verbose_name = 'Movimiento de bidones'
+        verbose_name_plural = 'Movimientos de bidones'
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} {self.cantidad:+d} — {self.cliente.nombre_completo()}"
+
+    def cantidad_absoluta(self):
+        return abs(self.cantidad)

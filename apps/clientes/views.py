@@ -6,9 +6,12 @@ from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import Cliente, TelefonoContacto, DireccionEntrega
 from .forms  import (ClienteForm, ClienteSinCuentaForm, AltaClienteConCuentaForm, TelefonoContactoForm,
-                     DireccionEntregaForm, BuscarClienteForm, EditarMiPerfilForm)
+                     DireccionEntregaForm, BuscarClienteForm, EditarMiPerfilForm, MovimientoBidonForm)
 from apps.pedidos.models import Pedido
+from django.core.exceptions import ValidationError
+
 from distribuidora.utils import normalizar_texto
+from . import services as servicios_clientes
 from apps.permisos.roles import es_admin_o_vendedor, puede_ver_nota_seguridad
 
 
@@ -79,6 +82,7 @@ def ver_cliente(request, pk):
     pedidos = cliente.pedidos.select_related('metodo_pago').prefetch_related('detalles__producto', 'pagos').all()
 
     form_tel = TelefonoContactoForm()
+    movimientos_bidon = cliente.movimientos_bidon.select_related('registrado_por', 'pedido')[:15]
 
     # RNF-02: la nota de seguridad se calcula por DIRECCIÓN, no por usuario.
     # Esta ficha solo la abre personal con poder de escritura; el repartidor
@@ -98,6 +102,8 @@ def ver_cliente(request, pk):
         'pedidos':             pedidos,
         'form_tel':            form_tel,
         'form_dir':            form_dir,
+        'form_bidon':          MovimientoBidonForm(),
+        'movimientos_bidon':   movimientos_bidon,
         'es_personal':         es_personal,
         # Lista de IDs de dirección cuya nota de seguridad puede ver este usuario.
         'direcciones_con_nota_visible': [
@@ -255,6 +261,38 @@ def cambiar_tipo_cliente(request, pk):
         else:
             messages.error(request, 'Tipo de cliente inválido.')
 
+    return redirect('apps.clientes:ver_cliente', pk=pk)
+
+
+# ─────────────────────────────────────────────────────────────
+# ENVASES (RF-08)
+# ─────────────────────────────────────────────────────────────
+@login_required
+def registrar_movimiento_bidon(request, pk):
+    """Devolución, préstamo, venta o ajuste de envases cargado por el personal."""
+    if not es_admin_o_vendedor(request.user):
+        messages.error(request, 'No tenés permiso para registrar envases.')
+        return redirect('inicio')
+    cliente = get_object_or_404(Cliente, pk=pk)
+    if request.method != 'POST':
+        return redirect('apps.clientes:ver_cliente', pk=pk)
+
+    form = MovimientoBidonForm(request.POST)
+    if form.is_valid():
+        try:
+            movimiento = servicios_clientes.registrar_movimiento_bidon(
+                cliente, form.cleaned_data['tipo'], form.cleaned_data['cantidad'],
+                usuario=request.user, nota=form.cleaned_data['nota'],
+            )
+            messages.success(
+                request,
+                f'{movimiento.get_tipo_display()} registrado. '
+                f'Saldo de envases: {movimiento.cliente.bidones_prestados}.'
+            )
+        except ValidationError as error:
+            messages.error(request, ' '.join(error.messages))
+    else:
+        messages.error(request, 'Revisá el tipo y la cantidad del movimiento.')
     return redirect('apps.clientes:ver_cliente', pk=pk)
 
 

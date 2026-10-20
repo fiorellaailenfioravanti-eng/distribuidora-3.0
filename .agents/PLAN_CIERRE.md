@@ -110,7 +110,13 @@ deja `bidones_prestados` +1 con dos movimientos en el historial.
 
 ---
 
-## FASE 6 — Pagos parciales, checkout y pedido automático 💳 (RF-04, RF-12, RF-13, RF-18)
+## FASE 6 — Pagos parciales, checkout y pedido automático 💳 (RF-04, RF-12, RF-13, RF-18) ✅ **COMPLETADA (20/10/2026)**
+
+> Decisiones aplicadas con la recomendación: **F-D3** (stock disponible = stock − lo comprometido en
+> pedidos Pendiente/Confirmado, con `select_for_update` al confirmar) y **F-D4** (modelo
+> `SuscripcionReposicion` que activa el cliente). En vez de marcar `es_frecuente`, «Planificar reparto»
+> deja de sugerir como frecuente a quien ya tiene un pedido pendiente en la zona (evita la doble parada).
+> Nuevo método de pago `CUENTA` (cuenta corriente, sólo con fiado; no se ofrece en la web).
 
 ### Punto de partida real
 - `Pedido.esta_pagado()` devuelve `True` con **cualquier** pago aprobado → un pago parcial lo marca pagado. ⚠️ Bug.

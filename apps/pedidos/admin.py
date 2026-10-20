@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import MetodoPago, Pedido, DetallePedido, PagoPedido
+from .models import MetodoPago, Pedido, DetallePedido, PagoPedido, SuscripcionReposicion
 
 
 class DetallePedidoInline(admin.TabularInline):
@@ -32,3 +32,11 @@ class PedidoAdmin(admin.ModelAdmin):
 class PagoPedidoAdmin(admin.ModelAdmin):
     list_display = ('id_pago', 'pedido', 'monto', 'metodo_pago', 'estado_pago', 'fecha')
     list_filter = ('estado_pago', 'metodo_pago')
+
+
+
+@admin.register(SuscripcionReposicion)
+class SuscripcionReposicionAdmin(admin.ModelAdmin):
+    list_display = ('cliente', 'producto', 'cantidad', 'periodicidad_dias', 'proxima_fecha', 'activa', 'ultimo_pedido')
+    list_filter = ('activa', 'periodicidad_dias')
+    search_fields = ('cliente__nombre', 'cliente__apellido')

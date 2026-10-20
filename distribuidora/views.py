@@ -26,6 +26,8 @@ def resumen_dashboard(request):
     cuentas_morosas = clientes_morosos()[:5]
     from apps.promociones.services import promociones_por_vencer
     por_vencer = promociones_por_vencer()
+    from apps.pedidos.services import resumen_caja
+    caja = resumen_caja(dias=30)
 
     contexto = {
         'total_pedidos': total_pedidos,
@@ -36,5 +38,6 @@ def resumen_dashboard(request):
         'morosidad': morosidad,
         'cuentas_morosas': cuentas_morosas,
         'promociones_por_vencer': por_vencer,
+        'caja': caja,
     }
     return render(request, 'dashboard/resumen.html', contexto)

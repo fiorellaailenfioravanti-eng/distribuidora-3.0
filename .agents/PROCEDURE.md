@@ -20,7 +20,8 @@
 | **Fase 4.5** | Commits de Fases 1–4, `db.sqlite3` fuera de git, limpieza de docs | ✅ **Completada** |
 | **Fase 4.6** | Correcciones de la auditoría ([`AUDITORIA.md`](AUDITORIA.md)): pagos, roles, errores 500, higiene | ✅ **Completada** |
 | **Fase 5** | Historial de envases, promociones prepagas y caducidad (RF-08/09/10) + `seed_demo` | ✅ **Completada** |
-| **Fase 6–7** | Pagos parciales (vista de cobro), RF-18, QA final | 🔴 **Pendiente** — plan detallado en [`PLAN_CIERRE.md`](PLAN_CIERRE.md) |
+| **Fase 6** | Cobro manual con pagos parciales y caja (RF-13), stock comprometido (RF-12), pedido automático (RF-18) | ✅ **Completada** |
+| **Fase 7** | QA, buscador (RF-07), producción y tesis | 🔴 **Pendiente** — plan detallado en [`PLAN_CIERRE.md`](PLAN_CIERRE.md) |
 
 **Hallazgos cerrados:** H-1, H-2, H-3, H-4, H-5, H-6, H-7, H-8, H-9, H-15 y H-16.
 **Hallazgos abiertos:** H-10 (suite parcial), H-13/H-14 (datos/README); de la auditoría
@@ -37,7 +38,7 @@ y la restricción por asignación.
 ```powershell
 .\venv\Scripts\python.exe manage.py check --settings=distribuidora.settings.local          # 0 issues
 .\venv\Scripts\python.exe manage.py makemigrations --check --dry-run --settings=...local   # No changes detected
-.\venv\Scripts\python.exe manage.py test --settings=distribuidora.settings.local            # 160 OK
+.\venv\Scripts\python.exe manage.py test --settings=distribuidora.settings.local            # 180 OK
 .\venv\Scripts\python.exe manage.py check --deploy --settings=distribuidora.settings.production  # 0 issues
 ```
 
@@ -121,19 +122,19 @@ Leyenda: ✅ completo · 🟡 parcial · 🔴 no implementado · ⚠️ implemen
 | RF-09 | **Promociones prepago** "paga 3 lleva 4" | `apps/promociones` (`Promocion`, `CompraPromocion`, `ConsumoPromocion`) | ✅ | T-5.2 ✅ |
 | RF-10 | **Caducidad 30 días corridos** | `promociones/services.py::vencer_promociones`, comando `vencer_promociones` | ✅ | T-5.3 ✅ |
 | RF-11 | Pedido: fecha, total, estado, dirección, desglose | `pedidos/models.py:36-107` | ✅ | — |
-| RF-12 | Carrito no excede stock | `carrito/views.py` | 🟡 | T-1.6 |
-| RF-13 | **Pagos parciales** y múltiples métodos | `PagoPedido` existe; **no hay vista de cobro manual** | 🟡 | T-6.2 (H-30 ✅; falta vista de cobro manual) |
+| RF-12 | Carrito no excede stock | `carrito/views.py` | ✅ | T-1.6 ✅ (stock disponible = stock − comprometido, con bloqueo de fila) |
+| RF-13 | **Pagos parciales** y múltiples métodos | `PagoPedido` existe; **no hay vista de cobro manual** | ✅ | T-6.2 ✅ (cobro manual, pagos parciales, a cuenta, caja) |
 | RF-14 | **Semaforización de deuda** (🟡/🟠/🔴) | `cuentas/models.py`, `cuentas/services.py` | ✅ | — |
 | RF-15 | **Contratos de alquiler de dispensers** | `abonos/models.py`, `abonos/services.py` | ✅ | — |
 | RF-16 | Hojas de ruta diarias (fecha, zona, camión, chofer) | `logistica/models.py:155-207` | ✅ | — |
 | RF-17 | **Agrupación automática + generación quincenal** | `logistica/services.py::generar_borradores_periodo`, comando `generar_borradores_reparto` | ✅ | A-D5 ✅ (borradores de 15 días, confirmación manual) |
-| RF-18 | **Pedido automático quincenal activable** | — (ausente incluso del roadmap) | 🔴 | T-6.3 |
+| RF-18 | **Pedido automático quincenal activable** | `pedidos.SuscripcionReposicion`, comando `generar_pedidos_automaticos` | ✅ | T-6.3 ✅ |
 | RF-19 | Confirmación de entrega en campo por repartidor | `logistica/views.py:244-307` | ✅ | — |
 | RNF-01 | Escalabilidad multi-camión/multi-zona/multi-chofer | `logistica/models.py` | ✅ | T-2.1 ✅ (Empleado unificado) |
 | RNF-02 | Ocultación de info sensible | `permisos/roles.py::puede_ver_nota_seguridad`, templates | ✅ | T-2.4 ✅, T-2.5 ✅ |
 | RNF-03 | Dark mode sin autenticación | `base_tienda.html`, `base_dashboard.html` | ✅ | — |
 
-**Balance (20/10/2026, control ejecutado — ver [`CONTROL_REQUISITOS.md`](CONTROL_REQUISITOS.md)): 18 completos · 3 parciales · 1 no implementado — 4 de 22 requisitos requieren trabajo.**
+**Balance (20/10/2026, control ejecutado — ver [`CONTROL_REQUISITOS.md`](CONTROL_REQUISITOS.md)): 21 completos · 1 parcial (RF-07) — 1 de 22 requisitos requiere trabajo.**
 
 ---
 
@@ -375,7 +376,7 @@ Estas **no** son técnicas: cambian el alcance de la tesis y las debe decidir el
 - [x] `makemigrations --check --dry-run` → sin cambios
 - [x] `manage.py test` → todas las suites en verde *(hoy: 128 tests)*
 - [x] `manage.py check --deploy --settings=distribuidora.settings.production` → limpio
-- [ ] RF-01 … RF-19 + RNF-01 … RNF-03 con estado ✅ en la matriz de §4 *(18/22 ✅; falta RF-18 y pulir RF-07/12/13)*
+- [ ] RF-01 … RF-19 + RNF-01 … RNF-03 con estado ✅ en la matriz de §4 *(21/22 ✅; falta pulir RF-07)*
 - [ ] Cada RF tiene **al menos un test** que lo cubra
 - [x] `SECRET_KEY` fuera del repositorio
 - [ ] `CONTEXT.md` v5.0 refleja el código final *(hoy: v4.1 tras Fase 4)*

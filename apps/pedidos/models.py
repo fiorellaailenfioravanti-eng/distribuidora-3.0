@@ -33,6 +33,17 @@ ORIGENES_PEDIDO = [
     ('WEB',        'Web'),
     ('ADMIN',      'Cargado por la empresa'),
     ('REPARTIDOR', 'Venta en calle'),
+    ('AUTOMATICO', 'Reposición automática'),
+]
+
+# Método que representa «queda a cuenta corriente» (fiado). No se ofrece en la
+# web: lo usa el personal o el repartidor al cobrar.
+CODIGO_CUENTA_CORRIENTE = 'CUENTA'
+
+PERIODICIDADES = [
+    (7, 'Semanal'),
+    (15, 'Quincenal'),
+    (30, 'Mensual'),
 ]
 
 
@@ -215,3 +226,55 @@ class PagoPedido(models.Model):
 
     def __str__(self):
         return f"Pago #{self.id_pago} — Pedido #{self.pedido.id_pedido} (${self.monto}) [{self.estado_pago}]"
+
+
+
+class SuscripcionReposicion(models.Model):
+    """RF-18: pedido automático de reposición que activa el propio cliente.
+
+    El comando `generar_pedidos_automaticos` crea un `Pedido` (origen
+    AUTOMATICO) cuando llega `proxima_fecha` y la adelanta un período.
+    """
+    id_suscripcion   = models.AutoField(primary_key=True)
+    cliente          = models.OneToOneField(
+        Cliente,
+        on_delete=models.CASCADE,
+        related_name='suscripcion',
+        verbose_name='Cliente'
+    )
+    direccion        = models.ForeignKey(
+        DireccionEntrega,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='suscripciones',
+        verbose_name='Dirección de entrega'
+    )
+    producto         = models.ForeignKey(Producto, on_delete=models.PROTECT, verbose_name='Producto')
+    cantidad         = models.PositiveSmallIntegerField(default=2, verbose_name='Cantidad')
+    periodicidad_dias = models.PositiveSmallIntegerField(
+        choices=PERIODICIDADES, default=15, verbose_name='Cada cuántos días'
+    )
+    proxima_fecha    = models.DateField(verbose_name='Próximo pedido')
+    activa           = models.BooleanField(default=True, verbose_name='Activa')
+    metodo_pago      = models.ForeignKey(
+        MetodoPago,
+        on_delete=models.PROTECT,
+        verbose_name='Medio de pago'
+    )
+    ultimo_pedido    = models.ForeignKey(
+        Pedido,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
+        verbose_name='Último pedido generado'
+    )
+    fecha_alta       = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Pedido automático'
+        verbose_name_plural = 'Pedidos automáticos'
+
+    def __str__(self):
+        estado = 'activa' if self.activa else 'pausada'
+        return f'{self.cliente.nombre_completo()}: {self.cantidad} × {self.producto} cada {self.periodicidad_dias} días ({estado})'

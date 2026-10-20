@@ -176,9 +176,17 @@ def _fijar_botellones(pedido, cantidades):
 
 
 def construir_borrador(fecha, zona):
-    """Arma los datos de previsualización para generar una hoja de ruta."""
+    """Arma los datos de previsualización para generar una hoja de ruta.
+
+    Un frecuente que ya tiene un pedido pendiente en la zona (web, telefónico o
+    automático) aparece sólo por su pedido, para no repartirle dos veces.
+    """
+    pedidos = list(pedidos_candidatos(zona, fecha))
+    con_pedido = {p.cliente_id for p in pedidos}
     frecuentes = []
     for cliente in clientes_frecuentes_de_zona(zona):
+        if cliente.pk in con_pedido:
+            continue
         direccion = direccion_en_zona(cliente, zona)
         if direccion is None:
             continue
@@ -192,7 +200,7 @@ def construir_borrador(fecha, zona):
         'fecha': fecha,
         'zona': zona,
         'frecuentes': frecuentes,
-        'pedidos': list(pedidos_candidatos(zona, fecha)),
+        'pedidos': pedidos,
         'ruta_default': ruta_default(zona, fecha),
     }
 

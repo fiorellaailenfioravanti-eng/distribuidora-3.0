@@ -18,9 +18,14 @@ import hmac
 import logging
 from decimal import Decimal, InvalidOperation
 
-from django.db import transaction
+from datetime import timedelta
 
-from .models import PagoPedido
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.db.models import Sum
+from django.utils import timezone
+
+from .models import CODIGO_CUENTA_CORRIENTE, PagoPedido
 
 logger = logging.getLogger(__name__)
 
@@ -141,3 +146,149 @@ def firma_webhook_valida(secreto, x_signature, x_request_id, data_id):
 
     esperado = hmac.new(secreto.encode(), manifiesto.encode(), hashlib.sha256).hexdigest()
     return hmac.compare_digest(esperado, v1)
+
+
+
+# ─────────────────────────────────────────────────────────────
+# RF-13 — COBRO MANUAL CON PAGOS PARCIALES
+# ─────────────────────────────────────────────────────────────
+@transaction.atomic
+def registrar_pago_manual(pedido, monto, metodo_pago, referencia=''):
+    """Registra un pago (total o parcial) cargado por el personal.
+
+    Con el método «Cuenta corriente» el importe pasa a la cuenta del cliente
+    (sólo si tiene fiado) y el pedido queda saldado por ese monto. Cuando los
+    pagos cubren el total, un pedido `Pendiente` pasa a `Confirmado`.
+    """
+    from apps.cuentas.services import obtener_o_crear_cuenta, registrar_cargo
+
+    monto = _a_decimal(monto)
+    if monto is None or monto <= 0:
+        raise ValidationError('El monto debe ser mayor a cero.')
+    saldo = pedido.saldo_pendiente()
+    if monto > saldo:
+        raise ValidationError(f'El monto supera el saldo pendiente del pedido (${saldo}).')
+
+    if metodo_pago.codigo == CODIGO_CUENTA_CORRIENTE:
+        if pedido.cliente is None:
+            raise ValidationError('El pedido no tiene cliente: no se puede cargar a cuenta.')
+        cargo = registrar_cargo(  # valida RF-05 (fiado)
+            obtener_o_crear_cuenta(pedido.cliente), monto,
+            descripcion=f'Pedido #{pedido.pk}', pedido=pedido,
+        )
+        referencia = referencia or f'Cargo en cuenta corriente #{cargo.pk}'
+
+    pago = PagoPedido.objects.create(
+        pedido=pedido, monto=monto, metodo_pago=metodo_pago,
+        referencia_comprobante=referencia or '', estado_pago='Aprobado',
+    )
+    if pedido.esta_pagado() and pedido.estado == 'Pendiente':
+        pedido.estado = 'Confirmado'
+        pedido.save(update_fields=['estado'])
+    return pago
+
+
+def resumen_caja(dias=30, hoy=None):
+    """Ingresos de los últimos `dias`: por medio de pago y por día (RF-13, 6A.5).
+
+    No cuenta lo que pasó a cuenta corriente (no es dinero cobrado); sí suma
+    los pagos que los clientes hicieron sobre su cuenta.
+    """
+    from apps.cuentas.models import MovimientoCuenta
+
+    hoy = hoy or timezone.localdate()
+    desde = hoy - timedelta(days=dias - 1)
+    pagos = (PagoPedido.objects
+             .filter(estado_pago='Aprobado', fecha__date__gte=desde)
+             .exclude(metodo_pago__codigo=CODIGO_CUENTA_CORRIENTE))
+    por_metodo = {
+        fila['metodo_pago__nombre']: fila['total']
+        for fila in pagos.values('metodo_pago__nombre').annotate(total=Sum('monto')).order_by('-total')
+    }
+    cobros_cuenta = (MovimientoCuenta.objects.filter(tipo='Pago', fecha__date__gte=desde)
+                     .aggregate(t=Sum('monto'))['t'] or 0)
+    if cobros_cuenta:
+        por_metodo['Cobros de cuenta corriente'] = cobros_cuenta
+
+    por_dia = []
+    for offset in range(min(dias, 7) - 1, -1, -1):
+        dia = hoy - timedelta(days=offset)
+        total = pagos.filter(fecha__date=dia).aggregate(t=Sum('monto'))['t'] or 0
+        total += MovimientoCuenta.objects.filter(tipo='Pago', fecha__date=dia).aggregate(t=Sum('monto'))['t'] or 0
+        por_dia.append({'dia': dia, 'total': total})
+    maximo = max((d['total'] for d in por_dia), default=0) or 1
+    for d in por_dia:
+        d['porcentaje'] = int(d['total'] * 100 / maximo)
+    return {'por_metodo': por_metodo, 'por_dia': por_dia, 'total': sum(por_metodo.values()), 'dias': dias}
+
+
+# ─────────────────────────────────────────────────────────────
+# RF-12 — STOCK DISPONIBLE (decisión F-D3)
+# ─────────────────────────────────────────────────────────────
+ESTADOS_QUE_COMPROMETEN = ('Pendiente', 'Confirmado')
+
+
+def stock_comprometido(producto, excluir_pedido=None):
+    """Unidades vendidas que todavía no salieron en un camión.
+
+    El stock se descuenta al cargar el camión; hasta entonces lo pedido queda
+    comprometido y no puede venderse dos veces.
+    """
+    from .models import DetallePedido
+    qs = DetallePedido.objects.filter(producto=producto, pedido__estado__in=ESTADOS_QUE_COMPROMETEN)
+    if excluir_pedido is not None:
+        qs = qs.exclude(pedido=excluir_pedido)
+    return qs.aggregate(t=Sum('cantidad'))['t'] or 0
+
+
+def stock_disponible(producto, excluir_pedido=None):
+    return producto.stock - stock_comprometido(producto, excluir_pedido)
+
+
+# ─────────────────────────────────────────────────────────────
+# RF-18 — PEDIDO AUTOMÁTICO DE REPOSICIÓN
+# ─────────────────────────────────────────────────────────────
+@transaction.atomic
+def generar_pedidos_automaticos(fecha=None):
+    """Crea el pedido de cada suscripción activa cuya fecha llegó.
+
+    Es idempotente: después de generar adelanta `proxima_fecha` un período (o
+    varios, si el comando no corrió durante un tiempo), así que volver a
+    correrlo el mismo día no duplica. Usa el saldo de promociones prepagas.
+    Devuelve la lista de pedidos creados.
+    """
+    from apps.logistica.services import fecha_estimada_para_direccion
+    from apps.promociones.services import consumir_saldo
+    from .models import DetallePedido, Pedido, SuscripcionReposicion
+
+    fecha = fecha or timezone.localdate()
+    creados = []
+    for sus in (SuscripcionReposicion.objects.select_for_update()
+                .filter(activa=True, proxima_fecha__lte=fecha)
+                .select_related('cliente', 'direccion', 'producto', 'metodo_pago')):
+        direccion = sus.direccion or sus.cliente.direcciones.filter(es_principal=True).first()
+        if direccion is None or not sus.producto.activo:
+            continue
+        pedido = Pedido.objects.create(
+            cliente=sus.cliente, direccion_entrega=direccion, metodo_pago=sus.metodo_pago,
+            estado='Confirmado', origen='AUTOMATICO', total=0,
+            fecha_estimada_entrega=fecha_estimada_para_direccion(direccion) or sus.proxima_fecha,
+            notas_cliente=f'Reposición automática cada {sus.periodicidad_dias} días.',
+        )
+        cubiertas = consumir_saldo(sus.cliente, sus.producto, sus.cantidad, pedido, fecha=fecha)
+        if cubiertas:
+            DetallePedido.objects.create(pedido=pedido, producto=sus.producto, precio_unitario=0,
+                                         cantidad=cubiertas, subtotal=0)
+        restantes = sus.cantidad - cubiertas
+        if restantes:
+            DetallePedido.objects.create(pedido=pedido, producto=sus.producto, precio_unitario=sus.producto.precio,
+                                         cantidad=restantes, subtotal=sus.producto.precio * restantes)
+        pedido.total = sum(d.subtotal for d in pedido.detalles.all())
+        pedido.save(update_fields=['total'])
+
+        while sus.proxima_fecha <= fecha:
+            sus.proxima_fecha += timedelta(days=sus.periodicidad_dias)
+        sus.ultimo_pedido = pedido
+        sus.save(update_fields=['proxima_fecha', 'ultimo_pedido'])
+        creados.append(pedido)
+    return creados

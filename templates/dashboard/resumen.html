@@ -145,6 +145,42 @@
         </div>
     </div>
 
+    {# ── Caja (RF-13): ingresos por medio de pago y por día ── #}
+    <div class="row g-4 mb-4">
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 bg-surface h-100">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-main mb-1"><i class="fa-solid fa-cash-register text-success me-2"></i>Caja de los últimos {{ caja.dias }} días</h6>
+                    <div class="h3 fw-bold text-success mb-3">${{ caja.total }}</div>
+                    {% for metodo, total in caja.por_metodo.items %}
+                    <div class="d-flex justify-content-between small border-bottom py-1">
+                        <span class="text-muted">{{ metodo }}</span><span class="fw-semibold">${{ total }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted small mb-0">Sin cobros en el período.</p>
+                    {% endfor %}
+                    <p class="small text-muted mt-2 mb-0">No incluye lo que quedó a cuenta corriente.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 bg-surface h-100">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-main mb-3"><i class="fa-solid fa-chart-column text-primary me-2"></i>Cobros por día</h6>
+                    <div class="d-flex align-items-end gap-2" style="height: 160px;" role="img" aria-label="Cobros de los últimos 7 días">
+                        {% for d in caja.por_dia %}
+                        <div class="flex-fill d-flex flex-column align-items-center justify-content-end h-100" title="{{ d.dia|date:'l d/m' }}: ${{ d.total }}">
+                            <small class="text-muted mb-1" style="font-size:.7rem;">{% if d.total %}${{ d.total|floatformat:0 }}{% endif %}</small>
+                            <div class="w-100 rounded-top bg-primary" style="height: {{ d.porcentaje }}%; min-height: 2px; opacity: .85;"></div>
+                            <small class="text-muted mt-1">{{ d.dia|date:"D d" }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {# ── Promociones prepagas por vencer (RF-10) ── #}
     {% if promociones_por_vencer %}
     <div class="card border-0 shadow-sm rounded-4 bg-surface mb-4">

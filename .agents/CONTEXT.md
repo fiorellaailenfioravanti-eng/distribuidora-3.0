@@ -365,6 +365,12 @@ de logística (`mi_ruta_hoy`, `ver_ruta`, `imprimir_ruta`) reciben la lista
 - `Pedido.cambiar_estado_manual()` / `estados_manuales_posibles()`: transiciones permitidas
   desde la gestión; `En Camino`/`Entregado` de pedidos en hoja de ruta los fija logística.
 - Panel de gestión para Vendedores (`/pedidos/gestion/`) e historial (`/pedidos/mis-pedidos/`).
+- **Fase 6:** cobro manual con pagos parciales desde el detalle del pedido (`/pedidos/<pk>/registrar-pago/`,
+  `registrar_pago_manual`); método `CUENTA` para dejar el importe en la cuenta corriente (sólo con fiado);
+  caja de 30 días en el dashboard (`resumen_caja`). `stock_disponible` = stock − comprometido (RF-12).
+  **Pedido automático** `SuscripcionReposicion` (RF-18): el cliente lo activa en «Mi perfil» (o el vendedor
+  en la ficha, `/pedidos/automatico/<cliente>/`); el comando diario `generar_pedidos_automaticos` crea el
+  pedido (origen `AUTOMATICO`, usa el saldo prepago) y adelanta la próxima fecha.
 
 ---
 

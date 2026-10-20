@@ -1,0 +1,57 @@
+{# Pedido automático de reposición (RF-18). Variables: cliente, suscripcion, form_suscripcion #}
+<div class="card border-0 shadow-sm rounded-4 bg-surface surface-card overflow-hidden">
+    <div class="card-header border-0 bg-transparent fw-bold text-main d-flex justify-content-between align-items-center pt-4 px-4 fs-5">
+        <span><i class="fa-solid fa-arrows-rotate me-2 text-primary"></i>Pedido automático</span>
+        {% if suscripcion and suscripcion.activa %}
+            <span class="badge bg-success bg-opacity-25 text-success rounded-pill">Activo · próximo {{ suscripcion.proxima_fecha|date:"d/m" }}</span>
+        {% elif suscripcion %}
+            <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill">Pausado</span>
+        {% endif %}
+    </div>
+    <div class="card-body p-4">
+        {% if not cliente.direcciones.exists %}
+            <p class="small text-muted mb-0">Cargá un domicilio de entrega para activar el pedido automático.</p>
+        {% elif not form_suscripcion.fields.producto.queryset %}
+            <p class="small text-muted mb-0">Todavía no hay botellones disponibles para reposición automática.</p>
+        {% else %}
+        <p class="small text-muted">Se genera solo un pedido cada cierto tiempo y se entrega en el día de reparto de tu zona. Si tenés una promoción prepaga, se descuenta automáticamente.</p>
+        <form method="post" action="{% url 'apps.pedidos:suscripcion_cliente' cliente.pk %}" class="row g-2 align-items-end">
+            {% csrf_token %}
+            <div class="col-12 col-md-5">
+                <label class="form-label small mb-1" for="{{ form_suscripcion.producto.id_for_label }}">Producto</label>
+                {{ form_suscripcion.producto }}
+            </div>
+            <div class="col-4 col-md-2">
+                <label class="form-label small mb-1" for="{{ form_suscripcion.cantidad.id_for_label }}">Cantidad</label>
+                {{ form_suscripcion.cantidad }}
+            </div>
+            <div class="col-8 col-md-5">
+                <label class="form-label small mb-1" for="{{ form_suscripcion.periodicidad_dias.id_for_label }}">Frecuencia</label>
+                {{ form_suscripcion.periodicidad_dias }}
+            </div>
+            <div class="col-12 col-md-5">
+                <label class="form-label small mb-1" for="{{ form_suscripcion.direccion.id_for_label }}">Entregar en</label>
+                {{ form_suscripcion.direccion }}
+            </div>
+            <div class="col-6 col-md-4">
+                <label class="form-label small mb-1" for="{{ form_suscripcion.metodo_pago.id_for_label }}">Pago</label>
+                {{ form_suscripcion.metodo_pago }}
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label small mb-1" for="{{ form_suscripcion.proxima_fecha.id_for_label }}">{% if suscripcion %}Próximo pedido{% else %}Primer pedido{% endif %}</label>
+                {{ form_suscripcion.proxima_fecha }}
+            </div>
+            <div class="col-12 d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2">
+                <div class="form-check">
+                    {{ form_suscripcion.activa }}
+                    <label class="form-check-label small" for="{{ form_suscripcion.activa.id_for_label }}">Activo (desmarcá para pausarlo)</label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm rounded-pill fw-bold px-4">{% if suscripcion %}Guardar cambios{% else %}Activar pedido automático{% endif %}</button>
+            </div>
+        </form>
+        {% if suscripcion.ultimo_pedido %}
+        <p class="small text-muted mt-3 mb-0">Último pedido generado: <a href="{% url 'apps.pedidos:detalle_pedido' suscripcion.ultimo_pedido.pk %}">#{{ suscripcion.ultimo_pedido.pk }}</a> del {{ suscripcion.ultimo_pedido.fecha_pedido|date:"d/m/Y" }}.</p>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>

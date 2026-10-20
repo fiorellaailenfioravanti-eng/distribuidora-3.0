@@ -11,12 +11,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 
 from .models import Pedido, DetallePedido, PagoPedido, MetodoPago
-from .forms import CheckoutForm
+from .forms import CheckoutForm, RegistrarPagoForm, SuscripcionForm
 from .services import (
     aplicar_pago_mercadopago,
     consultar_pago_mercadopago,
     firma_webhook_valida,
     pago_en_curso,
+    registrar_pago_manual,
+    stock_disponible,
 )
 from apps.carrito.models import Carrito
 from apps.clientes.models import Cliente
@@ -138,13 +140,19 @@ def confirmar_pedido(request):
     metodo_pago = form.cleaned_data['metodo_pago']
     notas = form.cleaned_data['notas_cliente']
 
-    # 1. Validar Stock atómicamente de todos los ítems
+    # 1. Validar stock (RF-12): se bloquean las filas de producto hasta el fin
+    #    de la transacción y se descuenta lo comprometido en otros pedidos que
+    #    todavía no salieron, para que dos clientes no compren la misma unidad.
+    from apps.productos.models import Producto
+    bloqueados = {p.pk: p for p in Producto.objects.select_for_update().filter(
+        pk__in=[item.producto_id for item in items])}
     for item in items:
-        if item.producto.stock < item.cantidad:
+        disponible = stock_disponible(bloqueados[item.producto_id])
+        if disponible < item.cantidad:
             messages.error(
                 request,
                 f"Lo sentimos, no hay stock suficiente de '{item.producto.nombre}'. "
-                f"Disponibles: {item.producto.stock}, en tu carrito: {item.cantidad}."
+                f"Disponibles: {max(disponible, 0)}, en tu carrito: {item.cantidad}."
             )
             return redirect('apps.carrito:ver_carrito')
 
@@ -401,8 +409,62 @@ def detalle_pedido(request, pk):
         'puede_ver_nota_seguridad': puede_ver_nota_seguridad(
             request.user, pedido.direccion_entrega
         ),
+        'es_personal': es_admin_o_vendedor(request.user),
+        'form_pago': RegistrarPagoForm(pedido=pedido),
     }
     return render(request, 'pedidos/detalle_pedido.html', contexto)
+
+
+@login_required
+@user_passes_test(es_admin_o_vendedor, login_url='/')
+def registrar_pago(request, pk):
+    """Cobro manual con pagos parciales (RF-13 / HU-05)."""
+    pedido = get_object_or_404(Pedido, pk=pk)
+    if request.method == 'POST':
+        form = RegistrarPagoForm(request.POST, pedido=pedido)
+        if form.is_valid():
+            from django.core.exceptions import ValidationError
+            try:
+                pago = registrar_pago_manual(pedido, form.cleaned_data['monto'],
+                                             form.cleaned_data['metodo_pago'], form.cleaned_data['referencia'])
+                pedido.refresh_from_db()
+                saldo = pedido.saldo_pendiente()
+                messages.success(request, f'Pago de ${pago.monto} registrado. '
+                                          + ('Pedido saldado.' if not saldo else f'Saldo pendiente: ${saldo}.'))
+            except ValidationError as error:
+                messages.error(request, ' '.join(error.messages))
+        else:
+            messages.error(request, 'Revisá el monto y el medio de pago.')
+    return redirect('apps.pedidos:detalle_pedido', pk=pedido.pk)
+
+
+@login_required
+def suscripcion_cliente(request, cliente_pk):
+    """Alta, cambio o pausa del pedido automático (RF-18): el cliente o el personal."""
+    from apps.clientes.models import Cliente
+    from .models import SuscripcionReposicion
+    cliente = get_object_or_404(Cliente, pk=cliente_pk)
+    es_personal = es_admin_o_vendedor(request.user)
+    if not (es_personal or cliente.usuario_id == request.user.pk):
+        messages.error(request, 'No tenés permiso para modificar este pedido automático.')
+        return redirect('inicio')
+    destino = ('apps.clientes:ver_cliente', cliente.pk) if es_personal else ('apps.clientes:mi_perfil',)
+    if request.method == 'POST':
+        suscripcion = SuscripcionReposicion.objects.filter(cliente=cliente).first()
+        form = SuscripcionForm(request.POST, instance=suscripcion, cliente=cliente)
+        if form.is_valid():
+            suscripcion = form.save(commit=False)
+            suscripcion.cliente = cliente
+            suscripcion.save()
+            if suscripcion.activa:
+                messages.success(request, f'Pedido automático activo: {suscripcion.cantidad} × {suscripcion.producto.nombre} '
+                                          f'cada {suscripcion.periodicidad_dias} días, desde el {suscripcion.proxima_fecha:%d/%m/%Y}.')
+            else:
+                messages.info(request, 'Pedido automático pausado.')
+        else:
+            errores = '; '.join(e for lista in form.errors.values() for e in lista)
+            messages.error(request, f'No se guardó el pedido automático: {errores}')
+    return redirect(*destino)
 
 
 @login_required

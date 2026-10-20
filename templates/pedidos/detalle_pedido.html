@@ -148,19 +148,53 @@
                 <div class="card-body p-4">
                     <p class="mb-3 text-main"><strong class="text-muted small text-uppercase">Método:</strong><br> {{ pedido.metodo_pago.nombre }}</p>
 
-                    {% if pagos %}
-                        {% for pago in pagos %}
-                            <div class="p-3 border rounded-4 bg-secondary bg-opacity-10 mt-2 shadow-sm">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="badge bg-primary bg-opacity-25 text-primary rounded-pill px-2 py-1">{{ pago.estado_pago }}</span>
-                                    <small class="text-main fw-bold">${{ pago.monto }}</small>
-                                </div>
-                                {% if pago.mercadopago_payment_id %}
-                                    <small class="d-block text-muted">ID Pago MP: #{{ pago.mercadopago_payment_id }}</small>
-                                {% endif %}
+                    {# Avance del cobro (RF-13: pagos parciales) #}
+                    {% with pagado=pedido.total_pagado saldo=pedido.saldo_pendiente %}
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span class="text-muted">Cobrado ${{ pagado }} de ${{ pedido.total }}</span>
+                        <span class="fw-bold {% if saldo %}text-warning{% else %}text-success{% endif %}">{% if saldo %}Saldo ${{ saldo }}{% else %}Saldado{% endif %}</span>
+                    </div>
+                    <div class="progress rounded-pill mb-3" style="height:8px;">
+                        <div class="progress-bar bg-success" style="width:{% if pedido.total %}{% widthratio pagado pedido.total 100 %}{% else %}100{% endif %}%;"></div>
+                    </div>
+
+                    {% for pago in pagos %}
+                        <div class="p-3 border rounded-4 bg-secondary bg-opacity-10 mt-2 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge bg-primary bg-opacity-25 text-primary rounded-pill px-2 py-1">{{ pago.estado_pago }}</span>
+                                <small class="text-main fw-bold">${{ pago.monto }}</small>
                             </div>
-                        {% endfor %}
+                            <small class="d-block text-muted">{{ pago.metodo_pago.nombre }} · {{ pago.fecha|date:"d/m/Y H:i" }}</small>
+                            {% if pago.referencia_comprobante %}<small class="d-block text-muted">{{ pago.referencia_comprobante }}</small>{% endif %}
+                            {% if pago.mercadopago_payment_id %}
+                                <small class="d-block text-muted">ID Pago MP: #{{ pago.mercadopago_payment_id }}</small>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    {% if es_personal and saldo and pedido.estado != 'Cancelado' %}
+                    <form method="post" action="{% url 'apps.pedidos:registrar_pago' pedido.pk %}" class="mt-4 pt-3 border-top">
+                        {% csrf_token %}
+                        <h6 class="fw-bold text-main small text-uppercase mb-2">Registrar cobro</h6>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label small mb-1" for="{{ form_pago.monto.id_for_label }}">Monto</label>
+                                {{ form_pago.monto }}
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small mb-1" for="{{ form_pago.metodo_pago.id_for_label }}">Medio</label>
+                                {{ form_pago.metodo_pago }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small mb-1" for="{{ form_pago.referencia.id_for_label }}">Comprobante</label>
+                                {{ form_pago.referencia }}
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm rounded-pill fw-bold mt-3 w-100">Registrar pago</button>
+                        <small class="text-muted d-block mt-2">Se aceptan pagos parciales; el pedido se marca pagado cuando se cubre el total.</small>
+                    </form>
                     {% endif %}
+                    {% endwith %}
                 </div>
             </div>
         </div>

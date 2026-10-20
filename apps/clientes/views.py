@@ -20,6 +20,14 @@ from apps.permisos.roles import es_admin_o_vendedor, puede_ver_nota_seguridad
 # ─────────────────────────────────────────────────────────────
 # HELPERS
 # ─────────────────────────────────────────────────────────────
+def _contexto_suscripcion(cliente):
+    """Pedido automático de reposición (RF-18) para la ficha y «Mi perfil»."""
+    from apps.pedidos.forms import SuscripcionForm
+    from apps.pedidos.models import SuscripcionReposicion
+    suscripcion = SuscripcionReposicion.objects.filter(cliente=cliente).select_related('ultimo_pedido').first()
+    return {'suscripcion': suscripcion, 'form_suscripcion': SuscripcionForm(instance=suscripcion, cliente=cliente)}
+
+
 def es_dueno_o_staff(user, cliente):
     return es_admin_o_vendedor(user) or (cliente and cliente.usuario == user)
 
@@ -108,6 +116,7 @@ def ver_cliente(request, pk):
         'form_promocion':      VenderPromocionForm(),
         'compras_promocion':   cliente.compras_promocion.select_related('promocion').order_by('-fecha_compra', '-id_compra')[:10],
         'saldos_promocion':    compras_vigentes(cliente),
+        **_contexto_suscripcion(cliente),
         'movimientos_bidon':   movimientos_bidon,
         'es_personal':         es_personal,
         # Lista de IDs de dirección cuya nota de seguridad puede ver este usuario.
@@ -487,6 +496,7 @@ def mi_perfil_cliente(request):
         'direcciones': direcciones,
         'pedidos':     pedidos,
         'saldos_promocion': compras_vigentes(cliente),
+        **_contexto_suscripcion(cliente),
     })
 
 

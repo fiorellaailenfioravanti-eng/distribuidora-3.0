@@ -33,12 +33,14 @@ def agregar_al_carrito(request, producto_id):
     cantidad_previa = 0 if creado else item_carrito.cantidad
     nueva_cantidad = cantidad_previa + cantidad_a_agregar
     
-    if producto.stock >= nueva_cantidad:
+    from apps.pedidos.services import stock_disponible
+    disponible = stock_disponible(producto)
+    if disponible >= nueva_cantidad:
         item_carrito.cantidad = nueva_cantidad
         item_carrito.save()
         messages.success(request, f"{producto.nombre} se añadió al carrito.")
     else:
-        messages.error(request, f"Lo sentimos, no hay suficiente stock de {producto.nombre}. (Máximo: {producto.stock})")
+        messages.error(request, f"Lo sentimos, no hay suficiente stock de {producto.nombre}. (Máximo: {max(disponible, 0)})")
         # Si acababa de ser creado pero no hay stock, lo borramos
         if creado:
             item_carrito.delete()

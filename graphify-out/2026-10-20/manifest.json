@@ -462,10 +462,10 @@
     "semantic_hash": "1706279f0ab60e87908632c254cc5b40"
   },
   "apps/logistica/forms.py": {
-    "mtime": 1790809393.0480647,
-    "seen": 1792492789.023524,
-    "ast_hash": "ef5f3429b5ecfaf4dd1705d2346fc66b",
-    "semantic_hash": "ef5f3429b5ecfaf4dd1705d2346fc66b"
+    "mtime": 1792513155.4749038,
+    "seen": 1792513625.2351482,
+    "ast_hash": "7824f4f27cbf5ea38ca965efdb382780",
+    "semantic_hash": ""
   },
   "apps/logistica/migrations/0001_initial.py": {
     "mtime": 1790803370.834452,
@@ -522,33 +522,33 @@
     "semantic_hash": "d62ee7f96f1cc3ad81becc78f8b94d45"
   },
   "apps/logistica/models.py": {
-    "mtime": 1790808453.782962,
-    "seen": 1792492789.023524,
-    "ast_hash": "39c266f2389ea3a89c19c461ed898994",
-    "semantic_hash": "39c266f2389ea3a89c19c461ed898994"
+    "mtime": 1792512787.1633358,
+    "seen": 1792513625.2351482,
+    "ast_hash": "a85a36cc51f9e3ca28feb8e324af38f2",
+    "semantic_hash": ""
   },
   "apps/logistica/services.py": {
-    "mtime": 1792512042.2909236,
-    "seen": 1792512378.2961423,
-    "ast_hash": "0a7f3a77cc6d963b9697ed91e1ff8143",
+    "mtime": 1792512776.162304,
+    "seen": 1792513625.2351482,
+    "ast_hash": "c085f66a18e69c46766f232d25c0470c",
     "semantic_hash": ""
   },
   "apps/logistica/tests.py": {
-    "mtime": 1792511729.3710747,
-    "seen": 1792511798.5807722,
-    "ast_hash": "aa4640be0345bc07c77301b69415c6ae",
+    "mtime": 1792513354.9237218,
+    "seen": 1792513625.2351482,
+    "ast_hash": "3f2d7540a2d2774dfb10ca08c862c0a5",
     "semantic_hash": ""
   },
   "apps/logistica/urls.py": {
-    "mtime": 1790809526.8912728,
-    "seen": 1792492789.023524,
-    "ast_hash": "08f0b35842a181b04037b1229d9bd64a",
-    "semantic_hash": "08f0b35842a181b04037b1229d9bd64a"
+    "mtime": 1792512920.6501794,
+    "seen": 1792513625.2351482,
+    "ast_hash": "5f4a92c213d283e7e6ce90d18e047e90",
+    "semantic_hash": ""
   },
   "apps/logistica/views.py": {
-    "mtime": 1792492555.4542184,
-    "seen": 1792492789.023524,
-    "ast_hash": "92f35037a4672c3353d5459b85321f81",
+    "mtime": 1792513092.1266477,
+    "seen": 1792513625.2351482,
+    "ast_hash": "3d89487bf6284f98e123054b7311af16",
     "semantic_hash": ""
   },
   "apps/pedidos/__init__.py": {
@@ -678,9 +678,9 @@
     "semantic_hash": "72f6b311c7f35a0fb68b72c9aeb94e09"
   },
   "apps/productos/forms.py": {
-    "mtime": 1792492065.782384,
-    "seen": 1792492789.023524,
-    "ast_hash": "5bfe20d210724eed8d7dc957e1f32217",
+    "mtime": 1792513435.4970794,
+    "seen": 1792513625.2351482,
+    "ast_hash": "77544ebd86da43c27efabd495f003d0e",
     "semantic_hash": ""
   },
   "apps/productos/migrations/0001_initial.py": {
@@ -708,15 +708,15 @@
     "semantic_hash": "173c68ba75b0f7bbd886b33e0731b78d"
   },
   "apps/productos/models.py": {
-    "mtime": 1792492065.775391,
-    "seen": 1792492789.023524,
-    "ast_hash": "48e7479413f1148a53fc7e0d5c7b8a8a",
+    "mtime": 1792512679.0254276,
+    "seen": 1792513625.2351482,
+    "ast_hash": "e3346233a5cd003a7f40ccff76155135",
     "semantic_hash": ""
   },
   "apps/productos/tests.py": {
-    "mtime": 1792492205.7003243,
-    "seen": 1792492789.023524,
-    "ast_hash": "272111451dd2dc3d6fe3278d99257b9f",
+    "mtime": 1792513454.69955,
+    "seen": 1792513625.2351482,
+    "ast_hash": "1a8991c6fe179783cb718c3382549424",
     "semantic_hash": ""
   },
   "apps/productos/urls.py": {
@@ -798,9 +798,9 @@
     "semantic_hash": ""
   },
   ".agents/CONTEXT.md": {
-    "mtime": 1792512372.2747712,
-    "seen": 1792512378.2961423,
-    "ast_hash": "f50c5af667ff92f0a93fdb4e88c613a8",
+    "mtime": 1792513620.2075596,
+    "seen": 1792513625.2351482,
+    "ast_hash": "f740b29dbbfb44d45930e465d3af9f65",
     "semantic_hash": ""
   },
   ".agents/DESIGN.md": {
@@ -1014,10 +1014,10 @@
     "semantic_hash": "320945449ae334e2cf63b22a37a4cccd"
   },
   "templates/logistica/confirmar_ruta.html": {
-    "mtime": 1790809212.4652903,
-    "seen": 1792492789.023524,
-    "ast_hash": "669c23b23ce50cbe4897819ffb03db63",
-    "semantic_hash": "669c23b23ce50cbe4897819ffb03db63"
+    "mtime": 1792513123.6165457,
+    "seen": 1792513625.2351482,
+    "ast_hash": "af8d14e1a7c4b8e97f5282b4ba45cd40",
+    "semantic_hash": ""
   },
   "templates/logistica/crear_ruta.html": {
     "mtime": 1790803370.8918052,
@@ -1050,9 +1050,9 @@
     "semantic_hash": "014b8a8200766d1d30d8461d9847c818"
   },
   "templates/logistica/imprimir_ruta.html": {
-    "mtime": 1792492555.4542184,
-    "seen": 1792492789.023524,
-    "ast_hash": "980dae5f94cc909702198b3d5c9cd8ef",
+    "mtime": 1792513145.491232,
+    "seen": 1792513625.2351482,
+    "ast_hash": "c3cb99cbbfe6acc85d6d9ff6caa833c4",
     "semantic_hash": ""
   },
   "templates/logistica/listar_camiones.html": {
@@ -1074,22 +1074,22 @@
     "semantic_hash": "4987f048cbd87edeb2c99fc090b5d080"
   },
   "templates/logistica/mi_ruta_hoy.html": {
-    "mtime": 1790805778.070646,
-    "seen": 1792492789.023524,
-    "ast_hash": "99f935b5a2877682d5ae7b3ab1c38b68",
-    "semantic_hash": "99f935b5a2877682d5ae7b3ab1c38b68"
+    "mtime": 1792513145.491232,
+    "seen": 1792513625.2351482,
+    "ast_hash": "3532c66a2f5f91c2c47b5949487f0e65",
+    "semantic_hash": ""
   },
   "templates/logistica/planificar_reparto.html": {
-    "mtime": 1790808731.4152977,
-    "seen": 1792492789.023524,
-    "ast_hash": "4bc82e51eb2faea320833d736b4eb870",
-    "semantic_hash": "4bc82e51eb2faea320833d736b4eb870"
+    "mtime": 1792513069.5281918,
+    "seen": 1792513625.2351482,
+    "ast_hash": "98f8b9caaa8f170b250007d709b564b0",
+    "semantic_hash": ""
   },
   "templates/logistica/registrar_regreso.html": {
-    "mtime": 1790809220.2777448,
-    "seen": 1792492789.023524,
-    "ast_hash": "af84466b93d9b7535cbdab6da2c210d6",
-    "semantic_hash": "af84466b93d9b7535cbdab6da2c210d6"
+    "mtime": 1792513128.1357858,
+    "seen": 1792513625.2351482,
+    "ast_hash": "52899d76bb6fb661e79724d4fc296780",
+    "semantic_hash": ""
   },
   "templates/logistica/venta_calle.html": {
     "mtime": 1790809536.1015,
@@ -1098,9 +1098,9 @@
     "semantic_hash": "a7c80d54cfd90842103be2c8e3ad2e4e"
   },
   "templates/logistica/ver_ruta.html": {
-    "mtime": 1792492555.4542184,
-    "seen": 1792492789.023524,
-    "ast_hash": "a08674d6b0662076b3d67cb79228a31d",
+    "mtime": 1792513532.1807468,
+    "seen": 1792513625.2351482,
+    "ast_hash": "c60909ba08e4ca7d75de429e4f5d4524",
     "semantic_hash": ""
   },
   "templates/pedidos/checkout.html": {
@@ -1140,15 +1140,15 @@
     "semantic_hash": "85136c9f460c013744d895ccd5006e22"
   },
   "templates/productos/crear_producto.html": {
-    "mtime": 1790803370.8963287,
-    "seen": 1792492789.023524,
-    "ast_hash": "bfb80fda370634fdd55ebf1eaa79a1bb",
-    "semantic_hash": "bfb80fda370634fdd55ebf1eaa79a1bb"
+    "mtime": 1792513453.9148126,
+    "seen": 1792513625.2351482,
+    "ast_hash": "66f84f67da6c49f80d09cf43ed02393e",
+    "semantic_hash": ""
   },
   "templates/productos/editar_producto.html": {
-    "mtime": 1792492065.782384,
-    "seen": 1792492789.023524,
-    "ast_hash": "ee04d131b55852b112b0b63fc940a56c",
+    "mtime": 1792513435.4970794,
+    "seen": 1792513625.2351482,
+    "ast_hash": "0b9ff280101ecab2fe9e763bdeba1bed",
     "semantic_hash": ""
   },
   "templates/productos/eliminar_producto.html": {
@@ -1506,9 +1506,9 @@
     "semantic_hash": ""
   },
   "apps/logistica/management/commands/seed_demo.py": {
-    "mtime": 1792512194.6519022,
-    "seen": 1792512378.2961423,
-    "ast_hash": "082686d0bd1a8ee5cd3aff45056ebfe3",
+    "mtime": 1792513155.4757886,
+    "seen": 1792513625.2351482,
+    "ast_hash": "0c69959b88f53a53d5567d421d3ca6cd",
     "semantic_hash": ""
   },
   "apps/promociones/__init__.py": {
@@ -1605,6 +1605,36 @@
     "mtime": 1792511980.2617533,
     "seen": 1792512378.2961423,
     "ast_hash": "4397f328b3f366c13c0a78db0ee3e616",
+    "semantic_hash": ""
+  },
+  "apps/logistica/migrations/0010_hojaruta_vacios_recibidos.py": {
+    "mtime": 1792512680.3937364,
+    "seen": 1792513625.2351482,
+    "ast_hash": "0d0df462af1979df281057ae1066c658",
+    "semantic_hash": ""
+  },
+  "apps/logistica/migrations/0011_renumerar_paradas.py": {
+    "mtime": 1792513516.1286645,
+    "seen": 1792513625.2351482,
+    "ast_hash": "5b3d846e03ae6f7ef3420ec24fdd74ea",
+    "semantic_hash": ""
+  },
+  "apps/logistica/migrations/0012_completar_pedidos_de_paradas.py": {
+    "mtime": 1792513545.4237142,
+    "seen": 1792513625.2351482,
+    "ast_hash": "1dbe6695304e9977438347f26b3230a4",
+    "semantic_hash": ""
+  },
+  "apps/productos/migrations/0006_producto_es_botellon.py": {
+    "mtime": 1792512679.6500697,
+    "seen": 1792513625.2351482,
+    "ast_hash": "c197b64277f777d7c6b21ea73ad34fa6",
+    "semantic_hash": ""
+  },
+  "apps/productos/migrations/0007_marcar_botellones.py": {
+    "mtime": 1792513425.670368,
+    "seen": 1792513625.2351482,
+    "ast_hash": "0bea3338eee0583b0dc17315a3eb509a",
     "semantic_hash": ""
   }
 }

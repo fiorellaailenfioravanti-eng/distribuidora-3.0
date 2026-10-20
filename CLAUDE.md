@@ -5,7 +5,7 @@ Las reglas del workspace viven en `.agents/AGENTS.md` y se importan acá para qu
 @.agents/AGENTS.md
 
 Resumen operativo:
-- Antes de proponer cambios, revisar `.agents/CONTEXT.md` (qué existe) y `.agents/PROCEDURE.md` (fase actual). Fases 1–5 completadas (más 4.5/4.6 de auditoría); Fase 6 (vista de cobro, RF-18, RF-12) es la siguiente. Datos de demo: `manage.py seed_demo`.
+- Antes de proponer cambios, revisar `.agents/CONTEXT.md` (qué existe) y `.agents/PROCEDURE.md` (fase actual). Fases 1–6 completadas (más 4.5/4.6 de auditoría); Fase 7 (QA, RF-07, producción y tesis) es la siguiente. Datos de demo: `manage.py seed_demo`.
 - Todo en español: código, comentarios, templates y mensajes.
 - Django 5.0 con Function-Based Views (no CBV). Settings de desarrollo: `--settings=distribuidora.settings.local`.
 - Permisos: usar siempre `apps/permisos/roles.py` (`es_admin_o_vendedor`, `puede_ver_nota_seguridad`, etc.); no reimplementar chequeos de grupo en las apps.

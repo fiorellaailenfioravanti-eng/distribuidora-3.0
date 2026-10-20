@@ -17,4 +17,6 @@ urlpatterns = [
     path('<int:pk>/', views.detalle_pedido, name='detalle_pedido'),
     path('<int:pk>/cambiar-estado/', views.cambiar_estado_pedido, name='cambiar_estado_pedido'),
     path('<int:pk>/cambiar-estado-pago/', views.cambiar_estado_pago, name='cambiar_estado_pago'),
+    path('<int:pk>/registrar-pago/', views.registrar_pago, name='registrar_pago'),
+    path('automatico/<int:cliente_pk>/', views.suscripcion_cliente, name='suscripcion_cliente'),
 ]

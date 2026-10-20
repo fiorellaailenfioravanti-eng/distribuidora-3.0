@@ -446,3 +446,21 @@ class GeneracionQuincenalTests(TestCase):
         call_command('generar_borradores_reparto', desde=self.lunes.isoformat(), stdout=StringIO())
         call_command('generar_borradores_reparto', desde=self.lunes.isoformat(), stdout=StringIO())
         self.assertEqual(HojaRuta.objects.count(), 2)
+
+
+class SeedDemoTests(TestCase):
+    """El seed de demostración corre sobre una base nueva y es idempotente."""
+
+    def test_seed_demo_dos_veces(self):
+        from io import StringIO
+        from django.core.management import call_command
+        from apps.clientes.models import Cliente
+        from apps.pedidos.models import Pedido
+        call_command('seed_demo', stdout=StringIO())
+        pedidos, clientes = Pedido.objects.count(), Cliente.objects.count()
+        call_command('seed_demo', stdout=StringIO())
+        self.assertEqual(Pedido.objects.count(), pedidos)
+        self.assertEqual(Cliente.objects.count(), clientes)
+        self.assertEqual(Cliente.objects.filter(dni__isnull=True).count(), 0)  # el personal no es cliente
+        self.assertTrue(all(c.cantidad_telefonos() >= 2 for c in Cliente.objects.all()))
+        self.assertFalse(any(p.estado == 'Entregado' and not p.esta_pagado() for p in Pedido.objects.all()))

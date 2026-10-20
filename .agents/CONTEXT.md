@@ -134,7 +134,7 @@ copy .env.example .env          # completar SECRET_KEY, ALLOWED_HOSTS y credenci
 python manage.py migrate --settings=distribuidora.settings.local
 python manage.py createsuperuser --settings=distribuidora.settings.local
 python manage.py seed_barrios --settings=distribuidora.settings.local     # barrios de Resistencia
-python manage.py seed_logistica --settings=distribuidora.settings.local   # datos de demo de reparto
+python manage.py seed_demo --settings=distribuidora.settings.local       # datos de demo completos (usuarios en el docstring)
 python manage.py runserver --settings=distribuidora.settings.local
 # → http://127.0.0.1:8000/
 ```
@@ -414,7 +414,7 @@ propios; los importa de `apps.empleados`. Se eliminaron las tablas
 > `pedidos.Pedido`; `logistica/services.py` agrupa frecuentes + pedidos por zona, confirma
 > la hoja (→ `En Camino`), registra carga/regreso (sobrantes a stock) y las ventas en calle.
 > Comando `generar_borradores_reparto [--desde AAAA-MM-DD] [--dias 15]` (RF-17, A-D5): borradores por zona
-> para el período, sin confirmar. Comando de demo `seed_logistica`. **Detalle:** [`.agents/FASE3_LOGISTICA.md`](FASE3_LOGISTICA.md).
+> para el período, sin confirmar. Comando de datos de demo `seed_demo` (reemplaza a `seed_logistica`, que fallaba en una base nueva). **Detalle:** [`.agents/FASE3_LOGISTICA.md`](FASE3_LOGISTICA.md).
 
 ---
 

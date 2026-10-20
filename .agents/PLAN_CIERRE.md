@@ -149,7 +149,7 @@ RF-04, dos confirmaciones concurrentes del último stock, comando de suscripcion
 |:--:|---|---|
 | 7.1 | Tests faltantes (H-10) | `carrito`, `buscador` (RF-07: tildes y fuzzy), `productos`, `autenticacion` (RF-01/RF-02), `pedidos` (checkout atómico, estados), `empleados` (no tiene `tests.py`) |
 | 7.2 | Matriz RF ↔ test | Agregar columna "Test" a `PROCEDURE.md` §4; **cada RF con al menos un test** |
-| 7.3 | Datos demo (H-13) | Extender `seed_logistica` (o comando `seed_demo`) con promociones, suscripciones, abonos y deudas en los 3 colores |
+| 7.3 | Datos demo (H-13) | ✅ `seed_demo` (catálogo, zonas, personal, 16 clientes, 3 semanas de reparto, deudas en los 3 colores, abonos). Falta sumar promociones (5B) y suscripciones (6C) |
 | 7.4 | README (H-14) | Instalación, `.env`, migraciones, seeds, comandos programados (`generar_cargos_abonos`, `vencer_promociones`, `generar_pedidos_automaticos`), roles y usuarios demo |
 | 7.5 | Producción | `check --deploy` limpio; `LOGGING`; documentar el cron/Task Scheduler |
 | 7.6 | Decisión C-9 / RF-20 | Declarar "gastos por proveedor" **fuera de alcance** en el informe (recomendado) o planificarlo |

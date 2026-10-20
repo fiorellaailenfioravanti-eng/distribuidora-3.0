@@ -30,3 +30,7 @@ env/
 # Agents
 .agents/scratch/
 .agents/knowledge/
+
+# graphify (cache local; graph.json y GRAPH_REPORT.md si se versionan)
+graphify-out/cache/
+graphify-out/cost.json

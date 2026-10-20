@@ -349,6 +349,17 @@ class EntregaCalleTests(TestCase):
         self.assertEqual(self.pedido.estado, 'Entregado')
         self.assertEqual(self.envase.stock, 6)
 
+    def test_registrar_entrega_dos_veces_no_duplica_envases(self):
+        """H-28: volver a guardar la parada aplica sólo la diferencia."""
+        registrar_entrega(self.parada, 'Entregado', envases_retirados=2, envases_vendidos=1)
+        registrar_entrega(self.parada, 'Entregado', envases_retirados=2, envases_vendidos=1)
+        self.envase.refresh_from_db()
+        self.assertEqual(self.envase.stock, 6)
+        # Corregir de 2 a 3 retirados suma sólo uno más.
+        registrar_entrega(self.parada, 'Entregado', envases_retirados=3, envases_vendidos=1)
+        self.envase.refresh_from_db()
+        self.assertEqual(self.envase.stock, 7)
+
     def test_registrar_cobro_crea_pago_aprobado(self):
         pago = registrar_cobro(self.pedido, 200, self.efectivo)
         self.assertEqual(pago.estado_pago, 'Aprobado')

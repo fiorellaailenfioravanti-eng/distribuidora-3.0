@@ -11,6 +11,18 @@ ESTADOS_PEDIDO = [
     ('Cancelado',   'Cancelado'),
 ]
 
+# Cambios de estado que el personal puede hacer a mano desde la gestión de
+# pedidos (H-29). `En Camino` y `Entregado` de un pedido que está en una hoja
+# de ruta los fija logística (confirmar hoja / registrar entrega), que además
+# mueve el stock; por eso no se ofrecen acá.
+TRANSICIONES_MANUALES = {
+    'Pendiente':  ('Confirmado', 'Cancelado'),
+    'Confirmado': ('Pendiente', 'Entregado', 'Cancelado'),
+    'En Camino':  (),
+    'Entregado':  (),
+    'Cancelado':  (),
+}
+
 ESTADOS_PAGO = [
     ('Pendiente', 'Pendiente de Verificación / Cobro'),
     ('Aprobado',  'Aprobado / Pagado'),
@@ -107,6 +119,28 @@ class Pedido(models.Model):
 
     def cantidad_items(self):
         return sum(item.cantidad for item in self.detalles.all())
+
+    def estados_manuales_posibles(self):
+        """Estados a los que el personal puede pasar el pedido a mano (H-29)."""
+        posibles = list(TRANSICIONES_MANUALES.get(self.estado, ()))
+        # Un pedido que va en una hoja de ruta se entrega desde logística.
+        if 'Entregado' in posibles and self.paradas.exists():
+            posibles.remove('Entregado')
+        return posibles
+
+    def cambiar_estado_manual(self, nuevo_estado):
+        """Aplica un cambio manual válido; devuelve False si no está permitido."""
+        from django.utils import timezone
+
+        if nuevo_estado not in self.estados_manuales_posibles():
+            return False
+        self.estado = nuevo_estado
+        campos = ['estado']
+        if nuevo_estado == 'Entregado':
+            self.fecha_entrega = timezone.localdate()
+            campos.append('fecha_entrega')
+        self.save(update_fields=campos)
+        return True
 
     def esta_pagado(self):
         return self.pagos.filter(estado_pago='Aprobado').exists()

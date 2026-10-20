@@ -98,13 +98,14 @@
                         <td class="text-center">
                             <form action="{% url 'apps.pedidos:cambiar_estado_pedido' pedido.id_pedido %}" method="post" class="d-inline">
                                 {% csrf_token %}
-                                <select name="estado" class="form-select form-select-sm border shadow-sm rounded-pill text-main" onchange="this.form.submit()">
-                                    {% for cod, nombre in estados_choices %}
-                                        <option value="{{ cod }}" {% if pedido.estado == cod %}selected{% endif %}>
-                                            {{ nombre }}
-                                        </option>
+                                {% with posibles=pedido.estados_manuales_posibles %}
+                                <select name="estado" class="form-select form-select-sm border shadow-sm rounded-pill text-main" onchange="this.form.submit()" {% if not posibles %}disabled title="Se gestiona desde Logística"{% endif %}>
+                                    <option value="{{ pedido.estado }}" selected>{{ pedido.estado }}</option>
+                                    {% for cod in posibles %}
+                                        <option value="{{ cod }}">{{ cod }}</option>
                                     {% endfor %}
                                 </select>
+                                {% endwith %}
                             </form>
                         </td>
                         <td class="text-end pe-4">

@@ -15,13 +15,14 @@ class ProductoForm(forms.ModelForm):
 
     class Meta:
         model = Producto
-        fields = ['nombre', 'descripcion', 'categoria', 'precio', 'stock', 'imagen']
+        fields = ['nombre', 'descripcion', 'categoria', 'precio', 'stock', 'imagen', 'activo']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Botellón 20L'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción detallada...'}),
             'precio': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0.00'}),
             'stock': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Cantidad inicial'}),
             'imagen': forms.FileInput(attrs={'class': 'form-control'}),
+            'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
     def __init__(self, *args, **kwargs):

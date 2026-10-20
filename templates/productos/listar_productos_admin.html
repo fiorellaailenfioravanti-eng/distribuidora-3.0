@@ -66,7 +66,7 @@
                                     </div>
                                 {% endif %}
                                 <div>
-                                    <h6 class="mb-0 fw-bold text-main">{{ e.nombre }}</h6>
+                                    <h6 class="mb-0 fw-bold text-main">{{ e.nombre }}{% if not e.activo %} <span class="badge bg-secondary ms-1">Inactivo</span>{% endif %}</h6>
                                     <span class="text-muted small d-inline-block text-truncate" style="max-width: 200px;">{{ e.descripcion }}</span>
                                 </div>
                             </div>

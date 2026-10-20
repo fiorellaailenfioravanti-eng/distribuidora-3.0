@@ -1,4 +1,3 @@
-import unicodedata
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -8,6 +7,7 @@ from .models import Cliente, TelefonoContacto, DireccionEntrega
 from .forms  import (ClienteForm, ClienteSinCuentaForm, AltaClienteConCuentaForm, TelefonoContactoForm,
                      DireccionEntregaForm, BuscarClienteForm, EditarMiPerfilForm)
 from apps.pedidos.models import Pedido
+from distribuidora.utils import normalizar_texto
 from apps.permisos.roles import es_admin_o_vendedor, puede_ver_nota_seguridad
 
 
@@ -18,17 +18,17 @@ def es_dueno_o_staff(user, cliente):
     return es_admin_o_vendedor(user) or (cliente and cliente.usuario == user)
 
 
-def _normalizar(texto):
-    """Elimina tildes y pasa a minúsculas para búsqueda tolerante."""
-    return ''.join(
-        c for c in unicodedata.normalize('NFD', texto.lower())
-        if unicodedata.category(c) != 'Mn'
-    )
-
-
 # ─────────────────────────────────────────────────────────────
 # LISTAR CLIENTES
 # ─────────────────────────────────────────────────────────────
+def _texto_buscable(cliente):
+    partes = [cliente.nombre, cliente.apellido, cliente.dni, cliente.email_contacto]
+    if cliente.usuario is not None:
+        u = cliente.usuario
+        partes += [u.get_full_name(), u.username, u.email]
+    return normalizar_texto(' '.join(p for p in partes if p))
+
+
 @login_required
 def listar_clientes(request):
     if not es_admin_o_vendedor(request.user):
@@ -42,14 +42,10 @@ def listar_clientes(request):
     tipo = request.GET.get('tipo', '').strip()
 
     if q:
-        q_norm = _normalizar(q)
-        clientes = [
-            c for c in clientes
-            if q_norm in _normalizar(c.usuario.get_full_name())
-            or q_norm in _normalizar(c.usuario.username)
-            or q_norm in _normalizar(c.usuario.email)
-            or (c.dni and q_norm in _normalizar(c.dni))
-        ]
+        # Filtro en Python para tolerar tildes (SQLite no lo hace). Incluye a
+        # los clientes sin cuenta web, que no tienen `usuario` (H-22).
+        q_norm = normalizar_texto(q)
+        clientes = [c for c in clientes if q_norm in _texto_buscable(c)]
     else:
         clientes = list(clientes)
 

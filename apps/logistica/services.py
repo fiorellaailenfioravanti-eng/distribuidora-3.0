@@ -352,8 +352,20 @@ def registrar_entrega(parada, estado, envases_retirados=0, envases_vendidos=0, n
 
     Ajusta el stock del envase: +retirados (vuelven llenos al depósito) y
     -vendidos (envases no devueltos que se le cobran al cliente).
+
+    Es idempotente (H-28): volver a guardar la misma parada sólo aplica la
+    **diferencia** contra lo ya registrado en la base, no los totales otra vez.
+    El `ModelForm` de la vista ya modificó la instancia en memoria, por eso lo
+    previo se lee de la base.
     """
     from apps.productos.models import Producto
+
+    previo = (
+        DetalleHojaRuta.objects.select_for_update()
+        .filter(pk=parada.pk)
+        .values('envases_retirados', 'envases_vendidos')
+        .first()
+    ) or {'envases_retirados': 0, 'envases_vendidos': 0}
 
     parada.envases_retirados = max(0, int(envases_retirados or 0))
     parada.envases_vendidos = max(0, int(envases_vendidos or 0))
@@ -361,7 +373,10 @@ def registrar_entrega(parada, estado, envases_retirados=0, envases_vendidos=0, n
         parada.nota_entrega = nota
 
     envase = _producto_envase_para(parada)
-    delta = parada.envases_retirados - parada.envases_vendidos
+    delta = (
+        (parada.envases_retirados - previo['envases_retirados'])
+        - (parada.envases_vendidos - previo['envases_vendidos'])
+    )
     if envase is not None and delta:
         producto = Producto.objects.select_for_update().get(pk=envase.pk)
         producto.stock += delta

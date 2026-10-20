@@ -369,7 +369,7 @@ def mis_pedidos(request):
 
 
 @login_required
-@user_passes_test(es_admin_o_vendedor)
+@user_passes_test(es_admin_o_vendedor, login_url='/')
 def listar_pedidos(request):
     """Panel de administración/vendedor para gestionar todos los pedidos recibidos."""
     pedidos = Pedido.objects.all().select_related('cliente', 'direccion_entrega', 'metodo_pago').prefetch_related('detalles__producto', 'pagos')
@@ -394,24 +394,28 @@ def listar_pedidos(request):
 
 
 @login_required
-@user_passes_test(es_admin_o_vendedor)
+@user_passes_test(es_admin_o_vendedor, login_url='/')
 def cambiar_estado_pedido(request, pk):
     """Permite al staff actualizar el estado de un pedido."""
     if request.method == 'POST':
         pedido = get_object_or_404(Pedido, pk=pk)
         nuevo_estado = request.POST.get('estado')
-        if nuevo_estado in dict(Pedido._meta.get_field('estado').choices):
-            pedido.estado = nuevo_estado
-            pedido.save()
-            messages.success(request, f"Estado del Pedido #{pedido.id_pedido} actualizado a '{nuevo_estado}'.")
-        else:
-            messages.error(request, "Estado no válido.")
+        estado_anterior = pedido.estado
+        if nuevo_estado != estado_anterior:
+            if pedido.cambiar_estado_manual(nuevo_estado):
+                messages.success(request, f"Estado del Pedido #{pedido.id_pedido} actualizado a '{nuevo_estado}'.")
+            else:
+                messages.error(
+                    request,
+                    f"No se puede pasar el Pedido #{pedido.id_pedido} de '{estado_anterior}' a '{nuevo_estado}'. "
+                    "Las salidas y entregas en reparto se registran desde Logística."
+                )
 
     return redirect(request.META.get('HTTP_REFERER') or 'apps.pedidos:listar_pedidos')
 
 
 @login_required
-@user_passes_test(es_admin_o_vendedor)
+@user_passes_test(es_admin_o_vendedor, login_url='/')
 def cambiar_estado_pago(request, pk):
     """Permite al staff actualizar el estado del pago de un pedido (ej. de Pendiente a Aprobado)."""
     if request.method == 'POST':

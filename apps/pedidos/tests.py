@@ -154,3 +154,37 @@ class PagosSegurosTests(TestCase):
         codigos = set(metodos_pago_checkout_web().values_list('codigo', flat=True))
         self.assertNotIn('TARJETA', codigos)
         self.assertIn('EFECTIVO', codigos)
+
+
+class TransicionesManualesTests(TestCase):
+    """H-29: el cambio manual de estado respeta el circuito de logística."""
+
+    def setUp(self):
+        self.pedido = Pedido.objects.create(
+            metodo_pago=MetodoPago.objects.get(codigo='EFECTIVO'),
+            total=Decimal('100'), estado='Pendiente',
+        )
+
+    def test_flujo_valido(self):
+        self.assertTrue(self.pedido.cambiar_estado_manual('Confirmado'))
+        self.assertTrue(self.pedido.cambiar_estado_manual('Entregado'))
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.estado, 'Entregado')
+        self.assertIsNotNone(self.pedido.fecha_entrega)
+
+    def test_estados_terminales_no_vuelven_atras(self):
+        self.pedido.cambiar_estado_manual('Cancelado')
+        self.assertFalse(self.pedido.cambiar_estado_manual('Pendiente'))
+        self.assertEqual(self.pedido.estados_manuales_posibles(), [])
+
+    def test_no_se_marca_en_camino_a_mano(self):
+        self.assertFalse(self.pedido.cambiar_estado_manual('En Camino'))
+
+    def test_pedido_en_hoja_de_ruta_se_entrega_desde_logistica(self):
+        from datetime import date
+        from apps.logistica.models import DetalleHojaRuta, HojaRuta
+        self.pedido.cambiar_estado_manual('Confirmado')
+        hoja = HojaRuta.objects.create(fecha=date(2026, 10, 20))
+        DetalleHojaRuta.objects.create(hoja_ruta=hoja, pedido=self.pedido, orden=1)
+        self.assertNotIn('Entregado', self.pedido.estados_manuales_posibles())
+        self.assertFalse(self.pedido.cambiar_estado_manual('Entregado'))

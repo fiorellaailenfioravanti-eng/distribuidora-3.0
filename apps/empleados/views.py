@@ -1,4 +1,3 @@
-import unicodedata
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -7,14 +6,10 @@ from django.db.models import Count
 from django.http import HttpResponseNotAllowed
 
 from apps.permisos.roles import es_admin_o_vendedor
+from distribuidora.utils import normalizar_texto
+
 from .models import Empleado, RolEmpleado
 from .forms import EmpleadoForm, RolEmpleadoForm
-
-def _normalizar(texto):
-    if not texto:
-        return ""
-    texto = unicodedata.normalize('NFD', texto)
-    return ''.join(c for c in texto if unicodedata.category(c) != 'Mn').lower()
 
 @login_required
 def listar_empleados(request):
@@ -29,11 +24,11 @@ def listar_empleados(request):
     empleados = Empleado.objects.select_related('rol').all()
 
     if query:
-        q_norm = _normalizar(query)
+        q_norm = normalizar_texto(query)
         emp_ids = []
         for emp in empleados:
             texto = f"{emp.nombre} {emp.apellido} {emp.dni} {emp.email}"
-            if q_norm in _normalizar(texto):
+            if q_norm in normalizar_texto(texto):
                 emp_ids.append(emp.id_empleado)
         empleados = empleados.filter(id_empleado__in=emp_ids)
 

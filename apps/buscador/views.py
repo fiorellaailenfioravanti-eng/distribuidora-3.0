@@ -1,17 +1,8 @@
-import unicodedata
 from django.shortcuts import render
 from django.core.paginator import Paginator
 from django.db.models import Q
 from apps.productos.models import Producto
-
-# Create your views here.
-def normalizar_texto(texto):
-    """Elimina tildes y convierte a minúsculas para una búsqueda flexible."""
-    if not texto:
-        return ""
-    # Convierte 'Bidón' en 'Bidon'
-    texto = ''.join((c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn'))
-    return texto.lower().strip()
+from distribuidora.utils import normalizar_texto
 
 def buscar_productos(request):
     query_original = request.GET.get('q', '').strip()
@@ -21,7 +12,7 @@ def buscar_productos(request):
         resultados = Producto.objects.none()
     else:
         # 1. Búsqueda por frase completa (prioridad)
-        resultados = Producto.objects.filter(
+        resultados = Producto.objects.filter(activo=True).filter(
             Q(nombre__icontains=query_original) | Q(nombre__icontains=query_limpia)
         )
 
@@ -37,7 +28,7 @@ def buscar_productos(request):
                 else:
                     q_fuzzy |= Q(nombre__icontains=p)
             
-            resultados = Producto.objects.filter(q_fuzzy).distinct()
+            resultados = Producto.objects.filter(activo=True).filter(q_fuzzy).distinct()
 
 
     # Paginación (Mantenemos tus 6 productos por página)

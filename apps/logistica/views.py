@@ -273,6 +273,7 @@ def actualizar_estado_entrega(request, pk):
         return redirect('apps.logistica:mi_ruta_hoy')
 
     if request.method == 'POST':
+        ya_entregada = parada.estado == 'Entregado'
         form = ActualizarEstadoForm(request.POST, instance=parada)
         if form.is_valid():
             nuevo_estado = form.cleaned_data['estado']
@@ -285,7 +286,15 @@ def actualizar_estado_entrega(request, pk):
             )
             monto = form.cleaned_data.get('monto_cobrado')
             if monto and parada.pedido is not None and nuevo_estado == 'Entregado':
-                registrar_cobro(parada.pedido, monto, form.cleaned_data.get('metodo_pago'))
+                if ya_entregada:
+                    # H-28: corregir una parada no vuelve a cobrar.
+                    messages.warning(
+                        request,
+                        'La parada ya estaba entregada: el cobro no se volvió a registrar. '
+                        'Si hace falta corregirlo, hacelo desde el pedido.'
+                    )
+                else:
+                    registrar_cobro(parada.pedido, monto, form.cleaned_data.get('metodo_pago'))
             messages.success(request, f'Estado actualizado a "{nuevo_estado}" correctamente.')
             if es_admin:
                 return redirect('apps.logistica:ver_ruta', pk=parada.hoja_ruta.id_ruta)

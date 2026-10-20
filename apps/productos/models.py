@@ -30,6 +30,12 @@ class Producto(models.Model):
         verbose_name='Es retornable',
         help_text='Producto cuyo envase se retira al momento de entregar.'
     )
+    activo = models.BooleanField(
+        default=True,
+        verbose_name='Activo',
+        help_text='Los productos inactivos no se muestran en la tienda ni se pueden comprar. '
+                  'Se usa en lugar de borrar un producto que ya tiene pedidos.'
+    )
     envase = models.ForeignKey(
         'self',
         on_delete=models.SET_NULL,

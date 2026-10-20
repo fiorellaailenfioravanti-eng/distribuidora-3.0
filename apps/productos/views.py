@@ -9,13 +9,15 @@ from .forms import ProductoForm, CategoriaForm
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render, redirect, get_object_or_404 # Agrega get_object_or_404 aquí
+from django.contrib import messages
+from django.db.models import ProtectedError
 from apps.permisos.roles import es_admin_o_vendedor
 
 #CRUD
 #Aca empeiza Read
 
 def listar_productos(request):
-    listar_productos = Producto.objects.all()
+    listar_productos = Producto.objects.filter(activo=True).order_by('nombre')
     #esto es para filtrar por categoria
     parametro_categoria = request.GET.get('categoria',"").strip()
     #filtrar por categoria
@@ -34,9 +36,10 @@ def listar_productos(request):
     }
     return render(request, 'productos/listar_productos.html', contexto)
 
-@user_passes_test(es_admin_o_vendedor)
+@login_required
+@user_passes_test(es_admin_o_vendedor, login_url='/')
 def listar_productos_admin(request):
-    listar_productos = Producto.objects.all()
+    listar_productos = Producto.objects.order_by('nombre')
     parametro_categoria = request.GET.get('categoria',"").strip()
     
     if parametro_categoria:
@@ -57,16 +60,10 @@ def listar_productos_admin(request):
 
 
 def ver_producto(request, pk):
-    try:
-        #obtener detalles de un producto específico mediante contexto
-        producto = Producto.objects.get(id_producto=pk)
-        contexto = {
-            'producto': producto
-        }
-        return render(request, 'productos/ver_producto.html', contexto)
-    
-    except Producto.DoesNotExist:
-        return render(request, 'productos/ver_producto.html', {'producto': None})
+    """Detalle de un producto; los inactivos sólo los ve el personal."""
+    filtros = {} if es_admin_o_vendedor(request.user) else {'activo': True}
+    producto = get_object_or_404(Producto, id_producto=pk, **filtros)
+    return render(request, 'productos/ver_producto.html', {'producto': producto})
 
 #Aca termina Read   
     
@@ -74,7 +71,8 @@ def ver_producto(request, pk):
 
 #Create
 #MI DECORADOR SERIA ESTE PARA QUE VERIFIQUE SI ES VENDEDOR
-@user_passes_test(es_admin_o_vendedor)
+@login_required
+@user_passes_test(es_admin_o_vendedor, login_url='/')
 def crear_producto(request):   
     if request.method == 'POST':
         form = ProductoForm(request.POST, request.FILES)
@@ -86,7 +84,8 @@ def crear_producto(request):
     return render(request, 'productos/crear_producto.html', {'form': form})
 
 
-@user_passes_test(es_admin_o_vendedor)
+@login_required
+@user_passes_test(es_admin_o_vendedor, login_url='/')
 def crear_categoria(request):
     if request.method == 'POST':
         form = CategoriaForm(request.POST)
@@ -99,7 +98,8 @@ def crear_categoria(request):
 
 
 #Update
-@user_passes_test(es_admin_o_vendedor)
+@login_required
+@user_passes_test(es_admin_o_vendedor, login_url='/')
 def editar_producto(request, pk):
     producto = get_object_or_404(Producto, id_producto=pk)
     if request.method == 'POST':
@@ -116,10 +116,22 @@ def editar_producto(request, pk):
 
 
 #Delete 
-@user_passes_test(es_admin_o_vendedor)
+@login_required
+@user_passes_test(es_admin_o_vendedor, login_url='/')
 def eliminar_producto(request, pk):
+    """Borra el producto; si ya tiene pedidos (PROTECT), lo desactiva (H-27)."""
     producto = get_object_or_404(Producto, id_producto=pk)
     if request.method == 'POST':
-        producto.delete()
+        try:
+            producto.delete()
+            messages.success(request, f'Producto "{producto.nombre}" eliminado.')
+        except ProtectedError:
+            producto.activo = False
+            producto.save(update_fields=['activo'])
+            messages.warning(
+                request,
+                f'"{producto.nombre}" tiene pedidos registrados y no se puede borrar: '
+                'se desactivó y ya no aparece en la tienda.'
+            )
         return redirect('apps.productos:listar_productos_admin')
     return render(request, 'productos/eliminar_producto.html', {'producto': producto})

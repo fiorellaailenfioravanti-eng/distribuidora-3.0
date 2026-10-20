@@ -13,7 +13,7 @@ def agregar_al_carrito(request, producto_id):
         messages.info(request, "Los usuarios administradores y vendedores gestionan la tienda y no realizan compras desde el carrito.")
         return redirect('dashboard')
 
-    producto = get_object_or_404(Producto, id_producto=producto_id)
+    producto = get_object_or_404(Producto, id_producto=producto_id, activo=True)
     carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
     item_carrito, creado = ItemCarrito.objects.get_or_create(carrito=carrito, producto=producto)
 

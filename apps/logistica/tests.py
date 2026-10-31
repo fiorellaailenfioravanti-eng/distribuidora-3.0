@@ -768,6 +768,19 @@ class PedidoEspontaneoTests(TestCase):
         self._vender(direccion=self.direccion.pk, cobro='cuenta')
         self.assertEqual(self.cliente.cuenta_corriente.saldo, Decimal('6000'))
 
+    def test_primero_se_elige_la_zona_y_filtra_clientes_y_barrios(self):
+        otra = Zona.objects.create(nombre='Sur', dias_reparto='2')
+        barrio_sur = Barrio.objects.create(nombre='Santa Inés', zona=otra)
+        respuesta = self.client.get(self.url)
+        self.assertEqual(set(respuesta.context['zonas']), {self.zona, otra})
+        html = respuesta.content.decode()
+        self.assertIn(f'value="{self.zona.pk}" selected', html)  # la zona de la hoja viene elegida
+        self.assertIn(f'data-zona="{otra.pk}">Santa Inés', html)  # barrios marcados por zona
+        self.assertIn(f'data-zona="{self.zona.pk}" data-fiado', html)  # clientes marcados por zona
+        # Un cliente nuevo de otra zona se registra igual.
+        self._vender(nombre='Kiosco Sur', calle='Lavalle', altura='9', barrio=barrio_sur.pk)
+        self.assertEqual(self.hoja.detalles.get(orden=2).direccion_entrega.barrio, barrio_sur)
+
     def test_no_se_vende_con_la_hoja_en_borrador(self):
         borrador = HojaRuta.objects.create(fecha=timezone.localdate(), zona=self.zona, empleado=self.empleado)
         self.client.post(reverse('apps.logistica:venta_calle', args=[borrador.pk]),

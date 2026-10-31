@@ -961,11 +961,11 @@ def venta_calle(request, pk):
             return redirect('apps.logistica:ver_ruta', pk=hoja.id_ruta)
         return redirect(volver)
 
-    direcciones = DireccionEntrega.objects.select_related('cliente', 'barrio').order_by('cliente__apellido', 'cliente__nombre')
-    barrios = Barrio.objects.order_by('nombre')
-    if hoja.zona_id:
-        direcciones = direcciones.filter(barrio__zona=hoja.zona)
-        barrios = barrios.filter(zona=hoja.zona)
+    # La zona se elige primero (por defecto la de la hoja) y filtra clientes y barrios.
+    direcciones = (DireccionEntrega.objects.exclude(barrio__zona=None)
+                   .select_related('cliente', 'barrio').order_by('cliente__apellido', 'cliente__nombre'))
+    barrios = Barrio.objects.exclude(zona=None).order_by('nombre')
+    zonas = Zona.objects.filter(pk__in=barrios.values('zona')).order_by('nombre')
     codigos = ['EFECTIVO', 'TRANSFERENCIA', 'MERCADOPAGO', 'BILLETERA']
     return render(request, 'logistica/venta_calle.html', {
         'hoja': hoja,
@@ -973,6 +973,7 @@ def venta_calle(request, pk):
         'botellon_defecto': botellon_por_defecto(),
         'direcciones': direcciones,
         'barrios': barrios,
+        'zonas': zonas,
         'metodos_pago': sorted(MetodoPago.objects.filter(activo=True, codigo__in=codigos),
                                key=lambda m: codigos.index(m.codigo)),
     })

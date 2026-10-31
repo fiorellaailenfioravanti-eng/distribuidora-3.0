@@ -33,6 +33,7 @@
             </a>
             
             <ul class="nav flex-column mb-auto gap-1 mt-3">
+                {% if es_vendedor %}
                 <li class="nav-item">
                     <a href="{% url 'dashboard' %}" class="sidebar-link {% if request.resolver_match.view_name == 'dashboard' %}active{% endif %}">
                         <i class="fa-solid fa-border-all"></i> Resumen
@@ -43,7 +44,6 @@
                         <i class="fa-solid fa-wallet"></i> Productos
                     </a>
                 </li>
-                {% if es_vendedor %}
                 <li class="nav-item">
                     <a href="{% url 'apps.pedidos:listar_pedidos' %}" class="sidebar-link {% if 'pedidos' in request.resolver_match.view_name %}active{% endif %}">
                         <i class="fa-solid fa-box-open"></i> Pedidos
@@ -78,17 +78,18 @@
                 {% if es_personal_interno %}
                 <li class="nav-item">
                     <a href="{% url 'apps.logistica:listar_rutas' %}" class="sidebar-link {% if 'logistica' in request.resolver_match.view_name %}active{% endif %}">
-                        <i class="fa-solid fa-route"></i> Logística
+                        <i class="fa-solid fa-route"></i> {% if es_vendedor %}Logística{% else %}Mis hojas de ruta{% endif %}
                     </a>
                 </li>
                 {% endif %}
                 {% if es_repartidor %}
                 <li class="nav-item">
                     <a href="{% url 'apps.logistica:mi_ruta_hoy' %}" class="sidebar-link {% if request.resolver_match.view_name == 'apps.logistica:mi_ruta_hoy' %}active{% endif %}">
-                        <i class="fa-solid fa-truck-fast"></i> Mi Ruta
+                        <i class="fa-solid fa-truck-fast"></i> Mi recorrido
                     </a>
                 </li>
                 {% endif %}
+{% if es_vendedor or not es_personal_interno %}
                 
                 <!-- Separador -->
                 <li class="nav-item mt-auto pt-3">
@@ -96,6 +97,7 @@
                         <i class="fa-solid fa-shop"></i> Ver Tienda
                     </a>
                 </li>
+{% endif %}
             </ul>
         </aside>
 
@@ -108,13 +110,13 @@
             <div class="offcanvas-body p-0">
                 <!-- Se podría usar javascript para clonar el menú, pero por simplicidad lo replicaremos minimamente -->
                 <ul class="nav flex-column gap-1 p-3">
+                    {% if es_vendedor %}
                     <li class="nav-item">
                         <a href="{% url 'dashboard' %}" class="sidebar-link"><i class="fa-solid fa-border-all"></i> Resumen</a>
                     </li>
                     <li class="nav-item">
                         <a href="{% url 'apps.productos:listar_productos_admin' %}" class="sidebar-link"><i class="fa-solid fa-wallet"></i> Productos</a>
                     </li>
-                    {% if es_vendedor %}
                     <li class="nav-item">
                         <a href="{% url 'apps.pedidos:listar_pedidos' %}" class="sidebar-link"><i class="fa-solid fa-box-open"></i> Pedidos</a>
                     </li>
@@ -136,14 +138,15 @@
                     {% endif %}
                     {% if es_personal_interno %}
                     <li class="nav-item">
-                        <a href="{% url 'apps.logistica:listar_rutas' %}" class="sidebar-link"><i class="fa-solid fa-route"></i> Logística</a>
+                        <a href="{% url 'apps.logistica:listar_rutas' %}" class="sidebar-link"><i class="fa-solid fa-route"></i> {% if es_vendedor %}Logística{% else %}Mis hojas de ruta{% endif %}</a>
                     </li>
                     {% endif %}
                     {% if es_repartidor %}
                     <li class="nav-item">
-                        <a href="{% url 'apps.logistica:mi_ruta_hoy' %}" class="sidebar-link"><i class="fa-solid fa-truck-fast"></i> Mi Ruta</a>
+                        <a href="{% url 'apps.logistica:mi_ruta_hoy' %}" class="sidebar-link"><i class="fa-solid fa-truck-fast"></i> Mi recorrido</a>
                     </li>
                     {% endif %}
+{% if es_vendedor or not es_personal_interno %}
                     
                     <!-- Separador -->
                     <li class="nav-item mt-auto pt-3">
@@ -151,6 +154,7 @@
                             <i class="fa-solid fa-shop"></i> Ver Tienda
                         </a>
                     </li>
+{% endif %}
                 </ul>
             </div>
         </div>
@@ -203,9 +207,9 @@
                                     <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=6466f1&color=fff&rounded=true" alt="" width="40" height="40" class="shadow-sm">
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2" aria-labelledby="dropdownUser">
-                                    {% if user.perfil_empleado %}
+                                    {% if user.perfil_empleado and es_vendedor %}
                                         <li><a class="dropdown-item py-2" href="{% url 'apps.empleados:ver_empleado' user.perfil_empleado.id_empleado %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi Perfil</a></li>
-                                    {% elif not user.is_superuser %}
+                                    {% elif not es_personal_interno %}
                                         <li><a class="dropdown-item py-2" href="{% url 'apps.clientes:mi_perfil' %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi Perfil</a></li>
                                     {% else %}
                                         <li><a class="dropdown-item py-2" href="{% url 'apps.autenticacion:perfil' %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi Perfil</a></li>

@@ -635,98 +635,96 @@ def registrar_entrega(parada, estado, envases_retirados=0, envases_vendidos=0, n
 
 @transaction.atomic
 def crear_venta_calle(hoja, datos):
-    """Registra una venta en calle (D8): cliente pasajero, dirección, pedido,
-    cobro y la parada dentro de la hoja. Devuelve la parada creada.
+    """Pedido espontáneo durante el reparto: el repartidor vende en la calle.
 
-    `datos` admite: cliente_id | (nombre, apellido); calle, altura, barrio_id;
-    productos = [{'producto_id': int, 'cantidad': int}]; metodo_pago_id;
-    marcar_frecuente; nota.
+    Crea (si hace falta) el cliente y su dirección, el pedido (origen
+    REPARTIDOR) y la parada ya entregada al final del recorrido, registra los
+    vacíos retirados y el cobro. Devuelve la parada.
+
+    `datos` admite: cliente_id (+ direccion_id) | nombre, apellido, calle,
+    altura, barrio_id (obligatorios para un cliente nuevo); productos =
+    [{'producto_id', 'cantidad'}]; envases_retirados; cobro ('total' | 'cuenta' |
+    'ninguno'); metodo_pago_id; marcar_frecuente; nota.
+
+    Stock: si el producto salió cargado en el camión ya se descontó al
+    confirmar la hoja (y el regreso cuenta esta venta como entregada), así que
+    no se vuelve a descontar. Sólo se descuenta lo que no estaba en la carga.
     """
+    from django.core.exceptions import ValidationError
     from apps.clientes.models import Cliente, DireccionEntrega
-    from apps.pedidos.models import Pedido, DetallePedido, MetodoPago
+    from apps.pedidos.models import CODIGO_CUENTA_CORRIENTE, DetallePedido, MetodoPago, Pedido
+    from apps.pedidos.services import registrar_pago_manual
     from apps.productos.models import Producto
 
-    cliente = None
-    if datos.get('cliente_id'):
-        cliente = Cliente.objects.filter(pk=datos['cliente_id']).first()
-    if cliente is None:
-        cliente = Cliente.objects.create(
-            nombre=datos.get('nombre') or 'Cliente',
-            apellido=datos.get('apellido') or '',
-            tipo_registro='pasajero',
-        )
+    if hoja.estado != 'Confirmada':
+        raise ValueError('Las ventas en la calle se registran con la hoja en reparto.')
 
-    direccion = None
-    if datos.get('calle'):
-        direccion = DireccionEntrega.objects.create(
-            cliente=cliente,
-            calle=datos['calle'],
-            altura=datos.get('altura') or 'S/N',
-            barrio_id=datos.get('barrio_id') or None,
-            es_principal=not cliente.direcciones.exists(),
-        )
-
-    if datos.get('marcar_frecuente'):
-        cliente.es_frecuente = True
-        cliente.cantidad_recurrente_default = cliente.cantidad_recurrente_default or 1
-        cliente.save(update_fields=['es_frecuente', 'cantidad_recurrente_default'])
-
-    metodo = None
-    if datos.get('metodo_pago_id'):
-        metodo = MetodoPago.objects.filter(pk=datos['metodo_pago_id']).first()
-    metodo = metodo or _metodo_pago_efectivo()
-
-    total = Decimal('0')
     renglones = []
     for item in datos.get('productos', []):
         producto = Producto.objects.select_for_update().filter(pk=item.get('producto_id')).first()
         cantidad = int(item.get('cantidad') or 0)
-        if producto is None or cantidad <= 0:
-            continue
-        subtotal = producto.precio * cantidad
-        total += subtotal
-        renglones.append((producto, cantidad, subtotal))
+        if producto is not None and cantidad > 0:
+            renglones.append((producto, cantidad))
+    if not renglones:
+        raise ValueError('Indicá al menos un producto con cantidad.')
 
-    pedido = Pedido.objects.create(
-        cliente=cliente,
-        direccion_entrega=direccion,
-        metodo_pago=metodo,
-        estado='Entregado',
-        origen='REPARTIDOR',
-        total=total,
-        fecha_entrega=timezone.localdate(),
-    )
-    for producto, cantidad, subtotal in renglones:
-        DetallePedido.objects.create(
-            pedido=pedido,
-            producto=producto,
-            precio_unitario=producto.precio,
-            cantidad=cantidad,
-            subtotal=subtotal,
+    cliente = Cliente.objects.filter(pk=datos.get('cliente_id')).first() if datos.get('cliente_id') else None
+    if cliente is not None:
+        direccion = (DireccionEntrega.objects.filter(pk=datos.get('direccion_id'), cliente=cliente).first()
+                     or (direccion_en_zona(cliente, hoja.zona) if hoja.zona_id else None)
+                     or cliente.direcciones.order_by('-es_principal').first())
+    else:
+        faltan = [nombre for nombre, clave in (('nombre', 'nombre'), ('calle', 'calle'), ('altura', 'altura'),
+                                               ('barrio', 'barrio_id')) if not datos.get(clave)]
+        if faltan:
+            raise ValueError(f'Para un cliente nuevo completá: {", ".join(faltan)}.')
+        cliente = Cliente.objects.create(nombre=datos['nombre'], apellido=datos.get('apellido') or '',
+                                         tipo_registro='pasajero')
+        direccion = DireccionEntrega.objects.create(
+            cliente=cliente, calle=datos['calle'], altura=datos['altura'],
+            barrio_id=datos['barrio_id'], es_principal=True,
         )
-        producto.stock -= cantidad
-        producto.save(update_fields=['stock'])
 
-    orden = (hoja.detalles.aggregate(total=Max('orden'))['total'] or 0) + 1
-    parada = DetalleHojaRuta.objects.create(
-        hoja_ruta=hoja,
-        orden=orden,
-        pedido=pedido,
-        cliente=cliente,
-        direccion_entrega=direccion,
-        cliente_nombre=cliente.nombre_completo(),
-        direccion_texto=_texto_direccion(direccion),
-        cantidad_bidones=bidones_de_pedido(pedido),
-        estado='Entregado',
-        hora_registro=timezone.now(),
+    if datos.get('marcar_frecuente') and not cliente.es_frecuente:
+        cliente.es_frecuente = True
+        cliente.cantidad_recurrente_default = cliente.cantidad_recurrente_default or sum(c for _, c in renglones)
+        cliente.save(update_fields=['es_frecuente', 'cantidad_recurrente_default'])
+
+    metodo = MetodoPago.objects.filter(pk=datos.get('metodo_pago_id')).first() or _metodo_pago_efectivo()
+    pedido = Pedido.objects.create(
+        cliente=cliente, direccion_entrega=direccion, metodo_pago=metodo,
+        estado='En Camino', origen='REPARTIDOR', total=0, fecha_entrega=hoja.fecha,
+        notas_cliente=datos.get('nota') or 'Venta en la calle durante el reparto.',
     )
+    cargados = set(hoja.cargas.values_list('producto_id', flat=True))
+    for producto, cantidad in renglones:
+        DetallePedido.objects.create(pedido=pedido, producto=producto, precio_unitario=producto.precio,
+                                     cantidad=cantidad, subtotal=producto.precio * cantidad)
+        if producto.pk not in cargados:
+            producto.stock -= cantidad
+            producto.save(update_fields=['stock'])
+    pedido.total = sum(d.subtotal for d in pedido.detalles.all())
+    pedido.save(update_fields=['total'])
 
-    if total > 0:
-        registrar_cobro(pedido, total, metodo, referencia=f'Cobro en calle — venta, hoja #{hoja.pk}')
+    renumerar_paradas(hoja)
+    parada = DetalleHojaRuta.objects.create(
+        hoja_ruta=hoja, orden=_siguiente_orden(hoja), pedido=pedido, cliente=cliente,
+        es_frecuente=cliente.es_frecuente, direccion_entrega=direccion,
+        cliente_nombre=cliente.nombre_completo(), direccion_texto=_texto_direccion(direccion),
+        cantidad_bidones=bidones_de_pedido(pedido),
+    )
+    registrar_entrega(parada, 'Entregado', envases_retirados=datos.get('envases_retirados') or 0)
 
-    sincronizar_bidones_de_parada(parada)
+    cobro = datos.get('cobro') or 'total'
+    if cobro in ('total', 'cuenta') and pedido.total > 0:
+        if cobro == 'cuenta':
+            metodo = MetodoPago.objects.get(codigo=CODIGO_CUENTA_CORRIENTE)
+        try:
+            registrar_pago_manual(pedido, pedido.total, metodo,
+                                  referencia=f'Cobro en calle — venta, hoja #{hoja.pk}')
+        except ValidationError as error:
+            raise ValueError(' '.join(error.messages))
     return parada
-
 
 
 # ────────────────────────────────────────────────

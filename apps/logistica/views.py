@@ -914,49 +914,65 @@ def registrar_regreso_ruta(request, pk):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def venta_calle(request, pk):
-    from apps.productos.models import Producto
+    """Pedido espontáneo que el repartidor vende durante el reparto."""
+    from apps.clientes.models import DireccionEntrega
     from apps.pedidos.models import MetodoPago
 
-    hoja = get_object_or_404(HojaRuta, id_ruta=pk)
+    hoja = get_object_or_404(HojaRuta.objects.select_related('zona'), id_ruta=pk)
     es_admin = es_admin_o_vendedor(request.user)
-    empleado = obtener_empleado(request.user)
-    es_asignado = empleado is not None and hoja.empleado_id == empleado.id_empleado
-
-    if not (es_admin or es_asignado):
+    if not (es_admin or es_repartidor_asignado(request.user, hoja)):
         messages.error(request, 'No tenés permiso para registrar ventas en esta hoja.')
         return redirect('apps.logistica:mi_ruta_hoy')
+    volver = reverse('apps.logistica:mi_ruta_hoy') + f'?hoja={hoja.pk}'
+    if hoja.estado != 'Confirmada':
+        messages.error(request, 'Las ventas en la calle se registran con la hoja en reparto.')
+        return redirect(volver)
 
     if request.method == 'POST':
+        post = request.POST
         productos = []
-        for key, value in request.POST.items():
-            if key.startswith('cantidad_producto_'):
-                pid = key[len('cantidad_producto_'):]
+        for key, value in post.items():
+            if key.startswith('cantidad_producto_') and key[len('cantidad_producto_'):].isdigit():
                 cantidad = _int_o_none(value)
-                if pid.isdigit() and cantidad:
-                    productos.append({'producto_id': int(pid), 'cantidad': cantidad})
-
-        if not productos:
-            messages.error(request, 'Agregá al menos un producto con cantidad.')
-        else:
+                if cantidad:
+                    productos.append({'producto_id': int(key[len('cantidad_producto_'):]), 'cantidad': cantidad})
+        direccion = DireccionEntrega.objects.filter(pk=_int_o_none(post.get('direccion'))).select_related('cliente').first()
+        try:
             parada = crear_venta_calle(hoja, {
-                'cliente_id': _int_o_none(request.POST.get('cliente_id')),
-                'nombre': (request.POST.get('nombre') or '').strip(),
-                'apellido': (request.POST.get('apellido') or '').strip(),
-                'calle': (request.POST.get('calle') or '').strip(),
-                'altura': (request.POST.get('altura') or '').strip(),
-                'barrio_id': _int_o_none(request.POST.get('barrio')),
-                'metodo_pago_id': _int_o_none(request.POST.get('metodo_pago')),
-                'marcar_frecuente': request.POST.get('marcar_frecuente') == 'on',
+                'cliente_id': direccion.cliente_id if direccion else None,
+                'direccion_id': direccion.pk if direccion else None,
+                'nombre': (post.get('nombre') or '').strip(),
+                'apellido': (post.get('apellido') or '').strip(),
+                'calle': (post.get('calle') or '').strip(),
+                'altura': (post.get('altura') or '').strip(),
+                'barrio_id': _int_o_none(post.get('barrio')),
                 'productos': productos,
+                'envases_retirados': _int_o_none(post.get('envases_retirados')) or 0,
+                'cobro': post.get('cobro') or 'total',
+                'metodo_pago_id': _int_o_none(post.get('metodo_pago')),
+                'marcar_frecuente': post.get('marcar_frecuente') == 'on',
+                'nota': (post.get('nota') or '').strip(),
             })
-            messages.success(request, f'Venta en calle registrada (parada #{parada.id_detalle}).')
-            if es_admin:
-                return redirect('apps.logistica:ver_ruta', pk=hoja.id_ruta)
-            return redirect('apps.logistica:mi_ruta_hoy')
+        except ValueError as error:
+            messages.error(request, str(error))
+            return redirect('apps.logistica:venta_calle', pk=hoja.pk)
+        messages.success(request, f'Venta registrada: {parada.cliente_nombre} — {parada.resumen_pedido()} (${parada.pedido.total}).')
+        if es_admin and not es_repartidor(request.user):
+            return redirect('apps.logistica:ver_ruta', pk=hoja.id_ruta)
+        return redirect(volver)
 
+    direcciones = DireccionEntrega.objects.select_related('cliente', 'barrio').order_by('cliente__apellido', 'cliente__nombre')
+    barrios = Barrio.objects.order_by('nombre')
+    if hoja.zona_id:
+        direcciones = direcciones.filter(barrio__zona=hoja.zona)
+        barrios = barrios.filter(zona=hoja.zona)
+    codigos = ['EFECTIVO', 'TRANSFERENCIA', 'MERCADOPAGO', 'BILLETERA']
     return render(request, 'logistica/venta_calle.html', {
         'hoja': hoja,
-        'productos': Producto.objects.all().order_by('nombre'),
-        'barrios': Barrio.objects.all().order_by('nombre'),
-        'metodos_pago': MetodoPago.objects.filter(activo=True),
+        'productos': productos_de_reparto(),
+        'botellon_defecto': botellon_por_defecto(),
+        'direcciones': direcciones,
+        'barrios': barrios,
+        'metodos_pago': sorted(MetodoPago.objects.filter(activo=True, codigo__in=codigos),
+                               key=lambda m: codigos.index(m.codigo)),
     })

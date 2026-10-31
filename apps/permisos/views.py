@@ -18,6 +18,28 @@ from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 
 
+def destino_personal(user):
+    """Pantalla de inicio de cada empleado: el repartidor su recorrido, el resto el panel."""
+    from .roles import es_admin_o_vendedor, es_repartidor
+    if es_repartidor(user) and not es_admin_o_vendedor(user):
+        return 'apps.logistica:mi_ruta_hoy'
+    return 'dashboard'
+
+
+def solo_clientes(request):
+    """Si el usuario es personal de la empresa, lo devuelve a su panel.
+
+    El personal (vendedores, repartidores, administradores) no compra desde la
+    tienda: no usa carrito, checkout, «Mis pedidos» ni «Mi cuenta» de cliente.
+    Devuelve una redirección o `None` si es un cliente.
+    """
+    from .roles import es_personal_interno
+    if es_personal_interno(request.user):
+        messages.info(request, 'Tu cuenta es del personal de la distribuidora: no hace compras en la tienda.')
+        return redirect(destino_personal(request.user))
+    return None
+
+
 def sin_permiso(request, destino='inicio'):
     messages.error(request, 'No tenés permiso para acceder a esta sección.')
     return redirect(destino)

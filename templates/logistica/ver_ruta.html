@@ -249,7 +249,7 @@
                                 </div>
                             </form>
                             {% else %}
-                            <a href="{% url 'apps.logistica:actualizar_estado_entrega' d.id_detalle %}" class="btn btn-sm btn-success rounded-pill">Registrar entrega</a>
+                            <a href="{% url 'apps.logistica:mi_ruta_hoy' %}?hoja={{ ruta.pk }}#parada-{{ d.id_detalle }}" class="btn btn-sm btn-success rounded-pill">Registrar en mi recorrido</a>
                             {% endif %}
                         </div>
                     </div>

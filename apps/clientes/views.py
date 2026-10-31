@@ -14,6 +14,7 @@ from distribuidora.utils import normalizar_texto
 from apps.promociones.forms import VenderPromocionForm
 from apps.promociones.services import compras_vigentes
 from . import services as servicios_clientes
+from apps.permisos.views import solo_clientes
 from apps.permisos.roles import es_admin_o_vendedor, puede_ver_nota_seguridad
 
 
@@ -474,6 +475,8 @@ def eliminar_direccion(request, pk):
 @login_required
 def mi_perfil_cliente(request):
     """El cliente ve sus propios datos sin información sensible."""
+    if (fuera := solo_clientes(request)) is not None:
+        return fuera
     try:
         cliente = request.user.perfil_cliente
     except Cliente.DoesNotExist:
@@ -506,6 +509,8 @@ from django.contrib.auth import update_session_auth_hash
 @login_required
 def editar_mi_perfil(request):
     """Permite al cliente logueado modificar sus datos personales y foto de perfil."""
+    if (fuera := solo_clientes(request)) is not None:
+        return fuera
     try:
         cliente = request.user.perfil_cliente
     except Cliente.DoesNotExist:

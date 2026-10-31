@@ -1,103 +1,133 @@
 {% extends 'base_dashboard.html' %}
 
-{% block title %}Venta en Calle — Hoja #{{ hoja.id_ruta }}{% endblock %}
+{% block title %}Venta en calle — Hoja #{{ hoja.id_ruta }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="mx-auto" style="max-width: 640px;">
+<div class="d-flex justify-content-between align-items-start mb-3">
     <div>
-        <h1 class="mb-0">🛒 Venta en Calle</h1>
-        <small class="text-muted">Agrega una parada y venta a la hoja #{{ hoja.id_ruta }}</small>
+        <h1 class="h4 fw-bold mb-0 text-main">Pedido en la calle</h1>
+        <small class="text-muted">Hoja #{{ hoja.id_ruta }} · {{ hoja.zona.nombre|default:"sin zona" }} · se agrega al final del recorrido</small>
     </div>
-    <a href="{% url 'apps.logistica:ver_ruta' hoja.id_ruta %}" class="btn btn-outline-secondary btn-sm">
-        <i class="fa-solid fa-arrow-left me-1"></i> Volver a la hoja
-    </a>
+    <a href="{% url 'apps.logistica:mi_ruta_hoy' %}?hoja={{ hoja.pk }}" class="btn btn-sm btn-light rounded-pill"><i class="fa-solid fa-arrow-left me-1"></i> Volver</a>
 </div>
 
-<form method="post">
+<form method="post" id="form-venta">
     {% csrf_token %}
-    <input type="hidden" name="cliente_id" value="">
 
-    <div class="card border-0 shadow-sm mb-3">
-        <div class="card-header bg-body fw-semibold"><i class="fa-solid fa-user me-1"></i> Cliente</div>
-        <div class="card-body row g-3">
-            <div class="col-md-6">
-                <label class="form-label small fw-semibold">Nombre</label>
-                <input type="text" name="nombre" class="form-control" placeholder="Nombre (o dejar vacío)">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label small fw-semibold">Apellido</label>
-                <input type="text" name="apellido" class="form-control">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label small fw-semibold">Calle</label>
-                <input type="text" name="calle" class="form-control">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small fw-semibold">Altura</label>
-                <input type="text" name="altura" class="form-control">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label small fw-semibold">Barrio</label>
-                <select name="barrio" class="form-select">
-                    <option value="">— Sin especificar —</option>
-                    {% for b in barrios %}
-                        <option value="{{ b.pk }}">{{ b.nombre }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-12">
-                <div class="form-check">
+    {# Cliente #}
+    <div class="card border-0 shadow-sm rounded-4 bg-surface mb-3">
+        <div class="card-body p-3 p-md-4">
+            <h6 class="fw-bold text-main mb-2"><i class="fa-solid fa-user me-1 text-primary"></i> Cliente</h6>
+            <select name="direccion" id="sel-direccion" class="form-select mb-2" aria-label="Cliente">
+                <option value="">— Cliente nuevo —</option>
+                {% for d in direcciones %}
+                <option value="{{ d.pk }}" data-fiado="{% if d.cliente.permite_fiado %}1{% endif %}">{{ d.cliente.nombre_completo }} — {{ d.calle }} {{ d.altura }}</option>
+                {% endfor %}
+            </select>
+            <div id="cliente-nuevo" class="row g-2">
+                <div class="col-6"><input type="text" name="nombre" class="form-control" placeholder="Nombre *" aria-label="Nombre"></div>
+                <div class="col-6"><input type="text" name="apellido" class="form-control" placeholder="Apellido" aria-label="Apellido"></div>
+                <div class="col-8"><input type="text" name="calle" class="form-control" placeholder="Calle *" aria-label="Calle"></div>
+                <div class="col-4"><input type="text" name="altura" class="form-control" placeholder="Altura *" aria-label="Altura"></div>
+                <div class="col-12">
+                    <select name="barrio" class="form-select" aria-label="Barrio">
+                        <option value="">Barrio *</option>
+                        {% for b in barrios %}<option value="{{ b.pk }}">{{ b.nombre }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 form-check ms-1">
                     <input class="form-check-input" type="checkbox" name="marcar_frecuente" id="frecuente">
-                    <label class="form-check-label" for="frecuente">Marcar como cliente frecuente</label>
+                    <label class="form-check-label small" for="frecuente">Sumarlo como cliente frecuente</label>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm mb-3">
-        <div class="card-header bg-body fw-semibold"><i class="fa-solid fa-boxes-stacked me-1"></i> Productos</div>
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Producto</th>
-                        <th class="text-end">Precio</th>
-                        <th style="width: 160px;">Cantidad</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for p in productos %}
-                    <tr>
-                        <td>{{ p.nombre }}</td>
-                        <td class="text-end text-muted">${{ p.precio }}</td>
-                        <td>
-                            <input type="number" min="0" class="form-control form-control-sm"
-                                   name="cantidad_producto_{{ p.pk }}" value="0">
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="3" class="text-muted text-center py-3">No hay productos en el catálogo.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    {# Botellones #}
+    <div class="card border-0 shadow-sm rounded-4 bg-surface mb-3">
+        <div class="card-body p-3 p-md-4">
+            <h6 class="fw-bold text-main mb-2"><i class="fa-solid fa-bottle-water me-1 text-primary"></i> Botellones</h6>
+            {% for p in productos %}
+            <div class="d-flex justify-content-between align-items-center gap-2 py-2 border-bottom">
+                <div><div class="fw-semibold">{{ p.nombre }}</div><small class="text-muted">${{ p.precio }}</small></div>
+                <div class="input-group" style="width: 9.5rem;">
+                    <button class="btn btn-outline-secondary" type="button" onclick="pasoCantidad(this,-1)">−</button>
+                    <input type="number" min="0" name="cantidad_producto_{{ p.pk }}" class="form-control text-center cantidad"
+                           data-precio="{{ p.precio|stringformat:'s' }}" value="{% if p.pk == botellon_defecto.pk %}1{% else %}0{% endif %}" aria-label="Cantidad de {{ p.nombre }}">
+                    <button class="btn btn-outline-secondary" type="button" onclick="pasoCantidad(this,1)">+</button>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-warning small mb-0">No hay botellones de reparto cargados en el catálogo.</p>
+            {% endfor %}
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <label class="small fw-semibold mb-0" for="vacios">Vacíos que retiraste</label>
+                <input type="number" min="0" name="envases_retirados" id="vacios" class="form-control text-center" style="width: 6rem;" value="0">
+            </div>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm mb-3">
-        <div class="card-body">
-            <label class="form-label small fw-semibold">Método de pago</label>
-            <select name="metodo_pago" class="form-select">
-                {% for m in metodos_pago %}
-                    <option value="{{ m.pk }}">{{ m.nombre }}</option>
-                {% endfor %}
+    {# Cobro #}
+    <div class="card border-0 shadow-sm rounded-4 bg-surface mb-3">
+        <div class="card-body p-3 p-md-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold text-main mb-0"><i class="fa-solid fa-hand-holding-dollar me-1 text-success"></i> Cobro</h6>
+                <span class="fs-5 fw-bold">Total $<span id="total">0</span></span>
+            </div>
+            <div class="d-grid gap-2 mb-2">
+                <label class="btn btn-outline-success text-start"><input class="form-check-input me-2" type="radio" name="cobro" value="total" checked> Pagó todo</label>
+                <label class="btn btn-outline-secondary text-start d-none" id="opcion-cuenta"><input class="form-check-input me-2" type="radio" name="cobro" value="cuenta"> Queda a cuenta corriente</label>
+                <label class="btn btn-outline-secondary text-start"><input class="form-check-input me-2" type="radio" name="cobro" value="ninguno"> No pagó (queda pendiente)</label>
+            </div>
+            <select name="metodo_pago" id="sel-metodo" class="form-select mb-2" aria-label="Medio de pago">
+                {% for mp in metodos_pago %}<option value="{{ mp.pk }}">{{ mp.nombre }}</option>{% endfor %}
             </select>
+            <input type="text" name="nota" class="form-control" placeholder="Nota (opcional)">
         </div>
     </div>
 
-    <div class="d-flex justify-content-end">
-        <button type="submit" class="btn btn-success">
-            <i class="fa-solid fa-cash-register me-1"></i> Registrar venta
-        </button>
-    </div>
+    <button type="submit" class="btn btn-success btn-lg w-100 rounded-pill fw-bold mb-4">
+        <i class="fa-solid fa-check me-1"></i> Registrar venta entregada
+    </button>
 </form>
+</div>
+
+<script>
+function pasoCantidad(boton, paso) {
+    const input = boton.parentElement.querySelector('input');
+    input.value = Math.max(0, (parseInt(input.value, 10) || 0) + paso);
+    actualizarTotal();
+}
+function actualizarTotal() {
+    let total = 0;
+    document.querySelectorAll('input.cantidad').forEach(el => {
+        total += (parseInt(el.value, 10) || 0) * parseFloat(el.dataset.precio.replace(',', '.'));
+    });
+    document.getElementById('total').textContent = total.toLocaleString('es-AR');
+}
+document.addEventListener('DOMContentLoaded', function () {
+    const selector = document.getElementById('sel-direccion');
+    const nuevo = document.getElementById('cliente-nuevo');
+    const cuenta = document.getElementById('opcion-cuenta');
+    const actualizarCliente = () => {
+        const opcion = selector.options[selector.selectedIndex];
+        const esNuevo = !selector.value;
+        nuevo.classList.toggle('d-none', !esNuevo);
+        ['nombre', 'calle', 'altura', 'barrio'].forEach(n => { nuevo.querySelector(`[name=${n}]`).required = esNuevo; });
+        cuenta.classList.toggle('d-none', !(opcion && opcion.dataset.fiado));
+        if (cuenta.classList.contains('d-none')) {
+            const radio = cuenta.querySelector('input');
+            if (radio.checked) document.querySelector('input[name=cobro][value=total]').checked = true;
+        }
+    };
+    selector.addEventListener('change', actualizarCliente);
+    document.querySelectorAll('input[name=cobro]').forEach(r => r.addEventListener('change', () => {
+        document.getElementById('sel-metodo').classList.toggle('d-none', r.checked && r.value !== 'total');
+    }));
+    document.querySelectorAll('input.cantidad').forEach(el => el.addEventListener('input', actualizarTotal));
+    actualizarCliente();
+    actualizarTotal();
+});
+</script>
 {% endblock %}

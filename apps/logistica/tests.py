@@ -677,3 +677,99 @@ class RecorridoRepartidorTests(TestCase):
                          {'resultado': 'entregado', 'cobro': 'ninguno'})
         parada.refresh_from_db()
         self.assertEqual(parada.estado, 'Pendiente')
+
+
+
+class CuentaDeRepartidorTests(TestCase):
+    """El repartidor no compra en la tienda; trabaja desde su recorrido."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from apps.empleados.models import Empleado, RolEmpleado
+        Usuario = get_user_model()
+        self.usuario = Usuario.objects.create_user('ramon', 'r@x.com', 'Agua-Lluvia-2026')  # la señal le crea perfil de cliente
+        rol = RolEmpleado.objects.create(nombre='Chofer', grupo_permisos='Repartidor')
+        Empleado.objects.create(usuario=self.usuario, nombre='Ramón', apellido='Acosta', dni='77', rol=rol)
+
+    def test_alta_de_empleado_quita_el_perfil_de_cliente_vacio(self):
+        self.assertFalse(Cliente.objects.filter(usuario=self.usuario).exists())
+
+    def test_no_accede_a_la_tienda_de_clientes(self):
+        self.client.force_login(self.usuario)
+        destino = reverse('apps.logistica:mi_ruta_hoy')
+        for nombre in ('apps.carrito:ver_carrito', 'apps.pedidos:checkout', 'apps.pedidos:mis_pedidos',
+                       'apps.clientes:mi_perfil'):
+            respuesta = self.client.get(reverse(nombre))
+            self.assertRedirects(respuesta, destino, fetch_redirect_response=False, msg_prefix=nombre)
+        inicio = self.client.get(reverse('inicio'))
+        self.assertNotContains(inicio, 'Mi Carrito')
+        self.assertContains(inicio, 'Mi recorrido')
+
+    def test_al_ingresar_va_a_su_recorrido(self):
+        respuesta = self.client.post(reverse('apps.autenticacion:ingresar'),
+                                     {'username': 'ramon', 'password': 'Agua-Lluvia-2026'})
+        self.assertEqual(respuesta.url, reverse('apps.logistica:mi_ruta_hoy'))
+
+
+class PedidoEspontaneoTests(TestCase):
+    """El repartidor agrega una venta durante el reparto."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from apps.empleados.models import Empleado, RolEmpleado
+        from apps.productos.models import Producto
+        from .services import agregar_parada
+        Usuario = get_user_model()
+        self.usuario = Usuario.objects.create_user('ramon', 'r@x.com', 'Agua-Lluvia-2026')
+        rol = RolEmpleado.objects.create(nombre='Chofer', grupo_permisos='Repartidor')
+        self.empleado = Empleado.objects.create(usuario=self.usuario, nombre='Ramón', apellido='Acosta', dni='77', rol=rol)
+        self.zona = Zona.objects.create(nombre='Centro', dias_reparto='0,1,2,3,4,5,6')
+        self.barrio = Barrio.objects.create(nombre='Centro', zona=self.zona)
+        self.envase = Producto.objects.create(nombre='Envase', descripcion='', precio=Decimal('9000'), stock=50, es_envase=True)
+        self.bidon = Producto.objects.create(nombre='Bidón 20 L', descripcion='', precio=Decimal('3000'), stock=40,
+                                             es_botellon=True, es_retornable=True, envase=self.envase)
+        self.cliente = Cliente.objects.create(nombre='Ana', apellido='Paz', tipo_cliente='Premium')
+        self.direccion = DireccionEntrega.objects.create(cliente=self.cliente, calle='Mitre', altura='1', barrio=self.barrio)
+        self.hoja = HojaRuta.objects.create(fecha=timezone.localdate(), zona=self.zona, empleado=self.empleado)
+        agregar_parada(self.hoja, self.cliente, self.direccion, {self.bidon.pk: 2})
+        confirmar_hoja(self.hoja, None, [{'producto_id': self.bidon.pk, 'cantidad': 6}])  # 2 encargados + 4 extra
+        self.client.force_login(self.usuario)
+        self.url = reverse('apps.logistica:venta_calle', args=[self.hoja.pk])
+
+    def _vender(self, **datos):
+        return self.client.post(self.url, {f'cantidad_producto_{self.bidon.pk}': 2, 'cobro': 'total',
+                                           'metodo_pago': MetodoPago.objects.get(codigo='EFECTIVO').pk, **datos})
+
+    def test_cliente_nuevo_sin_direccion_se_rechaza(self):
+        self._vender(nombre='Kiosco')
+        self.assertEqual(self.hoja.detalles.count(), 1)
+
+    def test_venta_a_cliente_nuevo_queda_entregada_y_cobrada(self):
+        self._vender(nombre='Kiosco Pepe', calle='Belgrano', altura='300', barrio=self.barrio.pk, envases_retirados=1)
+        parada = self.hoja.detalles.get(orden=2)
+        self.assertEqual((parada.estado, parada.pedido.origen, parada.cantidad_bidones), ('Entregado', 'REPARTIDOR', 2))
+        self.assertTrue(parada.pedido.esta_pagado())
+        self.assertEqual(parada.cliente.bidones_prestados, 1)  # 2 prestados − 1 retirado
+
+    def test_lo_que_salio_en_el_camion_no_se_descuenta_dos_veces(self):
+        self._vender(direccion=self.direccion.pk)
+        self.bidon.refresh_from_db()
+        self.assertEqual(self.bidon.stock, 34)  # 40 − 6 cargados; la venta sale del camión
+        registrar_entrega(self.hoja.detalles.get(orden=1), 'Entregado')
+        from .services import entregados_por_producto
+        entregados = entregados_por_producto(self.hoja)[self.bidon.pk]
+        self.assertEqual(entregados, 4)  # 2 del pedido + 2 de la venta en la calle
+        carga = self.hoja.cargas.get()
+        registrar_regreso(self.hoja, [{'carga_id': carga.pk, 'cantidad_entregada': entregados}])  # vuelven 6 − 4 = 2
+        self.bidon.refresh_from_db()
+        self.assertEqual(self.bidon.stock, 36)  # 40 − 4 entregados
+
+    def test_cliente_con_fiado_puede_quedar_a_cuenta(self):
+        self._vender(direccion=self.direccion.pk, cobro='cuenta')
+        self.assertEqual(self.cliente.cuenta_corriente.saldo, Decimal('6000'))
+
+    def test_no_se_vende_con_la_hoja_en_borrador(self):
+        borrador = HojaRuta.objects.create(fecha=timezone.localdate(), zona=self.zona, empleado=self.empleado)
+        self.client.post(reverse('apps.logistica:venta_calle', args=[borrador.pk]),
+                         {f'cantidad_producto_{self.bidon.pk}': 1, 'direccion': self.direccion.pk})
+        self.assertFalse(borrador.detalles.exists())

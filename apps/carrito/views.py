@@ -5,14 +5,13 @@ from apps.productos.models import Producto
 from django.urls import reverse
 from django.contrib import messages
 from distribuidora.utils import redirigir_a_origen
-from apps.permisos.roles import es_admin_o_vendedor
+from apps.permisos.views import solo_clientes
 
 
 @login_required
 def agregar_al_carrito(request, producto_id):
-    if es_admin_o_vendedor(request.user):
-        messages.info(request, "Los usuarios administradores y vendedores gestionan la tienda y no realizan compras desde el carrito.")
-        return redirect('dashboard')
+    if (fuera := solo_clientes(request)) is not None:
+        return fuera
 
     producto = get_object_or_404(Producto, id_producto=producto_id, activo=True)
     if request.method != 'POST':
@@ -50,9 +49,8 @@ def agregar_al_carrito(request, producto_id):
 
 @login_required
 def ver_carrito(request):
-    if es_admin_o_vendedor(request.user):
-        messages.info(request, "Los usuarios administradores y vendedores gestionan los pedidos desde la consola.")
-        return redirect('dashboard')
+    if (fuera := solo_clientes(request)) is not None:
+        return fuera
 
     carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
     contexto = {
@@ -64,6 +62,8 @@ def ver_carrito(request):
 
 @login_required
 def eliminar_del_carrito(request, item_id):
+    if (fuera := solo_clientes(request)) is not None:
+        return fuera
     if request.method != 'POST':
         return redirect('apps.carrito:ver_carrito')
     carrito= get_object_or_404(Carrito, usuario=request.user)
@@ -84,6 +84,8 @@ def eliminar_del_carrito(request, item_id):
 
 @login_required
 def vaciar_carrito(request):
+    if (fuera := solo_clientes(request)) is not None:
+        return fuera
     if request.method != 'POST':
         return redirect('apps.carrito:ver_carrito')
     carrito = get_object_or_404(Carrito, usuario=request.user)

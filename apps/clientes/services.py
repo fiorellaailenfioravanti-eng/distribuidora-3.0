@@ -103,3 +103,38 @@ def sincronizar_bidones_de_parada(parada, usuario=None):
     ]
     recalcular_saldo_bidones(cliente)
     return movimientos
+
+
+
+# ─────────────────────────────────────────────────────────────
+# PERSONAL SIN PERFIL DE CLIENTE
+# ─────────────────────────────────────────────────────────────
+def perfil_cliente_esta_vacio(cliente):
+    """True si el perfil no tiene ningún dato de negocio (se puede borrar sin perder nada)."""
+    from apps.abonos.models import Abono
+    from apps.cuentas.models import CuentaCorriente
+    from apps.pedidos.models import Pedido, SuscripcionReposicion
+    from apps.promociones.models import CompraPromocion
+    return not any((
+        Pedido.objects.filter(cliente=cliente).exists(),
+        cliente.telefonos.exists(),
+        cliente.direcciones.exists(),
+        cliente.movimientos_bidon.exists(),
+        CuentaCorriente.objects.filter(cliente=cliente, movimientos__isnull=False).exists(),
+        Abono.objects.filter(cliente=cliente).exists(),
+        CompraPromocion.objects.filter(cliente=cliente).exists(),
+        SuscripcionReposicion.objects.filter(cliente=cliente).exists(),
+    ))
+
+
+def retirar_perfil_cliente_vacio(usuario):
+    """El personal no compra: si el usuario tiene un perfil de cliente vacío, se elimina.
+
+    Si el perfil tiene datos (por ejemplo, un cliente que después pasó a ser
+    empleado) se conserva: se ve en Clientes y no se pierde historia.
+    """
+    cliente = Cliente.objects.filter(usuario=usuario).first()
+    if cliente is not None and perfil_cliente_esta_vacio(cliente):
+        cliente.delete()
+        return True
+    return False

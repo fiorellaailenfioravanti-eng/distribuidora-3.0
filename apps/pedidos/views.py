@@ -23,6 +23,7 @@ from .services import (
 from apps.carrito.models import Carrito
 from apps.clientes.models import Cliente
 from distribuidora.utils import redirigir_a_origen
+from apps.permisos.views import solo_clientes
 from apps.permisos.roles import (
     es_admin_o_vendedor,
     puede_ver_nota_seguridad,
@@ -56,9 +57,8 @@ def _cliente_puede_comprar(request, cliente):
 @login_required
 def checkout(request):
     """Pantalla de selección de dirección y método de pago antes de confirmar."""
-    if es_admin_o_vendedor(request.user):
-        messages.info(request, "Los usuarios administradores y vendedores gestionan los pedidos desde la consola.")
-        return redirect('apps.pedidos:listar_pedidos')
+    if (fuera := solo_clientes(request)) is not None:
+        return fuera
 
     carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
     items = carrito.items.all()
@@ -117,6 +117,8 @@ def checkout(request):
 @transaction.atomic
 def confirmar_pedido(request):
     """Procesa y confirma el pedido descontando stock e iniciando el flujo de pago."""
+    if (fuera := solo_clientes(request)) is not None:
+        return fuera
     if request.method != 'POST':
         return redirect('apps.pedidos:checkout')
 
@@ -470,9 +472,8 @@ def suscripcion_cliente(request, cliente_pk):
 @login_required
 def mis_pedidos(request):
     """Listado de compras/pedidos realizas por el cliente logueado."""
-    if es_admin_o_vendedor(request.user):
-        messages.info(request, "Los usuarios administradores y vendedores gestionan la totalidad de pedidos de la distribuidora.")
-        return redirect('apps.pedidos:listar_pedidos')
+    if (fuera := solo_clientes(request)) is not None:
+        return fuera
 
     try:
         cliente = request.user.perfil_cliente

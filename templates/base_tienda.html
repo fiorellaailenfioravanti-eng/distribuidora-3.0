@@ -44,7 +44,7 @@
                         <i class="fa-solid fa-moon"></i>
                     </button>
 
-                    {% if not es_vendedor %}
+                    {% if not es_personal_interno %}
                     <!-- Carrito (Móvil) -->
                     <a href="{% url 'apps.carrito:ver_carrito' %}" class="btn btn-light rounded-circle text-primary position-relative d-flex align-items-center justify-content-center p-0 shadow-sm" style="width: 40px; height: 40px;">
                         <i class="fa-solid fa-cart-shopping"></i>
@@ -89,6 +89,12 @@
                                <i class="fa-solid fa-border-all me-2 me-lg-1"></i> Dashboard
                             </a>
                         </li>
+                        {% elif es_repartidor %}
+                        <li class="nav-item">
+                            <a class="nav-link py-3 py-lg-2 px-3 rounded-3 text-primary fw-bold hover-bg-light" href="{% url 'apps.logistica:mi_ruta_hoy' %}">
+                               <i class="fa-solid fa-truck-fast me-2 me-lg-1"></i> Mi recorrido
+                            </a>
+                        </li>
                         {% endif %}
                     </ul>
 
@@ -111,7 +117,7 @@
                             </button>
                         </div>
 
-                        {% if not es_vendedor %}
+                        {% if not es_personal_interno %}
                         <!-- Carrito (Escritorio) -->
                         <a href="{% url 'apps.carrito:ver_carrito' %}" class="d-none d-lg-flex btn btn-primary btn-glow rounded-pill px-4 shadow-sm align-items-center gap-2 fw-bold text-nowrap hover-lift" style="height: 42px;">
                             <i class="fa-solid fa-cart-shopping"></i>
@@ -136,6 +142,9 @@
                                         {% if es_vendedor %}
                                             <li><a class="dropdown-item py-3 py-lg-2" href="{% url 'dashboard' %}"><i class="fa-solid fa-border-all me-2 text-muted"></i> Dashboard</a></li>
                                             <li><a class="dropdown-item py-3 py-lg-2" href="{% url 'apps.pedidos:listar_pedidos' %}"><i class="fa-solid fa-boxes-packing me-2 text-muted"></i> Gestión de Pedidos</a></li>
+                                        {% elif es_repartidor %}
+                                            <li><a class="dropdown-item py-3 py-lg-2" href="{% url 'apps.logistica:mi_ruta_hoy' %}"><i class="fa-solid fa-truck-fast me-2 text-muted"></i> Mi recorrido</a></li>
+                                            <li><a class="dropdown-item py-3 py-lg-2" href="{% url 'apps.autenticacion:perfil' %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi perfil</a></li>
                                         {% else %}
                                             <li><a class="dropdown-item py-3 py-lg-2" href="{% url 'apps.clientes:mi_perfil' %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi Cuenta</a></li>
                                             <li><a class="dropdown-item py-3 py-lg-2" href="{% url 'apps.pedidos:mis_pedidos' %}"><i class="fa-solid fa-boxes-packing me-2 text-muted"></i> Mis Pedidos</a></li>

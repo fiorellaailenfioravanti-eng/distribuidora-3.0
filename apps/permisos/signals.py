@@ -93,8 +93,15 @@ def sincronizar_permisos_grupos(sender, **kwargs):
 
 @receiver(post_save, sender='empleados.Empleado')
 def sincronizar_grupo_al_guardar_empleado(sender, instance, **kwargs):
-    """Alta, edición, cambio de rol o de estado del empleado → grupo correcto."""
+    """Alta, edición, cambio de rol o de estado del empleado → grupo correcto.
+
+    Además, el personal no compra en la tienda: si su usuario quedó con un
+    perfil de cliente vacío (lo crea la señal de alta de usuarios), se elimina.
+    """
     sincronizar_grupo_empleado(instance)
+    if instance.usuario_id:
+        from apps.clientes.services import retirar_perfil_cliente_vacio
+        retirar_perfil_cliente_vacio(instance.usuario)
 
 
 @receiver(post_save, sender='empleados.RolEmpleado')

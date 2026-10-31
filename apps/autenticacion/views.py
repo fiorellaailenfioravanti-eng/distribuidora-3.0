@@ -2,6 +2,9 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.utils.http import url_has_allowed_host_and_scheme
+
+from apps.permisos.roles import es_personal_interno
+from apps.permisos.views import destino_personal
 from django.contrib.auth.decorators import login_required
 from .forms import RegistroUsuarioForm, IngresarUsuarioForm
 
@@ -37,6 +40,8 @@ def ingresar_usuario(request):
                     destino, allowed_hosts={request.get_host()}, require_https=request.is_secure()
                 ):
                     return redirect(destino)
+                if es_personal_interno(user):
+                    return redirect(destino_personal(user))
                 return redirect('inicio')
             else:
                 messages.error(request, 'Credenciales inválidas. Por favor, intente de nuevo.')

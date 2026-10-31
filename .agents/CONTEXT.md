@@ -426,6 +426,14 @@ cobro total / parcial / a cuenta con fiado / no pagó) o **No se pudo** (motivo;
 día (botellones, vacíos, efectivo a rendir) en `resumen_recorrido`, que también muestra la rendición en
 «Registrar regreso».
 
+**Cuenta del repartidor:** el personal no compra en la tienda (`apps.permisos.views.solo_clientes`): carrito,
+checkout, «Mis pedidos» y «Mi cuenta» lo devuelven a su panel (`destino_personal`: el repartidor a su recorrido,
+el vendedor al dashboard), también al iniciar sesión. Al guardar un empleado se elimina su perfil de cliente si está
+vacío (`retirar_perfil_cliente_vacio`). Menú del repartidor: «Mi recorrido» y «Mis hojas de ruta».
+**Pedido espontáneo** (`venta_calle`, sólo con la hoja en reparto): cliente de la zona o nuevo con nombre y
+dirección obligatorios, botellones, vacíos retirados y cobro (todo / a cuenta con fiado / pendiente). Lo que salió
+en el camión no se vuelve a descontar del stock.
+
 - `Zona` con días de reparto (lunes…domingo) y `barrios` relacionados.
 - `Barrio` FK a `Zona`.
 - `Camion` (patente PK).

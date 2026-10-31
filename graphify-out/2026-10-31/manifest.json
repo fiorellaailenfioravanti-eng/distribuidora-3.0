@@ -528,15 +528,15 @@
     "semantic_hash": ""
   },
   "apps/logistica/services.py": {
-    "mtime": 1793456829.121466,
-    "seen": 1793457026.1220477,
-    "ast_hash": "5c2c2aff705be645085d7d263117a6b3",
+    "mtime": 1793457252.1588569,
+    "seen": 1793457369.5522985,
+    "ast_hash": "a10e678125d42292389ce851dee72e6a",
     "semantic_hash": ""
   },
   "apps/logistica/tests.py": {
-    "mtime": 1793456930.3346517,
-    "seen": 1793457026.1220477,
-    "ast_hash": "4cc1c058cf5921e88d6f498c3add6018",
+    "mtime": 1793457289.7681065,
+    "seen": 1793457369.5522985,
+    "ast_hash": "e21062a5ab2d455211398740a3674e1b",
     "semantic_hash": ""
   },
   "apps/logistica/urls.py": {
@@ -546,9 +546,9 @@
     "semantic_hash": ""
   },
   "apps/logistica/views.py": {
-    "mtime": 1793456859.2069056,
-    "seen": 1793457026.1220477,
-    "ast_hash": "be5f39de91fb0822b69b0ca1d0558f98",
+    "mtime": 1793457252.1993122,
+    "seen": 1793457369.5522985,
+    "ast_hash": "b0f19a81dbac919f309ed7305c0905df",
     "semantic_hash": ""
   },
   "apps/pedidos/__init__.py": {
@@ -1074,9 +1074,9 @@
     "semantic_hash": "4987f048cbd87edeb2c99fc090b5d080"
   },
   "templates/logistica/mi_ruta_hoy.html": {
-    "mtime": 1793456859.2235036,
-    "seen": 1793457026.1220477,
-    "ast_hash": "a7ce33c25d8454ef6b9b906a9f88c16d",
+    "mtime": 1793457289.7382927,
+    "seen": 1793457369.5538015,
+    "ast_hash": "e59c92d908d880786db826f2297f6798",
     "semantic_hash": ""
   },
   "templates/logistica/planificar_reparto.html": {
@@ -1092,9 +1092,9 @@
     "semantic_hash": ""
   },
   "templates/logistica/venta_calle.html": {
-    "mtime": 1793456712.3829036,
-    "seen": 1793457026.1220477,
-    "ast_hash": "1ac9b18f087dd4c0185724be1c5ad550",
+    "mtime": 1793457272.0885499,
+    "seen": 1793457369.5538015,
+    "ast_hash": "1f6e07afd1f6d904995dbab168c943b8",
     "semantic_hash": ""
   },
   "templates/logistica/ver_ruta.html": {

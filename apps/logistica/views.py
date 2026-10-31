@@ -449,15 +449,19 @@ def mi_ruta_hoy(request):
     if ruta is None:
         ruta = next((h for h in hojas_hoy if h.estado == 'Confirmada'), hojas_hoy[0] if hojas_hoy else None)
 
-    pendientes, hechas, extras, resumen, camion = [], [], [], None, None
+    pendientes, entregados, no_entregados, extras, resumen, camion = [], [], [], [], None, None
     if ruta is not None:
         for parada in ruta.detalles.select_related(
                 'pedido__cliente', 'cliente', 'direccion_entrega').order_by('orden', 'id_detalle'):
             ficha = _ficha_de_parada(parada, request.user)
             if parada.es_venta_calle:
                 extras.append(ficha)  # ventas en la calle: no son paradas del recorrido
-            else:
-                (pendientes if parada.estado == 'Pendiente' else hechas).append(ficha)
+            elif parada.estado == 'Pendiente':
+                pendientes.append(ficha)
+            elif parada.estado == 'Entregado':
+                entregados.append(ficha)
+            else:  # Reprogramado o Cancelado
+                no_entregados.append(ficha)
         resumen = resumen_recorrido(ruta)
         camion = inventario_camion(ruta)
 
@@ -471,7 +475,8 @@ def mi_ruta_hoy(request):
         'ruta': ruta,
         'hojas_hoy': hojas_hoy,
         'pendientes': pendientes,
-        'hechas': hechas,
+        'entregados': entregados,
+        'no_entregados': no_entregados,
         'extras': extras,
         'resumen': resumen,
         'camion': camion,

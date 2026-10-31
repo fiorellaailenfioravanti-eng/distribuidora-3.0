@@ -439,6 +439,9 @@ se resumen aparte; sí cuentan en la rendición y el regreso.
 **Inventario del camión** (`inventario_camion`), en el recorrido y en la venta en calle: llenos que quedan
 (cargados − entregados), pedidos por entregar, libres para vender (o cuántos faltan) y vacíos que debería haber
 (cargados + retirados − vendidos). La venta en calle no puede superar los llenos que quedan.
+La lista del recorrido tiene pestañas **Pendientes / Entregados / No entregados / Extras**, cada parada es una fila
+colapsable (`logistica/_fila_parada.html`, la siguiente abierta) y un **buscador en tiempo real** (sin tildes)
+por cliente, calle, barrio, producto o teléfono que actualiza los contadores.
 
 - `Zona` con días de reparto (lunes…domingo) y `barrios` relacionados.
 - `Barrio` FK a `Zona`.

@@ -114,173 +114,73 @@
 </div>
 {% endif %}
 
-{# ── Paradas pendientes ── #}
-{% for f in pendientes %}
-{% with d=f.parada %}
-<div class="card border-0 shadow-sm rounded-4 bg-surface mb-3 {% if forloop.first %}border-start border-4 border-primary{% endif %}" id="parada-{{ d.id_detalle }}">
-    <div class="card-body p-3 p-md-4">
-        {% if forloop.first %}<div class="small fw-bold text-primary text-uppercase mb-1"><i class="fa-solid fa-location-arrow me-1"></i>Siguiente parada</div>{% endif %}
-        <div class="d-flex justify-content-between align-items-start gap-2">
-            <div>
-                <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill me-1">#{{ d.orden }}</span>
-                <strong class="text-main fs-5">{{ d.cliente_nombre|default:"Sin nombre" }}</strong>
-                <div class="text-muted small mt-1"><i class="fa-solid fa-location-dot me-1"></i>{{ d.direccion_texto|default:"Sin dirección" }}</div>
-            </div>
-        </div>
-
-        <div class="d-flex gap-2 my-3">
-            <a href="{{ f.mapa }}" target="_blank" rel="noopener" class="btn btn-light border flex-fill rounded-pill fw-semibold"><i class="fa-solid fa-map-location-dot me-1 text-primary"></i> Cómo llegar</a>
-            {% if f.telefono %}
-            <a href="tel:{{ f.telefono.numero }}" class="btn btn-light border flex-fill rounded-pill fw-semibold"><i class="fa-solid fa-phone me-1 text-success"></i> Llamar</a>
-            {% endif %}
-        </div>
-
-        {% if f.nota_seguridad %}
-        <p class="small text-warning-emphasis bg-warning bg-opacity-10 border-start border-4 border-warning rounded p-2 mb-2">
-            <i class="fa-solid fa-shield-halved me-1"></i><strong>Atención:</strong> {{ f.nota_seguridad }}
-        </p>
-        {% endif %}
-
-        <div class="d-flex justify-content-between align-items-center bg-body-tertiary rounded-3 p-2 mb-2">
-            <div class="small">
-                {% for item in f.items %}<div><strong>{{ item.cantidad }}</strong> × {{ item.producto.nombre }}{% if not item.precio_unitario %} <span class="badge bg-success bg-opacity-25 text-success">prepago</span>{% endif %}</div>{% empty %}<span class="text-warning">Sin pedido cargado</span>{% endfor %}
-            </div>
-            <div class="text-end">
-                {% if f.pagado %}<span class="badge bg-success rounded-pill">Pagado</span>
-                {% else %}<div class="small text-muted">a cobrar</div><div class="fs-5 fw-bold text-main">${{ f.saldo }}</div>{% endif %}
-            </div>
-        </div>
-        {% if f.cliente and f.cliente.bidones_prestados %}<p class="small text-muted mb-2"><i class="fa-solid fa-bottle-water me-1"></i>Tiene {{ f.cliente.bidones_prestados }} envase{{ f.cliente.bidones_prestados|pluralize }} en préstamo.</p>{% endif %}
-        {% if d.pedido.notas_cliente and d.es_pedido_web %}<p class="small mb-2"><i class="fa-solid fa-message me-1 text-info"></i>{{ d.pedido.notas_cliente }}</p>{% endif %}
-
-        {% if ruta.estado == 'Confirmada' %}
-        <form method="post" action="{% url 'apps.logistica:confirmar_entrega' d.id_detalle %}" class="confirmar-entrega">
-            {% csrf_token %}
-            <input type="hidden" name="resultado" value="">
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-success btn-lg flex-fill rounded-pill fw-bold" data-resultado="entregado"><i class="fa-solid fa-check me-1"></i> Entregado</button>
-                <button type="button" class="btn btn-outline-danger btn-lg flex-fill rounded-pill fw-bold" data-resultado="problema"><i class="fa-solid fa-xmark me-1"></i> No se pudo</button>
-            </div>
-
-            <div class="panel-entregado d-none mt-3">
-                <label class="form-label small fw-semibold mb-1">Vacíos que retiraste</label>
-                <div class="input-group mb-3" style="max-width: 12rem;">
-                    <button class="btn btn-outline-secondary" type="button" onclick="pasoCantidad(this,-1)">−</button>
-                    <input type="number" min="0" name="envases_retirados" class="form-control text-center" value="{{ d.cantidad_bidones }}" aria-label="Vacíos retirados">
-                    <button class="btn btn-outline-secondary" type="button" onclick="pasoCantidad(this,1)">+</button>
-                </div>
-                {% if not f.pagado and f.saldo %}
-                <label class="form-label small fw-semibold mb-1">Cobro</label>
-                <div class="d-grid gap-2 mb-2">
-                    <label class="btn btn-outline-success text-start"><input class="form-check-input me-2" type="radio" name="cobro" value="total" checked> Pagó todo (${{ f.saldo }})</label>
-                    <label class="btn btn-outline-secondary text-start"><input class="form-check-input me-2" type="radio" name="cobro" value="parcial"> Pagó una parte</label>
-                    {% if f.puede_fiar %}<label class="btn btn-outline-secondary text-start"><input class="form-check-input me-2" type="radio" name="cobro" value="cuenta"> Queda a cuenta corriente</label>{% endif %}
-                    <label class="btn btn-outline-secondary text-start"><input class="form-check-input me-2" type="radio" name="cobro" value="ninguno"> No pagó (queda pendiente)</label>
-                </div>
-                <div class="row g-2 mb-2">
-                    <div class="col-6 campo-monto d-none">
-                        <input type="number" min="0" step="0.01" name="monto" class="form-control" placeholder="Monto" aria-label="Monto cobrado">
-                    </div>
-                    <div class="col-6 campo-metodo">
-                        <select name="metodo_pago" class="form-select" aria-label="Medio de pago">
-                            {% for mp in metodos_cobro %}<option value="{{ mp.pk }}">{{ mp.nombre }}</option>{% endfor %}
-                        </select>
-                    </div>
-                </div>
-                {% endif %}
-                <details class="small mb-2">
-                    <summary class="text-muted">Más opciones</summary>
-                    <div class="mt-2">
-                        <label class="form-label small mb-1">Envases vendidos (el cliente se queda con el envase)</label>
-                        <input type="number" min="0" name="envases_vendidos" class="form-control form-control-sm mb-2" value="0" style="max-width: 8rem;">
-                    </div>
-                </details>
-                <input type="text" name="nota" class="form-control mb-2" placeholder="Nota (opcional)">
-                <button type="submit" class="btn btn-success w-100 rounded-pill fw-bold py-2">Confirmar entrega</button>
-            </div>
-
-            <div class="panel-problema d-none mt-3">
-                <label class="form-label small fw-semibold mb-1">¿Qué pasó?</label>
-                <select name="motivo" class="form-select mb-2">
-                    {% for valor, texto in motivos %}<option value="{{ valor }}">{{ texto }}</option>{% endfor %}
-                </select>
-                <div class="d-flex gap-3 small mb-2">
-                    <label><input type="radio" name="accion" value="reprogramar" checked> Volver otro día</label>
-                    <label><input type="radio" name="accion" value="cancelar"> Cancelar el pedido</label>
-                </div>
-                <input type="text" name="nota" class="form-control mb-2" placeholder="Detalle (opcional)" disabled>
-                <button type="submit" class="btn btn-danger w-100 rounded-pill fw-bold py-2">Registrar</button>
-            </div>
-        </form>
-        {% endif %}
+{# ── Buscador y pestañas ── #}
+{% if ruta.total_paradas or extras %}
+<div class="position-sticky bg-body pt-2 pb-2 mb-2" style="top: 0; z-index: 5;">
+    <div class="input-group mb-2">
+        <span class="input-group-text bg-body"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <input type="search" id="buscar-parada" class="form-control" placeholder="Buscar cliente, calle, barrio, producto o teléfono" aria-label="Buscar en el recorrido" autocomplete="off">
+        <button class="btn btn-outline-secondary" type="button" id="alternar-todo" title="Expandir o contraer todo"><i class="fa-solid fa-up-down"></i></button>
     </div>
+    <ul class="nav nav-pills nav-fill small gap-1 flex-nowrap overflow-auto" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active text-nowrap" data-bs-toggle="pill" data-bs-target="#tab-pendientes" type="button" role="tab">Pendientes <span class="badge rounded-pill bg-light text-dark contador" data-tab="tab-pendientes">{{ pendientes|length }}</span></button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link text-nowrap" data-bs-toggle="pill" data-bs-target="#tab-entregados" type="button" role="tab">Entregados <span class="badge rounded-pill bg-light text-dark contador" data-tab="tab-entregados">{{ entregados|length }}</span></button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link text-nowrap" data-bs-toggle="pill" data-bs-target="#tab-no-entregados" type="button" role="tab">No entregados <span class="badge rounded-pill bg-light text-dark contador" data-tab="tab-no-entregados">{{ no_entregados|length }}</span></button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link text-nowrap" data-bs-toggle="pill" data-bs-target="#tab-extras" type="button" role="tab">Extras <span class="badge rounded-pill bg-light text-dark contador" data-tab="tab-extras">{{ extras|length }}</span></button>
+        </li>
+    </ul>
 </div>
-{% endwith %}
-{% empty %}
-{% if ruta.total_paradas %}
-<div class="text-center py-4">
-    <i class="fa-solid fa-flag-checkered fa-3x text-success mb-2"></i>
-    <h5 class="fw-bold">¡Recorrido terminado!</h5>
-    <p class="text-muted small">Volvé al depósito para rendir: ${{ resumen.cobrado_total|floatformat:0 }} cobrados y {{ resumen.vacios_retirados }} vacíos.</p>
+
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="tab-pendientes" role="tabpanel">
+        {% for f in pendientes %}
+            {% include "logistica/_fila_parada.html" with tipo="pendiente" abierta=forloop.first %}
+        {% empty %}
+            {% if ruta.total_paradas %}
+            <div class="text-center py-4">
+                <i class="fa-solid fa-flag-checkered fa-3x text-success mb-2"></i>
+                <h5 class="fw-bold">¡Recorrido terminado!</h5>
+                <p class="text-muted small">Volvé al depósito para rendir: ${{ resumen.cobrado_total|floatformat:0 }} cobrados y {{ resumen.vacios_retirados }} vacíos.</p>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <div class="tab-pane fade" id="tab-entregados" role="tabpanel">
+        {% for f in entregados %}
+            {% include "logistica/_fila_parada.html" with tipo="hecha" abierta=False %}
+        {% empty %}
+            <p class="text-muted small text-center py-3 mb-0">Todavía no entregaste ningún pedido.</p>
+        {% endfor %}
+    </div>
+    <div class="tab-pane fade" id="tab-no-entregados" role="tabpanel">
+        {% for f in no_entregados %}
+            {% include "logistica/_fila_parada.html" with tipo="hecha" abierta=False %}
+        {% empty %}
+            <p class="text-muted small text-center py-3 mb-0">Sin pedidos reprogramados ni cancelados.</p>
+        {% endfor %}
+    </div>
+    <div class="tab-pane fade" id="tab-extras" role="tabpanel">
+        {% if extras %}<p class="small text-muted mb-2">Ventas en la calle: {{ resumen.botellones_extras }} botellones · ${{ resumen.importe_extras|floatformat:0 }}. No cuentan como paradas del recorrido.</p>{% endif %}
+        {% for f in extras %}
+            {% include "logistica/_fila_parada.html" with tipo="extra" abierta=False %}
+        {% empty %}
+            <p class="text-muted small text-center py-3 mb-0">Sin ventas en la calle. Usá «Venta en calle» para cargar un pedido espontáneo.</p>
+        {% endfor %}
+    </div>
+    <p class="text-muted small text-center py-3 d-none" id="sin-resultados">Ninguna parada coincide con la búsqueda.</p>
 </div>
 {% else %}
 <div class="text-center py-5 text-muted">
     <i class="fa-solid fa-map-location-dot fa-3x mb-3 opacity-25"></i>
     <p>Esta hoja no tiene paradas cargadas.</p>
 </div>
-{% endif %}
-{% endfor %}
-
-{# ── Ventas en la calle (extras: no cuentan como paradas del recorrido) ── #}
-{% if extras %}
-<h6 class="fw-bold text-muted text-uppercase small mt-4 mb-2">Ventas en la calle ({{ extras|length }}) · {{ resumen.botellones_extras }} botellones · ${{ resumen.importe_extras|floatformat:0 }}</h6>
-{% for f in extras %}
-{% with d=f.parada %}
-<div class="card border-0 shadow-sm rounded-4 bg-surface mb-2" id="parada-{{ d.id_detalle }}">
-    <div class="card-body p-3 d-flex justify-content-between align-items-center gap-2">
-        <div>
-            <span class="badge bg-info bg-opacity-25 text-info rounded-pill me-1">Extra</span>
-            <strong class="text-main">{{ d.cliente_nombre }}</strong>
-            <div class="small text-muted">{{ d.resumen_pedido }}{% if f.saldo %} · <span class="text-warning">debe ${{ f.saldo }}</span>{% else %} · pagado{% endif %}</div>
-        </div>
-        <small class="text-muted">{{ d.hora_registro|date:"H:i" }}</small>
-    </div>
-</div>
-{% endwith %}
-{% endfor %}
-{% endif %}
-
-{# ── Paradas ya registradas ── #}
-{% if hechas %}
-<h6 class="fw-bold text-muted text-uppercase small mt-4 mb-2">Registradas ({{ hechas|length }})</h6>
-{% for f in hechas %}
-{% with d=f.parada %}
-<details class="card border-0 shadow-sm rounded-4 bg-surface mb-2" id="parada-{{ d.id_detalle }}">
-    <summary class="card-body p-3 d-flex justify-content-between align-items-center" style="list-style:none; cursor:pointer;">
-        <span><span class="text-muted small me-1">#{{ d.orden }}</span><strong class="text-main">{{ d.cliente_nombre }}</strong></span>
-        <span>
-            {% if d.estado == 'Entregado' %}<span class="badge bg-success bg-opacity-25 text-success rounded-pill">Entregado</span>
-            {% elif d.estado == 'Cancelado' %}<span class="badge bg-danger bg-opacity-25 text-danger rounded-pill">Cancelado</span>
-            {% else %}<span class="badge bg-warning bg-opacity-25 text-warning rounded-pill">{{ d.estado }}</span>{% endif %}
-            <small class="text-muted ms-1">{{ d.hora_registro|date:"H:i" }}</small>
-        </span>
-    </summary>
-    <div class="px-3 pb-3 small">
-        <div class="text-muted">{{ d.resumen_pedido }} · {{ d.envases_retirados }} vacío{{ d.envases_retirados|pluralize }} retirado{{ d.envases_retirados|pluralize }}{% if f.saldo %} · <span class="text-warning">debe ${{ f.saldo }}</span>{% endif %}</div>
-        {% if d.nota_entrega %}<div class="mt-1"><i class="fa-solid fa-comment me-1 text-info"></i>{{ d.nota_entrega }}</div>{% endif %}
-        {% if ruta.estado == 'Confirmada' %}
-        <form method="post" action="{% url 'apps.logistica:confirmar_entrega' d.id_detalle %}" class="mt-2 d-flex flex-wrap gap-2 align-items-center">
-            {% csrf_token %}
-            <input type="hidden" name="resultado" value="entregado">
-            <input type="hidden" name="cobro" value="{% if f.saldo %}total{% else %}ninguno{% endif %}">
-            <input type="number" min="0" name="envases_retirados" value="{{ d.envases_retirados }}" class="form-control form-control-sm" style="width: 6rem;" aria-label="Vacíos retirados">
-            <button type="submit" class="btn btn-sm btn-outline-success rounded-pill">{% if d.estado == 'Entregado' %}Corregir vacíos{% else %}Finalmente se entregó{% endif %}{% if f.saldo %} y cobrar ${{ f.saldo }}{% endif %}</button>
-        </form>
-        {% endif %}
-    </div>
-</details>
-{% endwith %}
-{% endfor %}
 {% endif %}
 
 {% else %}
@@ -301,11 +201,60 @@
 {% endif %}
 </div>
 
+<style>
+    .parada-resumen { list-style: none; cursor: pointer; }
+    .parada-resumen::-webkit-details-marker { display: none; }
+    .parada-item[open] .parada-flecha { transform: rotate(180deg); }
+    .parada-flecha { transition: transform .2s; }
+    .min-w-0 { min-width: 0; }
+</style>
 <script>
 function pasoCantidad(boton, paso) {
     const input = boton.parentElement.querySelector('input');
     input.value = Math.max(0, (parseInt(input.value, 10) || 0) + paso);
 }
+// ── Búsqueda en tiempo real (sin tildes ni mayúsculas) y contadores por pestaña ──
+const normalizar = t => (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const buscador = document.getElementById('buscar-parada');
+if (buscador) {
+    const items = Array.from(document.querySelectorAll('.parada-item'));
+    items.forEach(el => el.dataset.texto = normalizar(el.dataset.buscar));
+    buscador.addEventListener('input', function () {
+        const palabras = normalizar(buscador.value).split(/\s+/).filter(Boolean);
+        let total = 0;
+        document.querySelectorAll('.tab-pane').forEach(function (pane) {
+            let visibles = 0;
+            pane.querySelectorAll('.parada-item').forEach(function (el) {
+                const coincide = palabras.every(p => el.dataset.texto.includes(p));
+                el.classList.toggle('d-none', !coincide);
+                if (coincide) visibles++;
+            });
+            pane.querySelectorAll(':scope > p.text-muted, :scope > .text-center').forEach(el => el.classList.toggle('d-none', palabras.length > 0));
+            const contador = document.querySelector(`.contador[data-tab="${pane.id}"]`);
+            if (contador) contador.textContent = visibles;
+            total += visibles;
+        });
+        document.getElementById('sin-resultados').classList.toggle('d-none', !(palabras.length && total === 0));
+        // Si en la pestaña actual no hay resultados, saltar a la primera que tenga.
+        const activa = document.querySelector('.tab-pane.active');
+        if (palabras.length && activa && !activa.querySelector('.parada-item:not(.d-none)')) {
+            const destino = Array.from(document.querySelectorAll('.tab-pane')).find(p => p.querySelector('.parada-item:not(.d-none)'));
+            if (destino) bootstrap.Tab.getOrCreateInstance(document.querySelector(`[data-bs-target="#${destino.id}"]`)).show();
+        }
+    });
+    document.getElementById('alternar-todo').addEventListener('click', function () {
+        const visibles = Array.from(document.querySelectorAll('.tab-pane.active .parada-item:not(.d-none)'));
+        const abrir = visibles.some(el => !el.open);
+        visibles.forEach(el => el.open = abrir);
+    });
+}
+// Abrir la pestaña de la parada pedida en la URL (#parada-N), por ejemplo al volver de registrar.
+if (location.hash.startsWith('#parada-')) {
+    const destino = document.querySelector(location.hash);
+    const pane = destino && destino.closest('.tab-pane');
+    if (pane) { bootstrap.Tab.getOrCreateInstance(document.querySelector(`[data-bs-target="#${pane.id}"]`)).show(); destino.open = true; }
+}
+
 document.querySelectorAll('form.confirmar-entrega').forEach(function (form) {
     const panelOk = form.querySelector('.panel-entregado');
     const panelMal = form.querySelector('.panel-problema');

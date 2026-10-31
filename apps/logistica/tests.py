@@ -791,8 +791,11 @@ class PedidoEspontaneoTests(TestCase):
         resumen = resumen_recorrido(self.hoja)
         self.assertEqual((resumen['extras'], resumen['botellones_extras']), (1, 2))
         respuesta = self.client.get(reverse('apps.logistica:mi_ruta_hoy') + f'?hoja={self.hoja.pk}')
-        self.assertContains(respuesta, 'Ventas en la calle (1)')
-        self.assertContains(respuesta, 'Siguiente parada')  # la planificada sigue pendiente
+        self.assertContains(respuesta, 'data-tab="tab-extras">1<')       # pestaña Extras
+        self.assertContains(respuesta, 'data-tab="tab-pendientes">1<')   # la planificada sigue pendiente
+        self.assertContains(respuesta, 'data-tab="tab-entregados">0<')   # la venta no cuenta como entrega del recorrido
+        self.assertContains(respuesta, 'Siguiente parada')
+        self.assertContains(respuesta, 'id="buscar-parada"')
 
     def test_no_se_vende_con_la_hoja_en_borrador(self):
         borrador = HojaRuta.objects.create(fecha=timezone.localdate(), zona=self.zona, empleado=self.empleado)

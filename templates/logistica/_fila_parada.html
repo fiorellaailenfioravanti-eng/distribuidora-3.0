@@ -1,0 +1,132 @@
+{# Una parada del recorrido como fila colapsable. Variables: f (ficha), tipo ('pendiente'|'hecha'|'extra'), abierta #}
+{% with d=f.parada %}
+<details class="parada-item card border-0 shadow-sm rounded-4 bg-surface mb-2 {% if abierta %}border-start border-4 border-primary{% endif %}"
+         id="parada-{{ d.id_detalle }}" {% if abierta %}open{% endif %}
+         data-buscar="{{ d.cliente_nombre }} {{ d.direccion_texto }} {{ d.resumen_pedido }} {{ f.telefono.numero|default:'' }} {{ d.nota_entrega }}">
+    <summary class="parada-resumen p-3 d-flex align-items-center gap-2">
+        {% if tipo == 'extra' %}<span class="badge bg-info bg-opacity-25 text-info rounded-pill">Extra</span>
+        {% else %}<span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill">#{{ d.orden }}</span>{% endif %}
+        <div class="flex-grow-1 min-w-0">
+            <div class="fw-bold text-main text-truncate">{{ d.cliente_nombre|default:"Sin nombre" }}</div>
+            <div class="small text-muted text-truncate">{{ d.direccion_texto|default:"Sin dirección" }}</div>
+        </div>
+        <div class="text-end small text-nowrap">
+            <div class="fw-semibold">{{ d.cantidad_bidones }} <i class="fa-solid fa-bottle-water text-primary"></i></div>
+            {% if tipo == 'pendiente' %}
+                {% if f.pagado %}<span class="text-success">pagado</span>{% else %}<span class="fw-bold">${{ f.saldo|floatformat:0 }}</span>{% endif %}
+            {% elif d.estado == 'Entregado' %}
+                <span class="text-success">{{ d.hora_registro|date:"H:i" }}</span>{% if f.saldo %} · <span class="text-warning">debe</span>{% endif %}
+            {% else %}
+                <span class="{% if d.estado == 'Cancelado' %}text-danger{% else %}text-warning{% endif %}">{{ d.estado }}</span>
+            {% endif %}
+        </div>
+        <i class="fa-solid fa-chevron-down text-muted parada-flecha"></i>
+    </summary>
+
+    <div class="px-3 pb-3">
+        {% if abierta %}<div class="small fw-bold text-primary text-uppercase mb-2"><i class="fa-solid fa-location-arrow me-1"></i>Siguiente parada</div>{% endif %}
+
+        {% if tipo == 'pendiente' %}
+        <div class="d-flex gap-2 mb-3">
+            <a href="{{ f.mapa }}" target="_blank" rel="noopener" class="btn btn-light border flex-fill rounded-pill fw-semibold"><i class="fa-solid fa-map-location-dot me-1 text-primary"></i> Cómo llegar</a>
+            {% if f.telefono %}
+            <a href="tel:{{ f.telefono.numero }}" class="btn btn-light border flex-fill rounded-pill fw-semibold"><i class="fa-solid fa-phone me-1 text-success"></i> Llamar</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if f.nota_seguridad and tipo == 'pendiente' %}
+        <p class="small text-warning-emphasis bg-warning bg-opacity-10 border-start border-4 border-warning rounded p-2 mb-2">
+            <i class="fa-solid fa-shield-halved me-1"></i><strong>Atención:</strong> {{ f.nota_seguridad }}
+        </p>
+        {% endif %}
+
+        <div class="d-flex justify-content-between align-items-center bg-body-tertiary rounded-3 p-2 mb-2">
+            <div class="small">
+                {% for item in f.items %}<div><strong>{{ item.cantidad }}</strong> × {{ item.producto.nombre }}{% if not item.precio_unitario %} <span class="badge bg-success bg-opacity-25 text-success">prepago</span>{% endif %}</div>{% empty %}<span class="text-warning">Sin pedido cargado</span>{% endfor %}
+            </div>
+            <div class="text-end">
+                {% if f.pagado %}<span class="badge bg-success rounded-pill">Pagado</span>
+                {% else %}<div class="small text-muted">{% if tipo == 'pendiente' %}a cobrar{% else %}debe{% endif %}</div><div class="fs-5 fw-bold text-main">${{ f.saldo }}</div>{% endif %}
+            </div>
+        </div>
+        {% if tipo == 'pendiente' and f.cliente and f.cliente.bidones_prestados %}<p class="small text-muted mb-2"><i class="fa-solid fa-bottle-water me-1"></i>Tiene {{ f.cliente.bidones_prestados }} envase{{ f.cliente.bidones_prestados|pluralize }} en préstamo.</p>{% endif %}
+        {% if d.pedido.notas_cliente and d.es_pedido_web %}<p class="small mb-2"><i class="fa-solid fa-message me-1 text-info"></i>{{ d.pedido.notas_cliente }}</p>{% endif %}
+        {% if tipo != 'pendiente' %}
+        <p class="small text-muted mb-2">{{ d.envases_retirados }} vacío{{ d.envases_retirados|pluralize }} retirado{{ d.envases_retirados|pluralize }}{% if d.hora_registro %} · registrado a las {{ d.hora_registro|date:"H:i" }}{% endif %}</p>
+        {% if d.nota_entrega %}<p class="small mb-2"><i class="fa-solid fa-comment me-1 text-info"></i>{{ d.nota_entrega }}</p>{% endif %}
+        {% endif %}
+
+        {% if ruta.estado == 'Confirmada' %}
+        {% if tipo == 'pendiente' %}
+        <form method="post" action="{% url 'apps.logistica:confirmar_entrega' d.id_detalle %}" class="confirmar-entrega">
+            {% csrf_token %}
+            <input type="hidden" name="resultado" value="">
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-success btn-lg flex-fill rounded-pill fw-bold" data-resultado="entregado"><i class="fa-solid fa-check me-1"></i> Entregado</button>
+                <button type="button" class="btn btn-outline-danger btn-lg flex-fill rounded-pill fw-bold" data-resultado="problema"><i class="fa-solid fa-xmark me-1"></i> No se pudo</button>
+            </div>
+
+            <div class="panel-entregado d-none mt-3">
+                <label class="form-label small fw-semibold mb-1">Vacíos que retiraste</label>
+                <div class="input-group mb-3" style="max-width: 12rem;">
+                    <button class="btn btn-outline-secondary" type="button" onclick="pasoCantidad(this,-1)">−</button>
+                    <input type="number" min="0" name="envases_retirados" class="form-control text-center" value="{{ d.cantidad_bidones }}" aria-label="Vacíos retirados">
+                    <button class="btn btn-outline-secondary" type="button" onclick="pasoCantidad(this,1)">+</button>
+                </div>
+                {% if not f.pagado and f.saldo %}
+                <label class="form-label small fw-semibold mb-1">Cobro</label>
+                <div class="d-grid gap-2 mb-2">
+                    <label class="btn btn-outline-success text-start"><input class="form-check-input me-2" type="radio" name="cobro" value="total" checked> Pagó todo (${{ f.saldo }})</label>
+                    <label class="btn btn-outline-secondary text-start"><input class="form-check-input me-2" type="radio" name="cobro" value="parcial"> Pagó una parte</label>
+                    {% if f.puede_fiar %}<label class="btn btn-outline-secondary text-start"><input class="form-check-input me-2" type="radio" name="cobro" value="cuenta"> Queda a cuenta corriente</label>{% endif %}
+                    <label class="btn btn-outline-secondary text-start"><input class="form-check-input me-2" type="radio" name="cobro" value="ninguno"> No pagó (queda pendiente)</label>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-6 campo-monto d-none">
+                        <input type="number" min="0" step="0.01" name="monto" class="form-control" placeholder="Monto" aria-label="Monto cobrado">
+                    </div>
+                    <div class="col-6 campo-metodo">
+                        <select name="metodo_pago" class="form-select" aria-label="Medio de pago">
+                            {% for mp in metodos_cobro %}<option value="{{ mp.pk }}">{{ mp.nombre }}</option>{% endfor %}
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
+                <details class="small mb-2">
+                    <summary class="text-muted">Más opciones</summary>
+                    <div class="mt-2">
+                        <label class="form-label small mb-1">Envases vendidos (el cliente se queda con el envase)</label>
+                        <input type="number" min="0" name="envases_vendidos" class="form-control form-control-sm mb-2" value="0" style="max-width: 8rem;">
+                    </div>
+                </details>
+                <input type="text" name="nota" class="form-control mb-2" placeholder="Nota (opcional)">
+                <button type="submit" class="btn btn-success w-100 rounded-pill fw-bold py-2">Confirmar entrega</button>
+            </div>
+
+            <div class="panel-problema d-none mt-3">
+                <label class="form-label small fw-semibold mb-1">¿Qué pasó?</label>
+                <select name="motivo" class="form-select mb-2">
+                    {% for valor, texto in motivos %}<option value="{{ valor }}">{{ texto }}</option>{% endfor %}
+                </select>
+                <div class="d-flex gap-3 small mb-2">
+                    <label><input type="radio" name="accion" value="reprogramar" checked> Volver otro día</label>
+                    <label><input type="radio" name="accion" value="cancelar"> Cancelar el pedido</label>
+                </div>
+                <input type="text" name="nota" class="form-control mb-2" placeholder="Detalle (opcional)" disabled>
+                <button type="submit" class="btn btn-danger w-100 rounded-pill fw-bold py-2">Registrar</button>
+            </div>
+        </form>
+        {% elif tipo == 'hecha' %}
+        <form method="post" action="{% url 'apps.logistica:confirmar_entrega' d.id_detalle %}" class="d-flex flex-wrap gap-2 align-items-center">
+            {% csrf_token %}
+            <input type="hidden" name="resultado" value="entregado">
+            <input type="hidden" name="cobro" value="{% if f.saldo %}total{% else %}ninguno{% endif %}">
+            <input type="number" min="0" name="envases_retirados" value="{{ d.envases_retirados }}" class="form-control form-control-sm" style="width: 6rem;" aria-label="Vacíos retirados">
+            <button type="submit" class="btn btn-sm btn-outline-success rounded-pill">{% if d.estado == 'Entregado' %}Corregir vacíos{% else %}Finalmente se entregó{% endif %}{% if f.saldo %} y cobrar ${{ f.saldo }}{% endif %}</button>
+        </form>
+        {% endif %}
+        {% endif %}
+    </div>
+</details>
+{% endwith %}

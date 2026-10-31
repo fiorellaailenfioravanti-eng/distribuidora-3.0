@@ -1,7 +1,7 @@
 # Graph Report - distribuidora-3.0  (2026-10-31)
 
 ## Corpus Check
-- 207 files · ~294,761 words
+- 207 files · ~295,365 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 15 file(s) not represented in the graph (top: (none) 6, .jfif 3, .css 3)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a9d76cc8`
+- Built from commit: `7383451d`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -440,7 +440,7 @@ Nodes (8): BuscarClienteForm, ClienteForm, Meta, DireccionEntregaForm, Meta, Edi
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Cliente` connect `Cliente` to `pedidos/views.py`, `vender_promocion`, `clientes/forms.py`, `cuentas/views.py`, `logistica/tests.py`, `clientes/urls.py`, `Empleado`, `logistica/services.py`, `Producto`, `seed_demo.py`, `PROCEDURE.md`, `logistica/views.py`, `base_dashboard.html`, `crear_cliente_con_cuenta`, `pedidos/views.py`, `generar_cargos_mensuales`, `crear_perfil_cliente`, `Abono`, `RecorridoRepartidorTests`, `Tests de abonos (RF-05)`, `CuentaCorriente`, `puede_ver_nota_seguridad`, `GeneracionBorradorTests`, `CheckoutFechaEstimadaTests`, `distribuidora/views.py`, `registrar_cargo`, `SuscripcionReposicion`, `CobroManualTests`, `6A — Pagos parciales (RF-13) · ~4 h`, `MetodoPago`, `Command`, `clientes/services.py`, `Barrio`, `ver_cliente`, `DireccionEntrega`, `HojaRuta`, `✅ Control de cumplimiento de requisitos — 20/10/2026`, `perfil_cliente_esta_vacio`, `Fase 4 · Cuentas corrientes y abonos`, `permisos/signals.py`, `Fase 5 · Bidones y promociones prepago`, `clientes/admin.py`, `clientes/views.py`?**
-  _High betweenness centrality (0.139) - this node is a cross-community bridge._
+  _High betweenness centrality (0.147) - this node is a cross-community bridge._
 - **Are the 61 inferred relationships involving `Cliente` (e.g. with `AbonoForm` and `Abono`) actually correct?**
   _`Cliente` has 61 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `H-13 · Logística sin datos de prueba`, `H-14 · README vacío; scripts de raíz sin documentar` to the rest of the system?**
@@ -448,7 +448,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `autenticacion/views.py` be split into smaller, more focused modules?**
   _Cohesion score 0.13043478260869565 - nodes in this community are weakly interconnected._
 - **Why does `Pedido` connect `6A — Pagos parciales (RF-13) · ~4 h` to `pedidos/views.py`, `base_dashboard.html`, `vender_promocion`, `logistica/tests.py`, `PedidoAutomaticoTests`, `Empleado`, `logistica/services.py`, `Producto`, `seed_demo.py`, `PROCEDURE.md`, `logistica/views.py`, `base_dashboard.html`, `Cliente`, `pedidos/views.py`, `RecorridoRepartidorTests`, `GeneracionBorradorTests`, `🔎 Auditoría de coherencia — Distribuidora 3.0`, `distribuidora/views.py`, `pedidos/admin.py`, `SuscripcionReposicion`, `StockComprometidoTests`, `CobroManualTests`, `TransicionesManualesTests`, `MetodoPago`, `Command`, `PagosSegurosTests`, `EliminarProductoTests`, `Barrio`, `CheckoutRequiereTelefonosTests`, `ver_cliente`, `DireccionEntrega`, `HojaRuta`, `generar_borradores_periodo`, `perfil_cliente_esta_vacio`, `clientes/views.py`?**
-  _High betweenness centrality (0.070) - this node is a cross-community bridge._
+  _High betweenness centrality (0.067) - this node is a cross-community bridge._
 - **Are the 4 inferred relationships involving `es_admin_o_vendedor()` (e.g. with `2. 🟠 Altos — errores funcionales` and `4. ♻️ Redundancias`) actually correct?**
   _`es_admin_o_vendedor()` has 4 INFERRED edges - model-reasoned connections that need verification._
 - **Should `pedidos/views.py` be split into smaller, more focused modules?**

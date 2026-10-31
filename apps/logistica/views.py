@@ -17,7 +17,7 @@ from .services import (
     botellones_por_producto, clientes_frecuentes_de_zona, direccion_en_zona, entregados_por_producto,
     envase_de_reparto, envases_retirados_en_hoja, fijar_pedido_de_parada, pedidos_candidatos,
     productos_de_reparto, renumerar_paradas,
-    confirmar_entrega_en_calle, resumen_recorrido, MOTIVOS_NO_ENTREGA,
+    confirmar_entrega_en_calle, resumen_recorrido, MOTIVOS_NO_ENTREGA, inventario_camion,
 )
 from apps.clientes.models import DireccionEntrega
 from apps.permisos.roles import (
@@ -449,7 +449,7 @@ def mi_ruta_hoy(request):
     if ruta is None:
         ruta = next((h for h in hojas_hoy if h.estado == 'Confirmada'), hojas_hoy[0] if hojas_hoy else None)
 
-    pendientes, hechas, extras, resumen = [], [], [], None
+    pendientes, hechas, extras, resumen, camion = [], [], [], None, None
     if ruta is not None:
         for parada in ruta.detalles.select_related(
                 'pedido__cliente', 'cliente', 'direccion_entrega').order_by('orden', 'id_detalle'):
@@ -459,6 +459,7 @@ def mi_ruta_hoy(request):
             else:
                 (pendientes if parada.estado == 'Pendiente' else hechas).append(ficha)
         resumen = resumen_recorrido(ruta)
+        camion = inventario_camion(ruta)
 
     proximas = []
     if empleado is not None:
@@ -473,6 +474,7 @@ def mi_ruta_hoy(request):
         'hechas': hechas,
         'extras': extras,
         'resumen': resumen,
+        'camion': camion,
         'proximas': proximas,
         'hoy': hoy,
         'es_admin': es_admin,
@@ -961,6 +963,9 @@ def venta_calle(request, pk):
             messages.error(request, str(error))
             return redirect('apps.logistica:venta_calle', pk=hoja.pk)
         messages.success(request, f'Venta registrada: {parada.cliente_nombre} — {parada.resumen_pedido()} (${parada.pedido.total}).')
+        faltan = inventario_camion(hoja)['faltan']
+        if faltan:
+            messages.warning(request, f'Atención: faltan {faltan} botellones para completar los pedidos del recorrido.')
         if es_admin and not es_repartidor(request.user):
             return redirect('apps.logistica:ver_ruta', pk=hoja.id_ruta)
         return redirect(volver)
@@ -975,6 +980,7 @@ def venta_calle(request, pk):
         'hoja': hoja,
         'productos': productos_de_reparto(),
         'botellon_defecto': botellon_por_defecto(),
+        'camion': inventario_camion(hoja),
         'direcciones': direcciones,
         'barrios': barrios,
         'zonas': zonas,

@@ -436,6 +436,9 @@ en el camión no se vuelve a descontar del stock. La zona se elige primero y fil
 Las ventas en la calle son **extras** (`DetalleHojaRuta.es_venta_calle`): no cuentan como paradas, ni en el
 progreso ni en los botellones previstos (`HojaRuta.paradas_planificadas`), van al final con la etiqueta «Extra» y
 se resumen aparte; sí cuentan en la rendición y el regreso.
+**Inventario del camión** (`inventario_camion`), en el recorrido y en la venta en calle: llenos que quedan
+(cargados − entregados), pedidos por entregar, libres para vender (o cuántos faltan) y vacíos que debería haber
+(cargados + retirados − vendidos). La venta en calle no puede superar los llenos que quedan.
 
 - `Zona` con días de reparto (lunes…domingo) y `barrios` relacionados.
 - `Barrio` FK a `Zona`.

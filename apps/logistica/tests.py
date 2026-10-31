@@ -799,3 +799,43 @@ class PedidoEspontaneoTests(TestCase):
         self.client.post(reverse('apps.logistica:venta_calle', args=[borrador.pk]),
                          {f'cantidad_producto_{self.bidon.pk}': 1, 'direccion': self.direccion.pk})
         self.assertFalse(borrador.detalles.exists())
+
+
+class InventarioCamionTests(TestCase):
+    """El repartidor sabe qué lleva el camión: llenos, pedidos, libres y vacíos."""
+
+    def setUp(self):
+        from apps.productos.models import Producto
+        from .services import agregar_parada
+        self.zona = Zona.objects.create(nombre='Centro', dias_reparto='0,1,2,3,4,5,6')
+        barrio = Barrio.objects.create(nombre='Centro', zona=self.zona)
+        self.envase = Producto.objects.create(nombre='Envase', descripcion='', precio=Decimal('9000'), stock=50, es_envase=True)
+        self.bidon = Producto.objects.create(nombre='Bidón 20 L', descripcion='', precio=Decimal('3000'), stock=40,
+                                             es_botellon=True, es_retornable=True, envase=self.envase)
+        self.hoja = HojaRuta.objects.create(fecha=timezone.localdate(), zona=self.zona)
+        self.paradas = []
+        for n, cantidad in ((1, 3), (2, 2)):
+            cliente = Cliente.objects.create(nombre=f'Cliente {n}', apellido='X', tipo_cliente='Premium')
+            direccion = DireccionEntrega.objects.create(cliente=cliente, calle='Mitre', altura=str(n), barrio=barrio)
+            self.paradas.append(agregar_parada(self.hoja, cliente, direccion, {self.bidon.pk: cantidad}))
+        confirmar_hoja(self.hoja, None, [{'producto_id': self.bidon.pk, 'cantidad': 8},
+                                         {'producto_id': self.envase.pk, 'cantidad': 2}])
+
+    def test_cuentas_del_camion_durante_el_reparto(self):
+        from .services import inventario_camion
+        c = inventario_camion(self.hoja)
+        self.assertEqual((c['en_camion'], c['pendientes'], c['libres'], c['vacios']), (8, 5, 3, 2))
+        registrar_entrega(self.paradas[0], 'Entregado', envases_retirados=3)
+        c = inventario_camion(self.hoja)
+        self.assertEqual((c['en_camion'], c['pendientes'], c['libres'], c['vacios']), (5, 2, 3, 5))
+        crear_venta_calle(self.hoja, {'nombre': 'Kiosco', 'calle': 'Belgrano', 'altura': '1',
+                                      'barrio_id': Barrio.objects.first().pk,
+                                      'productos': [{'producto_id': self.bidon.pk, 'cantidad': 4}]})
+        c = inventario_camion(self.hoja)
+        self.assertEqual((c['en_camion'], c['pendientes'], c['libres'], c['faltan']), (1, 2, -1, 1))
+
+    def test_no_se_vende_mas_de_lo_que_hay_en_el_camion(self):
+        with self.assertRaises(ValueError):
+            crear_venta_calle(self.hoja, {'nombre': 'Kiosco', 'calle': 'Belgrano', 'altura': '1',
+                                          'barrio_id': Barrio.objects.first().pk,
+                                          'productos': [{'producto_id': self.bidon.pk, 'cantidad': 9}]})

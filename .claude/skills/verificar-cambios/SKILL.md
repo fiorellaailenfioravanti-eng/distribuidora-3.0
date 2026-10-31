@@ -20,7 +20,7 @@ Correr los tres comandos, en este orden, y no seguir si alguno falla:
 
 - `check` debe dar `0 issues`.
 - `makemigrations --check` debe decir `No changes detected`. Si detecta cambios y el cambio de modelo era intencional, crear la migración con nombre descriptivo en español (`makemigrations <app> --name <descripcion>`) y volver a correr los tres comandos.
-- `test` debe terminar en `OK`. Informar cuántos tests corrieron (la base al 31/10/2026 es 196).
+- `test` debe terminar en `OK`. Informar cuántos tests corrieron (la base al 31/10/2026 es 198).
 
 Si el cambio toca despliegue o settings, correr además:
 

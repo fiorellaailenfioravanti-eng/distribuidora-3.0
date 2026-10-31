@@ -679,6 +679,11 @@ def crear_venta_calle(hoja, datos):
             renglones.append((producto, cantidad))
     if not renglones:
         raise ValueError('Indicá al menos un producto con cantidad.')
+    camion = {p['producto'].pk: p for p in inventario_camion(hoja)['productos']}
+    for producto, cantidad in renglones:
+        fila = camion.get(producto.pk)
+        if fila is not None and fila['cargados'] and cantidad > fila['en_camion']:
+            raise ValueError(f'En el camión quedan {max(fila["en_camion"], 0)} {producto.nombre}: no se pueden vender {cantidad}.')
 
     cliente = Cliente.objects.filter(pk=datos.get('cliente_id')).first() if datos.get('cliente_id') else None
     if cliente is not None:
@@ -825,4 +830,60 @@ def resumen_recorrido(hoja):
         'cobrado_por_metodo': por_metodo,
         'cobrado_total': sum(por_metodo.values()),
         'efectivo': por_metodo.get('Efectivo en Entrega', 0),
+    }
+
+
+
+def inventario_camion(hoja):
+    """Qué lleva el camión en este momento del reparto.
+
+    - Llenos: cargados − entregados (paradas y ventas en la calle).
+    - Pedidos pendientes: botellones de las paradas planificadas sin registrar.
+    - Libres: llenos que quedan − pendientes (negativo = faltan para cumplir).
+    - Vacíos: vacíos cargados + retirados en las paradas − envases vendidos.
+    Devuelve los totales y el detalle por producto.
+    """
+    cargas = list(hoja.cargas.select_related('producto'))
+    entregados = entregados_por_producto(hoja)
+    pendientes = {}
+    for parada in hoja.detalles.filter(es_venta_calle=False, estado='Pendiente').select_related('pedido'):
+        for producto_id, cantidad in botellones_por_producto(parada.pedido).items():
+            pendientes[producto_id] = pendientes.get(producto_id, 0) + cantidad
+
+    productos = []
+    for carga in cargas:
+        if not carga.producto.es_botellon:
+            continue
+        en_camion = carga.cantidad_cargada - entregados.get(carga.producto_id, 0)
+        pendiente = pendientes.get(carga.producto_id, 0)
+        productos.append({
+            'producto': carga.producto,
+            'cargados': carga.cantidad_cargada,
+            'entregados': entregados.get(carga.producto_id, 0),
+            'en_camion': en_camion,
+            'pendientes': pendiente,
+            'libres': en_camion - pendiente,
+        })
+    # Pedidos de productos que no se cargaron: faltan del todo.
+    cargados_ids = {c.producto_id for c in cargas}
+    for producto_id, cantidad in pendientes.items():
+        if producto_id not in cargados_ids:
+            from apps.productos.models import Producto
+            productos.append({'producto': Producto.objects.get(pk=producto_id), 'cargados': 0, 'entregados': 0,
+                              'en_camion': 0, 'pendientes': cantidad, 'libres': -cantidad})
+
+    paradas = list(hoja.detalles.all())
+    vacios_cargados = sum(c.cantidad_cargada for c in cargas if c.producto.es_envase)
+    vacios = vacios_cargados + sum(p.envases_retirados for p in paradas) - sum(p.envases_vendidos for p in paradas)
+    return {
+        'productos': productos,
+        'cargados': sum(p['cargados'] for p in productos),
+        'entregados': sum(p['entregados'] for p in productos),
+        'en_camion': sum(p['en_camion'] for p in productos),
+        'pendientes': sum(p['pendientes'] for p in productos),
+        'libres': sum(p['libres'] for p in productos),
+        'faltan': sum(-p['libres'] for p in productos if p['libres'] < 0),
+        'vacios_cargados': vacios_cargados,
+        'vacios': max(vacios, 0),
+        'tiene_carga': bool(cargas),
     }

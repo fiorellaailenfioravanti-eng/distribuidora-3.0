@@ -449,12 +449,15 @@ def mi_ruta_hoy(request):
     if ruta is None:
         ruta = next((h for h in hojas_hoy if h.estado == 'Confirmada'), hojas_hoy[0] if hojas_hoy else None)
 
-    pendientes, hechas, resumen = [], [], None
+    pendientes, hechas, extras, resumen = [], [], [], None
     if ruta is not None:
         for parada in ruta.detalles.select_related(
                 'pedido__cliente', 'cliente', 'direccion_entrega').order_by('orden', 'id_detalle'):
             ficha = _ficha_de_parada(parada, request.user)
-            (pendientes if parada.estado == 'Pendiente' else hechas).append(ficha)
+            if parada.es_venta_calle:
+                extras.append(ficha)  # ventas en la calle: no son paradas del recorrido
+            else:
+                (pendientes if parada.estado == 'Pendiente' else hechas).append(ficha)
         resumen = resumen_recorrido(ruta)
 
     proximas = []
@@ -468,6 +471,7 @@ def mi_ruta_hoy(request):
         'hojas_hoy': hojas_hoy,
         'pendientes': pendientes,
         'hechas': hechas,
+        'extras': extras,
         'resumen': resumen,
         'proximas': proximas,
         'hoy': hoy,

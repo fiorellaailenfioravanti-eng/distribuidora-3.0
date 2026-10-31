@@ -781,6 +781,19 @@ class PedidoEspontaneoTests(TestCase):
         self._vender(nombre='Kiosco Sur', calle='Lavalle', altura='9', barrio=barrio_sur.pk)
         self.assertEqual(self.hoja.detalles.get(orden=2).direccion_entrega.barrio, barrio_sur)
 
+    def test_la_venta_es_un_extra_y_no_cuenta_como_parada(self):
+        from .services import resumen_recorrido
+        self._vender(direccion=self.direccion.pk)
+        self.assertEqual(self.hoja.total_paradas(), 1)          # sólo la planificada
+        self.assertEqual(self.hoja.paradas_entregadas(), 0)     # la venta no adelanta el recorrido
+        self.assertEqual(self.hoja.porcentaje_completado(), 0)
+        self.assertEqual(self.hoja.total_botellones(), 2)
+        resumen = resumen_recorrido(self.hoja)
+        self.assertEqual((resumen['extras'], resumen['botellones_extras']), (1, 2))
+        respuesta = self.client.get(reverse('apps.logistica:mi_ruta_hoy') + f'?hoja={self.hoja.pk}')
+        self.assertContains(respuesta, 'Ventas en la calle (1)')
+        self.assertContains(respuesta, 'Siguiente parada')  # la planificada sigue pendiente
+
     def test_no_se_vende_con_la_hoja_en_borrador(self):
         borrador = HojaRuta.objects.create(fecha=timezone.localdate(), zona=self.zona, empleado=self.empleado)
         self.client.post(reverse('apps.logistica:venta_calle', args=[borrador.pk]),

@@ -522,21 +522,21 @@
     "semantic_hash": "d62ee7f96f1cc3ad81becc78f8b94d45"
   },
   "apps/logistica/models.py": {
-    "mtime": 1792512787.1633358,
-    "seen": 1792513625.2351482,
-    "ast_hash": "a85a36cc51f9e3ca28feb8e324af38f2",
+    "mtime": 1793456829.0378668,
+    "seen": 1793457026.1220477,
+    "ast_hash": "c0c04bbef00d9c586ebb92a9d6d55157",
     "semantic_hash": ""
   },
   "apps/logistica/services.py": {
-    "mtime": 1793455461.2300406,
-    "seen": 1793455906.4971473,
-    "ast_hash": "dca47c61671afbe38122c1d103f4ead4",
+    "mtime": 1793456829.121466,
+    "seen": 1793457026.1220477,
+    "ast_hash": "5c2c2aff705be645085d7d263117a6b3",
     "semantic_hash": ""
   },
   "apps/logistica/tests.py": {
-    "mtime": 1793455720.9393835,
-    "seen": 1793455906.4971473,
-    "ast_hash": "36b138945694b1eb3caac502a0d1fe69",
+    "mtime": 1793456930.3346517,
+    "seen": 1793457026.1220477,
+    "ast_hash": "4cc1c058cf5921e88d6f498c3add6018",
     "semantic_hash": ""
   },
   "apps/logistica/urls.py": {
@@ -546,9 +546,9 @@
     "semantic_hash": ""
   },
   "apps/logistica/views.py": {
-    "mtime": 1793455502.6096802,
-    "seen": 1793455906.4971473,
-    "ast_hash": "9842371a39098cbecd856367db2fd0c3",
+    "mtime": 1793456859.2069056,
+    "seen": 1793457026.1220477,
+    "ast_hash": "be5f39de91fb0822b69b0ca1d0558f98",
     "semantic_hash": ""
   },
   "apps/pedidos/__init__.py": {
@@ -798,9 +798,9 @@
     "semantic_hash": ""
   },
   ".agents/CONTEXT.md": {
-    "mtime": 1793455896.2344139,
-    "seen": 1793455906.4971473,
-    "ast_hash": "041dd6f038829937ba36853a55954554",
+    "mtime": 1793457021.0358315,
+    "seen": 1793457026.1220477,
+    "ast_hash": "4fa88be7d1ae799e41dc172dbdaf34bc",
     "semantic_hash": ""
   },
   ".agents/DESIGN.md": {
@@ -816,9 +816,9 @@
     "semantic_hash": ""
   },
   ".agents/PROCEDURE.md": {
-    "mtime": 1793455896.2344139,
-    "seen": 1793455906.4971473,
-    "ast_hash": "4f7f6c28b9ce444d853f29b3f271bb00",
+    "mtime": 1793457021.0368402,
+    "seen": 1793457026.1220477,
+    "ast_hash": "0c49a117ed7253d996a3f1515d2128da",
     "semantic_hash": ""
   },
   "templates/abonos/form_abono.html": {
@@ -858,9 +858,9 @@
     "semantic_hash": "b1e4febd16829c63d943ba57e93138be"
   },
   "templates/base_dashboard.html": {
-    "mtime": 1793455814.5965166,
-    "seen": 1793455906.4971473,
-    "ast_hash": "3c58808b4cc152b2e1ee73f8fcfa9215",
+    "mtime": 1793456712.315941,
+    "seen": 1793457026.1220477,
+    "ast_hash": "ebc01dd94fecfac404f719f04aa5cd47",
     "semantic_hash": ""
   },
   "templates/base_tienda.html": {
@@ -1074,9 +1074,9 @@
     "semantic_hash": "4987f048cbd87edeb2c99fc090b5d080"
   },
   "templates/logistica/mi_ruta_hoy.html": {
-    "mtime": 1792515136.8675354,
-    "seen": 1792515264.244675,
-    "ast_hash": "b9f0a699f9f328f0e5fc5545396c80f2",
+    "mtime": 1793456859.2235036,
+    "seen": 1793457026.1220477,
+    "ast_hash": "a7ce33c25d8454ef6b9b906a9f88c16d",
     "semantic_hash": ""
   },
   "templates/logistica/planificar_reparto.html": {
@@ -1092,15 +1092,15 @@
     "semantic_hash": ""
   },
   "templates/logistica/venta_calle.html": {
-    "mtime": 1793455502.162823,
-    "seen": 1793455906.4971473,
-    "ast_hash": "5e3aeea2454a332d9c96385da3b8f261",
+    "mtime": 1793456712.3829036,
+    "seen": 1793457026.1220477,
+    "ast_hash": "1ac9b18f087dd4c0185724be1c5ad550",
     "semantic_hash": ""
   },
   "templates/logistica/ver_ruta.html": {
-    "mtime": 1793455823.2264817,
-    "seen": 1793455906.4971473,
-    "ast_hash": "2bc5a40705ab6c1ffe803ae62b06587f",
+    "mtime": 1793456859.235795,
+    "seen": 1793457026.1220477,
+    "ast_hash": "9f301cd07a102cbc7ed1ee805b5245d4",
     "semantic_hash": ""
   },
   "templates/pedidos/checkout.html": {
@@ -1320,9 +1320,9 @@
     "semantic_hash": ""
   },
   ".claude/skills/verificar-cambios/SKILL.md": {
-    "mtime": 1793455896.241081,
-    "seen": 1793455906.4971473,
-    "ast_hash": "d2a6658a8ea2c8116fccc9628350bc47",
+    "mtime": 1793457021.0368402,
+    "seen": 1793457026.1220477,
+    "ast_hash": "3efcc6c44551e61a85750be8314298ad",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -1398,9 +1398,9 @@
     "semantic_hash": ""
   },
   "skills-claude/verificar-cambios/SKILL.md": {
-    "mtime": 1793455896.242584,
-    "seen": 1793455906.4971473,
-    "ast_hash": "d2a6658a8ea2c8116fccc9628350bc47",
+    "mtime": 1793457021.0368402,
+    "seen": 1793457026.1220477,
+    "ast_hash": "3efcc6c44551e61a85750be8314298ad",
     "semantic_hash": ""
   },
   "templates/404.html": {
@@ -1677,6 +1677,12 @@
     "mtime": 1793455623.4192545,
     "seen": 1793455906.4971473,
     "ast_hash": "172a615056ca899dc1c9d048c8c9d2c3",
+    "semantic_hash": ""
+  },
+  "apps/logistica/migrations/0013_detallehojaruta_es_venta_calle.py": {
+    "mtime": 1793456838.9221978,
+    "seen": 1793457026.1220477,
+    "ast_hash": "f6cde7792d710ba0bcd4f1242b34422f",
     "semantic_hash": ""
   }
 }

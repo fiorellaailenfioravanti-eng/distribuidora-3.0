@@ -42,7 +42,7 @@
         <div class="row text-center g-2">
             <div class="col-4">
                 <div class="fs-5 fw-bold text-primary">{{ resumen.botellones_entregados }}<small class="text-muted fw-normal">/{{ resumen.botellones_total }}</small></div>
-                <small class="text-muted">botellones</small>
+                <small class="text-muted">botellones{% if resumen.botellones_extras %}<br>+{{ resumen.botellones_extras }} en la calle{% endif %}</small>
             </div>
             <div class="col-4">
                 <div class="fs-5 fw-bold text-main">{{ resumen.vacios_retirados }}</div>
@@ -178,6 +178,25 @@
 </div>
 {% endif %}
 {% endfor %}
+
+{# ── Ventas en la calle (extras: no cuentan como paradas del recorrido) ── #}
+{% if extras %}
+<h6 class="fw-bold text-muted text-uppercase small mt-4 mb-2">Ventas en la calle ({{ extras|length }}) · {{ resumen.botellones_extras }} botellones · ${{ resumen.importe_extras|floatformat:0 }}</h6>
+{% for f in extras %}
+{% with d=f.parada %}
+<div class="card border-0 shadow-sm rounded-4 bg-surface mb-2" id="parada-{{ d.id_detalle }}">
+    <div class="card-body p-3 d-flex justify-content-between align-items-center gap-2">
+        <div>
+            <span class="badge bg-info bg-opacity-25 text-info rounded-pill me-1">Extra</span>
+            <strong class="text-main">{{ d.cliente_nombre }}</strong>
+            <div class="small text-muted">{{ d.resumen_pedido }}{% if f.saldo %} · <span class="text-warning">debe ${{ f.saldo }}</span>{% else %} · pagado{% endif %}</div>
+        </div>
+        <small class="text-muted">{{ d.hora_registro|date:"H:i" }}</small>
+    </div>
+</div>
+{% endwith %}
+{% endfor %}
+{% endif %}
 
 {# ── Paradas ya registradas ── #}
 {% if hechas %}

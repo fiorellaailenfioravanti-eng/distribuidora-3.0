@@ -44,6 +44,7 @@
             <div class="card-body p-4">
                 <div class="fs-3 fw-bold text-primary">{{ ruta.total_paradas }}</div>
                 <small class="text-muted text-uppercase fw-semibold">Paradas · {{ ruta.paradas_entregadas }} entregadas</small>
+                {% with extras=ruta.ventas_calle.count %}{% if extras %}<div class="small text-info">+{{ extras }} venta{{ extras|pluralize }} en la calle</div>{% endif %}{% endwith %}
             </div>
         </div>
     </div>
@@ -114,7 +115,7 @@
             <tr id="parada-{{ d.id_detalle }}" class="parada-fila" role="button"
                 data-bs-toggle="collapse" data-bs-target="#detalle-{{ d.id_detalle }}"
                 aria-expanded="{% if parada_abierta == d.id_detalle|stringformat:'s' %}true{% else %}false{% endif %}">
-                <td class="ps-4 text-muted fw-bold">{{ d.orden }}</td>
+                <td class="ps-4 text-muted fw-bold">{% if d.es_venta_calle %}<span class="badge bg-info bg-opacity-25 text-info rounded-pill" title="Venta en la calle: no es una parada planificada">Extra</span>{% else %}{{ d.orden }}{% endif %}</td>
                 <td>
                     <div class="fw-semibold text-main">{{ d.cliente_nombre|default:"Sin cliente" }}</div>
                     {% if d.es_frecuente %}<span class="badge bg-primary bg-opacity-10 text-primary rounded-pill small">Frecuente</span>{% endif %}

@@ -38,7 +38,7 @@ y la restricción por asignación.
 ```powershell
 .\venv\Scripts\python.exe manage.py check --settings=distribuidora.settings.local          # 0 issues
 .\venv\Scripts\python.exe manage.py makemigrations --check --dry-run --settings=...local   # No changes detected
-.\venv\Scripts\python.exe manage.py test --settings=distribuidora.settings.local            # 194 OK
+.\venv\Scripts\python.exe manage.py test --settings=distribuidora.settings.local            # 196 OK
 .\venv\Scripts\python.exe manage.py check --deploy --settings=distribuidora.settings.production  # 0 issues
 ```
 

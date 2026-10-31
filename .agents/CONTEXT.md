@@ -432,7 +432,10 @@ el vendedor al dashboard), también al iniciar sesión. Al guardar un empleado s
 vacío (`retirar_perfil_cliente_vacio`). Menú del repartidor: «Mi recorrido» y «Mis hojas de ruta».
 **Pedido espontáneo** (`venta_calle`, sólo con la hoja en reparto): cliente de la zona o nuevo con nombre y
 dirección obligatorios, botellones, vacíos retirados y cobro (todo / a cuenta con fiado / pendiente). Lo que salió
-en el camión no se vuelve a descontar del stock.
+en el camión no se vuelve a descontar del stock. La zona se elige primero y filtra clientes y barrios.
+Las ventas en la calle son **extras** (`DetalleHojaRuta.es_venta_calle`): no cuentan como paradas, ni en el
+progreso ni en los botellones previstos (`HojaRuta.paradas_planificadas`), van al final con la etiqueta «Extra» y
+se resumen aparte; sí cuentan en la rendición y el regreso.
 
 - `Zona` con días de reparto (lunes…domingo) y `barrios` relacionados.
 - `Barrio` FK a `Zona`.

@@ -146,14 +146,21 @@ def botellones_por_producto(pedido):
 
 
 def renumerar_paradas(hoja):
-    """Deja el orden de las paradas en 1..n respetando el orden actual."""
-    for numero, parada in enumerate(hoja.detalles.order_by('orden', 'id_detalle'), start=1):
+    """Deja el orden en 1..n: primero las paradas planificadas y después las
+    ventas en la calle (extras), cada grupo respetando su orden actual."""
+    paradas = list(hoja.detalles.order_by('es_venta_calle', 'orden', 'id_detalle'))
+    for numero, parada in enumerate(paradas, start=1):
         if parada.orden != numero:
             DetalleHojaRuta.objects.filter(pk=parada.pk).update(orden=numero)
 
 
 def _siguiente_orden(hoja):
     return (hoja.detalles.aggregate(m=Max('orden'))['m'] or 0) + 1
+
+
+def _reubicar_extras(hoja):
+    """Tras sumar una parada planificada, los extras vuelven a quedar al final."""
+    renumerar_paradas(hoja)
 
 
 def _fijar_botellones(pedido, cantidades):
@@ -497,7 +504,7 @@ def agregar_parada(hoja, cliente, direccion, cantidades):
     )
     _fijar_botellones(pedido, cantidades)
     renumerar_paradas(hoja)
-    return DetalleHojaRuta.objects.create(
+    parada = DetalleHojaRuta.objects.create(
         hoja_ruta=hoja,
         orden=_siguiente_orden(hoja),
         pedido=pedido,
@@ -508,6 +515,9 @@ def agregar_parada(hoja, cliente, direccion, cantidades):
         direccion_texto=_texto_direccion(direccion),
         cantidad_bidones=bidones_de_pedido(pedido),
     )
+    _reubicar_extras(hoja)
+    parada.refresh_from_db()
+    return parada
 
 
 @transaction.atomic
@@ -528,6 +538,8 @@ def agregar_pedido_a_hoja(hoja, pedido):
     )
     pedido.fecha_entrega = hoja.fecha
     pedido.save(update_fields=['fecha_entrega'])
+    _reubicar_extras(hoja)
+    parada.refresh_from_db()
     return parada
 
 
@@ -709,7 +721,7 @@ def crear_venta_calle(hoja, datos):
     renumerar_paradas(hoja)
     parada = DetalleHojaRuta.objects.create(
         hoja_ruta=hoja, orden=_siguiente_orden(hoja), pedido=pedido, cliente=cliente,
-        es_frecuente=cliente.es_frecuente, direccion_entrega=direccion,
+        es_frecuente=cliente.es_frecuente, direccion_entrega=direccion, es_venta_calle=True,
         cliente_nombre=cliente.nombre_completo(), direccion_texto=_texto_direccion(direccion),
         cantidad_bidones=bidones_de_pedido(pedido),
     )
@@ -792,7 +804,9 @@ def resumen_recorrido(hoja):
     from django.db.models import Sum
     from apps.pedidos.models import CODIGO_CUENTA_CORRIENTE, PagoPedido
 
-    paradas = list(hoja.detalles.all())
+    todas = list(hoja.detalles.select_related('pedido'))
+    paradas = [p for p in todas if not p.es_venta_calle]
+    extras = [p for p in todas if p.es_venta_calle]
     pagos = PagoPedido.objects.filter(
         pedido__paradas__hoja_ruta=hoja, estado_pago='Aprobado',
         referencia_comprobante__startswith='Cobro en calle',
@@ -804,7 +818,10 @@ def resumen_recorrido(hoja):
         'hechas': sum(1 for p in paradas if p.estado != 'Pendiente'),
         'botellones_entregados': sum(p.cantidad_bidones for p in paradas if p.estado == 'Entregado'),
         'botellones_total': sum(p.cantidad_bidones for p in paradas),
-        'vacios_retirados': sum(p.envases_retirados for p in paradas),
+        'vacios_retirados': sum(p.envases_retirados for p in todas),
+        'extras': len(extras),
+        'botellones_extras': sum(p.cantidad_bidones for p in extras),
+        'importe_extras': sum((p.pedido.total for p in extras if p.pedido_id), 0),
         'cobrado_por_metodo': por_metodo,
         'cobrado_total': sum(por_metodo.values()),
         'efectivo': por_metodo.get('Efectivo en Entrega', 0),

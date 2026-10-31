@@ -255,11 +255,19 @@ class HojaRuta(models.Model):
         zona_str = self.zona.nombre if self.zona_id else (str(self.ruta_reparto) if self.ruta_reparto_id else 'sin zona')
         return f"Hoja #{self.id_ruta} — {self.fecha} · {zona_str} · {self.empleado or 'sin asignar'}"
 
+    # Las ventas en la calle son extras: no cuentan como paradas planificadas
+    # ni en el progreso del recorrido, pero sí en la rendición y el regreso.
+    def paradas_planificadas(self):
+        return self.detalles.filter(es_venta_calle=False)
+
+    def ventas_calle(self):
+        return self.detalles.filter(es_venta_calle=True)
+
     def total_paradas(self):
-        return self.detalles.count()
+        return self.paradas_planificadas().count()
 
     def paradas_entregadas(self):
-        return self.detalles.filter(estado='Entregado').count()
+        return self.paradas_planificadas().filter(estado='Entregado').count()
 
     def porcentaje_completado(self):
         total = self.total_paradas()
@@ -268,7 +276,7 @@ class HojaRuta(models.Model):
         return int((self.paradas_entregadas() / total) * 100)
 
     def total_botellones(self):
-        return sum(d.cantidad_bidones for d in self.detalles.all())
+        return sum(d.cantidad_bidones for d in self.paradas_planificadas())
 
     def supera_capacidad(self):
         if not self.camion_id:
@@ -313,6 +321,11 @@ class DetalleHojaRuta(models.Model):
         blank=True,
         related_name='paradas_ruta',
         verbose_name='Cliente'
+    )
+    es_venta_calle = models.BooleanField(
+        default=False,
+        verbose_name='Venta en la calle (extra)',
+        help_text='Pedido espontáneo que el repartidor vendió durante el reparto; no es una parada planificada.'
     )
     es_frecuente  = models.BooleanField(
         default=False,

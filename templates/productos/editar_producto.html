@@ -71,6 +71,19 @@
                                 </div>
                                 <div class="form-text">{{ form.es_botellon.help_text }}</div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.es_recargable }}
+                                    <label for="{{ form.es_recargable.id_for_label }}" class="form-check-label fw-semibold">Se recarga en planta</label>
+                                </div>
+                                <div class="form-text">{{ form.es_recargable.help_text }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.envase.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Envase asociado</label>
+                                {{ form.envase }}
+                                {% for error in form.envase.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                                <div class="form-text">Envase vacío que se retira al entregar y que se usa al recargar.</div>
+                            </div>
 
                             <!-- Descripción -->
                             <div class="col-md-12">

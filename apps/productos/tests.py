@@ -12,7 +12,7 @@ from .models import Categoria, Producto
 
 
 class EliminarProductoTests(TestCase):
-    """H-27: un producto con pedidos se desactiva en lugar de dar error 500."""
+    """«Eliminar» desactiva (no borra) y se puede restaurar; H-27: nunca da error 500."""
 
     def setUp(self):
         Usuario = get_user_model()
@@ -26,9 +26,19 @@ class EliminarProductoTests(TestCase):
         self.client.force_login(self.vendedor)
         return self.client.post(reverse('apps.productos:eliminar_producto', args=[self.producto.pk]))
 
-    def test_sin_pedidos_se_borra(self):
+    def test_eliminar_no_borra_sino_que_desactiva(self):
         self._eliminar()
-        self.assertFalse(Producto.objects.filter(pk=self.producto.pk).exists())
+        self.producto.refresh_from_db()
+        self.assertFalse(self.producto.activo)
+
+    def test_eliminado_aparece_en_la_lista_y_se_restaura(self):
+        self._eliminar()
+        respuesta = self.client.get(reverse('apps.productos:listar_productos_admin'))
+        self.assertIn(self.producto, list(respuesta.context['eliminados']))
+        self.assertNotIn(self.producto, list(respuesta.context['productos']))
+        self.client.post(reverse('apps.productos:restaurar_producto', args=[self.producto.pk]))
+        self.producto.refresh_from_db()
+        self.assertTrue(self.producto.activo)
 
     def test_con_pedidos_se_desactiva(self):
         pedido = Pedido.objects.create(

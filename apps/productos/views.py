@@ -2,7 +2,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Count, ProtectedError
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.permisos.roles import puede, requiere
@@ -34,9 +34,10 @@ def listar_productos(request):
 @requiere('ver_inventario')
 def listar_productos_admin(request):
     productos, categoria_actual = _filtrar_por_categoria(
-        request, Producto.objects.prefetch_related('categoria').order_by('nombre'))
+        request, Producto.objects.filter(activo=True).prefetch_related('categoria').order_by('nombre'))
     return render(request, 'productos/listar_productos_admin.html', {
         'productos': Paginator(productos, 20).get_page(request.GET.get('page')),
+        'eliminados': Producto.objects.filter(activo=False).prefetch_related('categoria').order_by('nombre'),
         'categorias': Categoria.objects.order_by('nombre'),
         'categoria_actual': categoria_actual,
     })
@@ -75,22 +76,28 @@ def editar_producto(request, pk):
 @login_required
 @requiere('gestionar_productos')
 def eliminar_producto(request, pk):
-    """Borra el producto; si ya tiene pedidos (PROTECT), lo desactiva (H-27)."""
+    """«Eliminar» no borra: desactiva el producto (deja de verse en la tienda y
+    no se puede comprar) y lo pasa a la lista de eliminados, desde donde se restaura.
+    Así se conservan los pedidos, el stock y el historial que lo usan."""
     producto = get_object_or_404(Producto, id_producto=pk)
     if request.method == 'POST':
-        try:
-            producto.delete()
-            messages.success(request, f'Producto "{producto.nombre}" eliminado.')
-        except ProtectedError:
-            producto.activo = False
-            producto.save(update_fields=['activo'])
-            messages.warning(
-                request,
-                f'"{producto.nombre}" tiene pedidos registrados y no se puede borrar: '
-                'se desactivó y ya no aparece en la tienda.'
-            )
+        producto.activo = False
+        producto.save(update_fields=['activo'])
+        messages.success(request, f'«{producto.nombre}» se eliminó de la tienda. '
+                                  'Lo podés restaurar desde «Productos eliminados».')
         return redirect('apps.productos:listar_productos_admin')
     return render(request, 'productos/eliminar_producto.html', {'producto': producto})
+
+
+@login_required
+@requiere('gestionar_productos')
+def restaurar_producto(request, pk):
+    producto = get_object_or_404(Producto, id_producto=pk)
+    if request.method == 'POST':
+        producto.activo = True
+        producto.save(update_fields=['activo'])
+        messages.success(request, f'«{producto.nombre}» volvió a la tienda.')
+    return redirect('apps.productos:listar_productos_admin')
 
 
 # ─────────────────────────────────────────────────────────────

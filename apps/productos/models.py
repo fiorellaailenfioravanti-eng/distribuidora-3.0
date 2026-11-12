@@ -31,6 +31,11 @@ class Producto(models.Model):
         help_text='Bidón lleno que se carga en el camión y se entrega en las paradas. '
                   'Por ahora el reparto sólo maneja botellones llenos y envases vacíos.'
     )
+    es_recargable = models.BooleanField(
+        default=False,
+        verbose_name='Se recarga en planta',
+        help_text='Bidón que el recargador llena en la planta: suma stock lleno y descuenta su envase vacío.'
+    )
     es_retornable = models.BooleanField(
         default=False,
         verbose_name='Es retornable',

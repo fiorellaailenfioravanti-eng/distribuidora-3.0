@@ -553,6 +553,17 @@ class MovimientoCuenta(models.Model):
 
 ---
 
+### Módulo `apps.planta` ✅ — Recarga de bidones (12/11/2026)
+
+- `RecargaBidones` (una por día, `fecha` única) y `DetalleRecarga` (bidón, cantidad).
+- `services.guardar_recarga()`: por cada bidón `Producto.es_recargable`, +cantidad al stock lleno y
+  −cantidad al stock de su envase vacío (`Producto.envase`). Se corrige durante el día moviendo sólo la
+  diferencia; los bidones del mismo tamaño comparten envase y se controla el total (no deja vacíos negativos).
+- Recargables: 20 L primera/segunda marca (envase 20 L) y 10 L primera/segunda marca (envase 10 L).
+- Pantallas: `/planta/recarga/` (función `registrar_recargas`, rol «Recargador») y `/planta/stock/`
+  (función `ver_stock_bidones`: llenos por marca, vacíos por tamaño, envases en clientes, últimas recargas).
+- Productos: «Eliminar» ya no borra: desactiva y el inventario muestra «Productos eliminados» con «Restaurar».
+
 ### Frontend y Templates ✅
 
 `base.html` tiene: Bootstrap 5.3 dark mode, Font Awesome 6, navbar con toggle dark/light,
@@ -665,7 +676,10 @@ Camion ← RutaReparto → Zona
 /productos/admin-panel/        → listar_productos_admin [🔒 Vendedor/Admin]
 /productos/crear/              → crear_producto        [🔒 Vendedor/Admin]
 /productos/editar/<pk>         → editar_producto       [🔒 Vendedor/Admin]
-/productos/eliminar/<pk>       → eliminar_producto     [🔒 Vendedor/Admin]
+/productos/eliminar/<pk>       → eliminar_producto     [🔒 gestionar_productos] (desactiva)
+/productos/restaurar/<pk>      → restaurar_producto    [🔒 gestionar_productos]
+/planta/recarga/               → recarga_diaria        [🔒 registrar_recargas]
+/planta/stock/                 → stock_bidones         [🔒 ver_stock_bidones]
 /productos/categorias/         → listar_categorias     [🔒 Vendedor/Admin] (listado + alta)
 /productos/categoria/crear/    → crear_categoria       [🔒 Vendedor/Admin]
 /productos/categoria/<pk>/editar/   → editar_categoria  [🔒 Vendedor/Admin]

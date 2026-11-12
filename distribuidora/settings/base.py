@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'apps.abonos',
     'apps.promociones',
     'apps.permisos',
+    'apps.planta',
 ]
 
 MIDDLEWARE = [

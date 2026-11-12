@@ -71,7 +71,7 @@
                                     </div>
                                 {% endif %}
                                 <div>
-                                    <h6 class="mb-0 fw-bold text-main">{{ e.nombre }}{% if not e.activo %} <span class="badge bg-secondary ms-1">Inactivo</span>{% endif %}</h6>
+                                    <h6 class="mb-0 fw-bold text-main">{{ e.nombre }}</h6>
                                     <span class="text-muted small d-inline-block text-truncate" style="max-width: 200px;">{{ e.descripcion }}</span>
                                 </div>
                             </div>
@@ -148,6 +148,57 @@
         </div>
         {% endif %}
     </div>
+
+    {# ── Productos eliminados (no se borran: quedan desactivados) ── #}
+    {% if eliminados %}
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-surface mt-4">
+        <button class="btn w-100 text-start d-flex justify-content-between align-items-center p-3 px-4 border-0"
+                type="button" data-bs-toggle="collapse" data-bs-target="#productosEliminados" aria-expanded="false" aria-controls="productosEliminados">
+            <span class="fw-bold text-main"><i class="fa-solid fa-box-archive me-2 text-muted"></i>Productos eliminados
+                <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis ms-1">{{ eliminados|length }}</span>
+            </span>
+            <i class="fa-solid fa-chevron-down text-muted"></i>
+        </button>
+        <div class="collapse" id="productosEliminados">
+            <p class="small text-muted px-4 mb-2">No se ven en la tienda ni se pueden comprar. Sus pedidos e historial se conservan.</p>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-muted small text-uppercase">
+                        <tr>
+                            <th class="ps-4 py-3 border-bottom-0">ID</th>
+                            <th class="py-3 border-bottom-0">Producto</th>
+                            <th class="py-3 border-bottom-0">Categoría</th>
+                            <th class="py-3 border-bottom-0">Stock</th>
+                            <th class="pe-4 py-3 border-bottom-0 text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in eliminados %}
+                        <tr class="opacity-75">
+                            <td class="ps-4 text-muted">#{{ e.id_producto }}</td>
+                            <td class="fw-semibold text-main">{{ e.nombre }}</td>
+                            <td>{% for c in e.categoria.all %}<span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 py-1">{{ c.nombre }}</span>{% empty %}<span class="text-muted small">—</span>{% endfor %}</td>
+                            <td class="text-muted">{{ e.stock }}</td>
+                            <td class="pe-4 text-end text-nowrap">
+                                <a href="{% url 'apps.productos:editar_producto' e.id_producto %}" class="btn btn-sm btn-light border-0 text-warning rounded-pill px-3 shadow-sm" title="Editar">
+                                    <i class="fa-solid fa-pen"></i>
+                                </a>
+                                <form method="post" action="{% url 'apps.productos:restaurar_producto' e.id_producto %}" class="d-inline"
+                                      data-confirmar="¿Volver a mostrar «{{ e.nombre }}» en la tienda?">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 ms-1">
+                                        <i class="fa-solid fa-rotate-left me-1"></i>Restaurar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 

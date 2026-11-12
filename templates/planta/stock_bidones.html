@@ -1,0 +1,101 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}Stock de bidones{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-0 text-main"><i class="fa-solid fa-warehouse me-2 text-primary"></i>Stock de bidones</h1>
+        <p class="text-muted small mb-0 mt-1">Bidones llenos y envases vacíos en el depósito, por tamaño.</p>
+    </div>
+    {% if 'registrar_recargas' in puede %}
+    <a href="{% url 'apps.planta:recarga_diaria' %}" class="btn btn-primary btn-glow rounded-pill fw-bold px-4">
+        <i class="fa-solid fa-fill-drip me-2"></i>Registrar recarga
+    </a>
+    {% endif %}
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-4">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface h-100"><div class="card-body p-4">
+            <div class="text-muted small text-uppercase fw-semibold">Recargados hoy</div>
+            <div class="display-6 fw-bold text-main">{{ recarga_hoy.total|default:0 }}</div>
+            <div class="small text-muted">{% if recarga_hoy %}por {{ recarga_hoy.registrada_por.get_full_name|default:recarga_hoy.registrada_por.username }}{% else %}todavía sin registrar{% endif %}</div>
+        </div></div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface h-100"><div class="card-body p-4">
+            <div class="text-muted small text-uppercase fw-semibold">Envases en clientes</div>
+            <div class="display-6 fw-bold text-main">{{ en_clientes }}</div>
+            <div class="small text-muted">prestados, según el historial de envases</div>
+        </div></div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface h-100"><div class="card-body p-4">
+            <div class="text-muted small text-uppercase fw-semibold">Vacíos en depósito</div>
+            <div class="display-6 fw-bold text-main">{% for g in grupos %}{{ g.vacios }}{% if not forloop.last %} · {% endif %}{% endfor %}</div>
+            <div class="small text-muted">{% for g in grupos %}{{ g.envase.nombre|cut:"Envase bidón " }}{% if not forloop.last %} · {% endif %}{% endfor %}</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="row g-4">
+    {% for g in grupos %}
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface h-100">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h5 fw-bold text-main mb-0">{{ g.envase.nombre|cut:"Envase "|capfirst }}</h2>
+                    <span class="badge rounded-pill {% if g.vacios > 0 %}bg-secondary-subtle text-secondary-emphasis{% else %}bg-danger-subtle text-danger-emphasis{% endif %} px-3 py-2">
+                        <i class="fa-regular fa-circle me-1"></i>{{ g.vacios }} vacíos
+                    </span>
+                </div>
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light small text-uppercase">
+                        <tr><th>Lleno</th><th class="text-end">En depósito</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for p in g.llenos %}
+                        <tr>
+                            <td>
+                                {{ p.nombre }}
+                                {% if p.es_recargable %}<span class="badge rounded-pill bg-success-subtle text-success-emphasis ms-1">se recarga</span>{% endif %}
+                            </td>
+                            <td class="text-end fw-bold {% if p.stock <= 0 %}text-danger{% endif %}">{{ p.stock }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2" class="text-muted small">Ningún bidón usa este envase.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr><th>Total llenos</th><th class="text-end">{{ g.total_llenos }}</th></tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 bg-surface mt-4">
+    <div class="card-body p-4">
+        <h2 class="h6 fw-bold text-main mb-3"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i>Últimas recargas</h2>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light small text-uppercase"><tr><th>Fecha</th><th>Detalle</th><th>Registró</th><th class="text-end">Total</th></tr></thead>
+                <tbody>
+                    {% for r in ultimas %}
+                    <tr>
+                        <td class="text-nowrap">{{ r.fecha|date:"D d/m/Y" }}</td>
+                        <td class="small">{{ r.resumen|default:"Sin bidones recargados" }}</td>
+                        <td class="small text-muted">{{ r.registrada_por.username }}</td>
+                        <td class="text-end fw-bold">{{ r.total }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-muted small">Todavía no hay recargas.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

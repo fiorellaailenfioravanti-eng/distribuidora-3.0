@@ -152,7 +152,7 @@ class ZonaForm(forms.ModelForm):
         choices=DIA_SEMANA_CHOICES,
         required=False,
         label='Días de reparto',
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'})
+        widget=forms.CheckboxSelectMultiple,
     )
 
     class Meta:

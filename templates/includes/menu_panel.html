@@ -80,6 +80,20 @@ tiene la función que la habilita (`puede`, ver apps/permisos/context_processors
     </a>
 </li>
 {% endif %}
+{% if 'registrar_recargas' in puede %}
+<li class="nav-item">
+    <a href="{% url 'apps.planta:recarga_diaria' %}" class="sidebar-link {% if vista == 'apps.planta:recarga_diaria' %}active{% endif %}">
+        <i class="fa-solid fa-fill-drip"></i> Recarga de bidones
+    </a>
+</li>
+{% endif %}
+{% if 'ver_stock_bidones' in puede %}
+<li class="nav-item">
+    <a href="{% url 'apps.planta:stock_bidones' %}" class="sidebar-link {% if vista == 'apps.planta:stock_bidones' %}active{% endif %}">
+        <i class="fa-solid fa-warehouse"></i> Stock de bidones
+    </a>
+</li>
+{% endif %}
 {% if 'gestionar_empleados' in puede %}
 <li class="nav-item">
     <a href="{% url 'apps.empleados:listar_empleados' %}" class="sidebar-link {% if 'empleados' in vista %}active{% endif %}">

@@ -1,0 +1,14 @@
+{% comment %}
+Días de reparto como botones que se activan/desactivan (checkboxes accesibles).
+Uso: {% include 'includes/dias_reparto.html' with campo=form.dias_reparto %}
+{% endcomment %}
+<div class="dias-reparto" role="group" aria-label="Días de reparto">
+    {% for dia in campo %}
+    <input type="checkbox" class="btn-check" name="{{ dia.data.name }}" value="{{ dia.data.value }}"
+           id="{{ dia.id_for_label }}" autocomplete="off" {% if dia.data.selected %}checked{% endif %}>
+    <label class="btn btn-sm dias-reparto__dia" for="{{ dia.id_for_label }}" title="{{ dia.choice_label }}">
+        {{ dia.choice_label|slice:":3" }}
+    </label>
+    {% endfor %}
+</div>
+{% for error in campo.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}

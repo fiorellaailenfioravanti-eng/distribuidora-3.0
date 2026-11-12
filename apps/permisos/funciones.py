@@ -48,6 +48,10 @@ FUNCIONES_POR_AREA = [
         ('realizar_entregas', 'Hacer el recorrido: entregar, cobrar y vender en la calle'),
         ('gestionar_zonas_camiones', 'Gestionar zonas, barrios y camiones'),
     ]),
+    ('Planta de recarga', [
+        ('registrar_recargas', 'Registrar la recarga diaria de bidones'),
+        ('ver_stock_bidones', 'Ver el stock de bidones llenos y vacíos'),
+    ]),
     ('Empleados', [
         ('gestionar_empleados', 'Gestionar empleados, roles y permisos'),
     ]),
@@ -60,6 +64,7 @@ CODIGOS = [codigo for codigo, _ in FUNCIONES]
 POR_DEFECTO = {
     'Administrador': set(CODIGOS),
     # El vendedor planifica (y con eso opera cualquier hoja) pero no hace recorridos.
-    'Vendedor': set(CODIGOS) - {'gestionar_empleados', 'realizar_entregas'},
+    'Vendedor': set(CODIGOS) - {'gestionar_empleados', 'realizar_entregas', 'registrar_recargas'},
     'Repartidor': {'realizar_entregas'},
+    'Recargador': {'registrar_recargas'},
 }

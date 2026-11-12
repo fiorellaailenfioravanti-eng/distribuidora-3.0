@@ -9,8 +9,9 @@
                 <h1 class="h4 fw-bold text-danger mb-3"><i class="fa-solid fa-triangle-exclamation me-2"></i>Eliminar producto</h1>
                 <p class="mb-2">¿Seguro que querés eliminar <strong>{{ producto.nombre }}</strong>?</p>
                 {% if producto.descripcion %}<p class="text-muted small mb-3">{{ producto.descripcion }}</p>{% endif %}
-                <div class="alert alert-warning small mb-4">
-                    Si el producto ya tiene pedidos no se borra: se desactiva y deja de verse en la tienda.
+                <div class="alert alert-info small mb-4">
+                    No se borra del sistema: deja de verse en la tienda y pasa a «Productos eliminados»
+                    al final del inventario, desde donde lo podés restaurar. Sus pedidos y su historial se conservan.
                 </div>
                 <form method="post" class="d-flex gap-2 justify-content-end">
                     {% csrf_token %}

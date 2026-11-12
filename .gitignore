@@ -41,3 +41,7 @@ graphify-out/cost.json
 .trash/
 # Enlace (junction) a .agents/ para verlo en Obsidian: no versionar dos veces
 Documentacion/
+
+# Respaldos locales de la base
+db.sqlite3.*
+*.sqlite3.respaldo

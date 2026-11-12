@@ -54,6 +54,9 @@ y la restricción por asignación.
   roles por defecto Administrador / Vendedor / Repartidor (migración `empleados.0007`); cada vista
   exige su función. Ver CONTEXT §4 «Sistema de Roles y Permisos».
 
+- **Planta de recarga:** rol Recargador, recarga diaria que suma llenos y descuenta envases vacíos,
+  stock de bidones llenos/vacíos; «Eliminar producto» desactiva y se restaura (`apps.planta`).
+
 **Comandos verificados (12/11/2026):** check 0 issues · makemigrations sin cambios · **216 tests OK** · check --deploy 0 issues.
 
 **Comandos verificados (20/10/2026):**

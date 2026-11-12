@@ -14,7 +14,7 @@ class ProductoForm(forms.ModelForm):
 
     class Meta:
         model = Producto
-        fields = ['nombre', 'descripcion', 'categoria', 'precio', 'stock', 'imagen', 'activo', 'es_botellon']
+        fields = ['nombre', 'descripcion', 'categoria', 'precio', 'stock', 'imagen', 'activo', 'es_botellon', 'es_recargable', 'envase']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Botellón 20L'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción detallada...'}),
@@ -25,11 +25,16 @@ class ProductoForm(forms.ModelForm):
             'imagen': forms.FileInput(attrs={'class': 'form-control'}),
             'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'es_botellon': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'es_recargable': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'envase': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['descripcion'].required = False
+        self.fields['envase'].queryset = Producto.objects.filter(es_envase=True).order_by('nombre')
+        self.fields['envase'].required = False
+        self.fields['envase'].empty_label = '— Sin envase —'
         if self.instance and self.instance.pk:
             cat_actual = self.instance.categoria.first()
             if cat_actual:
@@ -46,6 +51,12 @@ class ProductoForm(forms.ModelForm):
         if stock is not None and stock < 0:
             raise forms.ValidationError('El stock no puede ser negativo.')
         return stock
+
+    def clean(self):
+        datos = super().clean()
+        if datos.get('es_recargable') and not datos.get('envase'):
+            self.add_error('envase', 'Un bidón que se recarga necesita su envase vacío asociado.')
+        return datos
 
     def clean_categoria(self):
         cat = self.cleaned_data.get('categoria')

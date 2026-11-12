@@ -26,6 +26,8 @@ def destino_personal(user):
         return 'dashboard'
     if puede_alguna(user, 'realizar_entregas', 'ver_todas_las_rutas', 'planificar_repartos'):
         return 'apps.logistica:mi_ruta_hoy'
+    if puede(user, 'registrar_recargas'):
+        return 'apps.planta:recarga_diaria'
     return 'apps.autenticacion:perfil'
 
 

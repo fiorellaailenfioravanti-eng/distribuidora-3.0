@@ -13,6 +13,7 @@ urlpatterns = [
     path('crear/', views.crear_producto, name='crear_producto'),
     path('editar/<int:pk>', views.editar_producto, name='editar_producto'),
     path('eliminar/<int:pk>', views.eliminar_producto, name='eliminar_producto'),
+    path('restaurar/<int:pk>', views.restaurar_producto, name='restaurar_producto'),
 
     # Categorías (panel)
     path('categorias/', views.listar_categorias, name='listar_categorias'),

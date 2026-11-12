@@ -23,6 +23,7 @@ con la nota «[demo]»). Las fechas se calculan desde el día en que se corre.
 Usuarios de prueba (sólo desarrollo local), todos con la contraseña
 `Demo-Aquadelluvia-2026`:
   admin.demo (superusuario) · vendedor.demo · repartidor.norte · repartidor.sur
+  · recargador.demo (planta de recarga)
   · cliente: marta.gimenez, jorge.benitez, lucia.romero
 """
 from datetime import datetime, time, timedelta
@@ -69,7 +70,11 @@ CATEGORIAS = {
 # nombre, categoría, descripción, precio, stock, retornable, es_envase
 PRODUCTOS = [
     ('Envase bidón 20 L', 'Envases', 'Bidón retornable de policarbonato, sin contenido.', '9500', 180, True, True),
-    ('Bidón 20 L agua de mesa', 'Agua en bidones', 'Agua de mesa purificada por ósmosis inversa en bidón retornable de 20 litros.', '3200', 240, True, False),
+    ('Bidón 20 L primera marca', 'Agua en bidones', 'Agua de mesa purificada por ósmosis inversa en bidón retornable de 20 litros.', '3200', 240, True, False),
+    ('Bidón 20 L segunda marca', 'Agua en bidones', 'Bidón retornable de 20 litros, segunda marca.', '2600', 80, True, False),
+    ('Bidón 10 L primera marca', 'Agua en bidones', 'Bidón retornable de 10 litros, primera marca.', '2000', 60, True, False),
+    ('Bidón 10 L segunda marca', 'Agua en bidones', 'Bidón retornable de 10 litros, segunda marca.', '1600', 40, True, False),
+    ('Envase bidón 10 L', 'Envases', 'Bidón retornable de 10 litros, sin contenido.', '6000', 60, True, True),
     ('Bidón 12 L agua de mesa', 'Agua en bidones', 'Bidón retornable de 12 litros, ideal para departamentos.', '2300', 90, True, False),
     ('Bidón 20 L agua mineralizada', 'Agua en bidones', 'Agua con sales minerales agregadas, bidón retornable de 20 litros.', '3700', 60, True, False),
     ('Pack agua sin gas 2 L x 6', 'Agua y soda', 'Seis botellas descartables de 2 litros de agua de mesa sin gas.', '4800', 75, False, False),
@@ -103,6 +108,7 @@ PERSONAL = [
     ('vendedor.demo', 'Carolina', 'Sosa', '29874512', '3624501122', 'Vendedor', None),
     ('repartidor.norte', 'Ramón', 'Acosta', '31258963', '3624557788', 'Repartidor', 'Norte'),
     ('repartidor.sur', 'Héctor', 'Leiva', '33698741', '3624663344', 'Repartidor', 'Sur'),
+    ('recargador.demo', 'Tomás', 'Benítez', '40125896', '3624778899', 'Recargador', None),
 ]
 
 # usuario web (o None), nombre, apellido, dni, tipo, frecuente, bidones habituales,
@@ -201,8 +207,15 @@ class Command(BaseCommand):
             producto.categoria.add(self.categorias[cat])
             self.productos[nombre] = producto
         envase = self.productos['Envase bidón 20 L']
-        for nombre in ('Bidón 20 L agua de mesa', 'Bidón 20 L agua mineralizada', 'Bidón 12 L agua de mesa'):
+        envase_10 = self.productos['Envase bidón 10 L']
+        for nombre in ('Bidón 20 L primera marca', 'Bidón 20 L segunda marca',
+                       'Bidón 20 L agua mineralizada', 'Bidón 12 L agua de mesa'):
             Producto.objects.filter(pk=self.productos[nombre].pk, envase__isnull=True).update(envase=envase)
+        for nombre in ('Bidón 10 L primera marca', 'Bidón 10 L segunda marca'):
+            Producto.objects.filter(pk=self.productos[nombre].pk, envase__isnull=True).update(envase=envase_10)
+        # Los que se llenan en la planta (pantalla «Recarga de bidones»).
+        Producto.objects.filter(nombre__in=['Bidón 20 L primera marca', 'Bidón 20 L segunda marca',
+                                            'Bidón 10 L primera marca', 'Bidón 10 L segunda marca']).update(es_recargable=True)
 
     # ── Zonas, barrios, camiones, rutas y calendario ──────────
     def _zonas_y_flota(self):
@@ -260,8 +273,11 @@ class Command(BaseCommand):
             'Repartidor': RolEmpleado.objects.get_or_create(
                 nombre='Repartidor', defaults={'descripcion': 'Reparto y cobro en calle.',
                                                'grupo_permisos': 'Repartidor'})[0],
+            'Recargador': RolEmpleado.objects.get_or_create(
+                nombre='Recargador', defaults={'descripcion': 'Recarga los bidones en la planta y anota la carga del día.',
+                                               'grupo_permisos': ''})[0],
         }
-        for rol, grupo in (('Vendedor', 'Vendedor'), ('Repartidor', 'Repartidor')):
+        for rol, grupo in (('Vendedor', 'Vendedor'), ('Repartidor', 'Repartidor'), ('Recargador', '')):
             if roles[rol].grupo_permisos != grupo:
                 roles[rol].grupo_permisos = grupo
                 roles[rol].save(update_fields=['grupo_permisos'])
@@ -357,7 +373,7 @@ class Command(BaseCommand):
 
     def _items_habituales(self, cliente):
         bidones = max(cliente.cantidad_recurrente_default, 1)
-        items = [('Bidón 20 L agua de mesa', bidones)]
+        items = [('Bidón 20 L primera marca', bidones)]
         if cliente.dni in ('27111001', '20111004'):
             items.append(('Sifón de soda 1,5 L', 4))
         return items
@@ -428,15 +444,15 @@ class Command(BaseCommand):
         lucia, ramiro, norma, andrea, sofia = (self.clientes[i] for i in (2, 6, 10, 13, 15))
         self._crear_pedido(lucia, [('Bidón 12 L agua de mesa', 2), ('Vasos descartables x 100', 1)],
                            self.hoy, estado='Pendiente', nota='Si no estoy, dejar con el portero.')
-        self._crear_pedido(ramiro, [('Bidón 20 L agua de mesa', 2)], self.hoy, estado='Confirmado', origen='ADMIN')
-        self._crear_pedido(norma, [('Bidón 20 L agua de mesa', 1), ('Bomba manual para bidón', 1)],
+        self._crear_pedido(ramiro, [('Bidón 20 L primera marca', 2)], self.hoy, estado='Confirmado', origen='ADMIN')
+        self._crear_pedido(norma, [('Bidón 20 L primera marca', 1), ('Bomba manual para bidón', 1)],
                            self.hoy, estado='Confirmado', origen='ADMIN', nota='Pedido por teléfono.')
         self._crear_pedido(andrea, [('Pack agua sin gas 2 L x 6', 2)], self.hoy, estado='Pendiente')
         mp = self._crear_pedido(self.clientes[0], [('Bidón 20 L agua mineralizada', 2)], self.hoy,
                                 metodo='MERCADOPAGO', estado='Pendiente')
         PagoPedido.objects.create(pedido=mp, monto=mp.total, metodo_pago=mp.metodo_pago, estado_pago='Pendiente',
                                   mercadopago_preference_id='DEMO-PREF-0001')
-        self._crear_pedido(sofia, [('Dispenser de mesada natural', 1), ('Bidón 20 L agua de mesa', 1)],
+        self._crear_pedido(sofia, [('Dispenser de mesada natural', 1), ('Bidón 20 L primera marca', 1)],
                            self.hoy, estado='Confirmado', metodo='TRANSFERENCIA')
         hojas = generar_borradores_periodo(desde=self.hoy + timedelta(days=1), dias=7, usuario=self.admin)
         self.stdout.write(f'  Próximos días: 6 pedidos nuevos y {len(hojas)} borradores de reparto.')
@@ -480,7 +496,7 @@ class Command(BaseCommand):
 
     # ── Promociones prepagas (RF-09 / RF-10) ──────────────────
     def _promociones(self):
-        bidon = self.productos['Bidón 20 L agua de mesa']
+        bidon = self.productos['Bidón 20 L primera marca']
         soda = self.productos['Sifón de soda 1,5 L']
         p_bidon, _ = Promocion.objects.get_or_create(nombre='Paga 3, lleva 4 — Bidón 20 L', defaults={
             'producto': bidon, 'cant_paga': 3, 'cant_lleva': 4, 'precio': bidon.precio * 3,

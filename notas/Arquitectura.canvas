@@ -1,0 +1,261 @@
+{
+  "nodes": [
+    {
+      "id": "autenticacion",
+      "type": "file",
+      "file": "notas/apps/autenticacion.md",
+      "x": 0,
+      "y": -400,
+      "width": 260,
+      "height": 120,
+      "color": "4"
+    },
+    {
+      "id": "empleados",
+      "type": "file",
+      "file": "notas/apps/empleados.md",
+      "x": -420,
+      "y": -220,
+      "width": 260,
+      "height": 120,
+      "color": "4"
+    },
+    {
+      "id": "carrito",
+      "type": "file",
+      "file": "notas/apps/carrito.md",
+      "x": 420,
+      "y": -220,
+      "width": 260,
+      "height": 120,
+      "color": "4"
+    },
+    {
+      "id": "clientes",
+      "type": "file",
+      "file": "notas/apps/clientes.md",
+      "x": -300,
+      "y": 0,
+      "width": 260,
+      "height": 120,
+      "color": "4"
+    },
+    {
+      "id": "productos",
+      "type": "file",
+      "file": "notas/apps/productos.md",
+      "x": 300,
+      "y": 0,
+      "width": 260,
+      "height": 120,
+      "color": "4"
+    },
+    {
+      "id": "pedidos",
+      "type": "file",
+      "file": "notas/apps/pedidos.md",
+      "x": 0,
+      "y": 180,
+      "width": 260,
+      "height": 120,
+      "color": "4"
+    },
+    {
+      "id": "logistica",
+      "type": "file",
+      "file": "notas/apps/logistica.md",
+      "x": -420,
+      "y": 400,
+      "width": 260,
+      "height": 120,
+      "color": "4"
+    },
+    {
+      "id": "cuentas",
+      "type": "file",
+      "file": "notas/apps/cuentas.md",
+      "x": 0,
+      "y": 420,
+      "width": 260,
+      "height": 120,
+      "color": "4"
+    },
+    {
+      "id": "abonos",
+      "type": "file",
+      "file": "notas/apps/abonos.md",
+      "x": 420,
+      "y": 400,
+      "width": 260,
+      "height": 120,
+      "color": "4"
+    },
+    {
+      "id": "promociones",
+      "type": "file",
+      "file": "notas/apps/promociones.md",
+      "x": 420,
+      "y": 180,
+      "width": 260,
+      "height": 120,
+      "color": "4"
+    },
+    {
+      "id": "permisos",
+      "type": "file",
+      "file": "notas/apps/permisos.md",
+      "x": -700,
+      "y": -400,
+      "width": 260,
+      "height": 120,
+      "color": "6"
+    },
+    {
+      "id": "buscador",
+      "type": "file",
+      "file": "notas/apps/buscador.md",
+      "x": 700,
+      "y": -400,
+      "width": 260,
+      "height": 120,
+      "color": "6"
+    },
+    {
+      "id": "leyenda",
+      "type": "text",
+      "x": -700,
+      "y": -200,
+      "width": 240,
+      "height": 140,
+      "text": "**Mapa de apps**\nFlecha A → B: A tiene FK a modelos de B.\nVioleta: apps sin modelos."
+    }
+  ],
+  "edges": [
+    {
+      "id": "clientes-autenticacion",
+      "fromNode": "clientes",
+      "toNode": "autenticacion",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "clientes-logistica",
+      "fromNode": "clientes",
+      "toNode": "logistica",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "clientes-pedidos",
+      "fromNode": "clientes",
+      "toNode": "pedidos",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "carrito-autenticacion",
+      "fromNode": "carrito",
+      "toNode": "autenticacion",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "carrito-productos",
+      "fromNode": "carrito",
+      "toNode": "productos",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "pedidos-clientes",
+      "fromNode": "pedidos",
+      "toNode": "clientes",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "pedidos-productos",
+      "fromNode": "pedidos",
+      "toNode": "productos",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "logistica-empleados",
+      "fromNode": "logistica",
+      "toNode": "empleados",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "logistica-autenticacion",
+      "fromNode": "logistica",
+      "toNode": "autenticacion",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "logistica-pedidos",
+      "fromNode": "logistica",
+      "toNode": "pedidos",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "logistica-clientes",
+      "fromNode": "logistica",
+      "toNode": "clientes",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "logistica-productos",
+      "fromNode": "logistica",
+      "toNode": "productos",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "cuentas-clientes",
+      "fromNode": "cuentas",
+      "toNode": "clientes",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "cuentas-pedidos",
+      "fromNode": "cuentas",
+      "toNode": "pedidos",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "cuentas-abonos",
+      "fromNode": "cuentas",
+      "toNode": "abonos",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "abonos-clientes",
+      "fromNode": "abonos",
+      "toNode": "clientes",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "abonos-productos",
+      "fromNode": "abonos",
+      "toNode": "productos",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "promociones-productos",
+      "fromNode": "promociones",
+      "toNode": "productos",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "promociones-clientes",
+      "fromNode": "promociones",
+      "toNode": "clientes",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "promociones-pedidos",
+      "fromNode": "promociones",
+      "toNode": "pedidos",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "empleados-autenticacion",
+      "fromNode": "empleados",
+      "toNode": "autenticacion",
+      "toEnd": "arrow"
+    }
+  ]
+}

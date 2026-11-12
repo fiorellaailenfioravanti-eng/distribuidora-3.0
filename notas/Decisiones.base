@@ -1,0 +1,23 @@
+filters:
+  and:
+    - tipo == "decision"
+views:
+  - type: table
+    name: Decisiones
+    order:
+      - file.name
+      - estado
+      - fecha
+      - fase
+    sort:
+      - property: fecha
+        direction: DESC
+  - type: table
+    name: Abiertas
+    filters:
+      and:
+        - estado == "abierta"
+    order:
+      - file.name
+      - fecha
+      - fase

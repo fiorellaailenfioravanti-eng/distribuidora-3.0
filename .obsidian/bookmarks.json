@@ -1,0 +1,34 @@
+{
+  "items": [
+    {
+      "type": "file",
+      "ctime": 1,
+      "path": "Inicio.md",
+      "title": "Inicio"
+    },
+    {
+      "type": "file",
+      "ctime": 2,
+      "path": "Documentacion/PROCEDURE.md",
+      "title": "Estado de fases"
+    },
+    {
+      "type": "file",
+      "ctime": 3,
+      "path": "Documentacion/PLAN_CIERRE.md",
+      "title": "Plan de cierre"
+    },
+    {
+      "type": "file",
+      "ctime": 4,
+      "path": "Documentacion/AUDITORIA.md",
+      "title": "Auditoría"
+    },
+    {
+      "type": "file",
+      "ctime": 5,
+      "path": "notas/Arquitectura.canvas",
+      "title": "Mapa de apps"
+    }
+  ]
+}

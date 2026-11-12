@@ -34,3 +34,10 @@ env/
 # graphify (cache local; graph.json y GRAPH_REPORT.md si se versionan)
 graphify-out/cache/
 graphify-out/cost.json
+
+# Obsidian (el vault es la raíz del repo)
+.obsidian/workspace*.json
+.obsidian/cache/
+.trash/
+# Enlace (junction) a .agents/ para verlo en Obsidian: no versionar dos veces
+Documentacion/

@@ -23,4 +23,4 @@ Abonos mensuales de clientes (RF-05).
 - Usa modelos de [[productos]]
 
 ## Notas
--
+- Validaciones y correcciones: [[QA 2026-11-12]], [[Validaciones por campo]]

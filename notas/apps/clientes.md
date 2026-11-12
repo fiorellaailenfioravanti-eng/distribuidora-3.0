@@ -28,4 +28,4 @@ Clientes, teléfonos, direcciones de entrega e historial de envases (RF-08).
 - Usa modelos de [[pedidos]]
 
 ## Notas
--
+- Validaciones y correcciones: [[QA 2026-11-12]], [[Validaciones por campo]]

@@ -22,4 +22,4 @@ Empleados y roles (unificados en Fase 2).
 - Usa modelos de [[autenticacion]]
 
 ## Notas
--
+- Validaciones y correcciones: [[QA 2026-11-12]], [[Validaciones por campo]]

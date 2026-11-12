@@ -1,0 +1,90 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}Categorías{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-0 text-main">Categorías</h1>
+            <p class="text-muted small mb-0 mt-1">Clasificación del catálogo de la tienda y del inventario.</p>
+        </div>
+        <a href="{% url 'apps.productos:listar_productos_admin' %}" class="btn btn-light border-0 shadow-sm rounded-3 hover-lift fw-bold">
+            <i class="fa-solid fa-arrow-left me-1"></i> Volver al inventario
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-surface">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-muted small text-uppercase">
+                            <tr>
+                                <th class="ps-4 py-3 border-bottom-0">Nombre</th>
+                                <th class="py-3 border-bottom-0">Descripción</th>
+                                <th class="py-3 border-bottom-0 text-center">Productos</th>
+                                <th class="pe-4 py-3 border-bottom-0 text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="border-top-0">
+                            {% for c in categorias %}
+                            <tr>
+                                <td class="ps-4 fw-bold text-main">{{ c.nombre }}</td>
+                                <td class="text-muted small">{{ c.descripcion|default:"—"|truncatechars:80 }}</td>
+                                <td class="text-center">
+                                    <a href="{% url 'apps.productos:listar_productos_admin' %}?categoria={{ c.nombre|urlencode }}" class="badge rounded-pill bg-primary bg-opacity-10 text-primary text-decoration-none px-3 py-2">
+                                        {{ c.cantidad_productos }}
+                                    </a>
+                                </td>
+                                <td class="pe-4 text-end text-nowrap">
+                                    <a href="{% url 'apps.productos:editar_categoria' c.pk %}" class="btn btn-sm btn-light border-0 text-warning hover-lift rounded-pill px-3 shadow-sm" title="Editar">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </a>
+                                    <form method="post" action="{% url 'apps.productos:eliminar_categoria' c.pk %}" class="d-inline"
+                                          data-confirmar="¿Eliminar la categoría «{{ c.nombre }}»?" data-peligro>
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-light border-0 text-danger hover-lift rounded-pill px-3 shadow-sm ms-1"
+                                                title="{% if c.cantidad_productos %}Tiene productos: no se puede borrar{% else %}Eliminar{% endif %}"
+                                                {% if c.cantidad_productos %}disabled{% endif %}>
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">
+                                    <i class="fa-solid fa-tags fs-2 mb-3 d-block opacity-50"></i>
+                                    Todavía no hay categorías. Creá la primera con el formulario.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 bg-surface">
+                <div class="card-body p-4">
+                    <h2 class="h6 fw-bold text-main mb-3"><i class="fa-solid fa-plus me-2 text-primary"></i>Nueva categoría</h2>
+                    <form method="post">
+                        {% csrf_token %}
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">{{ field.label }}</label>
+                            {{ field }}
+                            {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-primary btn-glow rounded-pill fw-bold w-100">
+                            <i class="fa-solid fa-floppy-disk me-2"></i>Guardar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

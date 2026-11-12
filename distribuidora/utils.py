@@ -28,3 +28,13 @@ def redirigir_a_origen(request, por_defecto):
     ):
         return redirect(origen)
     return redirect(por_defecto)
+
+
+def errores_en_texto(form):
+    """Errores de un formulario en una línea, para mostrarlos en un mensaje flash."""
+    partes = []
+    for campo, errores in form.errors.items():
+        etiqueta = form.fields[campo].label if campo in form.fields else ''
+        for error in errores:
+            partes.append(f'{etiqueta}: {error}' if etiqueta else str(error))
+    return ' '.join(partes) or 'revisá los datos.'

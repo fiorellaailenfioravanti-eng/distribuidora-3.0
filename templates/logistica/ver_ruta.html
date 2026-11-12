@@ -149,7 +149,7 @@
                     <i class="fa-solid fa-chevron-down text-muted me-2 parada-chevron"></i>
                     {% if es_admin and ruta.estado != 'Cerrada' %}
                     <form method="post" action="{% url 'apps.logistica:eliminar_parada' d.id_detalle %}"
-                          onsubmit="event.stopPropagation(); return confirm('¿Eliminar la parada de {{ d.cliente_nombre|default:'este cliente'|escapejs }}?')" class="d-inline">
+                          data-confirmar="¿Eliminar la parada de {{ d.cliente_nombre|default:'este cliente' }}?" data-peligro class="d-inline">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-sm btn-light border-0 text-danger" title="Eliminar parada"
                                 onclick="event.stopPropagation();"><i class="fa-solid fa-trash"></i></button>

@@ -1,22 +1,22 @@
 from django.urls import path
-from .views import listar_productos, listar_productos_admin, crear_producto, ver_producto, editar_producto, eliminar_producto, crear_categoria
+
+from . import views
 
 app_name = 'apps.productos'
 urlpatterns = [
-    # Aquí puedes agregar las rutas específicas de la aplicación 'productos'
-    # CRUD
-    # C = Crear producto 
-    path('crear/', crear_producto, name='crear_producto'),
-    path('categoria/crear/', crear_categoria, name='crear_categoria'),
+    # Tienda
+    path('', views.listar_productos, name='listar_productos'),
+    path('producto/<int:pk>', views.ver_producto, name='ver_producto'),
 
-    # R = Leer productos
-    path('', listar_productos, name='listar_productos'),
-    path('admin-panel/', listar_productos_admin, name='listar_productos_admin'),
-    path('producto/<int:pk>', ver_producto, name='ver_producto'),
+    # Inventario (panel)
+    path('admin-panel/', views.listar_productos_admin, name='listar_productos_admin'),
+    path('crear/', views.crear_producto, name='crear_producto'),
+    path('editar/<int:pk>', views.editar_producto, name='editar_producto'),
+    path('eliminar/<int:pk>', views.eliminar_producto, name='eliminar_producto'),
 
-    # U = Actualizar producto
-    path('editar/<int:pk>', editar_producto, name='editar_producto'),
-
-    # D = Eliminar producto
-    path('eliminar/<int:pk>', eliminar_producto, name='eliminar_producto'),
+    # Categorías (panel)
+    path('categorias/', views.listar_categorias, name='listar_categorias'),
+    path('categoria/crear/', views.crear_categoria, name='crear_categoria'),
+    path('categoria/<int:pk>/editar/', views.editar_categoria, name='editar_categoria'),
+    path('categoria/<int:pk>/eliminar/', views.eliminar_categoria, name='eliminar_categoria'),
 ]

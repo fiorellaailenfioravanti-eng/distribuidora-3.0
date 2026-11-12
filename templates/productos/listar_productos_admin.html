@@ -9,9 +9,14 @@
             <h1 class="h3 fw-bold mb-0 text-main">Inventario de Productos</h1>
             <p class="text-muted small mb-0 mt-1">Gestión de catálogo, stock y precios.</p>
         </div>
-        <a href="{% url 'apps.productos:crear_producto' %}" class="btn btn-primary rounded-3 btn-glow fw-bold px-4 w-100 text-center" style="max-width: 250px;">
-            <i class="fa-solid fa-plus me-2"></i> Nuevo Producto
-        </a>
+        <div class="d-flex gap-2 w-100 justify-content-md-end" style="max-width: 420px;">
+            <a href="{% url 'apps.productos:listar_categorias' %}" class="btn btn-light border-0 shadow-sm rounded-3 hover-lift fw-bold px-3 flex-fill text-center">
+                <i class="fa-solid fa-tags me-2 text-primary"></i> Categorías
+            </a>
+            <a href="{% url 'apps.productos:crear_producto' %}" class="btn btn-primary rounded-3 btn-glow fw-bold px-3 flex-fill text-center">
+                <i class="fa-solid fa-plus me-2"></i> Nuevo producto
+            </a>
+        </div>
     </div>
 
     <!-- Filtros -->
@@ -29,7 +34,7 @@
                         Todas
                     </a>
                     {% for e in categorias %}
-                    <a href="{% url 'apps.productos:listar_productos_admin' %}?categoria={{ e.nombre }}" class="btn btn-sm shadow-sm rounded-pill hover-lift fw-bold px-3 {% if categoria_actual == e.nombre %}btn-primary btn-glow{% else %}btn-light text-muted border-0{% endif %}">
+                    <a href="{% url 'apps.productos:listar_productos_admin' %}?categoria={{ e.nombre|urlencode }}" class="btn btn-sm shadow-sm rounded-pill hover-lift fw-bold px-3 {% if categoria_actual == e.nombre %}btn-primary btn-glow{% else %}btn-light text-muted border-0{% endif %}">
                         {{ e.nombre }}
                     </a>
                     {% endfor %}
@@ -49,7 +54,7 @@
                         <th class="py-3 border-bottom-0" scope="col">Categoría</th>
                         <th class="py-3 border-bottom-0" scope="col">Stock</th>
                         <th class="py-3 border-bottom-0 text-end" scope="col">Precio</th>
-                        <th class="pe-4 py-3 border-bottom-0 text-center" scope="col">Acciones</th>
+                        <th class="pe-4 py-3 border-bottom-0 text-end" scope="col">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="border-top-0">
@@ -72,9 +77,11 @@
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 py-1">
-                                {{ e.categoria.nombre }}
-                            </span>
+                            {% for c in e.categoria.all %}
+                            <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 py-1">{{ c.nombre }}</span>
+                            {% empty %}
+                            <span class="text-muted small">Sin categoría</span>
+                            {% endfor %}
                         </td>
                         <td>
                             {% if e.stock > 10 %}
@@ -119,7 +126,7 @@
                 <ul class="pagination pagination-sm justify-content-end mb-0">
                     {% if productos.has_previous %}
                     <li class="page-item">
-                        <a class="page-link text-muted border-0 hover-lift bg-transparent rounded-pill px-3" href="?page={{ productos.previous_page_number }}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}"><i class="fa-solid fa-angle-left me-1"></i> Anterior</a>
+                        <a class="page-link text-muted border-0 hover-lift bg-transparent rounded-pill px-3" href="?page={{ productos.previous_page_number }}{% if categoria_actual %}&categoria={{ categoria_actual|urlencode }}{% endif %}"><i class="fa-solid fa-angle-left me-1"></i> Anterior</a>
                     </li>
                     {% endif %}
                     
@@ -127,13 +134,13 @@
                         {% if productos.number == num %}
                             <li class="page-item active"><span class="page-link bg-primary border-0 rounded-pill text-white shadow-sm mx-1 px-3">{{ num }}</span></li>
                         {% elif num > productos.number|add:'-3' and num < productos.number|add:'3' %}
-                            <li class="page-item"><a class="page-link text-muted border-0 mx-1 hover-lift bg-transparent rounded-pill px-3" href="?page={{ num }}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}">{{ num }}</a></li>
+                            <li class="page-item"><a class="page-link text-muted border-0 mx-1 hover-lift bg-transparent rounded-pill px-3" href="?page={{ num }}{% if categoria_actual %}&categoria={{ categoria_actual|urlencode }}{% endif %}">{{ num }}</a></li>
                         {% endif %}
                     {% endfor %}
                     
                     {% if productos.has_next %}
                     <li class="page-item">
-                        <a class="page-link text-muted border-0 hover-lift bg-transparent rounded-pill px-3" href="?page={{ productos.next_page_number }}{% if categoria_actual %}&categoria={{ categoria_actual }}{% endif %}">Siguiente <i class="fa-solid fa-angle-right ms-1"></i></a>
+                        <a class="page-link text-muted border-0 hover-lift bg-transparent rounded-pill px-3" href="?page={{ productos.next_page_number }}{% if categoria_actual %}&categoria={{ categoria_actual|urlencode }}{% endif %}">Siguiente <i class="fa-solid fa-angle-right ms-1"></i></a>
                     </li>
                     {% endif %}
                 </ul>

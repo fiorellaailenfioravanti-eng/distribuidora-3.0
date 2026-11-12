@@ -4,6 +4,7 @@ from .models import (
     DIA_SEMANA_CHOICES,
 )
 from apps.pedidos.models import MetodoPago
+from distribuidora.validadores import ATTRS_ALTURA, ATTRS_PATENTE, aplicar_attrs, normalizar_patente, validar_altura
 
 
 class HojaRutaForm(forms.ModelForm):
@@ -80,6 +81,7 @@ class AgregarParadaForm(forms.Form):
         self.fields['direccion'].label_from_instance = _etiqueta_direccion_cliente
         self.fields['barrio'].queryset = barrios
         self.fields['producto'].queryset = productos_de_reparto()
+        aplicar_attrs(self, 'altura', ATTRS_ALTURA)
         defecto = botellon_por_defecto()
         if defecto is not None:
             self.fields['producto'].initial = defecto.pk
@@ -88,6 +90,11 @@ class AgregarParadaForm(forms.Form):
         datos = super().clean()
         if datos.get('direccion'):
             return datos
+        if datos.get('altura'):
+            try:
+                datos['altura'] = validar_altura(datos['altura'])
+            except forms.ValidationError as error:
+                self.add_error('altura', error)
         for campo, mensaje in (('nombre', 'El nombre del cliente es obligatorio.'),
                                ('calle', 'La calle es obligatoria.'),
                                ('altura', 'La altura es obligatoria (o S/N).'),
@@ -216,7 +223,29 @@ class CamionForm(forms.ModelForm):
             }),
             'capacidad_botellones': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'min': 0
+                'min': 1
             }),
             'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            # La patente es la clave primaria: cambiarla crearía otro camión.
+            self.fields['patente'].disabled = True
+        else:
+            aplicar_attrs(self, 'patente', ATTRS_PATENTE)
+
+    def clean_patente(self):
+        if self.instance.pk:
+            return self.instance.patente
+        patente = normalizar_patente(self.cleaned_data.get('patente'))
+        if Camion.objects.filter(patente=patente).exists():
+            raise forms.ValidationError('Ya hay un camión con esa patente.')
+        return patente
+
+    def clean_capacidad_botellones(self):
+        capacidad = self.cleaned_data.get('capacidad_botellones')
+        if capacidad is not None and capacidad < 1:
+            raise forms.ValidationError('La capacidad debe ser de al menos 1 botellón.')
+        return capacidad

@@ -122,6 +122,8 @@ class SuscripcionForm(forms.ModelForm):
             + ([CODIGO_CUENTA_CORRIENTE] if cliente and cliente.permite_fiado else []))
         self.fields['metodo_pago'].empty_label = None
         self.fields['proxima_fecha'].label = 'Primer pedido'
+        from django.utils import timezone
+        self.fields['proxima_fecha'].widget.attrs['min'] = timezone.localdate().isoformat()
         if cliente is not None:
             self.fields['direccion'].queryset = cliente.direcciones.all()
             self.fields['direccion'].empty_label = None

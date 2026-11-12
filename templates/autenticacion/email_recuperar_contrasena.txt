@@ -1,0 +1,11 @@
+{% autoescape off %}Hola {{ user.get_full_name|default:user.username }}:
+
+Recibimos un pedido para cambiar la contraseña de tu cuenta de Aquadelluvia ({{ user.username }}).
+
+Para crear una nueva, abrí este enlace (vence en 24 horas):
+{{ protocol }}://{{ domain }}{% url 'apps.autenticacion:recuperar_confirmar' uidb64=uid token=token %}
+
+Si no lo pediste vos, ignorá este mensaje: tu contraseña no cambia.
+
+Aquadelluvia — Distribuidora de agua
+{% endautoescape %}

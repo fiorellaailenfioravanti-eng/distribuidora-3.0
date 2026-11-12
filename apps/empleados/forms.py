@@ -3,6 +3,9 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .models import Empleado, RolEmpleado
 from apps.autenticacion.models import Usuario
+from distribuidora.validadores import (
+    ATTRS_DNI, ATTRS_NOMBRE, ATTRS_TELEFONO, aplicar_attrs, validar_dni, validar_nombre, validar_telefono,
+)
 
 _INPUT = 'form-control'
 _SELECT = 'form-select'
@@ -38,6 +41,10 @@ class EmpleadoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        aplicar_attrs(self, 'dni', ATTRS_DNI)
+        aplicar_attrs(self, 'celular', ATTRS_TELEFONO)
+        aplicar_attrs(self, 'nombre', ATTRS_NOMBRE)
+        aplicar_attrs(self, 'apellido', ATTRS_NOMBRE)
         
         # Filtro de roles por jerarquía
         if self.user and not self.user.is_superuser:
@@ -51,21 +58,33 @@ class EmpleadoForm(forms.ModelForm):
         else:
             self.fields['email'].required = True
 
+    def clean_nombre(self):
+        return validar_nombre(self.cleaned_data.get('nombre'))
+
+    def clean_apellido(self):
+        return validar_nombre(self.cleaned_data.get('apellido'), 'El apellido')
+
+    def clean_dni(self):
+        return validar_dni(self.cleaned_data.get('dni'))
+
+    def clean_celular(self):
+        return validar_telefono(self.cleaned_data.get('celular'))
+
     def clean(self):
         cleaned_data = super().clean()
-        username = cleaned_data.get('username')
+        username = (cleaned_data.get('username') or '').strip()
         email = cleaned_data.get('email')
         password = cleaned_data.get('password')
 
         if not self.instance.pk or not self.instance.usuario:
             if not username:
                 self.add_error('username', 'El nombre de usuario es obligatorio para crear la cuenta.')
-            elif Usuario.objects.filter(username=username).exists():
+            elif Usuario.objects.filter(username__iexact=username).exists():
                 self.add_error('username', 'Este nombre de usuario ya está en uso.')
                 
             if not email:
                 self.add_error('email', 'El email es obligatorio para crear la cuenta de usuario.')
-            elif Usuario.objects.filter(email=email).exists():
+            elif Usuario.objects.filter(email__iexact=email).exists():
                 self.add_error('email', 'Ya existe un usuario con este email.')
                 
             if not password:

@@ -650,15 +650,23 @@ Camion ← RutaReparto → Zona
 
 /productos/                    → listar_productos
 /productos/producto/<pk>       → ver_producto
+/productos/admin-panel/        → listar_productos_admin [🔒 Vendedor/Admin]
 /productos/crear/              → crear_producto        [🔒 Vendedor/Admin]
-/productos/categoria/crear/    → crear_categoria       [🔒 Vendedor/Admin]
 /productos/editar/<pk>         → editar_producto       [🔒 Vendedor/Admin]
 /productos/eliminar/<pk>       → eliminar_producto     [🔒 Vendedor/Admin]
+/productos/categorias/         → listar_categorias     [🔒 Vendedor/Admin] (listado + alta)
+/productos/categoria/crear/    → crear_categoria       [🔒 Vendedor/Admin]
+/productos/categoria/<pk>/editar/   → editar_categoria  [🔒 Vendedor/Admin]
+/productos/categoria/<pk>/eliminar/ → eliminar_categoria [🔒 Vendedor/Admin] (POST; sólo si no tiene productos)
 
 /auth/registrar/               → registrar_usuario
 /auth/ingresar/                → ingresar_usuario
 /auth/cerrar_sesion/           → cerrar_sesion
 /auth/perfil/                  → perfil_usuario        [🔒 Login]
+/auth/recuperar/               → PasswordResetView (email con enlace, vence en 24 h)
+/auth/recuperar/enviado/       → PasswordResetDoneView
+/auth/recuperar/<uidb64>/<token>/ → PasswordResetConfirmView
+/auth/recuperar/listo/         → PasswordResetCompleteView
 
 /carrito/                      → ver_carrito           [🔒 Login]
 /carrito/agregar/<id>/         → agregar_al_carrito    [🔒 Login]

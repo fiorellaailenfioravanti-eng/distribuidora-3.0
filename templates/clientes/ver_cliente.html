@@ -111,13 +111,13 @@
                     {% if cliente.tipo_cliente == 'Normal' %}
                         <input type="hidden" name="tipo_cliente" value="Premium">
                         <button type="submit" class="btn btn-warning bg-opacity-25 text-warning rounded-pill fw-bold btn-sm w-100 border-0 hover-lift"
-                                onclick="return confirm('¿Promover a VIP Premium?')">
+                                data-confirmar="¿Promover a VIP Premium?">
                             <i class="fa-solid fa-star me-1"></i> Promover a Premium
                         </button>
                     {% else %}
                         <input type="hidden" name="tipo_cliente" value="Normal">
                         <button type="submit" class="btn btn-light text-muted rounded-pill btn-sm fw-bold w-100 border-0 hover-lift"
-                                onclick="return confirm('¿Volver a cliente Normal? Se deshabilitará el fiado.')">
+                                data-confirmar="¿Volver a cliente Normal? Se deshabilitará el fiado.">
                             <i class="fa-solid fa-arrow-down me-1"></i> Cambiar a Normal
                         </button>
                     {% endif %}
@@ -132,7 +132,7 @@
                 <small class="text-warning fw-bold text-uppercase">
                     <i class="fa-solid fa-lock me-1"></i>Notas internas (solo Admin/Vendedor)
                 </small>
-                <p class="mb-0 mt-2 text-dark">{{ cliente.notas_internas }}</p>
+                <p class="mb-0 mt-2 text-body-emphasis">{{ cliente.notas_internas }}</p>
             </div>
         </div>
         {% endif %}
@@ -156,7 +156,7 @@
                             <small class="text-muted ms-2">{{ tel.desc_relacion }}</small>
                         </div>
                         <form method="post" action="{% url 'apps.clientes:eliminar_telefono' tel.pk %}"
-                              onsubmit="return confirm('¿Eliminar este teléfono?')">
+                              data-confirmar="¿Eliminar este teléfono?" data-peligro>
                             {% csrf_token %}
                             <button type="submit" class="btn btn-sm btn-light text-danger hover-lift py-1 rounded-3">
                                 <i class="fa-solid fa-trash"></i>
@@ -252,7 +252,7 @@
                                 <i class="fa-solid fa-pen"></i>
                             </a>
                             <form method="post" action="{% url 'apps.clientes:eliminar_direccion' dir.pk %}"
-                                  onsubmit="return confirm('¿Eliminar esta dirección?')">
+                                  data-confirmar="¿Eliminar esta dirección?" data-peligro>
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-light text-danger hover-lift rounded-3">
                                     <i class="fa-solid fa-trash"></i>

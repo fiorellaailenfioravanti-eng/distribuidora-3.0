@@ -1,0 +1,26 @@
+filters:
+  and:
+    - tipo == "hallazgo"
+formulas:
+  orden: 'if(severidad == "alta", 1, if(severidad == "media", 2, 3))'
+views:
+  - type: table
+    name: Abiertos
+    filters:
+      and:
+        - estado == "abierto"
+    order:
+      - file.name
+      - severidad
+      - apps
+      - fecha
+    sort:
+      - property: formula.orden
+        direction: ASC
+  - type: table
+    name: Todos
+    order:
+      - file.name
+      - estado
+      - severidad
+      - fecha

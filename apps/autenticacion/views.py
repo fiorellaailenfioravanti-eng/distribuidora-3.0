@@ -1,31 +1,45 @@
-from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.permisos.roles import es_personal_interno
 from apps.permisos.views import destino_personal
-from django.contrib.auth.decorators import login_required
 from .forms import RegistroUsuarioForm, IngresarUsuarioForm
 
-# Create your views here.
+
+def _ya_ingresado(request):
+    """Un usuario con sesión iniciada no vuelve a ver el login ni el registro."""
+    if not request.user.is_authenticated:
+        return None
+    messages.info(request, f'Ya ingresaste como {request.user.username}.')
+    if es_personal_interno(request.user):
+        return redirect(destino_personal(request.user))
+    return redirect('inicio')
+
+
 def registrar_usuario(request):
+    if (ya := _ya_ingresado(request)) is not None:
+        return ya
     if request.method == 'POST':
         form = RegistroUsuarioForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Usuario registrado exitosamente.')
+            messages.success(request, 'Tu cuenta se creó. Ya podés ingresar.')
             return redirect('apps.autenticacion:ingresar')
         else:
-            messages.error(request, 'Error al registrar el usuario. Por favor, revise los datos ingresados.')
+            messages.error(request, 'No se pudo crear la cuenta: revisá los campos marcados.')
     else:
         form = RegistroUsuarioForm()
     return render(request, 'autenticacion/registrar.html', {'form': form})
 
 def ingresar_usuario(request):
+    if (ya := _ya_ingresado(request)) is not None:
+        return ya
     next_url = request.GET.get('next')
     if next_url and 'carrito' in next_url:
-        messages.info(request, "Debe ingresar para acceder al carrito.")
+        messages.info(request, "Ingresá para ver tu carrito.")
     if request.method == 'POST':
         form = IngresarUsuarioForm(request.POST)
         if form.is_valid():
@@ -44,7 +58,7 @@ def ingresar_usuario(request):
                     return redirect(destino_personal(user))
                 return redirect('inicio')
             else:
-                messages.error(request, 'Credenciales inválidas. Por favor, intente de nuevo.')
+                messages.error(request, 'Usuario o contraseña incorrectos. Probá de nuevo.')
     else:
         form = IngresarUsuarioForm()
     return render(request, 'autenticacion/ingresar.html', {'form': form})

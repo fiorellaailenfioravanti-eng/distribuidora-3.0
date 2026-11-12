@@ -20,4 +20,4 @@ Usuario personalizado (AbstractUser), login y registro.
 - Sin dependencias de modelos con otras apps.
 
 ## Notas
--
+- Validaciones y correcciones: [[QA 2026-11-12]], [[Validaciones por campo]]

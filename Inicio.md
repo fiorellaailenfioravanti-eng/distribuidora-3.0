@@ -29,6 +29,11 @@ Mapa visual: [[Arquitectura.canvas|Arquitectura]]
 
 ![[Apps.base]]
 
+## 🧪 QA
+Último control: [[QA 2026-11-12]] · reglas: [[Validaciones por campo]]
+
+![[Hallazgos.base#Abiertos]]
+
 ## 🧭 Decisiones
 ![[Decisiones.base#Abiertas]]
 
@@ -45,6 +50,7 @@ graphify update .
 - `Documentacion/` → enlace a `.agents/` (los docs que leen Claude y el equipo). Editar acá edita los originales.
 - `notas/apps/` → una nota por app Django, con modelos y dependencias en las propiedades.
 - `notas/decisiones/` → una nota por decisión (plantilla `Decision`).
+- `notas/qa/` → controles de calidad; `notas/hallazgos/` → un problema por nota (plantilla `Hallazgo`).
 - `notas/diario/` → notas diarias (botón de calendario o `Ctrl+P → Nota diaria`).
 - `notas/plantillas/` → plantillas: Nota diaria, Decision, Hallazgo.
 - Código, `venv/`, `static/` y `media/` quedan excluidos de búsqueda y grafo.

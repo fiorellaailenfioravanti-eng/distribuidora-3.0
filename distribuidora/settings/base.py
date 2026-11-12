@@ -148,3 +148,19 @@ LOGOUT_REDIRECT_URL = '/auth/ingresar/'  # Redirige al inicio de sesión despué
 MERCADOPAGO_ACCESS_TOKEN = config('MERCADOPAGO_ACCESS_TOKEN', default='')
 # Sin secreto no se valida la firma del webhook (sólo aceptable en desarrollo).
 MERCADOPAGO_WEBHOOK_SECRET = config('MERCADOPAGO_WEBHOOK_SECRET', default='')
+
+
+# ─────────────────────────────────────────────────────────────────────
+# EMAIL (recuperación de contraseña)
+# ─────────────────────────────────────────────────────────────────────
+# En desarrollo el mail se imprime en la consola del servidor.
+# En producción configurar EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+# y los datos del servidor SMTP en el .env.
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = config('EMAIL_HOST', default='localhost')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Aquadelluvia <no-responder@aquadelluvia.com.ar>')
+PASSWORD_RESET_TIMEOUT = 60 * 60 * 24  # el enlace vence en 24 horas

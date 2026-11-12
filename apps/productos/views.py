@@ -1,62 +1,47 @@
-from django.shortcuts import render, redirect
-#para hacer la paginación 
-from django.core.paginator import Paginator
-from .models import Producto, Categoria
-from .forms import ProductoForm, CategoriaForm
-#Decoradores para permisos (opcional)
-
-#para añadir permisos desde el backend
-from django.contrib.auth.decorators import user_passes_test, login_required
-from django.contrib.auth.decorators import permission_required
-from django.shortcuts import render, redirect, get_object_or_404 # Agrega get_object_or_404 aquí
+"""Catálogo: tienda pública, inventario del panel y ABM de categorías."""
 from django.contrib import messages
-from django.db.models import ProtectedError
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.paginator import Paginator
+from django.db.models import Count, ProtectedError
+from django.shortcuts import get_object_or_404, redirect, render
+
 from apps.permisos.roles import es_admin_o_vendedor
+from .forms import CategoriaForm, ProductoForm
+from .models import Categoria, Producto
 
-#CRUD
-#Aca empeiza Read
+solo_personal = user_passes_test(es_admin_o_vendedor, login_url='/')
 
+
+def _filtrar_por_categoria(request, productos):
+    categoria = request.GET.get('categoria', '').strip()
+    if categoria:
+        productos = productos.filter(categoria__nombre__icontains=categoria).distinct()
+    return productos, categoria
+
+
+# ─────────────────────────────────────────────────────────────
+# PRODUCTOS
+# ─────────────────────────────────────────────────────────────
 def listar_productos(request):
-    listar_productos = Producto.objects.filter(activo=True).order_by('nombre')
-    #esto es para filtrar por categoria
-    parametro_categoria = request.GET.get('categoria',"").strip()
-    #filtrar por categoria
-    if parametro_categoria:
-        listar_productos = listar_productos.filter(categoria__nombre__icontains=parametro_categoria)
+    productos, categoria_actual = _filtrar_por_categoria(
+        request, Producto.objects.filter(activo=True).order_by('nombre'))
+    return render(request, 'productos/listar_productos.html', {
+        'productos': Paginator(productos, 6).get_page(request.GET.get('page')),
+        'categorias': Categoria.objects.order_by('nombre'),
+        'categoria_actual': categoria_actual,
+    })
 
-    paginator = Paginator(listar_productos, 6) # Mostrar 6 productos por página
-    page_number = request.GET.get('page') # Obtener el número de página de la solicitud
-    page_obj = paginator.get_page(page_number) # Obtener los productos para la página actual
-    
-    #obtener todos los productos mediante contexto
-    contexto = {
-        'productos': page_obj,
-        'categorias': Categoria.objects.all(),
-        'categoria_actual': parametro_categoria # Útil para mantener el filtro en los links
-    }
-    return render(request, 'productos/listar_productos.html', contexto)
 
 @login_required
-@user_passes_test(es_admin_o_vendedor, login_url='/')
+@solo_personal
 def listar_productos_admin(request):
-    listar_productos = Producto.objects.order_by('nombre')
-    parametro_categoria = request.GET.get('categoria',"").strip()
-    
-    if parametro_categoria:
-        listar_productos = listar_productos.filter(categoria__nombre__icontains=parametro_categoria)
-
-    paginator = Paginator(listar_productos, 20) # Mostrar más productos en tabla
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    contexto = {
-        'productos': page_obj,
-        'categorias': Categoria.objects.all(),
-        'categoria_actual': parametro_categoria
-    }
-    return render(request, 'productos/listar_productos_admin.html', contexto)
-
-# Create your views here.
+    productos, categoria_actual = _filtrar_por_categoria(
+        request, Producto.objects.prefetch_related('categoria').order_by('nombre'))
+    return render(request, 'productos/listar_productos_admin.html', {
+        'productos': Paginator(productos, 20).get_page(request.GET.get('page')),
+        'categorias': Categoria.objects.order_by('nombre'),
+        'categoria_actual': categoria_actual,
+    })
 
 
 def ver_producto(request, pk):
@@ -65,59 +50,32 @@ def ver_producto(request, pk):
     producto = get_object_or_404(Producto, id_producto=pk, **filtros)
     return render(request, 'productos/ver_producto.html', {'producto': producto})
 
-#Aca termina Read   
-    
 
-
-#Create
-#MI DECORADOR SERIA ESTE PARA QUE VERIFIQUE SI ES VENDEDOR
 @login_required
-@user_passes_test(es_admin_o_vendedor, login_url='/')
-def crear_producto(request):   
-    if request.method == 'POST':
-        form = ProductoForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            return redirect('apps.productos:listar_productos_admin')
-    else:
-        form = ProductoForm()   
+@solo_personal
+def crear_producto(request):
+    form = ProductoForm(request.POST or None, request.FILES or None)
+    if request.method == 'POST' and form.is_valid():
+        producto = form.save()
+        messages.success(request, f'Producto "{producto.nombre}" creado.')
+        return redirect('apps.productos:listar_productos_admin')
     return render(request, 'productos/crear_producto.html', {'form': form})
 
 
 @login_required
-@user_passes_test(es_admin_o_vendedor, login_url='/')
-def crear_categoria(request):
-    if request.method == 'POST':
-        form = CategoriaForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('apps.productos:listar_productos_admin')
-    else:
-        form = CategoriaForm()
-    return render(request, 'productos/crear_categoria.html', {'form': form})
-
-
-#Update
-@login_required
-@user_passes_test(es_admin_o_vendedor, login_url='/')
+@solo_personal
 def editar_producto(request, pk):
     producto = get_object_or_404(Producto, id_producto=pk)
-    if request.method == 'POST':
-        form = ProductoForm(request.POST, request.FILES, instance=producto)
-        if form.is_valid():
-            form.save()
-            return redirect('apps.productos:listar_productos_admin')
-    else:
-        form = ProductoForm(instance=producto)
+    form = ProductoForm(request.POST or None, request.FILES or None, instance=producto)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, f'Producto "{producto.nombre}" actualizado.')
+        return redirect('apps.productos:listar_productos_admin')
     return render(request, 'productos/editar_producto.html', {'form': form, 'producto': producto})
 
 
-
-
-
-#Delete 
 @login_required
-@user_passes_test(es_admin_o_vendedor, login_url='/')
+@solo_personal
 def eliminar_producto(request, pk):
     """Borra el producto; si ya tiene pedidos (PROTECT), lo desactiva (H-27)."""
     producto = get_object_or_404(Producto, id_producto=pk)
@@ -135,3 +93,60 @@ def eliminar_producto(request, pk):
             )
         return redirect('apps.productos:listar_productos_admin')
     return render(request, 'productos/eliminar_producto.html', {'producto': producto})
+
+
+# ─────────────────────────────────────────────────────────────
+# CATEGORÍAS
+# ─────────────────────────────────────────────────────────────
+@login_required
+@solo_personal
+def listar_categorias(request):
+    """Listado con alta en la misma pantalla."""
+    form = CategoriaForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        categoria = form.save()
+        messages.success(request, f'Categoría "{categoria.nombre}" creada.')
+        return redirect('apps.productos:listar_categorias')
+    categorias = Categoria.objects.annotate(cantidad_productos=Count('producto')).order_by('nombre')
+    return render(request, 'productos/listar_categorias.html', {'categorias': categorias, 'form': form})
+
+
+@login_required
+@solo_personal
+def crear_categoria(request):
+    form = CategoriaForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        categoria = form.save()
+        messages.success(request, f'Categoría "{categoria.nombre}" creada.')
+        return redirect('apps.productos:listar_categorias')
+    return render(request, 'productos/crear_categoria.html', {'form': form})
+
+
+@login_required
+@solo_personal
+def editar_categoria(request, pk):
+    categoria = get_object_or_404(Categoria, pk=pk)
+    form = CategoriaForm(request.POST or None, instance=categoria)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, f'Categoría "{categoria.nombre}" actualizada.')
+        return redirect('apps.productos:listar_categorias')
+    return render(request, 'productos/crear_categoria.html', {'form': form, 'categoria': categoria})
+
+
+@login_required
+@solo_personal
+def eliminar_categoria(request, pk):
+    """Sólo se borran categorías vacías, para no dejar productos sin clasificar."""
+    categoria = get_object_or_404(Categoria, pk=pk)
+    if request.method == 'POST':
+        en_uso = categoria.producto_set.count()
+        if en_uso:
+            messages.error(
+                request,
+                f'"{categoria.nombre}" tiene {en_uso} producto(s). Pasalos a otra categoría antes de borrarla.'
+            )
+        else:
+            categoria.delete()
+            messages.success(request, f'Categoría "{categoria.nombre}" eliminada.')
+    return redirect('apps.productos:listar_categorias')

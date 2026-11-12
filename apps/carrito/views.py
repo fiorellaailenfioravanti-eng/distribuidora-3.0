@@ -23,10 +23,12 @@ def agregar_al_carrito(request, producto_id):
     try:
         cantidad_a_agregar = int(request.POST.get('cantidad', '1'))
     except ValueError:
-        cantidad_a_agregar = 1
-            
+        cantidad_a_agregar = 0
     if cantidad_a_agregar <= 0:
-        cantidad_a_agregar = 1
+        if creado:
+            item_carrito.delete()
+        messages.error(request, 'La cantidad debe ser un número mayor a cero.')
+        return redirigir_a_origen(request, 'apps.productos:listar_productos')
 
     # Verificamos si la cantidad actual en el carrito + agregada supera el stock disponible
     cantidad_previa = 0 if creado else item_carrito.cantidad

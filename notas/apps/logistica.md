@@ -36,4 +36,4 @@ Zonas, barrios, camiones, rutas y hojas de ruta de reparto (RF-16, RF-17, RF-19)
 - Usa modelos de [[productos]]
 
 ## Notas
--
+- Validaciones y correcciones: [[QA 2026-11-12]], [[Validaciones por campo]]

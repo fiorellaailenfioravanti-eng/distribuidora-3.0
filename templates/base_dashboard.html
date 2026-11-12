@@ -12,6 +12,7 @@
     <!-- Estilo Global Dashboard -->
     <link rel="stylesheet" href="{% static 'style/dashboard.css' %}?v=8">
     <link rel="stylesheet" href="{% static 'style/productos.css' %}?v=6">
+    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <title>{% block title %}{% endblock %}</title>
     <style>
@@ -40,8 +41,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{% url 'apps.productos:listar_productos_admin' %}" class="sidebar-link {% if request.resolver_match.view_name == 'apps.productos:listar_productos_admin' %}active{% endif %}">
-                        <i class="fa-solid fa-wallet"></i> Productos
+                    <a href="{% url 'apps.productos:listar_productos_admin' %}" class="sidebar-link {% if 'productos' in request.resolver_match.view_name and 'categoria' not in request.resolver_match.view_name %}active{% endif %}">
+                        <i class="fa-solid fa-boxes-stacked"></i> Productos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'apps.productos:listar_categorias' %}" class="sidebar-link {% if 'categoria' in request.resolver_match.view_name %}active{% endif %}">
+                        <i class="fa-solid fa-layer-group"></i> Categorías
                     </a>
                 </li>
                 <li class="nav-item">
@@ -115,7 +121,10 @@
                         <a href="{% url 'dashboard' %}" class="sidebar-link"><i class="fa-solid fa-border-all"></i> Resumen</a>
                     </li>
                     <li class="nav-item">
-                        <a href="{% url 'apps.productos:listar_productos_admin' %}" class="sidebar-link"><i class="fa-solid fa-wallet"></i> Productos</a>
+                        <a href="{% url 'apps.productos:listar_productos_admin' %}" class="sidebar-link"><i class="fa-solid fa-boxes-stacked"></i> Productos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'apps.productos:listar_categorias' %}" class="sidebar-link"><i class="fa-solid fa-layer-group"></i> Categorías</a>
                     </li>
                     <li class="nav-item">
                         <a href="{% url 'apps.pedidos:listar_pedidos' %}" class="sidebar-link"><i class="fa-solid fa-box-open"></i> Pedidos</a>
@@ -232,31 +241,6 @@
 
             {% block content_banner %}{% endblock content_banner %}
             
-            <!-- Notificaciones (Popups Toasts) -->
-            {% if messages %}
-                <div class="toast-container position-fixed bottom-0 end-0 p-3 p-md-4" style="z-index: 1080;">
-                    {% for message in messages %}
-                    <div class="toast align-items-center text-white bg-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning text-dark{% elif message.tags == 'info' %}info{% else %}success{% endif %} border-0 shadow-lg rounded-4 mb-3" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
-                        <div class="d-flex">
-                            <div class="toast-body fw-bold px-3 py-3 d-flex align-items-center">
-                                <i class="fa-solid {% if message.tags == 'error' %}fa-circle-xmark{% elif message.tags == 'warning' %}fa-triangle-exclamation{% elif message.tags == 'info' %}fa-circle-info{% else %}fa-circle-check{% endif %} me-2 fs-5"></i>
-                                <span>{{ message }}</span>
-                            </div>
-                            <button type="button" class="btn-close {% if message.tags == 'warning' %}btn-close-dark{% else %}btn-close-white{% endif %} me-3 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                <script>
-                    document.addEventListener('DOMContentLoaded', function () {
-                        var toastElList = [].slice.call(document.querySelectorAll('.toast'))
-                        var toastList = toastElList.map(function (toastEl) {
-                            var toast = new bootstrap.Toast(toastEl)
-                            toast.show()
-                        })
-                    });
-                </script>
-            {% endif %}
 
             <!-- Contenido principal -->
             <main class="container-fluid px-4 py-4 flex-grow-1">
@@ -273,6 +257,7 @@
         </div> <!-- End page-content-wrapper -->
     </div> <!-- End main-wrapper -->
     
+    {% include 'includes/popups.html' %}
     <script src="{% static 'js/main.js' %}"></script>
 
 </body>

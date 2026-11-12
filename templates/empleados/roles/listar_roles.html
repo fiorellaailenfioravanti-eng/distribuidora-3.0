@@ -45,7 +45,7 @@
                             </a>
                             {% if rol.empleados_count == 0 %}
                             <form method="post" action="{% url 'apps.empleados:eliminar_rol' rol.pk %}" class="d-inline"
-                                  onsubmit="return confirm('¿Eliminar el rol {{ rol.nombre|escapejs }}?');">
+                                  data-confirmar="¿Eliminar el rol {{ rol.nombre }}?" data-peligro>
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-outline-danger rounded-3 ms-1" title="Eliminar">
                                     <i class="fa-solid fa-trash"></i>

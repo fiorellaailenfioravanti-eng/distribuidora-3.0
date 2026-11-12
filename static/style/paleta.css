@@ -1,0 +1,246 @@
+/* =========================================================
+   AQUADELLUVIA — Paleta única (tienda y panel)
+   ---------------------------------------------------------
+   Colores del logo: azul agua de lluvia, verde rana y naranja
+   otoño, ajustados para contraste AA sobre los fondos de cada
+   tema. Se carga DESPUÉS de aquadelluvia.css / dashboard.css y
+   redefine también las variables internas de Bootstrap 5.3, para
+   que botones, enlaces, badges y formularios usen la misma marca.
+   ========================================================= */
+
+:root, [data-bs-theme="light"] {
+    /* Marca */
+    --aq-agua: #0B6FB0;           /* primario: 5.4:1 con texto blanco */
+    --aq-agua-hover: #095A8F;
+    --aq-agua-suave: #E6F2FB;
+    --aq-rana: #3E8E2C;           /* secundario de marca */
+    --aq-otono: #D9770A;          /* acento */
+    --aq-sobre-primario: #FFFFFF;
+
+    /* Superficies y texto */
+    --bg-main: #F3F7FA;
+    --bg-surface: #FFFFFF;
+    --bg-surface-2: #EEF3F7;
+    --text-main: #102A3A;
+    --text-muted: #52667A;
+    --aq-borde: #D6E1EA;
+
+    /* Estados */
+    --aq-exito: #2E8540;
+    --aq-advertencia: #A86400;
+    --aq-peligro: #C62828;
+    --aq-info: #0E7490;
+
+    /* Alias usados por los CSS existentes */
+    --color-primary: var(--aq-agua);
+    --color-secondary: var(--aq-rana);
+    --color-accent: var(--aq-otono);
+    --sidebar-bg: var(--bg-surface);
+    --sidebar-border: var(--aq-borde);
+
+    /* Bootstrap */
+    --bs-body-bg: var(--bg-main);
+    --bs-body-color: var(--text-main);
+    --bs-emphasis-color: #0A1C28;
+    --bs-secondary-color: var(--text-muted);
+    --bs-border-color: var(--aq-borde);
+    --bs-tertiary-bg: var(--bg-surface-2);
+    --bs-primary: #0B6FB0;   --bs-primary-rgb: 11, 111, 176;
+    --bs-success: #2E8540;   --bs-success-rgb: 46, 133, 64;
+    --bs-warning: #D98A00;   --bs-warning-rgb: 217, 138, 0;
+    --bs-danger: #C62828;    --bs-danger-rgb: 198, 40, 40;
+    --bs-info: #0E7490;      --bs-info-rgb: 14, 116, 144;
+    --bs-primary-text-emphasis: #074A76;
+    --bs-primary-bg-subtle: #E6F2FB;
+    --bs-primary-border-subtle: #A9D1EE;
+    --bs-success-text-emphasis: #1E5A2B;
+    --bs-success-bg-subtle: #E5F4E8;
+    --bs-warning-text-emphasis: #6E4300;
+    --bs-warning-bg-subtle: #FDF1DC;
+    --bs-danger-text-emphasis: #8A1C1C;
+    --bs-danger-bg-subtle: #FBE7E7;
+    --bs-info-text-emphasis: #0A4F62;
+    --bs-info-bg-subtle: #E1F3F7;
+    --bs-link-color: #0B6FB0;       --bs-link-color-rgb: 11, 111, 176;
+    --bs-link-hover-color: #095A8F; --bs-link-hover-color-rgb: 9, 90, 143;
+    --bs-focus-ring-color: rgba(11, 111, 176, 0.25);
+}
+
+[data-bs-theme="dark"] {
+    --aq-agua: #5BB8F5;
+    --aq-agua-hover: #86CBF8;
+    --aq-agua-suave: rgba(91, 184, 245, 0.12);
+    --aq-rana: #7CC45E;
+    --aq-otono: #F5A93B;
+    --aq-sobre-primario: #062338;
+
+    --bg-main: #0D1B26;
+    --bg-surface: #152735;
+    --bg-surface-2: #1C3344;
+    --text-main: #E6EEF4;
+    --text-muted: #93A8B8;
+    --aq-borde: rgba(255, 255, 255, 0.09);
+
+    --aq-exito: #5CCB75;
+    --aq-advertencia: #F2B24C;
+    --aq-peligro: #F27272;
+    --aq-info: #4FC3D9;
+
+    --bs-body-bg: var(--bg-main);
+    --bs-body-color: var(--text-main);
+    --bs-emphasis-color: #FFFFFF;
+    --bs-secondary-color: var(--text-muted);
+    --bs-border-color: var(--aq-borde);
+    --bs-tertiary-bg: var(--bg-surface-2);
+    --bs-primary: #5BB8F5;   --bs-primary-rgb: 91, 184, 245;
+    --bs-success: #5CCB75;   --bs-success-rgb: 92, 203, 117;
+    --bs-warning: #F2B24C;   --bs-warning-rgb: 242, 178, 76;
+    --bs-danger: #F27272;    --bs-danger-rgb: 242, 114, 114;
+    --bs-info: #4FC3D9;      --bs-info-rgb: 79, 195, 217;
+    --bs-primary-text-emphasis: #A9DBFA;
+    --bs-primary-bg-subtle: rgba(91, 184, 245, 0.12);
+    --bs-primary-border-subtle: rgba(91, 184, 245, 0.35);
+    --bs-success-text-emphasis: #A6E6B4;
+    --bs-success-bg-subtle: rgba(92, 203, 117, 0.12);
+    --bs-warning-text-emphasis: #F8D294;
+    --bs-warning-bg-subtle: rgba(242, 178, 76, 0.12);
+    --bs-danger-text-emphasis: #F8AEAE;
+    --bs-danger-bg-subtle: rgba(242, 114, 114, 0.12);
+    --bs-info-text-emphasis: #9FE0EC;
+    --bs-info-bg-subtle: rgba(79, 195, 217, 0.12);
+    --bs-link-color: #5BB8F5;       --bs-link-color-rgb: 91, 184, 245;
+    --bs-link-hover-color: #86CBF8; --bs-link-hover-color-rgb: 134, 203, 248;
+    --bs-focus-ring-color: rgba(91, 184, 245, 0.3);
+}
+
+/* ── Botones (Bootstrap compila sus colores: hay que redefinirlos) ── */
+.btn-primary {
+    --bs-btn-color: var(--aq-sobre-primario);
+    --bs-btn-bg: var(--aq-agua);
+    --bs-btn-border-color: var(--aq-agua);
+    --bs-btn-hover-color: var(--aq-sobre-primario);
+    --bs-btn-hover-bg: var(--aq-agua-hover);
+    --bs-btn-hover-border-color: var(--aq-agua-hover);
+    --bs-btn-active-color: var(--aq-sobre-primario);
+    --bs-btn-active-bg: var(--aq-agua-hover);
+    --bs-btn-active-border-color: var(--aq-agua-hover);
+    --bs-btn-disabled-color: var(--aq-sobre-primario);
+    --bs-btn-disabled-bg: var(--aq-agua);
+    --bs-btn-disabled-border-color: var(--aq-agua);
+    --bs-btn-focus-shadow-rgb: var(--bs-primary-rgb);
+}
+/* Anula los hover verdes / índigo de los CSS anteriores */
+[data-bs-theme="dark"] .btn-primary,
+[data-bs-theme="dark"] .btn-primary:hover {
+    background-color: var(--bs-btn-bg);
+    border-color: var(--bs-btn-border-color);
+    color: var(--bs-btn-color);
+}
+[data-bs-theme="dark"] .btn-primary:hover {
+    background-color: var(--bs-btn-hover-bg);
+    border-color: var(--bs-btn-hover-border-color);
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--aq-agua);
+    --bs-btn-border-color: var(--aq-agua);
+    --bs-btn-hover-color: var(--aq-sobre-primario);
+    --bs-btn-hover-bg: var(--aq-agua);
+    --bs-btn-hover-border-color: var(--aq-agua);
+    --bs-btn-active-color: var(--aq-sobre-primario);
+    --bs-btn-active-bg: var(--aq-agua-hover);
+    --bs-btn-active-border-color: var(--aq-agua-hover);
+    --bs-btn-focus-shadow-rgb: var(--bs-primary-rgb);
+}
+
+.btn-success {
+    --bs-btn-bg: var(--aq-exito); --bs-btn-border-color: var(--aq-exito);
+    --bs-btn-hover-bg: var(--aq-exito); --bs-btn-hover-border-color: var(--aq-exito);
+    --bs-btn-active-bg: var(--aq-exito);
+}
+.btn-danger {
+    --bs-btn-bg: var(--aq-peligro); --bs-btn-border-color: var(--aq-peligro);
+    --bs-btn-hover-bg: var(--aq-peligro); --bs-btn-hover-border-color: var(--aq-peligro);
+    --bs-btn-active-bg: var(--aq-peligro);
+}
+.btn-success:hover, .btn-danger:hover { filter: brightness(1.08); }
+[data-bs-theme="dark"] .btn-success,
+[data-bs-theme="dark"] .btn-danger { --bs-btn-color: #0D1B26; --bs-btn-hover-color: #0D1B26; }
+
+.btn-glow:hover { box-shadow: 0 0 0 4px var(--bs-focus-ring-color); }
+
+/* ── Formularios ── */
+.form-control:focus, .form-select:focus {
+    border-color: var(--aq-agua);
+    box-shadow: 0 0 0 0.25rem var(--bs-focus-ring-color);
+}
+.form-check-input:checked {
+    background-color: var(--aq-agua);
+    border-color: var(--aq-agua);
+}
+.form-control.is-invalid, .form-select.is-invalid {
+    border-color: var(--aq-peligro);
+}
+
+/* ── Navegación del panel ── */
+.sidebar-link:hover {
+    color: var(--aq-agua);
+    background-color: var(--aq-agua-suave);
+}
+.sidebar-link.active,
+[data-bs-theme="dark"] .sidebar-link.active {
+    color: var(--aq-agua);
+    border-left-color: var(--aq-agua);
+    background-color: var(--aq-agua-suave);
+}
+
+.page-link { color: var(--aq-agua); }
+.page-item.active .page-link, .pagination .bg-primary {
+    background-color: var(--aq-agua) !important;
+    border-color: var(--aq-agua);
+    color: var(--aq-sobre-primario) !important;
+}
+
+/* ── Popups (SweetAlert2) ── */
+.aq-popup {
+    background: var(--bg-surface) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--aq-borde);
+    border-radius: 1rem !important;
+    font-family: var(--font-body, 'Inter', sans-serif);
+}
+.aq-popup .swal2-title { color: var(--text-main); font-family: var(--font-heading, 'Nunito', sans-serif); font-size: 1.35rem; }
+.aq-popup .swal2-html-container { color: var(--text-muted); font-size: 0.98rem; }
+.aq-popup.aq-toast .swal2-title { font-size: 0.95rem; font-weight: 600; color: var(--text-main); }
+.aq-popup .swal2-timer-progress-bar { background: var(--aq-agua); }
+.aq-popup-lista { text-align: left; margin: 0.5rem 0 0; padding-left: 1.1rem; }
+.aq-popup-lista li { margin-bottom: 0.35rem; }
+.aq-popup-lista strong { color: var(--text-main); }
+.swal2-icon.swal2-success { border-color: var(--aq-exito) !important; color: var(--aq-exito) !important; }
+.swal2-icon.swal2-success [class^='swal2-success-line'] { background-color: var(--aq-exito) !important; }
+.swal2-icon.swal2-success .swal2-success-ring { border-color: rgba(var(--bs-success-rgb), 0.3) !important; }
+.swal2-icon.swal2-error { border-color: var(--aq-peligro) !important; }
+.swal2-icon.swal2-error [class^='swal2-x-mark-line'] { background-color: var(--aq-peligro) !important; }
+.swal2-icon.swal2-warning { border-color: var(--aq-otono) !important; color: var(--aq-otono) !important; }
+.swal2-icon.swal2-info, .swal2-icon.swal2-question { border-color: var(--aq-agua) !important; color: var(--aq-agua) !important; }
+.swal2-container.swal2-backdrop-show { background: rgba(6, 20, 30, 0.55) !important; }
+
+/* ── Ícono circular de pantallas simples (recuperar contraseña, etc.) ── */
+.icono-circulo {
+    width: 64px; height: 64px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    font-size: 1.6rem;
+    color: var(--aq-agua);
+    background: var(--aq-agua-suave);
+}
+.icono-circulo--exito { color: var(--aq-exito); background: var(--bs-success-bg-subtle); }
+.icono-circulo--peligro { color: var(--aq-peligro); background: var(--bs-danger-bg-subtle); }
+
+/* ── Tablas: el encabezado "table-light" se adapta al tema ── */
+.table-light {
+    --bs-table-bg: var(--bg-surface-2);
+    --bs-table-color: var(--text-muted);
+    --bs-table-border-color: var(--aq-borde);
+}
+.table { --bs-table-bg: transparent; --bs-table-hover-bg: var(--aq-agua-suave); }

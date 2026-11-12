@@ -7,7 +7,8 @@ from django.urls import reverse
 
 from apps.pedidos.models import DetallePedido, MetodoPago, Pedido
 
-from .models import Producto
+from .forms import ProductoForm
+from .models import Categoria, Producto
 
 
 class EliminarProductoTests(TestCase):
@@ -68,3 +69,52 @@ class AltaProductoTests(TestCase):
             'precio': '2300', 'stock': 10, 'activo': 'on', 'es_botellon': 'on'})
         producto = Producto.objects.get(nombre='Bidón 12 L')
         self.assertTrue(producto.activo and producto.es_botellon)
+
+
+class CategoriasPanelTests(TestCase):
+    """Las categorías se gestionan desde el panel, sin el admin de Django."""
+
+    def setUp(self):
+        Usuario = get_user_model()
+        self.vendedor = Usuario.objects.create_user('vend', 'v@x.com', 'Agua-Lluvia-2026')
+        self.vendedor.groups.add(Group.objects.get(name='Vendedor'))
+        self.cliente = Usuario.objects.create_user('cli', 'c@x.com', 'Agua-Lluvia-2026')
+        self.agua = Categoria.objects.create(nombre='Agua', descripcion='')
+
+    def test_vendedor_crea_edita_y_borra(self):
+        self.client.force_login(self.vendedor)
+        self.client.post(reverse('apps.productos:listar_categorias'), {'nombre': '  Soda  ', 'descripcion': ''})
+        soda = Categoria.objects.get(nombre='Soda')
+        self.client.post(reverse('apps.productos:editar_categoria', args=[soda.pk]),
+                         {'nombre': 'Sodas', 'descripcion': 'Sifones'})
+        soda.refresh_from_db()
+        self.assertEqual((soda.nombre, soda.descripcion), ('Sodas', 'Sifones'))
+        self.client.post(reverse('apps.productos:eliminar_categoria', args=[soda.pk]))
+        self.assertFalse(Categoria.objects.filter(pk=soda.pk).exists())
+
+    def test_nombre_repetido_sin_importar_mayusculas(self):
+        self.client.force_login(self.vendedor)
+        respuesta = self.client.post(reverse('apps.productos:listar_categorias'), {'nombre': 'AGUA'})
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(Categoria.objects.count(), 1)
+
+    def test_no_borra_categoria_con_productos(self):
+        producto = Producto.objects.create(nombre='Bidón', descripcion='', precio=Decimal('10'), stock=1)
+        producto.categoria.add(self.agua)
+        self.client.force_login(self.vendedor)
+        self.client.post(reverse('apps.productos:eliminar_categoria', args=[self.agua.pk]))
+        self.assertTrue(Categoria.objects.filter(pk=self.agua.pk).exists())
+
+    def test_cliente_no_accede(self):
+        self.client.force_login(self.cliente)
+        self.client.post(reverse('apps.productos:listar_categorias'), {'nombre': 'Hackeo'})
+        self.assertFalse(Categoria.objects.filter(nombre='Hackeo').exists())
+
+
+class ProductoFormValidacionesTests(TestCase):
+    def test_precio_y_stock(self):
+        cat = Categoria.objects.create(nombre='Agua', descripcion='')
+        base = {'nombre': 'Bidón', 'descripcion': '', 'categoria': cat.pk, 'precio': '100', 'stock': '5'}
+        self.assertTrue(ProductoForm(base).is_valid())
+        self.assertIn('precio', ProductoForm({**base, 'precio': '0'}).errors)
+        self.assertIn('stock', ProductoForm({**base, 'stock': '-1'}).errors)

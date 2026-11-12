@@ -34,6 +34,24 @@ permitían a **cualquier usuario autenticado** (incluido un cliente registrado) 
 modificar hojas de ruta ajenas. Se agregó el guard `es_admin_vendedor_o_repartidor`
 y la restricción por asignación.
 
+**QA campo a campo y pulido (12/11/2026, rama `qa/validaciones-panel`):**
+- Validaciones por tipo de dato en `distribuidora/validadores.py` (DNI 7–8 dígitos, teléfonos,
+  coordenadas, altura, patente, fechas) aplicadas en clientes, registro, empleados, camiones,
+  productos (precio > 0, stock ≥ 0), cuentas, promociones, envases y carrito; además los
+  atributos HTML (`inputmode`, `pattern`, `maxlength`, `min/max`) restringen lo que se escribe.
+- Mensajes, errores de campo y confirmaciones en popups (SweetAlert2): `templates/includes/popups.html`
+  + `static/js/popups.js`.
+- Corregido: «Editar mi perfil» del cliente daba 500 y no mostraba campos; crear promoción con
+  «paga 0» daba 500; la columna Categoría del inventario salía vacía; editar la patente de un camión
+  creaba otro camión.
+- Nuevo: ABM de categorías en el panel; «Olvidé mi contraseña» por email (`EMAIL_*` en `.env`).
+- Paleta única de tienda y panel en `static/style/paleta.css` (colores del logo, contraste AA).
+- Matriz de acceso por rol (anónimo, cliente, repartidor, vendedor, admin) sin hallazgos;
+  usuarios con sesión ya no ven el login/registro.
+- Detalle y correcciones grandes pendientes: vault de Obsidian `notas/qa/`.
+
+**Comandos verificados (12/11/2026):** check 0 issues · makemigrations sin cambios · **216 tests OK** · check --deploy 0 issues.
+
 **Comandos verificados (20/10/2026):**
 ```powershell
 .\venv\Scripts\python.exe manage.py check --settings=distribuidora.settings.local          # 0 issues

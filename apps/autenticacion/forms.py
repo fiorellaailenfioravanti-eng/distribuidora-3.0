@@ -1,9 +1,8 @@
-from .models import Usuario
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django import forms
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm, UserCreationForm
 
-def _solo_digitos(numero):
-    return ''.join(c for c in (numero or '') if c.isdigit())
+from distribuidora.validadores import ATTRS_TELEFONO, aplicar_attrs, solo_digitos, validar_telefono
+from .models import Usuario
 
 
 class RegistroUsuarioForm(UserCreationForm):
@@ -37,13 +36,29 @@ class RegistroUsuarioForm(UserCreationForm):
             if nombre in self.fields:
                 self.fields[nombre].required = True
                 self.fields[nombre].label = f'Celular {numero}'
+                aplicar_attrs(self, nombre, ATTRS_TELEFONO)
+
+    def clean_email(self):
+        email = (self.cleaned_data.get('email') or '').strip()
+        if Usuario.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('Ya existe una cuenta con ese email.')
+        return email
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if username and Usuario.objects.filter(username__iexact=username).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('Ese nombre de usuario ya está en uso.')
+        return username
+
+    def clean_celular1(self):
+        return validar_telefono(self.cleaned_data.get('celular1'))
+
+    def clean_celular2(self):
+        return validar_telefono(self.cleaned_data.get('celular2'))
 
     def clean(self):
         datos = super().clean()
-        c1, c2 = _solo_digitos(datos.get('celular1')), _solo_digitos(datos.get('celular2'))
-        for campo, digitos in (('celular1', c1), ('celular2', c2)):
-            if datos.get(campo) and len(digitos) < 8:
-                self.add_error(campo, 'Ingresá un número válido (al menos 8 dígitos).')
+        c1, c2 = solo_digitos(datos.get('celular1')), solo_digitos(datos.get('celular2'))
         if c1 and c1 == c2:
             self.add_error('celular2', 'Los dos celulares deben ser distintos.')
         return datos
@@ -68,3 +83,23 @@ class IngresarUsuarioForm(forms.Form):
         label='Contraseña', 
         widget=forms.PasswordInput(attrs={'class': 'form-control rounded-3 py-2 px-3'})
     )
+
+
+class RecuperarContrasenaForm(PasswordResetForm):
+    """Pide el email de la cuenta. Por seguridad no revela si el email existe."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].label = 'Email de tu cuenta'
+        self.fields['email'].widget.attrs.update({
+            'class': 'form-control rounded-3 py-2 px-3', 'placeholder': 'tu@email.com', 'autofocus': True,
+        })
+
+
+class NuevaContrasenaForm(SetPasswordForm):
+    """Nueva contraseña desde el enlace del email (mismos validadores que el registro)."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for campo in self.fields.values():
+            campo.widget.attrs['class'] = 'form-control rounded-3 py-2 px-3'

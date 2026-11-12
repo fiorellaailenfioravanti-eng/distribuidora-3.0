@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -7,10 +9,11 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from .models import Cliente, TelefonoContacto, DireccionEntrega
 from .forms  import (ClienteForm, ClienteSinCuentaForm, AltaClienteConCuentaForm, TelefonoContactoForm,
                      DireccionEntregaForm, BuscarClienteForm, EditarMiPerfilForm, MovimientoBidonForm)
+from apps.autenticacion.models import Usuario
 from apps.pedidos.models import Pedido
 from django.core.exceptions import ValidationError
 
-from distribuidora.utils import normalizar_texto
+from distribuidora.utils import errores_en_texto, normalizar_texto
 from apps.promociones.forms import VenderPromocionForm
 from apps.promociones.services import compras_vigentes
 from . import services as servicios_clientes
@@ -307,7 +310,7 @@ def registrar_movimiento_bidon(request, pk):
         except ValidationError as error:
             messages.error(request, ' '.join(error.messages))
     else:
-        messages.error(request, 'Revisá el tipo y la cantidad del movimiento.')
+        messages.error(request, f'No se registró el movimiento: {errores_en_texto(form)}')
     return redirect('apps.clientes:ver_cliente', pk=pk)
 
 
@@ -322,14 +325,14 @@ def agregar_telefono(request, pk):
         return redirect('inicio')
 
     if request.method == 'POST':
-        form = TelefonoContactoForm(request.POST)
+        form = TelefonoContactoForm(request.POST, cliente=cliente)
         if form.is_valid():
             tel = form.save(commit=False)
             tel.cliente = cliente
             tel.save()
             messages.success(request, f'Teléfono {tel.numero} agregado.')
         else:
-            messages.error(request, 'Error al agregar el teléfono. Revisá los datos.')
+            messages.error(request, f'No se agregó el teléfono: {errores_en_texto(form)}')
 
     if cliente.usuario == request.user and not es_admin_o_vendedor(request.user):
         return redirect('apps.clientes:mi_perfil')
@@ -503,9 +506,6 @@ def mi_perfil_cliente(request):
     })
 
 
-from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib.auth import update_session_auth_hash
-
 @login_required
 def editar_mi_perfil(request):
     """Permite al cliente logueado modificar sus datos personales y foto de perfil."""
@@ -523,43 +523,49 @@ def editar_mi_perfil(request):
             }
         )
 
-    if request.method == 'POST':
-        form = EditarMiPerfilForm(request.POST, request.FILES)
-        if form.is_valid():
-            user = request.user
-            user.first_name = form.cleaned_data['first_name']
-            user.last_name  = form.cleaned_data['last_name']
-            user.email      = form.cleaned_data['email']
+    user = request.user
+    principal = cliente.telefonos.order_by('-es_principal', 'pk').first()
+    form_perfil = EditarMiPerfilForm(initial={'celular': principal.numero if principal else user.celular1})
+    form_password = PasswordChangeForm(user)
+    for campo in form_password.fields.values():
+        campo.widget.attrs['class'] = 'form-control'
 
-            if form.cleaned_data.get('eliminar_foto'):
-                user.imagen_perfil = 'usuarios/default.jpg'
-            elif request.FILES.get('imagen_perfil'):
-                user.imagen_perfil = request.FILES['imagen_perfil']
-
-            user.save()
-
-            cliente.nombre = user.first_name
-            cliente.apellido = user.last_name
-            cliente.email_contacto = user.email
-            cliente.dni = form.cleaned_data.get('dni')
-            cliente.fecha_nacimiento = form.cleaned_data.get('fecha_nacimiento')
-            cliente.save()
-
-            messages.success(request, '¡Tus datos de perfil han sido actualizados con éxito!')
+    if request.method == 'POST' and 'form_password' in request.POST:
+        form_password = PasswordChangeForm(user, request.POST)
+        for campo in form_password.fields.values():
+            campo.widget.attrs['class'] = 'form-control'
+        if form_password.is_valid():
+            form_password.save()
+            update_session_auth_hash(request, form_password.user)
+            messages.success(request, 'Tu contraseña se cambió correctamente.')
             return redirect('apps.clientes:mi_perfil')
-        else:
-            messages.error(request, 'Por favor revisá los datos ingresados.')
-    else:
-        form = EditarMiPerfilForm(initial={
-            'first_name': request.user.first_name,
-            'last_name':  request.user.last_name,
-            'email':      request.user.email,
-            'dni':        cliente.dni,
-            'fecha_nacimiento': cliente.fecha_nacimiento,
-        })
+        messages.error(request, 'No se pudo cambiar la contraseña: revisá los campos marcados.')
+
+    elif request.method == 'POST':
+        form_perfil = EditarMiPerfilForm(request.POST, request.FILES)
+        if form_perfil.is_valid():
+            datos = form_perfil.cleaned_data
+            if datos.get('eliminar_foto'):
+                user.imagen_perfil = Usuario._meta.get_field('imagen_perfil').get_default()
+            elif datos.get('imagen_perfil'):
+                user.imagen_perfil = datos['imagen_perfil']
+            celular = datos.get('celular')
+            if celular:
+                user.celular1 = celular
+                if principal:
+                    principal.numero = celular
+                    principal.save(update_fields=['numero'])
+                else:
+                    TelefonoContacto.objects.create(cliente=cliente, numero=celular,
+                                                    desc_relacion='Titular', es_principal=True)
+            user.save()
+            messages.success(request, 'Tus datos de perfil se actualizaron.')
+            return redirect('apps.clientes:mi_perfil')
+        messages.error(request, f'No se guardaron los cambios: {errores_en_texto(form_perfil)}')
 
     return render(request, 'clientes/editar_mi_perfil.html', {
-        'form': form,
-        'cliente': cliente
+        'form_perfil': form_perfil,
+        'form_password': form_password,
+        'cliente': cliente,
     })
 

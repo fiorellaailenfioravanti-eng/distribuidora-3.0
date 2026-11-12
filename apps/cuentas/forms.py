@@ -1,5 +1,9 @@
 from django import forms
 
+from django.utils import timezone
+
+from distribuidora.validadores import validar_fecha_no_pasada
+
 
 _INPUT = 'form-control'
 
@@ -31,6 +35,14 @@ class CargoCuentaForm(forms.Form):
         label='Vencimiento (opcional)',
         widget=forms.DateInput(attrs={'class': _INPUT, 'type': 'date'}),
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['fecha_vencimiento'].widget.attrs['min'] = timezone.localdate().isoformat()
+
+    def clean_fecha_vencimiento(self):
+        return validar_fecha_no_pasada(self.cleaned_data.get('fecha_vencimiento'),
+                                       'El vencimiento no puede ser anterior a hoy.')
 
 
 class PagoCuentaForm(forms.Form):

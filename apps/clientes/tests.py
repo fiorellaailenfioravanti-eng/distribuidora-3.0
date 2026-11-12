@@ -153,3 +153,48 @@ class VistaMovimientoBidonTests(TestCase):
         self.client.force_login(otro)
         self.client.post(self.url, {'tipo': 'Prestamo', 'cantidad': 3})
         self.assertFalse(self.cliente.movimientos_bidon.exists())
+
+
+class EditarMiPerfilTests(TestCase):
+    """La pantalla «Editar mi perfil» respondía 500 en cualquier envío."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        self.usuario = get_user_model().objects.create_user('ana', 'ana@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(self.usuario)
+        self.url = reverse('apps.clientes:editar_mi_perfil')
+
+    def test_muestra_los_dos_formularios(self):
+        respuesta = self.client.get(self.url)
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, 'name="celular"')
+        self.assertContains(respuesta, 'name="old_password"')
+
+    def test_actualiza_el_telefono_principal(self):
+        respuesta = self.client.post(self.url, {'form_perfil': '1', 'celular': '3624 555666'})
+        self.assertRedirects(respuesta, reverse('apps.clientes:mi_perfil'))
+        cliente = self.usuario.perfil_cliente
+        self.assertTrue(cliente.telefonos.filter(numero='3624 555666').exists())
+
+    def test_rechaza_telefono_con_letras(self):
+        respuesta = self.client.post(self.url, {'form_perfil': '1', 'celular': 'llamame'})
+        self.assertEqual(respuesta.status_code, 200)
+
+    def test_cambia_la_contrasena(self):
+        respuesta = self.client.post(self.url, {
+            'form_password': '1', 'old_password': 'Agua-Lluvia-2026',
+            'new_password1': 'Otra-Clave-2026x', 'new_password2': 'Otra-Clave-2026x',
+        })
+        self.assertRedirects(respuesta, reverse('apps.clientes:mi_perfil'))
+        self.usuario.refresh_from_db()
+        self.assertTrue(self.usuario.check_password('Otra-Clave-2026x'))
+
+
+class ValidacionesClienteTests(TestCase):
+    def test_dni_y_telefono(self):
+        from .forms import ClienteForm
+        base = {'nombre': 'Ana', 'apellido': 'Paz', 'tipo_cliente': 'Normal'}
+        self.assertTrue(ClienteForm({**base, 'dni': '30123456'}).is_valid())
+        self.assertIn('dni', ClienteForm({**base, 'dni': 'abc'}).errors)
+        Cliente.objects.create(nombre='Otro', dni='30123456')
+        self.assertIn('dni', ClienteForm({**base, 'dni': '30.123.456'}).errors)

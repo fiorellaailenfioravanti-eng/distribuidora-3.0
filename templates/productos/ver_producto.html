@@ -7,7 +7,7 @@
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'inicio' %}" class="text-decoration-none text-muted">Inicio</a></li>
             <li class="breadcrumb-item"><a href="{% url 'apps.productos:listar_productos' %}" class="text-decoration-none text-muted">Productos</a></li>
-            <li class="breadcrumb-item active fw-bold text-dark" aria-current="page">{{ producto.nombre }}</li>
+            <li class="breadcrumb-item active fw-bold text-body-emphasis" aria-current="page">{{ producto.nombre }}</li>
         </ol>
     </nav>
 
@@ -30,7 +30,7 @@
                     </span>
                 </div>
                 
-                <h1 class="h2 fw-bold mb-2 text-dark tracking-tight">{{ producto.nombre }}</h1>
+                <h1 class="h2 fw-bold mb-2 text-body-emphasis tracking-tight">{{ producto.nombre }}</h1>
                 
                 <div class="mb-4 border-bottom pb-3">
                     <h2 class="text-primary fw-bold h1 mb-1 tracking-tight">$ {{ producto.precio }}</h2>
@@ -59,7 +59,7 @@
 
 
                 <div class="mb-4">
-                    <h6 class="fw-bold text-dark mb-2">Descripción</h6>
+                    <h6 class="fw-bold text-body-emphasis mb-2">Descripción</h6>
                     <p class="text-secondary small lh-base">{{ producto.descripcion }}</p>
                 </div>
 
@@ -70,7 +70,7 @@
                             <i class="fa-solid fa-box-open fs-5"></i>
                         </div>
                         <div>
-                            <p class="mb-0 fw-bold text-dark small">Stock Disponible</p>
+                            <p class="mb-0 fw-bold text-body-emphasis small">Stock Disponible</p>
                             <p class="mb-0 text-muted" style="font-size: 0.75rem;">{{ producto.stock }} unidades</p>
                         </div>
                     </div>
@@ -91,7 +91,7 @@
                     
                     {% if es_vendedor %}
                     <div class="d-flex gap-2 w-100 w-sm-auto">
-                        <a href="{% url 'apps.productos:editar_producto' producto.pk %}" class="btn btn-warning btn-sm rounded-pill px-3 text-dark shadow-sm hover-lift fw-bold flex-grow-1 flex-sm-grow-0">
+                        <a href="{% url 'apps.productos:editar_producto' producto.pk %}" class="btn btn-warning btn-sm rounded-pill px-3 text-body-emphasis shadow-sm hover-lift fw-bold flex-grow-1 flex-sm-grow-0">
                             <i class="fa-solid fa-pen"></i> Editar
                         </a>
                         <a href="{% url 'apps.productos:eliminar_producto' producto.pk %}" class="btn btn-danger btn-sm rounded-pill px-3 shadow-sm hover-lift fw-bold flex-grow-1 flex-sm-grow-0">

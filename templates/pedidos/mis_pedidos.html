@@ -30,7 +30,7 @@
                 <tbody>
                     {% for pedido in pedidos %}
                     <tr>
-                        <td class="ps-4 fw-bold text-white">#{{ pedido.id_pedido }}</td>
+                        <td class="ps-4 fw-bold text-body-emphasis">#{{ pedido.id_pedido }}</td>
                         <td>{{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</td>
                         <td class="text-center">
                             {% if pedido.estado == 'Pendiente' %}

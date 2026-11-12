@@ -1,18 +1,24 @@
 {% extends "base_dashboard.html" %}
-{% block title %} Eliminar {% endblock%}
-
+{% block title %}Eliminar producto{% endblock %}
 
 {% block content %}
-<div class="alert alert-danger">
-    <h2>ELIMINACIÓN DE PRODUCTO ❌</h2>
-    <p>¿Estás seguro de eliminar el producto "<strong>{{ producto.nombre }}</strong>"?</p>
-    <p><strong>Descripción:</strong> {{ producto.descripcion }}</p>
-    <p class="fw-bold">⚠️ Esta acción no se puede deshacer.</p>
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface">
+            <div class="card-body p-4 p-md-5">
+                <h1 class="h4 fw-bold text-danger mb-3"><i class="fa-solid fa-triangle-exclamation me-2"></i>Eliminar producto</h1>
+                <p class="mb-2">¿Seguro que querés eliminar <strong>{{ producto.nombre }}</strong>?</p>
+                {% if producto.descripcion %}<p class="text-muted small mb-3">{{ producto.descripcion }}</p>{% endif %}
+                <div class="alert alert-warning small mb-4">
+                    Si el producto ya tiene pedidos no se borra: se desactiva y deja de verse en la tienda.
+                </div>
+                <form method="post" class="d-flex gap-2 justify-content-end">
+                    {% csrf_token %}
+                    <a href="{% url 'apps.productos:listar_productos_admin' %}" class="btn btn-light rounded-pill px-4">Cancelar</a>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4"><i class="fa-solid fa-trash me-1"></i>Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
-
-<form method="post">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-danger">Confirmar Eliminación</button>
-    <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-secondary">Cancelar</a>
-</form>
-{% endblock%}
+{% endblock %}

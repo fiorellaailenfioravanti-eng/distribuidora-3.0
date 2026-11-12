@@ -1,6 +1,9 @@
+from django.core import mail
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+
+from .forms import RegistroUsuarioForm
 
 
 class SesionTests(TestCase):
@@ -60,3 +63,52 @@ class RegistroTelefonosTests(TestCase):
         usuario = get_user_model().objects.get(username='nuevo')
         relaciones = set(usuario.perfil_cliente.telefonos.values_list('desc_relacion', flat=True))
         self.assertEqual(relaciones, {'Titular', 'Esposa'})
+
+
+class RecuperarContrasenaTests(TestCase):
+    """«Olvidé mi contraseña»: enlace por email y nueva contraseña."""
+
+    def setUp(self):
+        self.usuario = get_user_model().objects.create_user('ana', 'ana@x.com', 'Agua-Lluvia-2026')
+
+    def test_flujo_completo(self):
+        respuesta = self.client.post(reverse('apps.autenticacion:recuperar'), {'email': 'ANA@x.com'})
+        self.assertRedirects(respuesta, reverse('apps.autenticacion:recuperar_enviado'))
+        self.assertEqual(len(mail.outbox), 1)
+        enlace = next(linea for linea in mail.outbox[0].body.splitlines() if '/auth/recuperar/' in linea)
+        ruta = enlace.strip().split('testserver', 1)[1]
+        # Django guarda el token en la sesión y redirige a la URL con "set-password".
+        respuesta = self.client.get(ruta, follow=True)
+        url_form = respuesta.redirect_chain[-1][0]
+        respuesta = self.client.post(url_form, {'new_password1': 'Otra-Clave-2026x',
+                                                'new_password2': 'Otra-Clave-2026x'})
+        self.assertRedirects(respuesta, reverse('apps.autenticacion:recuperar_listo'))
+        self.usuario.refresh_from_db()
+        self.assertTrue(self.usuario.check_password('Otra-Clave-2026x'))
+
+    def test_email_desconocido_no_revela_nada(self):
+        respuesta = self.client.post(reverse('apps.autenticacion:recuperar'), {'email': 'nadie@x.com'})
+        self.assertRedirects(respuesta, reverse('apps.autenticacion:recuperar_enviado'))
+        self.assertEqual(len(mail.outbox), 0)
+
+
+class RegistroValidacionesTests(TestCase):
+    def _datos(self, **cambios):
+        datos = dict(username='nuevo', email='nuevo@x.com', password1='Clave-Segura-2026x',
+                     password2='Clave-Segura-2026x', celular1='3624111222', relacion1='Titular',
+                     celular2='3624333444', relacion2='Esposa')
+        datos.update(cambios)
+        return datos
+
+    def test_email_repetido_en_mayusculas(self):
+        get_user_model().objects.create_user('ana', 'ana@x.com', 'Agua-Lluvia-2026')
+        self.assertIn('email', RegistroUsuarioForm(self._datos(email='ANA@X.COM')).errors)
+
+    def test_celular_con_letras(self):
+        self.assertIn('celular1', RegistroUsuarioForm(self._datos(celular1='llamame ya')).errors)
+
+    def test_usuario_logueado_no_ve_login_ni_registro(self):
+        usuario = get_user_model().objects.create_user('ana', 'ana@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(usuario)
+        for nombre in ('ingresar', 'registrar'):
+            self.assertEqual(self.client.get(reverse(f'apps.autenticacion:{nombre}')).status_code, 302)

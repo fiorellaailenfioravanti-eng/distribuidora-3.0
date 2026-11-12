@@ -27,4 +27,4 @@ Promociones prepagas, compras y consumos con caducidad (RF-09, RF-10).
 - Usa modelos de [[pedidos]]
 
 ## Notas
--
+- Validaciones y correcciones: [[QA 2026-11-12]], [[Validaciones por campo]]

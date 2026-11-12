@@ -26,4 +26,4 @@ Cuentas corrientes, movimientos y morosidad (RF-14, RF-15).
 - Usa modelos de [[abonos]]
 
 ## Notas
--
+- Validaciones y correcciones: [[QA 2026-11-12]], [[Validaciones por campo]]

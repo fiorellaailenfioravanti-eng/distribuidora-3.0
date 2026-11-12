@@ -18,7 +18,7 @@ class PromocionForm(forms.ModelForm):
             'producto': forms.Select(attrs={'class': _SELECT}),
             'cant_paga': forms.NumberInput(attrs={'class': _INPUT, 'min': 1}),
             'cant_lleva': forms.NumberInput(attrs={'class': _INPUT, 'min': 2}),
-            'precio': forms.NumberInput(attrs={'class': _INPUT, 'step': '0.01'}),
+            'precio': forms.NumberInput(attrs={'class': _INPUT, 'step': '0.01', 'min': '0.01', 'inputmode': 'decimal'}),
             'dias_validez': forms.NumberInput(attrs={'class': _INPUT, 'min': 1}),
             'activa': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'descripcion': forms.Textarea(attrs={'class': _INPUT, 'rows': 2}),
@@ -30,12 +30,26 @@ class PromocionForm(forms.ModelForm):
         self.fields['precio'].help_text = 'Si lo dejás vacío se calcula: unidades que paga × precio del producto.'
         self.fields['precio'].required = False
 
+    def clean_cant_paga(self):
+        return self._minimo_uno('cant_paga')
+
+    def clean_dias_validez(self):
+        return self._minimo_uno('dias_validez')
+
+    def _minimo_uno(self, campo):
+        valor = self.cleaned_data.get(campo)
+        if valor is not None and valor < 1:
+            raise forms.ValidationError('Debe ser al menos 1.')
+        return valor
+
     def clean(self):
-        datos = super().clean()
-        if not datos.get('precio') and datos.get('producto') and datos.get('cant_paga'):
+        # El precio vacío se calcula antes de la validación del modelo (que lo exige > 0).
+        datos = self.cleaned_data
+        if datos.get('precio') is None and datos.get('producto') and datos.get('cant_paga'):
             datos['precio'] = datos['producto'].precio * datos['cant_paga']
-            self.instance.precio = datos['precio']
-        return datos
+        if datos.get('precio') is None and 'precio' not in self.errors:
+            self.add_error('precio', 'Indicá el precio del pack.')
+        return super().clean()
 
 
 class VenderPromocionForm(forms.Form):

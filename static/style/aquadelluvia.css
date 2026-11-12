@@ -2,44 +2,11 @@
    AQUADELLUVIA - Diseño Visual (Distribuidora 3.0)
    ========================================================= */
 
-/* 1. Variables CSS (Extiende Bootstrap 5.3) - ESTILO LOGO */
+/* 1. Variables CSS — los colores están en paleta.css */
 :root, [data-bs-theme="light"] {
-    /* Tema Claro */
-    --bg-main: #F4F7F6;       /* Blanco nube suave */
-    --bg-surface: #FFFFFF;    /* Blanco puro (banderín del logo) */
-    --color-primary: #6CB4EE; /* Azul Agua de Lluvia (Texto del logo) */
-    --color-secondary: #8BC34A;/* Verde Rana (Mascota) */
-    --color-accent: #F5B041;  /* Naranja/Amarillo Otoño (Fondo del logo) */
-    --text-main: #2C3E50;     /* Pizarra oscuro */
-    --text-muted: #7F8C8D;
-    
     /* Tipografía */
     --font-body: 'Inter', sans-serif;
     --font-heading: 'Nunito', sans-serif;
-    
-    /* Variables de Bootstrap overrides */
-    --bs-body-bg: var(--bg-main);
-    --bs-body-color: var(--text-main);
-    --bs-primary: var(--color-primary);
-    --bs-secondary: var(--color-secondary);
-}
-
-[data-bs-theme="dark"] {
-    /* Tema Oscuro */
-    --bg-main: #1A252C;       /* Pizarra muy oscuro */
-    --bg-surface: #273746;    /* Pizarra superficie */
-    --color-primary: #5DADE2; /* Azul Agua de Lluvia (brillante) */
-    --color-secondary: #7CB342;/* Verde Rana */
-    --color-accent: #F39C12;  /* Naranja/Amarillo Otoño */
-    --text-main: #EAEDED;     /* Blanco suave */
-    --text-muted: #95A5A6;
-    
-    /* Variables de Bootstrap overrides */
-    --bs-body-bg: var(--bg-main);
-    --bs-body-color: var(--text-main);
-    --bs-primary: var(--color-primary);
-    --bs-secondary: var(--color-secondary);
-    --bs-border-color: rgba(255, 255, 255, 0.05);
 }
 
 /* 2. Estructura y Componentes Base */
@@ -104,16 +71,6 @@ h3 {
     box-shadow: 0 0 15px var(--color-primary);
 }
 
-[data-bs-theme="dark"] .btn-primary {
-    background-color: var(--color-primary);
-    border-color: var(--color-primary);
-    color: var(--bg-main); /* Alto contraste */
-}
-[data-bs-theme="dark"] .btn-primary:hover {
-    background-color: var(--color-secondary);
-    border-color: var(--color-secondary);
-}
-
 /* Focus en Inputs y Legibilidad de Formularios */
 .form-label {
     color: var(--text-main);
@@ -124,7 +81,7 @@ h3 {
 
 .form-control:focus, .form-select:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 0.25rem rgba(108, 180, 238, 0.25);
+    box-shadow: 0 0 0 0.25rem var(--bs-focus-ring-color);
 }
 
 [data-bs-theme="light"] .form-control,

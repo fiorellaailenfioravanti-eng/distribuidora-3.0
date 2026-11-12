@@ -17,7 +17,7 @@
     <!-- Estilo Global Dashboard -->
     <link rel="stylesheet" href="{% static 'style/dashboard.css' %}?v=8">
     <link rel="stylesheet" href="{% static 'style/productos.css' %}?v=6">
-    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=7">
+    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     {% include 'includes/favicon.html' %}
     <title>{% block title %}{% endblock %} · Aquadelluvia</title>
@@ -221,9 +221,9 @@
                                 <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
                                     <div class="text-end me-2 d-none d-md-block">
                                         <div class="fw-bold text-main" style="font-size: 0.9rem;">{{ user.username }}</div>
-                                        <div class="text-muted" style="font-size: 0.75rem;">{% if user.is_superuser %}Admin{% else %}Usuario{% endif %}</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">{% if user.is_superuser %}Admin{% elif es_vendedor %}Vendedor{% elif es_repartidor %}Repartidor{% else %}Cliente{% endif %}</div>
                                     </div>
-                                    <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=6466f1&color=fff&rounded=true" alt="" width="40" height="40" class="shadow-sm">
+                                    {% include 'includes/avatar.html' with tamano='md' %}
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2" aria-labelledby="dropdownUser">
                                     {% if user.perfil_empleado and es_vendedor %}

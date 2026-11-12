@@ -1,5 +1,15 @@
 # 🎨 Patrón de Diseño Visual — Aquadelluvia (Distribuidora 3.0)
 
+> [!important] Actualización 12/11/2026 — identidad «Agua de Lluvia»
+> - **Fuente única de colores:** `static/style/paleta.css` (tienda y panel). `aquadelluvia.css` y `dashboard.css` ya no definen colores.
+> - **Colores del logo:** azul marino `#183068` (letras), verde rana `#AAD03A`, rojo cachete `#CC2A1C`.
+>   Primario de la interfaz `#1E4F91` (claro) / `#8DB6F0` (oscuro); éxito en verde rana `#4D7C0F` / `#A3D44A`.
+> - **Logo:** `static/img/marca/` — `logo-color-*.webp` (sirve en fondo claro y oscuro), `logo-negro-*.webp`,
+>   `rana-*.webp` (cara sola, para encabezado/menú), favicons. Clases: `.marca-rana`, `.marca-nombre`, `.marca-logo-hero`.
+> - **Tema claro por defecto**; el oscuro se aplica en el `<head>` si el usuario lo eligió (sin destello).
+> - **Mensajes:** avisos apilados (éxito/info) y ventanas SweetAlert2 (error/advertencia/confirmación) en `static/js/popups.js`.
+> Las secciones de colores de abajo quedan como historia del diseño anterior.
+
 Este documento establece las guías de estilo, paleta de colores, márgenes, bordes y principios visuales a utilizar en todo el frontend de la aplicación web (Django Templates + Bootstrap 5.3). 
 
 **DEBE** ser consultado antes de crear o modificar cualquier componente visual para mantener la coherencia estética del proyecto.

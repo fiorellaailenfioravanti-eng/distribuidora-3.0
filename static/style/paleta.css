@@ -1,34 +1,38 @@
 /* =========================================================
    AQUADELLUVIA — Paleta única (tienda y panel)
    ---------------------------------------------------------
-   Colores del logo: azul agua de lluvia, verde rana y naranja
-   otoño, ajustados para contraste AA sobre los fondos de cada
-   tema. Se carga DESPUÉS de aquadelluvia.css / dashboard.css y
+   Colores del logo «Agua de Lluvia»: azul marino de las letras
+   (#183068), verde rana (#AAD03A) y rojo de los cachetes (#CC2A1C),
+   ajustados para contraste AA sobre los fondos de cada tema. Se carga DESPUÉS de aquadelluvia.css / dashboard.css y
    redefine también las variables internas de Bootstrap 5.3, para
    que botones, enlaces, badges y formularios usen la misma marca.
    ========================================================= */
 
 :root, [data-bs-theme="light"] {
     /* Marca */
-    --aq-agua: #0B6FB0;           /* primario: 5.4:1 con texto blanco */
-    --aq-agua-hover: #095A8F;
-    --aq-agua-suave: #E6F2FB;
-    --aq-rana: #3E8E2C;           /* secundario de marca */
-    --aq-otono: #D9770A;          /* acento */
+    --aq-agua: #1E4F91;           /* primario (marino del logo, un tono más claro): 8:1 con blanco */
+    --aq-agua-hover: #173E73;
+    --aq-agua-suave: #E8EFF8;
+    --aq-marino: #183068;         /* letras del logo */
+    --aq-rana: #5E8C17;           /* verde rana oscurecido para texto (AA) */
+    --aq-rana-logo: #AAD03A;      /* verde rana del logo (fondos, detalles) */
+    --aq-rana-suave: #F1F8E1;
+    --aq-cachete: #CC2A1C;        /* rojo del logo */
+    --aq-otono: #D9770A;          /* advertencias */
     --aq-sobre-primario: #FFFFFF;
 
     /* Superficies y texto */
-    --bg-main: #F3F7FA;
+    --bg-main: #F4F7FB;
     --bg-surface: #FFFFFF;
-    --bg-surface-2: #EEF3F7;
-    --text-main: #102A3A;
-    --text-muted: #52667A;
-    --aq-borde: #D6E1EA;
+    --bg-surface-2: #EEF2F8;
+    --text-main: #13223F;
+    --text-muted: #55657F;
+    --aq-borde: #D8E0EC;
 
     /* Estados */
-    --aq-exito: #2E8540;
+    --aq-exito: #4D7C0F;
     --aq-advertencia: #A86400;
-    --aq-peligro: #C62828;
+    --aq-peligro: #C0261A;
     --aq-info: #0E7490;
 
     /* Alias usados por los CSS existentes */
@@ -41,49 +45,53 @@
     /* Bootstrap */
     --bs-body-bg: var(--bg-main);
     --bs-body-color: var(--text-main);
-    --bs-emphasis-color: #0A1C28;
+    --bs-emphasis-color: #0E1A33;
     --bs-secondary-color: var(--text-muted);
     --bs-border-color: var(--aq-borde);
     --bs-tertiary-bg: var(--bg-surface-2);
-    --bs-primary: #0B6FB0;   --bs-primary-rgb: 11, 111, 176;
-    --bs-success: #2E8540;   --bs-success-rgb: 46, 133, 64;
+    --bs-primary: #1E4F91;   --bs-primary-rgb: 30, 79, 145;
+    --bs-success: #4D7C0F;   --bs-success-rgb: 77, 124, 15;
     --bs-warning: #D98A00;   --bs-warning-rgb: 217, 138, 0;
-    --bs-danger: #C62828;    --bs-danger-rgb: 198, 40, 40;
+    --bs-danger: #C0261A;    --bs-danger-rgb: 192, 38, 26;
     --bs-info: #0E7490;      --bs-info-rgb: 14, 116, 144;
-    --bs-primary-text-emphasis: #074A76;
-    --bs-primary-bg-subtle: #E6F2FB;
-    --bs-primary-border-subtle: #A9D1EE;
-    --bs-success-text-emphasis: #1E5A2B;
-    --bs-success-bg-subtle: #E5F4E8;
+    --bs-primary-text-emphasis: #143561;
+    --bs-primary-bg-subtle: #E8EFF8;
+    --bs-primary-border-subtle: #B5C9E4;
+    --bs-success-text-emphasis: #36570A;
+    --bs-success-bg-subtle: #F1F8E1;
     --bs-warning-text-emphasis: #6E4300;
     --bs-warning-bg-subtle: #FDF1DC;
-    --bs-danger-text-emphasis: #8A1C1C;
-    --bs-danger-bg-subtle: #FBE7E7;
+    --bs-danger-text-emphasis: #861A12;
+    --bs-danger-bg-subtle: #FCE9E7;
     --bs-info-text-emphasis: #0A4F62;
     --bs-info-bg-subtle: #E1F3F7;
-    --bs-link-color: #0B6FB0;       --bs-link-color-rgb: 11, 111, 176;
-    --bs-link-hover-color: #095A8F; --bs-link-hover-color-rgb: 9, 90, 143;
-    --bs-focus-ring-color: rgba(11, 111, 176, 0.25);
+    --bs-link-color: #1E4F91;       --bs-link-color-rgb: 30, 79, 145;
+    --bs-link-hover-color: #173E73; --bs-link-hover-color-rgb: 23, 62, 115;
+    --bs-focus-ring-color: rgba(30, 79, 145, 0.25);
 }
 
 [data-bs-theme="dark"] {
-    --aq-agua: #5BB8F5;
-    --aq-agua-hover: #86CBF8;
-    --aq-agua-suave: rgba(91, 184, 245, 0.12);
-    --aq-rana: #7CC45E;
+    --aq-agua: #8DB6F0;
+    --aq-agua-hover: #B2CEF6;
+    --aq-agua-suave: rgba(141, 182, 240, 0.13);
+    --aq-marino: #B2CEF6;
+    --aq-rana: #B5DB4C;
+    --aq-rana-logo: #AAD03A;
+    --aq-rana-suave: rgba(170, 208, 58, 0.12);
+    --aq-cachete: #F0705F;
     --aq-otono: #F5A93B;
-    --aq-sobre-primario: #062338;
+    --aq-sobre-primario: #0B1D38;
 
-    --bg-main: #0D1B26;
-    --bg-surface: #152735;
-    --bg-surface-2: #1C3344;
-    --text-main: #E6EEF4;
-    --text-muted: #93A8B8;
+    --bg-main: #0D1626;
+    --bg-surface: #152238;
+    --bg-surface-2: #1D2D47;
+    --text-main: #E7EDF6;
+    --text-muted: #98A7BF;
     --aq-borde: rgba(255, 255, 255, 0.09);
 
-    --aq-exito: #5CCB75;
+    --aq-exito: #A3D44A;
     --aq-advertencia: #F2B24C;
-    --aq-peligro: #F27272;
+    --aq-peligro: #F27A6C;
     --aq-info: #4FC3D9;
 
     --bs-body-bg: var(--bg-main);
@@ -92,25 +100,25 @@
     --bs-secondary-color: var(--text-muted);
     --bs-border-color: var(--aq-borde);
     --bs-tertiary-bg: var(--bg-surface-2);
-    --bs-primary: #5BB8F5;   --bs-primary-rgb: 91, 184, 245;
-    --bs-success: #5CCB75;   --bs-success-rgb: 92, 203, 117;
+    --bs-primary: #8DB6F0;   --bs-primary-rgb: 141, 182, 240;
+    --bs-success: #A3D44A;   --bs-success-rgb: 163, 212, 74;
     --bs-warning: #F2B24C;   --bs-warning-rgb: 242, 178, 76;
-    --bs-danger: #F27272;    --bs-danger-rgb: 242, 114, 114;
+    --bs-danger: #F27A6C;    --bs-danger-rgb: 242, 122, 108;
     --bs-info: #4FC3D9;      --bs-info-rgb: 79, 195, 217;
-    --bs-primary-text-emphasis: #A9DBFA;
-    --bs-primary-bg-subtle: rgba(91, 184, 245, 0.12);
-    --bs-primary-border-subtle: rgba(91, 184, 245, 0.35);
-    --bs-success-text-emphasis: #A6E6B4;
-    --bs-success-bg-subtle: rgba(92, 203, 117, 0.12);
+    --bs-primary-text-emphasis: #C6DBF8;
+    --bs-primary-bg-subtle: rgba(141, 182, 240, 0.13);
+    --bs-primary-border-subtle: rgba(141, 182, 240, 0.35);
+    --bs-success-text-emphasis: #CFE99A;
+    --bs-success-bg-subtle: rgba(163, 212, 74, 0.13);
     --bs-warning-text-emphasis: #F8D294;
     --bs-warning-bg-subtle: rgba(242, 178, 76, 0.12);
-    --bs-danger-text-emphasis: #F8AEAE;
-    --bs-danger-bg-subtle: rgba(242, 114, 114, 0.12);
+    --bs-danger-text-emphasis: #F8B5AC;
+    --bs-danger-bg-subtle: rgba(242, 122, 108, 0.13);
     --bs-info-text-emphasis: #9FE0EC;
     --bs-info-bg-subtle: rgba(79, 195, 217, 0.12);
-    --bs-link-color: #5BB8F5;       --bs-link-color-rgb: 91, 184, 245;
-    --bs-link-hover-color: #86CBF8; --bs-link-hover-color-rgb: 134, 203, 248;
-    --bs-focus-ring-color: rgba(91, 184, 245, 0.3);
+    --bs-link-color: #8DB6F0;       --bs-link-color-rgb: 141, 182, 240;
+    --bs-link-hover-color: #B2CEF6; --bs-link-hover-color-rgb: 178, 206, 246;
+    --bs-focus-ring-color: rgba(141, 182, 240, 0.3);
 }
 
 /* ── Botones (Bootstrap compila sus colores: hay que redefinirlos) ── */
@@ -165,7 +173,7 @@
 }
 .btn-success:hover, .btn-danger:hover { filter: brightness(1.08); }
 [data-bs-theme="dark"] .btn-success,
-[data-bs-theme="dark"] .btn-danger { --bs-btn-color: #0D1B26; --bs-btn-hover-color: #0D1B26; }
+[data-bs-theme="dark"] .btn-danger { --bs-btn-color: #0D1626; --bs-btn-hover-color: #0D1626; }
 
 .btn-glow:hover { box-shadow: 0 0 0 4px var(--bs-focus-ring-color); }
 
@@ -255,7 +263,7 @@
 
 /* Fondo detrás de las ventanas (nunca detrás de los avisos) */
 .swal2-container.swal2-backdrop-show {
-    background: rgba(6, 20, 30, 0.45) !important;
+    background: rgba(10, 20, 45, 0.45) !important;
     backdrop-filter: blur(2px);
 }
 
@@ -364,4 +372,40 @@
     --bs-btn-hover-color: #FFFFFF;
     --bs-btn-active-bg: rgba(255, 255, 255, 0.18);
     --bs-btn-active-color: #FFFFFF;
+}
+
+/* ── Marca: logo «Agua de Lluvia» ── */
+.marca-rana {
+    width: 46px; height: 46px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 3px rgba(19, 34, 63, 0.18));
+    transition: transform 0.25s ease;
+}
+a:hover > .marca-rana { transform: rotate(-6deg) scale(1.06); }
+.marca-rana--grande { width: 88px; height: 88px; }
+.marca-nombre {
+    font-family: var(--font-heading, 'Nunito', sans-serif);
+    font-weight: 800;
+    font-size: 1.3rem;
+    letter-spacing: -0.02em;
+    color: var(--aq-marino);
+}
+.marca-nombre::first-letter { color: var(--aq-rana); }
+#sidebar .marca-rana { width: 42px; height: 42px; }
+.marca-logo-hero {
+    width: 300px; max-width: 70%; height: auto;
+    filter: drop-shadow(0 10px 18px rgba(19, 34, 63, 0.15));
+}
+.marca-fondo-suave {
+    background:
+        radial-gradient(circle at 15% 20%, var(--aq-rana-suave) 0, transparent 45%),
+        radial-gradient(circle at 85% 80%, var(--aq-agua-suave) 0, transparent 50%);
+}
+@media (max-width: 575.98px) {
+    .marca-rana { width: 38px; height: 38px; }
+    .marca-nombre { font-size: 1.1rem; }
+    .marca-logo-hero { width: 220px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    a:hover > .marca-rana { transform: none; }
 }

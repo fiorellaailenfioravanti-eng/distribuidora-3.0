@@ -1,14 +1,18 @@
 {% extends "base_tienda.html" %}
+{% load static %}
 {% block title %}Inicio{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
 <div class="px-3 px-md-4 py-5 my-4 my-md-5 text-center bg-surface rounded-4 shadow-sm border position-relative overflow-hidden">
     <!-- Decoración sutil de fondo -->
-    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(135deg, rgba(108,180,238,0.05) 0%, rgba(139,195,74,0.05) 100%); z-index: 0;"></div>
+    <div class="position-absolute top-0 start-0 w-100 h-100 marca-fondo-suave" style="z-index: 0;"></div>
     
     <div class="position-relative" style="z-index: 1;">
-        <i class="fa-solid fa-droplet text-primary mb-3 mb-md-4" style="font-size: 3rem; filter: drop-shadow(0 4px 6px rgba(108, 180, 238, 0.3));"></i>
+        <img src="{% static 'img/marca/logo-color-480.webp' %}"
+             srcset="{% static 'img/marca/logo-color-480.webp' %} 480w, {% static 'img/marca/logo-color-960.webp' %} 960w"
+             sizes="(max-width: 576px) 220px, 300px"
+             alt="Agua de Lluvia" class="marca-logo-hero mb-3 mb-md-4" width="300" height="237">
         <h1 class="display-6 fw-bold text-body-emphasis tracking-tight mb-3">Pureza en cada gota</h1>
         <div class="col-lg-6 mx-auto">
             <p class="mb-4 text-muted">Bienvenido a la distribuidora oficial de <strong>Agua de Lluvia</strong>. Llevamos la frescura de la naturaleza directamente a tu mesa, con envíos rápidos y el mejor servicio.</p>

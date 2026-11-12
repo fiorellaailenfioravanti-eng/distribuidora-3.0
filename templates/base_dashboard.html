@@ -17,9 +17,10 @@
     <!-- Estilo Global Dashboard -->
     <link rel="stylesheet" href="{% static 'style/dashboard.css' %}?v=8">
     <link rel="stylesheet" href="{% static 'style/productos.css' %}?v=6">
-    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=6">
+    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=7">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>{% block title %}{% endblock %}</title>
+    {% include 'includes/favicon.html' %}
+    <title>{% block title %}{% endblock %} · Aquadelluvia</title>
     <style>
     /* Estilo para que el dropdown se abra al pasar el mouse */
     .nav-item.dropdown:hover .dropdown-menu {
@@ -35,7 +36,8 @@
         <!-- Sidebar Fijo (Escritorio) -->
         <aside id="sidebar" class="d-none d-lg-flex flex-column p-3 vh-100 sticky-top">
             <a href="{% url 'inicio' %}" class="navbar-brand d-flex align-items-center mb-4 mt-2 px-3 text-decoration-none">
-                <span class="fs-5 fw-bold text-primary tracking-wide text-uppercase" style="letter-spacing: 2px;">| Aquadelluvia</span>
+                <img src="{% static 'img/marca/rana-128.webp' %}" alt="" class="marca-rana me-2" width="42" height="42">
+                <span class="marca-nombre">Aquadelluvia</span>
             </a>
             
             <ul class="nav flex-column mb-auto gap-1 mt-3">
@@ -115,7 +117,10 @@
         <!-- Sidebar Offcanvas (Móviles) -->
         <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
             <div class="offcanvas-header border-bottom">
-                <h5 class="offcanvas-title text-primary fw-bold text-uppercase" id="sidebarOffcanvasLabel">| Aquadelluvia</h5>
+                <h5 class="offcanvas-title d-flex align-items-center gap-2 mb-0" id="sidebarOffcanvasLabel">
+                    <img src="{% static 'img/marca/rana-128.webp' %}" alt="" class="marca-rana" width="36" height="36">
+                    <span class="marca-nombre">Aquadelluvia</span>
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body p-0">

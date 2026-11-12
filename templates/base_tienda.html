@@ -17,9 +17,10 @@
     <!-- Estilo Global Aquadelluvia (Tienda) -->
     <link rel="stylesheet" href="{% static 'style/aquadelluvia.css' %}?v=7">
     <link rel="stylesheet" href="{% static 'style/productos.css' %}?v=7">
-    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=6">
+    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=7">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>{% block title %}{% endblock %}</title>
+    {% include 'includes/favicon.html' %}
+    <title>{% block title %}{% endblock %} · Aquadelluvia</title>
     <style>
     /* Estilo para que el dropdown se abra al pasar el mouse */
     .nav-item.dropdown:hover .dropdown-menu {
@@ -37,10 +38,8 @@
             <div class="container d-flex flex-wrap align-items-center justify-content-between"> 
                 <!-- Logo -->
                 <a class="navbar-brand d-flex align-items-center gap-2 me-auto me-lg-4" href="{% url 'inicio' %}">
-                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
-                        <i class="fa-solid fa-droplet fs-6"></i>
-                    </div>
-                    <span class="fw-bold fs-5 fs-lg-4 tracking-tight text-body-emphasis">Aquadelluvia</span>
+                    <img src="{% static 'img/marca/rana-128.webp' %}" alt="" class="marca-rana" width="46" height="46">
+                    <span class="marca-nombre">Aquadelluvia</span>
                 </a>
                 
                 <!-- Iconos móviles (siempre visibles) -->

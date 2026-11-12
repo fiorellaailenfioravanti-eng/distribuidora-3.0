@@ -1,4 +1,5 @@
 {% extends 'base_tienda.html' %}
+{% load static %}
 
 {% block title %}Registrar{% endblock %}
 
@@ -8,6 +9,7 @@
         <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden mt-4">
             <div class="card-body p-5">
                 <div class="text-center mb-4">
+                    <img src="{% static 'img/marca/rana-128.webp' %}" alt="Agua de Lluvia" class="marca-rana marca-rana--grande mb-3" width="88" height="88">
                     <h1 class="display-5 fw-bold text-body-emphasis tracking-tight mb-2">Crear Cuenta</h1>
                     <p class="text-muted mb-0">Únete a nuestra distribuidora para empezar a comprar.</p>
                 </div>

@@ -9,6 +9,10 @@ from apps.permisos.views import destino_personal
 from .forms import RegistroUsuarioForm, IngresarUsuarioForm
 
 
+# Páginas de la tienda que sólo usan los clientes.
+_SOLO_CLIENTES = ('/carrito', '/pedidos/checkout', '/pedidos/confirmar', '/pedidos/mis-pedidos', '/clientes/mi-perfil')
+
+
 def _ya_ingresado(request):
     """Un usuario con sesión iniciada no vuelve a ver el login ni el registro."""
     if not request.user.is_authenticated:
@@ -38,7 +42,7 @@ def ingresar_usuario(request):
     if (ya := _ya_ingresado(request)) is not None:
         return ya
     next_url = request.GET.get('next')
-    if next_url and 'carrito' in next_url:
+    if request.method == 'GET' and next_url and 'carrito' in next_url:
         messages.info(request, "Ingresá para ver tu carrito.")
     if request.method == 'POST':
         form = IngresarUsuarioForm(request.POST)
@@ -50,6 +54,8 @@ def ingresar_usuario(request):
                 login(request, user)
                 messages.success(request, 'Ingreso exitoso.')
                 destino = request.POST.get('next') or next_url
+                if destino and es_personal_interno(user) and destino.startswith(_SOLO_CLIENTES):
+                    destino = None  # el personal no compra: va a su panel
                 if destino and url_has_allowed_host_and_scheme(
                     destino, allowed_hosts={request.get_host()}, require_https=request.is_secure()
                 ):

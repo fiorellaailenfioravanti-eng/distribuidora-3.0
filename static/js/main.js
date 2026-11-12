@@ -1,13 +1,10 @@
-//funcion para cambiar el tema de bootstrap segun la preferencia del usuario
+// Botón de tema claro/oscuro: guarda la elección del usuario.
 document.addEventListener("DOMContentLoaded", function () {
     const btns = document.querySelectorAll(".toggle-theme-btn");
     const html = document.documentElement;
 
-    // Recuperar el tema guardado en localStorage al cargar la página
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme) {
-        html.setAttribute("data-bs-theme", savedTheme);
-    }
+    // El tema guardado ya lo aplica un script en el <head> de las plantillas base
+    // (antes de dibujar la página, para que no destelle).
 
     btns.forEach(btn => {
         btn.addEventListener("click", function () {

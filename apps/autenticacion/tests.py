@@ -107,6 +107,16 @@ class RegistroValidacionesTests(TestCase):
     def test_celular_con_letras(self):
         self.assertIn('celular1', RegistroUsuarioForm(self._datos(celular1='llamame ya')).errors)
 
+    def test_personal_no_es_enviado_al_carrito(self):
+        from django.contrib.auth.models import Group
+        vendedor = get_user_model().objects.create_user('vend', 'v@x.com', 'Agua-Lluvia-2026')
+        vendedor.groups.add(Group.objects.get(name='Vendedor'))
+        respuesta = self.client.post(
+            reverse('apps.autenticacion:ingresar') + '?next=/carrito/',
+            {'username': 'vend', 'password': 'Agua-Lluvia-2026'},
+        )
+        self.assertNotIn('/carrito', respuesta.url)
+
     def test_usuario_logueado_no_ve_login_ni_registro(self):
         usuario = get_user_model().objects.create_user('ana', 'ana@x.com', 'Agua-Lluvia-2026')
         self.client.force_login(usuario)

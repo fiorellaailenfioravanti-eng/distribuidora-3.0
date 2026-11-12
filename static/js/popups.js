@@ -20,28 +20,85 @@
     const ICONOS = { success: 'success', error: 'error', warning: 'warning', info: 'info', debug: 'info' };
     const TITULOS = { success: 'Listo', error: 'Hubo un problema', warning: 'Atención', info: 'Información' };
 
-    const popup = Swal.mixin({
-        customClass: {
-            popup: 'aq-popup',
-            confirmButton: 'btn btn-primary rounded-pill px-4 mx-1',
-            cancelButton: 'btn btn-light rounded-pill px-4 mx-1',
-        },
-        buttonsStyling: false,
-        confirmButtonText: 'Entendido',
-    });
+    // Íconos propios (Font Awesome) en lugar de los dibujos animados de SweetAlert.
+    const ICONO_FA = {
+        success: 'fa-check', error: 'fa-xmark', warning: 'fa-exclamation',
+        info: 'fa-info', question: 'fa-question',
+    };
+    const iconoHtml = (tipo) => '<i class="fa-solid ' + (ICONO_FA[tipo] || ICONO_FA.info) + '"></i>';
 
-    const aviso = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 4500,
-        timerProgressBar: true,
-        customClass: { popup: 'aq-popup aq-toast' },
-        didOpen: (t) => {
-            t.addEventListener('mouseenter', Swal.stopTimer);
-            t.addEventListener('mouseleave', Swal.resumeTimer);
-        },
-    });
+    /** Ventana modal (errores, advertencias, confirmaciones). */
+    function ventana(opciones) {
+        const tipo = opciones.icon || 'info';
+        const peligro = opciones.peligro;
+        delete opciones.peligro;
+        return Swal.fire(Object.assign({
+            iconHtml: iconoHtml(tipo),
+            buttonsStyling: false,
+            confirmButtonText: 'Entendido',
+            showClass: { popup: 'aq-entrar' },
+            hideClass: { popup: 'aq-salir' },
+            customClass: {
+                popup: 'aq-popup aq-tipo-' + tipo,
+                icon: 'aq-icono',
+                confirmButton: 'btn ' + (peligro ? 'btn-danger' : 'btn-primary') + ' rounded-pill px-4 mx-1',
+                cancelButton: 'btn btn-light rounded-pill px-4 mx-1',
+                actions: 'aq-acciones',
+            },
+        }, opciones));
+    }
+
+    // Los avisos salen justo debajo del encabezado visible (su alto cambia con el ancho de pantalla).
+    function actualizarTope() {
+        const encabezado = document.querySelector('header, .top-header, nav.navbar');
+        const borde = encabezado ? encabezado.getBoundingClientRect().bottom : 0;
+        document.documentElement.style.setProperty('--aq-tope', Math.max(12, Math.round(borde) + 12) + 'px');
+    }
+    window.addEventListener('scroll', actualizarTope, { passive: true });
+    window.addEventListener('resize', actualizarTope);
+
+    /**
+     * Aviso flotante (éxito, información): cada mensaje es su propia tarjeta,
+     * apiladas debajo del encabezado. Se cierra sola (pausa al pasar el mouse)
+     * o con la X. No usa SweetAlert: así varios avisos conviven sin taparse.
+     */
+    const DURACION_AVISO = 5000;
+    function contenedorAvisos() {
+        let c = document.getElementById('aq-avisos');
+        if (!c) {
+            c = document.createElement('div');
+            c.id = 'aq-avisos';
+            c.setAttribute('aria-live', 'polite');
+            document.body.appendChild(c);
+        }
+        return c;
+    }
+    function cerrarAviso(aviso) {
+        if (aviso.dataset.cerrando) return;
+        aviso.dataset.cerrando = '1';
+        aviso.classList.add('aq-aviso--saliendo');
+        setTimeout(() => aviso.remove(), 200);
+    }
+    function avisar(opciones) {
+        const tipo = opciones.icon || 'info';
+        actualizarTope();
+        const aviso = document.createElement('div');
+        aviso.className = 'aq-aviso aq-tipo-' + tipo;
+        aviso.setAttribute('role', tipo === 'error' ? 'alert' : 'status');
+        aviso.innerHTML =
+            '<span class="aq-aviso-icono">' + iconoHtml(tipo) + '</span>' +
+            '<div class="aq-aviso-texto">' + (opciones.html || escapar(opciones.title || '')) + '</div>' +
+            '<button type="button" class="aq-aviso-cerrar" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>' +
+            '<span class="aq-aviso-barra" style="animation-duration:' + DURACION_AVISO + 'ms"></span>';
+        aviso.querySelector('.aq-aviso-cerrar').addEventListener('click', () => cerrarAviso(aviso));
+        aviso.querySelector('.aq-aviso-barra').addEventListener('animationend', () => cerrarAviso(aviso));
+        const contenedor = contenedorAvisos();
+        contenedor.appendChild(aviso);
+        // Como máximo 4 a la vez: el más viejo se va.
+        const avisos = contenedor.querySelectorAll('.aq-aviso:not(.aq-aviso--saliendo)');
+        if (avisos.length > 4) cerrarAviso(avisos[0]);
+        return Promise.resolve();
+    }
 
     function escapar(texto) {
         const div = document.createElement('div');
@@ -55,10 +112,10 @@
 
     // Exponer para usar desde otros scripts: AqPopup.exito('...'), AqPopup.error('...').
     window.AqPopup = {
-        exito: (texto) => aviso.fire({ icon: 'success', title: texto }),
-        info: (texto) => aviso.fire({ icon: 'info', title: texto }),
-        advertencia: (texto) => popup.fire({ icon: 'warning', title: TITULOS.warning, text: texto }),
-        error: (texto) => popup.fire({ icon: 'error', title: TITULOS.error, text: texto }),
+        exito: (texto) => avisar({ icon: 'success', title: texto }),
+        info: (texto) => avisar({ icon: 'info', title: texto }),
+        advertencia: (texto) => ventana({ icon: 'warning', title: TITULOS.warning, text: texto }),
+        error: (texto) => ventana({ icon: 'error', title: TITULOS.error, text: texto }),
     };
 
     // ── 1. Mensajes de Django ──────────────────────────────────────────
@@ -69,11 +126,8 @@
     }
 
     function mostrarAvisos(leves) {
-        if (!leves.length) return;
-        const nivel = leves.some((m) => /success/.test(m.nivel)) ? 'success' : 'info';
-        const textos = leves.map((m) => escapar(m.texto));
-        aviso.fire({ icon: ICONOS[nivel], title: textos.length > 1 ? '' : textos[0],
-                     html: textos.length > 1 ? listaHtml(textos) : undefined });
+        // Uno por mensaje, cada uno con su tipo, con un pequeño escalonado.
+        leves.forEach((m, i) => setTimeout(() => avisar({ icon: ICONOS[m.nivel] || 'info', title: m.texto }), i * 120));
     }
 
     /* Un solo popup para los mensajes graves y los errores de campo;
@@ -89,7 +143,7 @@
 
         const nivel = errores.length || graves.some((m) => /error/.test(m.nivel)) ? 'error' : 'warning';
         const items = graves.map((m) => escapar(m.texto)).concat(errores);
-        popup.fire({
+        ventana({
             icon: ICONOS[nivel],
             title: errores.length ? 'Revisá los datos ingresados' : TITULOS[nivel],
             html: items.length > 1 ? listaHtml(items) : items[0],
@@ -171,7 +225,7 @@
                 items.push('<strong>' + escapar(etiquetaDe(campo)) + ':</strong> ' + escapar(mensajeDe(campo)));
             }
         });
-        popup.fire({ icon: 'error', title: 'Faltan datos o hay campos inválidos', html: listaHtml(items) })
+        ventana({ icon: 'error', title: 'Faltan datos o hay campos inválidos', html: listaHtml(items) })
             .then(() => { const p = form.querySelector('.is-invalid'); if (p) p.focus(); });
     }
 
@@ -223,18 +277,14 @@
 
     // ── 4. Confirmaciones ──────────────────────────────────────────────
     function confirmar(mensaje, peligro) {
-        return popup.fire({
+        return ventana({
             icon: peligro ? 'warning' : 'question',
+            peligro: peligro,
             title: mensaje,
             showCancelButton: true,
-            confirmButtonText: 'Sí, continuar',
+            confirmButtonText: peligro ? 'Sí, eliminar' : 'Sí, continuar',
             cancelButtonText: 'Cancelar',
             reverseButtons: true,
-            customClass: {
-                popup: 'aq-popup',
-                confirmButton: 'btn ' + (peligro ? 'btn-danger' : 'btn-primary') + ' rounded-pill px-4 mx-1',
-                cancelButton: 'btn btn-light rounded-pill px-4 mx-1',
-            },
         }).then((r) => r.isConfirmed);
     }
 

@@ -426,3 +426,8 @@ a:hover > .marca-rana { transform: rotate(-6deg) scale(1.06); }
 .avatar--md { width: 40px; height: 40px; font-size: 0.95rem; }
 .avatar--sm { width: 32px; height: 32px; font-size: 0.8rem; }
 .avatar--lg { width: 64px; height: 64px; font-size: 1.4rem; }
+
+/* Resumen de permisos del rol (formulario de empleado) */
+.permisos-resumen { background: var(--aq-agua-suave); border: 1px solid var(--bs-primary-border-subtle); }
+.permisos-resumen ul { columns: 2; column-gap: 2rem; }
+@media (max-width: 767.98px) { .permisos-resumen ul { columns: 1; } }

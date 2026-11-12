@@ -9,7 +9,7 @@
             <h1 class="h3 fw-bold mb-0 text-main">Mi perfil</h1>
             <p class="text-muted small mb-0">
                 <i class="fa-solid fa-at me-1"></i>{{ user.username }} ·
-                {% if user.is_superuser %}Admin{% elif es_vendedor %}Vendedor{% elif es_repartidor %}Repartidor{% else %}Personal{% endif %}
+                {% if user.is_superuser %}Admin{% elif user.perfil_empleado.rol %}{{ user.perfil_empleado.rol.nombre }}{% elif es_personal_interno %}Personal{% else %}Cliente{% endif %}
                 {% if user.last_login %}· último ingreso {{ user.last_login|date:"d/m/Y H:i" }}{% endif %}
             </p>
         </div>

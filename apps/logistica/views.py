@@ -22,12 +22,16 @@ from .services import (
 from apps.clientes.models import DireccionEntrega
 from apps.permisos.roles import (
     es_repartidor_asignado,
-    es_admin_o_vendedor,
-    es_repartidor,
-    es_admin_vendedor_o_repartidor,
     obtener_empleado,
+    puede,
+    puede_alguna,
+    puede_operar_hoja,
+    puede_ver_hoja,
     puede_ver_nota_seguridad,
 )
+
+# Quién ve todas las hojas de ruta (el resto, con `realizar_entregas`, sólo las propias).
+VER_TODAS = ('ver_todas_las_rutas', 'planificar_repartos')
 
 
 def _ids_de_paradas_con_nota(user, detalles):
@@ -51,12 +55,12 @@ def _ids_de_paradas_con_nota(user, detalles):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def listar_rutas(request):
-    if not es_admin_vendedor_o_repartidor(request.user):
+    if not puede_alguna(request.user, *VER_TODAS, 'realizar_entregas'):
         messages.error(request, 'No tenés permiso para acceder a esta sección.')
         return redirect('inicio')
 
-    # Si es repartidor, solo ve sus propias rutas
-    if es_repartidor(request.user) and not es_admin_o_vendedor(request.user):
+    # Sin permiso para ver todas, sólo las hojas asignadas al usuario.
+    if not puede_alguna(request.user, *VER_TODAS):
         empleado = obtener_empleado(request.user)
         if empleado is None:
             rutas = HojaRuta.objects.none()
@@ -95,7 +99,7 @@ def listar_rutas(request):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def crear_ruta(request):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'planificar_repartos'):
         messages.error(request, 'Solo administradores y vendedores pueden crear rutas.')
         return redirect('apps.logistica:listar_rutas')
 
@@ -118,21 +122,19 @@ def crear_ruta(request):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def ver_ruta(request, pk):
-    if not es_admin_vendedor_o_repartidor(request.user):
+    if not puede_alguna(request.user, *VER_TODAS, 'realizar_entregas'):
         messages.error(request, 'No tenés permiso para ver esta ruta.')
         return redirect('inicio')
 
     ruta = get_object_or_404(
         HojaRuta.objects.select_related('ruta_reparto__zona', 'zona', 'camion', 'empleado'), id_ruta=pk)
 
-    # Repartidor solo puede ver sus propias rutas
-    if es_repartidor(request.user) and not es_admin_o_vendedor(request.user):
-        empleado = obtener_empleado(request.user)
-        if empleado is None or ruta.empleado_id != empleado.id_empleado:
-            messages.error(request, 'No tenés permiso para ver esta ruta.')
-            return redirect('apps.logistica:mi_ruta_hoy')
+    if not puede_ver_hoja(request.user, ruta):
+        messages.error(request, 'No tenés permiso para ver esta ruta.')
+        return redirect('apps.logistica:mi_ruta_hoy')
 
-    es_admin = es_admin_o_vendedor(request.user)
+    # «es_admin» en el template: puede editar la hoja (paradas, carga, confirmación).
+    es_admin = puede(request.user, 'planificar_repartos')
     detalles = list(ruta.detalles.select_related(
         'pedido', 'cliente', 'direccion_entrega__barrio').prefetch_related('pedido__detalles__producto').order_by('orden', 'id_detalle'))
     productos = list(productos_de_reparto())
@@ -181,17 +183,14 @@ def ver_ruta(request, pk):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def imprimir_ruta(request, pk):
-    if not es_admin_vendedor_o_repartidor(request.user):
+    if not puede_alguna(request.user, *VER_TODAS, 'realizar_entregas'):
         messages.error(request, 'No tenés permiso para imprimir esta ruta.')
         return redirect('inicio')
 
     ruta = get_object_or_404(HojaRuta.objects.select_related('ruta_reparto__zona', 'empleado__usuario', 'camion'), id_ruta=pk)
 
-    # Repartidor solo puede imprimir sus propias rutas
-    if es_repartidor(request.user) and not es_admin_o_vendedor(request.user):
-        empleado = obtener_empleado(request.user)
-        if empleado is None or ruta.empleado_id != empleado.id_empleado:
-            return redirect('apps.logistica:mi_ruta_hoy')
+    if not puede_ver_hoja(request.user, ruta):
+        return redirect('apps.logistica:mi_ruta_hoy')
 
     detalles = ruta.detalles.all()
 
@@ -208,7 +207,7 @@ def imprimir_ruta(request, pk):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def editar_ruta(request, pk):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'planificar_repartos'):
         messages.error(request, 'No tenés permiso para editar rutas.')
         return redirect('apps.logistica:listar_rutas')
 
@@ -237,7 +236,7 @@ def _volver_a_hoja(hoja_pk, parada_pk=None):
 @login_required
 def agregar_parada(request, pk):
     """Alta manual de parada: cliente existente o nuevo (nombre y dirección obligatorios)."""
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'planificar_repartos'):
         messages.error(request, 'No tenés permiso para agregar paradas.')
         return redirect('apps.logistica:listar_rutas')
 
@@ -280,7 +279,7 @@ def agregar_parada(request, pk):
 @login_required
 def agregar_pedido_parada(request, pk):
     """Suma a la hoja un pedido pendiente de la zona (web o telefónico)."""
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'planificar_repartos'):
         messages.error(request, 'No tenés permiso para modificar la hoja.')
         return redirect('apps.logistica:listar_rutas')
     ruta = get_object_or_404(HojaRuta, id_ruta=pk)
@@ -299,7 +298,7 @@ def agregar_pedido_parada(request, pk):
 @login_required
 def pedido_parada(request, pk):
     """Carga o corrige los botellones que pide el cliente en una parada (subfila)."""
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'planificar_repartos'):
         messages.error(request, 'No tenés permiso para modificar pedidos.')
         return redirect('apps.logistica:listar_rutas')
     parada = get_object_or_404(DetalleHojaRuta.objects.select_related('hoja_ruta', 'pedido'), id_detalle=pk)
@@ -321,7 +320,7 @@ def pedido_parada(request, pk):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def eliminar_parada(request, pk):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'planificar_repartos'):
         messages.error(request, 'No tenés permiso para eliminar paradas.')
         return redirect('apps.logistica:listar_rutas')
 
@@ -346,17 +345,14 @@ def eliminar_parada(request, pk):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def actualizar_estado_entrega(request, pk):
-    if not es_admin_vendedor_o_repartidor(request.user):
+    if not puede_alguna(request.user, 'planificar_repartos', 'realizar_entregas'):
         messages.error(request, 'No tenés permiso para actualizar esta entrega.')
         return redirect('inicio')
 
     parada = get_object_or_404(DetalleHojaRuta, id_detalle=pk)
 
-    es_admin = es_admin_o_vendedor(request.user)
-    empleado = obtener_empleado(request.user)
-    es_asignado = empleado is not None and parada.hoja_ruta.empleado_id == empleado.id_empleado
-
-    if not (es_admin or es_asignado):
+    es_admin = puede(request.user, 'planificar_repartos')
+    if not puede_operar_hoja(request.user, parada.hoja_ruta):
         messages.error(request, 'No tenés permiso para actualizar esta entrega.')
         return redirect('apps.logistica:mi_ruta_hoy')
 
@@ -427,12 +423,12 @@ def _ficha_de_parada(parada, user):
 @login_required
 def mi_ruta_hoy(request):
     """Recorrido del día del repartidor: confirma cada entrega a medida que avanza."""
-    if not (es_repartidor(request.user) or es_admin_o_vendedor(request.user)):
+    if not puede_alguna(request.user, 'realizar_entregas', *VER_TODAS):
         messages.error(request, 'No tenés permiso para acceder a esta sección.')
         return redirect('inicio')
 
     hoy = timezone.localdate()
-    es_admin = es_admin_o_vendedor(request.user)
+    es_admin = puede_alguna(request.user, *VER_TODAS)
     empleado = obtener_empleado(request.user)
 
     # Las de hoy y cualquier hoja en reparto (el camión ya salió aunque sea de otra fecha).
@@ -499,7 +495,7 @@ def confirmar_entrega(request, pk):
 
     parada = get_object_or_404(DetalleHojaRuta.objects.select_related('hoja_ruta', 'pedido'), id_detalle=pk)
     destino = reverse('apps.logistica:mi_ruta_hoy') + f'?hoja={parada.hoja_ruta_id}'
-    if not (es_admin_o_vendedor(request.user) or es_repartidor_asignado(request.user, parada.hoja_ruta)):
+    if not puede_operar_hoja(request.user, parada.hoja_ruta):
         messages.error(request, 'Esta parada no es de tu recorrido.')
         return redirect('apps.logistica:mi_ruta_hoy')
     if request.method != 'POST':
@@ -540,7 +536,7 @@ def confirmar_entrega(request, pk):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def listar_zonas(request):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'gestionar_zonas_camiones'):
         messages.error(request, 'No tenés permiso para gestionar zonas.')
         return redirect('inicio')
 
@@ -559,7 +555,7 @@ def listar_zonas(request):
 
 @login_required
 def editar_zona(request, pk):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'gestionar_zonas_camiones'):
         messages.error(request, 'No tenés permiso para editar zonas.')
         return redirect('apps.logistica:listar_zonas')
 
@@ -579,7 +575,7 @@ def editar_zona(request, pk):
 
 @login_required
 def eliminar_zona(request, pk):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'gestionar_zonas_camiones'):
         messages.error(request, 'No tenés permiso para eliminar zonas.')
         return redirect('apps.logistica:listar_zonas')
 
@@ -611,7 +607,7 @@ def direcciones_sin_zona(request):
     Vista adaptada para asignar Barrios huerfanos a Zonas,
     en vez de Direcciones a Zonas.
     """
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'gestionar_zonas_camiones'):
         messages.error(request, 'No tenés permiso para asignar zonas.')
         return redirect('inicio')
 
@@ -651,7 +647,7 @@ def direcciones_sin_zona(request):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def listar_camiones(request):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'gestionar_zonas_camiones'):
         messages.error(request, 'No tenés permiso para gestionar camiones.')
         return redirect('inicio')
 
@@ -670,7 +666,7 @@ def listar_camiones(request):
 
 @login_required
 def editar_camion(request, pk):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'gestionar_zonas_camiones'):
         messages.error(request, 'No tenés permiso para editar camiones.')
         return redirect('apps.logistica:listar_camiones')
 
@@ -690,7 +686,7 @@ def editar_camion(request, pk):
 
 @login_required
 def eliminar_camion(request, pk):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'gestionar_zonas_camiones'):
         messages.error(request, 'No tenés permiso para eliminar camiones.')
         return redirect('apps.logistica:listar_camiones')
 
@@ -752,7 +748,7 @@ def _seleccion_desde_post(post):
 
 @login_required
 def planificar_reparto(request):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'planificar_repartos'):
         messages.error(request, 'No tenés permiso para planificar repartos.')
         return redirect('inicio')
 
@@ -799,7 +795,7 @@ def _opciones_equipo(ruta_default=None, hoja=None):
     empleado = getattr(hoja, 'empleado', None) or getattr(ruta_default, 'empleado_default', None)
     camion = getattr(hoja, 'camion', None) or getattr(ruta_default, 'camion_default', None)
     return {
-        'repartidores': Empleado.objects.filter(activo=True, rol__grupo_permisos='Repartidor').order_by('apellido', 'nombre'),
+        'repartidores': Empleado.objects.filter(activo=True, rol__funciones__codename='realizar_entregas').distinct().order_by('apellido', 'nombre'),
         'camiones': Camion.objects.filter(activo=True).order_by('patente'),
         'empleado_elegido': getattr(empleado, 'pk', None),
         'camion_elegido': getattr(camion, 'pk', None),
@@ -853,7 +849,7 @@ def _productos_para_carga(ruta):
 
 @login_required
 def confirmar_ruta(request, pk):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'planificar_repartos'):
         messages.error(request, 'No tenés permiso para confirmar rutas.')
         return redirect('apps.logistica:listar_rutas')
 
@@ -888,7 +884,7 @@ def confirmar_ruta(request, pk):
 
 @login_required
 def registrar_regreso_ruta(request, pk):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'planificar_repartos'):
         messages.error(request, 'No tenés permiso para registrar el regreso.')
         return redirect('apps.logistica:listar_rutas')
 
@@ -930,8 +926,8 @@ def venta_calle(request, pk):
     from apps.pedidos.models import MetodoPago
 
     hoja = get_object_or_404(HojaRuta.objects.select_related('zona'), id_ruta=pk)
-    es_admin = es_admin_o_vendedor(request.user)
-    if not (es_admin or es_repartidor_asignado(request.user, hoja)):
+    es_admin = puede(request.user, 'planificar_repartos')
+    if not puede_operar_hoja(request.user, hoja):
         messages.error(request, 'No tenés permiso para registrar ventas en esta hoja.')
         return redirect('apps.logistica:mi_ruta_hoy')
     volver = reverse('apps.logistica:mi_ruta_hoy') + f'?hoja={hoja.pk}'
@@ -971,7 +967,7 @@ def venta_calle(request, pk):
         faltan = inventario_camion(hoja)['faltan']
         if faltan:
             messages.warning(request, f'Atención: faltan {faltan} botellones para completar los pedidos del recorrido.')
-        if es_admin and not es_repartidor(request.user):
+        if es_admin and not es_repartidor_asignado(request.user, hoja):
             return redirect('apps.logistica:ver_ruta', pk=hoja.id_ruta)
         return redirect(volver)
 

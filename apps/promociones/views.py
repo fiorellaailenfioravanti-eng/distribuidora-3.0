@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from apps.clientes.models import Cliente
-from apps.permisos.roles import es_admin_o_vendedor
+from apps.permisos.roles import puede, requiere
 from apps.permisos.views import sin_permiso
 
 from . import services
@@ -15,7 +15,7 @@ from .models import CompraPromocion, Promocion
 
 @login_required
 def listar_promociones(request):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'gestionar_promociones'):
         return sin_permiso(request)
     hoy = timezone.localdate()
     vigentes = CompraPromocion.objects.filter(
@@ -30,7 +30,7 @@ def listar_promociones(request):
 
 
 def _form_promocion(request, promocion=None):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'gestionar_promociones'):
         return sin_permiso(request)
     form = PromocionForm(request.POST or None, instance=promocion)
     if request.method == 'POST' and form.is_valid():
@@ -53,7 +53,7 @@ def editar_promocion(request, pk):
 @login_required
 def vender_promocion(request, cliente_pk):
     """Venta de un pack prepago desde la ficha del cliente (RF-09)."""
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'vender_promociones'):
         return sin_permiso(request)
     cliente = get_object_or_404(Cliente, pk=cliente_pk)
     if request.method != 'POST':

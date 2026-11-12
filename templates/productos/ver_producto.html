@@ -89,7 +89,7 @@
                         <i class="fa-solid fa-arrow-left me-1"></i> Volver al listado
                     </a>
                     
-                    {% if es_vendedor %}
+                    {% if 'gestionar_productos' in puede %}
                     <div class="d-flex gap-2 w-100 w-sm-auto">
                         <a href="{% url 'apps.productos:editar_producto' producto.pk %}" class="btn btn-warning btn-sm rounded-pill px-3 text-body-emphasis shadow-sm hover-lift fw-bold flex-grow-1 flex-sm-grow-0">
                             <i class="fa-solid fa-pen"></i> Editar

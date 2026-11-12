@@ -11,15 +11,15 @@ Cubren los hallazgos que motivaron la unificación en `apps/permisos/roles.py`:
 
 from django.contrib.auth.models import Group
 from django.test import TestCase
+from django.urls import reverse
 
 from apps.empleados.models import Empleado, RolEmpleado
 from apps.logistica.models import Barrio, Camion, DetalleHojaRuta, HojaRuta, RutaReparto, Zona
 from apps.permisos.roles import (
     GRUPO_REPARTIDOR,
     GRUPO_VENDEDOR,
-    es_admin_o_vendedor,
-    es_admin_vendedor_o_repartidor,
-    es_repartidor,
+    puede,
+    puede_alguna,
     obtener_empleado,
     puede_ver_nota_seguridad,
 )
@@ -73,29 +73,29 @@ class EvaluacionDeRolesTests(TestCase):
         root = Usuario.objects.create_superuser(
             username='root', password='x', email='root@test.com'
         )
-        self.assertTrue(es_admin_o_vendedor(root))
-        self.assertTrue(es_admin_vendedor_o_repartidor(root))
+        self.assertTrue(puede(root, 'ver_panel'))
+        self.assertTrue(puede_alguna(root, 'ver_panel', 'realizar_entregas'))
 
     def test_vendedor_tiene_acceso_de_escritura(self):
-        self.assertTrue(es_admin_o_vendedor(self.vendedor))
-        self.assertFalse(es_repartidor(self.vendedor))
+        self.assertTrue(puede(self.vendedor, 'ver_panel'))
+        self.assertFalse(puede(self.vendedor, 'realizar_entregas'))
 
     def test_repartidor_no_tiene_acceso_de_escritura(self):
-        self.assertFalse(es_admin_o_vendedor(self.repartidor))
-        self.assertTrue(es_repartidor(self.repartidor))
+        self.assertFalse(puede(self.repartidor, 'ver_panel'))
+        self.assertTrue(puede(self.repartidor, 'realizar_entregas'))
 
     def test_repartidor_tiene_acceso_a_logistica(self):
-        self.assertTrue(es_admin_vendedor_o_repartidor(self.repartidor))
+        self.assertTrue(puede_alguna(self.repartidor, 'ver_panel', 'realizar_entregas'))
 
     def test_cliente_registrado_no_es_personal_interno(self):
-        self.assertFalse(es_admin_o_vendedor(self.cliente))
-        self.assertFalse(es_repartidor(self.cliente))
-        self.assertFalse(es_admin_vendedor_o_repartidor(self.cliente))
+        self.assertFalse(puede(self.cliente, 'ver_panel'))
+        self.assertFalse(puede(self.cliente, 'realizar_entregas'))
+        self.assertFalse(puede_alguna(self.cliente, 'ver_panel', 'realizar_entregas'))
 
     def test_usuario_inactivo_pierde_los_permisos(self):
         self.vendedor.is_active = False
         self.vendedor.save()
-        self.assertFalse(es_admin_o_vendedor(self.vendedor))
+        self.assertFalse(puede(self.vendedor, 'ver_panel'))
 
     def test_pertenencia_no_depende_del_orden_de_grupos(self):
         """
@@ -115,8 +115,8 @@ class EvaluacionDeRolesTests(TestCase):
         )
 
         for _ in range(4):
-            self.assertTrue(es_admin_o_vendedor(multi))
-            self.assertTrue(es_repartidor(multi))
+            self.assertTrue(puede(multi, 'ver_panel'))
+            self.assertTrue(puede(multi, 'realizar_entregas'))
 
 
 class NotaDeSeguridadTests(TestCase):
@@ -201,7 +201,7 @@ class NotaDeSeguridadTests(TestCase):
 
     def test_repartidor_no_asignado_no_ve_la_nota(self):
         """El caso que RNF-02 exige y que el código anterior no cumplía."""
-        self.assertTrue(es_repartidor(self.repartidor_ajeno))
+        self.assertTrue(puede(self.repartidor_ajeno, 'realizar_entregas'))
         self.assertFalse(puede_ver_nota_seguridad(self.repartidor_ajeno, self.direccion))
 
     def test_cliente_propietario_no_ve_su_propia_nota(self):
@@ -392,3 +392,79 @@ class AccesoAVistasLogisticasTests(TestCase):
             )
         )
         self.assertEqual(respuesta.status_code, 302)
+
+
+class FuncionesPorRolTests(TestCase):
+    """Permisos personalizables por rol (Empleados › Roles)."""
+
+    def setUp(self):
+        from django.contrib.auth.models import Permission
+        from apps.autenticacion.models import Usuario
+        self.Permission = Permission
+        self.rol_rep = RolEmpleado.objects.create(nombre='Chofer QA', grupo_permisos='Repartidor')
+        self._funciones(self.rol_rep, 'realizar_entregas')
+        self.chofer = Usuario.objects.create_user('chofer.qa', 'chofer@qa.com', 'Agua-Lluvia-2026')
+        self.chofer._es_empleado = True
+        Empleado.objects.create(usuario=self.chofer, nombre='Chofer', apellido='QA', dni='30999111', rol=self.rol_rep)
+        self.root = Usuario.objects.create_superuser('root.qa', 'root@qa.com', 'Agua-Lluvia-2026')
+
+    def _funciones(self, rol, *codigos):
+        rol.funciones.set(self.Permission.objects.filter(content_type__app_label='permisos', codename__in=codigos))
+
+    def _usuario(self):
+        from apps.autenticacion.models import Usuario
+        return Usuario.objects.get(pk=self.chofer.pk)  # sin la caché de permisos
+
+    def test_repartidor_por_defecto_no_registra_clientes(self):
+        self.assertFalse(puede(self._usuario(), 'registrar_clientes'))
+        self.client.force_login(self.chofer)
+        respuesta = self.client.get(reverse('apps.clientes:crear_sin_cuenta'))
+        self.assertEqual(respuesta.status_code, 302)
+
+    def test_agregar_funcion_al_rol_habilita_la_pantalla(self):
+        self._funciones(self.rol_rep, 'realizar_entregas', 'registrar_clientes')
+        self.assertTrue(puede(self._usuario(), 'registrar_clientes'))
+        self.client.force_login(self.chofer)
+        self.assertEqual(self.client.get(reverse('apps.clientes:crear_sin_cuenta')).status_code, 200)
+
+    def test_quitar_funcion_bloquea(self):
+        self._funciones(self.rol_rep, 'ver_clientes')  # le saco «realizar_entregas»
+        self.client.force_login(self.chofer)
+        self.assertEqual(self.client.get(reverse('apps.logistica:mi_ruta_hoy')).status_code, 302)
+
+    def test_empleado_inactivo_no_puede_nada(self):
+        self.chofer.perfil_empleado.activo = False
+        self.chofer.perfil_empleado.save()
+        self.assertFalse(puede(self._usuario(), 'realizar_entregas'))
+
+    def test_vendedor_por_defecto_no_gestiona_empleados(self):
+        from apps.autenticacion.models import Usuario
+        vend = Usuario.objects.create_user('vend.qa', 'vend@qa.com', 'Agua-Lluvia-2026')
+        vend.groups.add(Group.objects.get(name=GRUPO_VENDEDOR))
+        self.client.force_login(vend)
+        for nombre in ('listar_empleados', 'crear_empleado', 'listar_roles', 'crear_rol'):
+            self.assertEqual(self.client.get(reverse(f'apps.empleados:{nombre}')).status_code, 302, nombre)
+
+    def test_formulario_de_rol_guarda_las_casillas(self):
+        self.client.force_login(self.root)
+        ids = list(self.Permission.objects.filter(
+            content_type__app_label='permisos', codename__in=['ver_panel', 'ver_clientes']).values_list('pk', flat=True))
+        respuesta = self.client.post(reverse('apps.empleados:crear_rol'),
+                                     {'nombre': 'Atención', 'descripcion': '', 'funciones': ids})
+        self.assertEqual(respuesta.status_code, 302)
+        rol = RolEmpleado.objects.get(nombre='Atención')
+        self.assertEqual(rol.codigos_funciones(), {'ver_panel', 'ver_clientes'})
+        self.assertEqual(rol.grupo_permisos, 'Vendedor')  # tipo de acceso deducido: entra al panel
+
+    def test_nadie_se_quita_la_gestion_de_empleados(self):
+        from apps.autenticacion.models import Usuario
+        rol_admin = RolEmpleado.objects.get(nombre='Administrador')
+        jefe = Usuario.objects.create_user('jefe.qa', 'jefe@qa.com', 'Agua-Lluvia-2026')
+        jefe._es_empleado = True
+        Empleado.objects.create(usuario=jefe, nombre='Jefe', apellido='QA', dni='30999222', rol=rol_admin)
+        self.client.force_login(jefe)
+        ids = list(rol_admin.funciones.exclude(codename='gestionar_empleados').values_list('pk', flat=True))
+        respuesta = self.client.post(reverse('apps.empleados:editar_rol', args=[rol_admin.pk]),
+                                     {'nombre': 'Administrador', 'descripcion': '', 'funciones': ids})
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertIn('gestionar_empleados', rol_admin.codigos_funciones())

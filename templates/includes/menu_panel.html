@@ -1,0 +1,97 @@
+{% comment %}
+Menú del panel (escritorio y celular). Cada opción aparece sólo si el usuario
+tiene la función que la habilita (`puede`, ver apps/permisos/context_processors.py).
+{% endcomment %}
+{% with vista=request.resolver_match.view_name %}
+{% if 'ver_panel' in puede %}
+<li class="nav-item">
+    <a href="{% url 'dashboard' %}" class="sidebar-link {% if vista == 'dashboard' %}active{% endif %}">
+        <i class="fa-solid fa-border-all"></i> Resumen
+    </a>
+</li>
+{% endif %}
+{% if 'ver_inventario' in puede or 'gestionar_productos' in puede %}
+<li class="nav-item">
+    <a href="{% url 'apps.productos:listar_productos_admin' %}" class="sidebar-link {% if 'productos' in vista and 'categoria' not in vista %}active{% endif %}">
+        <i class="fa-solid fa-boxes-stacked"></i> Productos
+    </a>
+</li>
+{% endif %}
+{% if 'gestionar_categorias' in puede %}
+<li class="nav-item">
+    <a href="{% url 'apps.productos:listar_categorias' %}" class="sidebar-link {% if 'categoria' in vista %}active{% endif %}">
+        <i class="fa-solid fa-layer-group"></i> Categorías
+    </a>
+</li>
+{% endif %}
+{% if 'ver_pedidos' in puede %}
+<li class="nav-item">
+    <a href="{% url 'apps.pedidos:listar_pedidos' %}" class="sidebar-link {% if 'pedidos' in vista %}active{% endif %}">
+        <i class="fa-solid fa-box-open"></i> Pedidos
+    </a>
+</li>
+{% endif %}
+{% if 'ver_clientes' in puede %}
+<li class="nav-item">
+    <a href="{% url 'apps.clientes:listar_clientes' %}" class="sidebar-link {% if 'clientes' in vista %}active{% endif %}">
+        <i class="fa-solid fa-users"></i> Clientes
+    </a>
+</li>
+{% endif %}
+{% if 'ver_cuentas' in puede %}
+<li class="nav-item">
+    <a href="{% url 'apps.cuentas:listar_cuentas' %}" class="sidebar-link {% if 'cuentas' in vista %}active{% endif %}">
+        <i class="fa-solid fa-file-invoice-dollar"></i> Cuentas
+    </a>
+</li>
+{% endif %}
+{% if 'gestionar_abonos' in puede %}
+<li class="nav-item">
+    <a href="{% url 'apps.abonos:listar_abonos' %}" class="sidebar-link {% if 'abonos' in vista %}active{% endif %}">
+        <i class="fa-solid fa-snowflake"></i> Abonos
+    </a>
+</li>
+{% endif %}
+{% if 'gestionar_promociones' in puede %}
+<li class="nav-item">
+    <a href="{% url 'apps.promociones:listar_promociones' %}" class="sidebar-link {% if 'promociones' in vista %}active{% endif %}">
+        <i class="fa-solid fa-tags"></i> Promociones
+    </a>
+</li>
+{% endif %}
+{% if 'ver_todas_las_rutas' in puede or 'planificar_repartos' in puede or 'realizar_entregas' in puede %}
+<li class="nav-item">
+    <a href="{% url 'apps.logistica:listar_rutas' %}" class="sidebar-link {% if 'logistica' in vista and vista != 'apps.logistica:mi_ruta_hoy' and 'zona' not in vista and 'camion' not in vista %}active{% endif %}">
+        <i class="fa-solid fa-route"></i> {% if 'ver_todas_las_rutas' in puede or 'planificar_repartos' in puede %}Logística{% else %}Mis hojas de ruta{% endif %}
+    </a>
+</li>
+{% endif %}
+{% if 'realizar_entregas' in puede and not user.is_superuser %}
+<li class="nav-item">
+    <a href="{% url 'apps.logistica:mi_ruta_hoy' %}" class="sidebar-link {% if vista == 'apps.logistica:mi_ruta_hoy' %}active{% endif %}">
+        <i class="fa-solid fa-truck-fast"></i> Mi recorrido
+    </a>
+</li>
+{% endif %}
+{% if 'gestionar_zonas_camiones' in puede %}
+<li class="nav-item">
+    <a href="{% url 'apps.logistica:listar_zonas' %}" class="sidebar-link {% if 'zona' in vista or 'camion' in vista %}active{% endif %}">
+        <i class="fa-solid fa-map-location-dot"></i> Zonas y camiones
+    </a>
+</li>
+{% endif %}
+{% if 'gestionar_empleados' in puede %}
+<li class="nav-item">
+    <a href="{% url 'apps.empleados:listar_empleados' %}" class="sidebar-link {% if 'empleados' in vista %}active{% endif %}">
+        <i class="fa-solid fa-id-badge"></i> Empleados y roles
+    </a>
+</li>
+{% endif %}
+{% if 'ver_panel' in puede or not es_personal_interno %}
+<li class="nav-item mt-auto pt-3">
+    <a href="{% url 'inicio' %}" class="sidebar-link text-primary fw-bold bg-primary bg-opacity-10 mt-4 rounded-3" target="_blank">
+        <i class="fa-solid fa-shop"></i> Ver Tienda
+    </a>
+</li>
+{% endif %}
+{% endwith %}

@@ -1,15 +1,13 @@
 """Catálogo: tienda pública, inventario del panel y ABM de categorías."""
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Count, ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
 
-from apps.permisos.roles import es_admin_o_vendedor
+from apps.permisos.roles import puede, requiere
 from .forms import CategoriaForm, ProductoForm
 from .models import Categoria, Producto
-
-solo_personal = user_passes_test(es_admin_o_vendedor, login_url='/')
 
 
 def _filtrar_por_categoria(request, productos):
@@ -33,7 +31,7 @@ def listar_productos(request):
 
 
 @login_required
-@solo_personal
+@requiere('ver_inventario')
 def listar_productos_admin(request):
     productos, categoria_actual = _filtrar_por_categoria(
         request, Producto.objects.prefetch_related('categoria').order_by('nombre'))
@@ -46,13 +44,13 @@ def listar_productos_admin(request):
 
 def ver_producto(request, pk):
     """Detalle de un producto; los inactivos sólo los ve el personal."""
-    filtros = {} if es_admin_o_vendedor(request.user) else {'activo': True}
+    filtros = {} if puede(request.user, 'ver_inventario') else {'activo': True}
     producto = get_object_or_404(Producto, id_producto=pk, **filtros)
     return render(request, 'productos/ver_producto.html', {'producto': producto})
 
 
 @login_required
-@solo_personal
+@requiere('gestionar_productos')
 def crear_producto(request):
     form = ProductoForm(request.POST or None, request.FILES or None)
     if request.method == 'POST' and form.is_valid():
@@ -63,7 +61,7 @@ def crear_producto(request):
 
 
 @login_required
-@solo_personal
+@requiere('gestionar_productos')
 def editar_producto(request, pk):
     producto = get_object_or_404(Producto, id_producto=pk)
     form = ProductoForm(request.POST or None, request.FILES or None, instance=producto)
@@ -75,7 +73,7 @@ def editar_producto(request, pk):
 
 
 @login_required
-@solo_personal
+@requiere('gestionar_productos')
 def eliminar_producto(request, pk):
     """Borra el producto; si ya tiene pedidos (PROTECT), lo desactiva (H-27)."""
     producto = get_object_or_404(Producto, id_producto=pk)
@@ -99,7 +97,7 @@ def eliminar_producto(request, pk):
 # CATEGORÍAS
 # ─────────────────────────────────────────────────────────────
 @login_required
-@solo_personal
+@requiere('gestionar_categorias')
 def listar_categorias(request):
     """Listado con alta en la misma pantalla."""
     form = CategoriaForm(request.POST or None)
@@ -112,7 +110,7 @@ def listar_categorias(request):
 
 
 @login_required
-@solo_personal
+@requiere('gestionar_categorias')
 def crear_categoria(request):
     form = CategoriaForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
@@ -123,7 +121,7 @@ def crear_categoria(request):
 
 
 @login_required
-@solo_personal
+@requiere('gestionar_categorias')
 def editar_categoria(request, pk):
     categoria = get_object_or_404(Categoria, pk=pk)
     form = CategoriaForm(request.POST or None, instance=categoria)
@@ -135,7 +133,7 @@ def editar_categoria(request, pk):
 
 
 @login_required
-@solo_personal
+@requiere('gestionar_categorias')
 def eliminar_categoria(request, pk):
     """Sólo se borran categorías vacías, para no dejar productos sin clasificar."""
     categoria = get_object_or_404(Categoria, pk=pk)

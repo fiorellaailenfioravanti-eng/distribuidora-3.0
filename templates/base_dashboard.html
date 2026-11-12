@@ -17,7 +17,7 @@
     <!-- Estilo Global Dashboard -->
     <link rel="stylesheet" href="{% static 'style/dashboard.css' %}?v=8">
     <link rel="stylesheet" href="{% static 'style/productos.css' %}?v=6">
-    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=9">
+    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=10">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     {% include 'includes/favicon.html' %}
     <title>{% block title %}{% endblock %} · Aquadelluvia</title>
@@ -41,76 +41,7 @@
             </a>
             
             <ul class="nav flex-column mb-auto gap-1 mt-3">
-                {% if es_vendedor %}
-                <li class="nav-item">
-                    <a href="{% url 'dashboard' %}" class="sidebar-link {% if request.resolver_match.view_name == 'dashboard' %}active{% endif %}">
-                        <i class="fa-solid fa-border-all"></i> Resumen
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'apps.productos:listar_productos_admin' %}" class="sidebar-link {% if 'productos' in request.resolver_match.view_name and 'categoria' not in request.resolver_match.view_name %}active{% endif %}">
-                        <i class="fa-solid fa-boxes-stacked"></i> Productos
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'apps.productos:listar_categorias' %}" class="sidebar-link {% if 'categoria' in request.resolver_match.view_name %}active{% endif %}">
-                        <i class="fa-solid fa-layer-group"></i> Categorías
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'apps.pedidos:listar_pedidos' %}" class="sidebar-link {% if 'pedidos' in request.resolver_match.view_name %}active{% endif %}">
-                        <i class="fa-solid fa-box-open"></i> Pedidos
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'apps.clientes:listar_clientes' %}" class="sidebar-link {% if 'clientes' in request.resolver_match.view_name %}active{% endif %}">
-                        <i class="fa-solid fa-users"></i> Clientes
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'apps.empleados:listar_empleados' %}" class="sidebar-link {% if 'empleados' in request.resolver_match.view_name %}active{% endif %}">
-                        <i class="fa-solid fa-id-badge"></i> Empleados
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'apps.cuentas:listar_cuentas' %}" class="sidebar-link {% if 'cuentas' in request.resolver_match.view_name %}active{% endif %}">
-                        <i class="fa-solid fa-file-invoice-dollar"></i> Cuentas
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'apps.abonos:listar_abonos' %}" class="sidebar-link {% if 'abonos' in request.resolver_match.view_name %}active{% endif %}">
-                        <i class="fa-solid fa-snowflake"></i> Abonos
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'apps.promociones:listar_promociones' %}" class="sidebar-link {% if 'promociones' in request.resolver_match.view_name %}active{% endif %}">
-                        <i class="fa-solid fa-tags"></i> Promociones
-                    </a>
-                </li>
-                {% endif %}
-                {% if es_personal_interno %}
-                <li class="nav-item">
-                    <a href="{% url 'apps.logistica:listar_rutas' %}" class="sidebar-link {% if 'logistica' in request.resolver_match.view_name %}active{% endif %}">
-                        <i class="fa-solid fa-route"></i> {% if es_vendedor %}Logística{% else %}Mis hojas de ruta{% endif %}
-                    </a>
-                </li>
-                {% endif %}
-                {% if es_repartidor %}
-                <li class="nav-item">
-                    <a href="{% url 'apps.logistica:mi_ruta_hoy' %}" class="sidebar-link {% if request.resolver_match.view_name == 'apps.logistica:mi_ruta_hoy' %}active{% endif %}">
-                        <i class="fa-solid fa-truck-fast"></i> Mi recorrido
-                    </a>
-                </li>
-                {% endif %}
-{% if es_vendedor or not es_personal_interno %}
-                
-                <!-- Separador -->
-                <li class="nav-item mt-auto pt-3">
-                    <a href="{% url 'inicio' %}" class="sidebar-link text-primary fw-bold bg-primary bg-opacity-10 mt-4 rounded-3" target="_blank">
-                        <i class="fa-solid fa-shop"></i> Ver Tienda
-                    </a>
-                </li>
-{% endif %}
+                {% include 'includes/menu_panel.html' %}
             </ul>
         </aside>
 
@@ -126,54 +57,7 @@
             <div class="offcanvas-body p-0">
                 <!-- Se podría usar javascript para clonar el menú, pero por simplicidad lo replicaremos minimamente -->
                 <ul class="nav flex-column gap-1 p-3">
-                    {% if es_vendedor %}
-                    <li class="nav-item">
-                        <a href="{% url 'dashboard' %}" class="sidebar-link"><i class="fa-solid fa-border-all"></i> Resumen</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{% url 'apps.productos:listar_productos_admin' %}" class="sidebar-link"><i class="fa-solid fa-boxes-stacked"></i> Productos</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{% url 'apps.productos:listar_categorias' %}" class="sidebar-link"><i class="fa-solid fa-layer-group"></i> Categorías</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{% url 'apps.pedidos:listar_pedidos' %}" class="sidebar-link"><i class="fa-solid fa-box-open"></i> Pedidos</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{% url 'apps.clientes:listar_clientes' %}" class="sidebar-link"><i class="fa-solid fa-users"></i> Clientes</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{% url 'apps.empleados:listar_empleados' %}" class="sidebar-link"><i class="fa-solid fa-id-badge"></i> Empleados</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{% url 'apps.cuentas:listar_cuentas' %}" class="sidebar-link"><i class="fa-solid fa-file-invoice-dollar"></i> Cuentas</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{% url 'apps.abonos:listar_abonos' %}" class="sidebar-link"><i class="fa-solid fa-snowflake"></i> Abonos</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{% url 'apps.promociones:listar_promociones' %}" class="sidebar-link"><i class="fa-solid fa-tags"></i> Promociones</a>
-                    </li>
-                    {% endif %}
-                    {% if es_personal_interno %}
-                    <li class="nav-item">
-                        <a href="{% url 'apps.logistica:listar_rutas' %}" class="sidebar-link"><i class="fa-solid fa-route"></i> {% if es_vendedor %}Logística{% else %}Mis hojas de ruta{% endif %}</a>
-                    </li>
-                    {% endif %}
-                    {% if es_repartidor %}
-                    <li class="nav-item">
-                        <a href="{% url 'apps.logistica:mi_ruta_hoy' %}" class="sidebar-link"><i class="fa-solid fa-truck-fast"></i> Mi recorrido</a>
-                    </li>
-                    {% endif %}
-{% if es_vendedor or not es_personal_interno %}
-                    
-                    <!-- Separador -->
-                    <li class="nav-item mt-auto pt-3">
-                        <a href="{% url 'inicio' %}" class="sidebar-link text-primary fw-bold bg-primary bg-opacity-10 mt-4 rounded-3" target="_blank">
-                            <i class="fa-solid fa-shop"></i> Ver Tienda
-                        </a>
-                    </li>
-{% endif %}
+                    {% include 'includes/menu_panel.html' %}
                 </ul>
             </div>
         </div>
@@ -221,7 +105,7 @@
                                 <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
                                     <div class="text-end me-2 d-none d-md-block">
                                         <div class="fw-bold text-main" style="font-size: 0.9rem;">{{ user.username }}</div>
-                                        <div class="text-muted" style="font-size: 0.75rem;">{% if user.is_superuser %}Admin{% elif es_vendedor %}Vendedor{% elif es_repartidor %}Repartidor{% else %}Cliente{% endif %}</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">{% if user.is_superuser %}Admin{% elif user.perfil_empleado.rol %}{{ user.perfil_empleado.rol.nombre }}{% elif es_personal_interno %}Personal{% else %}Cliente{% endif %}</div>
                                     </div>
                                     {% include 'includes/avatar.html' with tamano='md' %}
                                 </a>

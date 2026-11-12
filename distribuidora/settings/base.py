@@ -135,6 +135,13 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'autenticacion.Usuario'  # Modelo de usuario personalizado
+
+# Permisos: además de los de Django, las funciones del rol del empleado
+# (apps/permisos/funciones.py, se asignan en Empleados › Roles).
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'apps.permisos.backends.RolBackend',
+]
 LOGIN_URL = '/auth/ingresar/'  # Ajusta al name que tengas en auth/urls.py
 LOGIN_REDIRECT_URL = '/'  # Redirige al inicio después de iniciar sesión
 LOGOUT_REDIRECT_URL = '/auth/ingresar/'  # Redirige al inicio de sesión después de cerrar sesión

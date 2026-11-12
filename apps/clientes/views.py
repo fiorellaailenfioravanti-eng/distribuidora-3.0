@@ -18,7 +18,7 @@ from apps.promociones.forms import VenderPromocionForm
 from apps.promociones.services import compras_vigentes
 from . import services as servicios_clientes
 from apps.permisos.views import solo_clientes
-from apps.permisos.roles import es_admin_o_vendedor, puede_ver_nota_seguridad
+from apps.permisos.roles import puede, puede_ver_nota_seguridad, requiere
 
 
 # ─────────────────────────────────────────────────────────────
@@ -33,7 +33,7 @@ def _contexto_suscripcion(cliente):
 
 
 def es_dueno_o_staff(user, cliente):
-    return es_admin_o_vendedor(user) or (cliente and cliente.usuario == user)
+    return puede(user, 'registrar_clientes') or (cliente and cliente.usuario == user)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -49,7 +49,7 @@ def _texto_buscable(cliente):
 
 @login_required
 def listar_clientes(request):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'ver_clientes'):
         messages.error(request, 'No tenés permiso para acceder a esta sección.')
         return redirect('inicio')
 
@@ -86,7 +86,7 @@ def listar_clientes(request):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def ver_cliente(request, pk):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'ver_clientes'):
         messages.error(request, 'No tenés permiso para ver esta ficha.')
         return redirect('inicio')
 
@@ -102,7 +102,7 @@ def ver_cliente(request, pk):
     # Esta ficha solo la abre personal con poder de escritura; el repartidor
     # recibe la nota de sus paradas en las vistas de logística (mi_ruta_hoy,
     # ver_ruta e imprimir_ruta), no en la ficha completa del cliente.
-    es_personal = es_admin_o_vendedor(request.user)
+    es_personal = puede(request.user, 'ver_clientes')
 
     # El formulario de alta/edición de dirección incluye el campo de nota de
     # seguridad, que es información sensible (RNF-02). Solo se expone al
@@ -159,7 +159,7 @@ def crear_cliente(request):
     Selector: muestra las dos opciones de alta de cliente.
     Admin/Vendedor pueden crear clientes con o sin cuenta web.
     """
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'registrar_clientes'):
         messages.error(request, 'No tenés permiso para crear clientes.')
         return redirect('apps.clientes:listar_clientes')
 
@@ -173,7 +173,7 @@ def crear_cliente_sin_cuenta(request):
     Solo Admin/Vendedor. El cliente solo existe en la base de datos
     para gestionar pedidos físicos/telefónicos.
     """
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'registrar_clientes'):
         messages.error(request, 'No tenés permiso para crear clientes.')
         return redirect('apps.clientes:listar_clientes')
 
@@ -202,7 +202,7 @@ def crear_cliente_con_cuenta(request):
     Alta de cliente con cuenta de acceso web.
     Usa el formulario que integra datos de usuario y cliente.
     """
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'registrar_clientes'):
         messages.error(request, 'No tenés permiso para crear clientes.')
         return redirect('apps.clientes:listar_clientes')
 
@@ -232,7 +232,7 @@ def crear_cliente_con_cuenta(request):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def editar_cliente(request, pk):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'registrar_clientes'):
         messages.error(request, 'No tenés permiso para editar clientes.')
         return redirect('apps.clientes:listar_clientes')
 
@@ -258,7 +258,7 @@ def editar_cliente(request, pk):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def cambiar_tipo_cliente(request, pk):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'cambiar_tipo_cliente'):
         messages.error(request, 'No tenés permiso para cambiar el tipo de cliente.')
         return redirect('apps.clientes:listar_clientes')
 
@@ -288,7 +288,7 @@ def cambiar_tipo_cliente(request, pk):
 @login_required
 def registrar_movimiento_bidon(request, pk):
     """Devolución, préstamo, venta o ajuste de envases cargado por el personal."""
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'registrar_envases'):
         messages.error(request, 'No tenés permiso para registrar envases.')
         return redirect('inicio')
     cliente = get_object_or_404(Cliente, pk=pk)
@@ -334,7 +334,7 @@ def agregar_telefono(request, pk):
         else:
             messages.error(request, f'No se agregó el teléfono: {errores_en_texto(form)}')
 
-    if cliente.usuario == request.user and not es_admin_o_vendedor(request.user):
+    if cliente.usuario == request.user and not puede(request.user, 'registrar_clientes'):
         return redirect('apps.clientes:mi_perfil')
     return redirect('apps.clientes:ver_cliente', pk=pk)
 
@@ -355,7 +355,7 @@ def eliminar_telefono(request, pk):
             tel.delete()
             messages.success(request, 'Teléfono eliminado.')
 
-    if cliente.usuario == request.user and not es_admin_o_vendedor(request.user):
+    if cliente.usuario == request.user and not puede(request.user, 'registrar_clientes'):
         return redirect('apps.clientes:mi_perfil')
     return redirect('apps.clientes:ver_cliente', pk=cliente.pk)
 
@@ -376,7 +376,7 @@ def agregar_direccion(request, pk):
     if next_url and not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
         next_url = ''
 
-    is_staff = es_admin_o_vendedor(request.user)
+    is_staff = puede(request.user, 'registrar_clientes')
 
     if request.method == 'POST':
         form = DireccionEntregaForm(request.POST, is_staff_or_admin=is_staff)
@@ -400,7 +400,7 @@ def agregar_direccion(request, pk):
 
             if next_url:
                 return redirect(next_url)
-            if cliente.usuario == request.user and not es_admin_o_vendedor(request.user):
+            if cliente.usuario == request.user and not puede(request.user, 'registrar_clientes'):
                 return redirect('apps.clientes:mi_perfil')
             return redirect('apps.clientes:ver_cliente', pk=pk)
         else:
@@ -421,7 +421,7 @@ def agregar_direccion(request, pk):
 def editar_direccion(request, pk):
     direccion  = get_object_or_404(DireccionEntrega, pk=pk)
     cliente    = direccion.cliente
-    is_staff   = es_admin_o_vendedor(request.user)
+    is_staff   = puede(request.user, 'registrar_clientes')
 
     if not es_dueno_o_staff(request.user, cliente):
         messages.error(request, 'Sin permiso.')
@@ -441,7 +441,7 @@ def editar_direccion(request, pk):
                 dir_.barrio.save()
             dir_.save()
             messages.success(request, 'Dirección actualizada.')
-            if cliente.usuario == request.user and not es_admin_o_vendedor(request.user):
+            if cliente.usuario == request.user and not puede(request.user, 'registrar_clientes'):
                 return redirect('apps.clientes:mi_perfil')
             return redirect('apps.clientes:ver_cliente', pk=cliente.pk)
     else:
@@ -467,7 +467,7 @@ def eliminar_direccion(request, pk):
         direccion.delete()
         messages.success(request, 'Dirección eliminada.')
 
-    if cliente.usuario == request.user and not es_admin_o_vendedor(request.user):
+    if cliente.usuario == request.user and not puede(request.user, 'registrar_clientes'):
         return redirect('apps.clientes:mi_perfil')
     return redirect('apps.clientes:ver_cliente', pk=cliente.pk)
 

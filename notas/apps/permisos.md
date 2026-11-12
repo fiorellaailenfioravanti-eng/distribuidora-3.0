@@ -19,4 +19,4 @@ Grupos, roles y helpers de permisos (`roles.py`). Sin modelos propios.
 - Sin dependencias de modelos con otras apps.
 
 ## Notas
--
+- Funciones por rol: [[Roles y permisos]]

@@ -19,7 +19,16 @@ class RolEmpleado(models.Model):
         choices=GRUPOS_PERMISOS_CHOICES,
         blank=True,
         default='',
-        verbose_name='Permisos del rol',
+        verbose_name='Tipo de acceso',
+        help_text='Base del rol: panel de administración, recorrido de reparto o sin acceso. '
+                  'Lo que puede hacer en detalle se elige en «funciones».',
+    )
+    funciones = models.ManyToManyField(
+        'auth.Permission',
+        blank=True,
+        related_name='roles_empleado',
+        limit_choices_to={'content_type__app_label': 'permisos', 'content_type__model': 'funcion'},
+        verbose_name='Funciones',
         help_text='Qué puede hacer en el sistema un empleado con este rol.',
     )
 
@@ -30,6 +39,10 @@ class RolEmpleado(models.Model):
 
     def __str__(self):
         return self.nombre
+
+    def codigos_funciones(self):
+        return set(self.funciones.values_list('codename', flat=True))
+
 
 class Empleado(models.Model):
     id_empleado = models.AutoField(primary_key=True)

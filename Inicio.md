@@ -30,7 +30,7 @@ Mapa visual: [[Arquitectura.canvas|Arquitectura]]
 ![[Apps.base]]
 
 ## 🧪 QA
-Último control: [[QA 2026-11-12]] · reglas: [[Validaciones por campo]]
+Último control: [[QA 2026-11-12]] · reglas: [[Validaciones por campo]] · [[Roles y permisos]]
 
 ![[Hallazgos.base#Abiertos]]
 

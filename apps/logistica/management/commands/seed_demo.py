@@ -29,6 +29,7 @@ from datetime import datetime, time, timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -41,6 +42,7 @@ from apps.cuentas.services import obtener_o_crear_cuenta, registrar_cargo, regis
 from apps.abonos.models import Abono
 from apps.abonos.services import generar_cargos_mensuales
 from apps.empleados.models import Empleado, RolEmpleado
+from apps.permisos.funciones import POR_DEFECTO
 from apps.logistica.models import (
     Barrio, CalendarioExcepcion, Camion, HojaRuta, RutaReparto, Zona,
 )
@@ -263,6 +265,10 @@ class Command(BaseCommand):
             if roles[rol].grupo_permisos != grupo:
                 roles[rol].grupo_permisos = grupo
                 roles[rol].save(update_fields=['grupo_permisos'])
+            # Funciones por defecto si el rol todavía no tiene ninguna (no pisa cambios hechos a mano).
+            if not roles[rol].funciones.exists():
+                roles[rol].funciones.set(Permission.objects.filter(
+                    content_type__app_label='permisos', codename__in=POR_DEFECTO[rol]))
 
         self.repartidores = {}
         for username, nombre, apellido, dni, celular, rol, zona in PERSONAL:

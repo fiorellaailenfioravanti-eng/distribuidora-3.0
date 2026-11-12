@@ -216,20 +216,30 @@ def puede_ver_nota_seguridad(user, direccion)  # RNF-02
 (aditivo, idempotente): Vendedor administra productos, clientes, pedidos,
 empleados y logística; Repartidor solo hojas de ruta y sus paradas.
 
-**Un único sistema de roles (Fase 4.6.2):** `RolEmpleado.grupo_permisos`
-(vacío / `Vendedor` / `Repartidor`) define el grupo de Django del empleado. Al crear o
-editar un empleado o un rol, `sincronizar_grupo_empleado()` deja al usuario sólo en
-ese grupo (o en ninguno si está inactivo). Ningún rol otorga superusuario.
-En vistas: funciones de `roles.py` + `apps.permisos.views.sin_permiso()`.
-En templates: `es_vendedor`, `es_repartidor`, `es_personal_interno`.
+**Permisos por funciones (12/11/2026):** cada pantalla exige una **función**
+(`apps/permisos/funciones.py`, 22 en 9 áreas: Panel, Productos, Clientes, Pedidos,
+Cuentas, Abonos, Promociones, Logística, Empleados). Las funciones son permisos de Django
+(`permisos.<codigo>`, modelo ancla `permisos.Funcion`) que se asignan a cada **rol** con
+checkboxes en *Empleados › Roles* (`RolEmpleado.funciones`). El backend
+`apps.permisos.backends.RolBackend` las resuelve desde el rol del empleado activo.
 
-| Rol | Acceso |
+- Vistas: `puede(user, 'codigo')`, `@requiere('codigo')`, `puede_ver_hoja` / `puede_operar_hoja`
+  (el repartidor sólo opera sus hojas) y `sin_permiso()`.
+- Templates: `{% if 'codigo' in puede %}`; el menú del panel es `templates/includes/menu_panel.html`.
+- `grupo_permisos` queda como *tipo de acceso* deducido de las funciones (panel / recorrido / ninguno)
+  y sigue sincronizando los grupos de Django. Usuarios sin ficha de empleado en los grupos
+  históricos Vendedor/Repartidor reciben las funciones por defecto de ese rol.
+- Sólo el superusuario o quien tenga `gestionar_empleados` entra a Empleados y Roles; nadie
+  puede quitarle esa función a su propio rol.
+
+| Rol por defecto | Funciones |
 |---|---|
 | Invitado | Ver catálogo, usar buscador |
-| Cliente registrado | Todo lo anterior + carrito y sus pedidos |
-| Vendedor (grupo Django) | Todo lo anterior + CRUD productos/clientes/pedidos/empleados/logística |
-| Repartidor (grupo Django) | Ver e imprimir **sus** hojas de ruta; marcar entregas |
-| Superusuario/Admin | Todo + `/admin/` |
+| Cliente registrado | Carrito, checkout, sus pedidos y su perfil |
+| Repartidor | `realizar_entregas` (sus hojas de ruta, entregas, cobros y venta en calle) |
+| Vendedor | Todas menos `gestionar_empleados` y `realizar_entregas` |
+| Administrador | Todas (incluye empleados, roles y permisos) |
+| Superusuario | Todas + `/admin/` |
 
 ---
 
@@ -644,6 +654,8 @@ Camion ← RutaReparto → Zona
 
 ## 8. 🗺️ Mapa de URLs Actual
 
+> Desde el 12/11/2026 cada 🔒 equivale a una función del rol (`apps/permisos/funciones.py`), no a un grupo fijo: ver «Sistema de Roles y Permisos».
+
 ```
 /                              → inicio
 /admin/                        → Django Admin
@@ -713,7 +725,7 @@ Camion ← RutaReparto → Zona
 /logistica/zonas/              → listar_zonas          [🔒 Admin/Vendedor]
 /logistica/camiones/           → listar_camiones       [🔒 Admin/Vendedor]
 
-/empleados/                    → listar_empleados      [🔒 Admin/Vendedor]
+/empleados/                    → listar_empleados      [🔒 gestionar_empleados]
 /empleados/nuevo/              → crear_empleado        [🔒 Admin/Vendedor]
 /empleados/<pk>/               → ver_empleado          [🔒 Admin/Vendedor]
 /empleados/<pk>/editar/        → editar_empleado       [🔒 Admin/Vendedor]

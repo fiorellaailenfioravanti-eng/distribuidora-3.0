@@ -1,6 +1,6 @@
 {% extends 'base_dashboard.html' %}
 
-{% block title %}{{ titulo }} — Aquadelluvia{% endblock %}
+{% block title %}{{ titulo }}{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
@@ -72,6 +72,18 @@
                         {% endif %}
                     </div>
                 </div>
+
+                {# Qué puede hacer el empleado con el rol elegido #}
+                <div class="rounded-4 p-3 mb-3 permisos-resumen" id="resumen-permisos" hidden>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                        <span class="fw-bold small text-uppercase text-muted"><i class="fa-solid fa-user-shield me-1 text-primary"></i>Con este rol puede:</span>
+                        <a href="#" class="small fw-semibold text-decoration-none" id="editar-permisos-rol" target="_blank">
+                            Editar permisos del rol <i class="fa-solid fa-arrow-up-right-from-square ms-1"></i>
+                        </a>
+                    </div>
+                    <ul class="list-unstyled mb-0 small" id="lista-permisos"></ul>
+                </div>
+                {{ funciones_por_rol|json_script:"funciones-por-rol" }}
                 
                 <div class="row g-3 mb-3">
                     <div class="col-md-6 d-flex align-items-center">
@@ -143,4 +155,34 @@
 </div>
 
 
+<script>
+    (function () {
+        const datos = JSON.parse(document.getElementById('funciones-por-rol').textContent);
+        const select = document.getElementById('{{ form.rol.id_for_label }}');
+        const caja = document.getElementById('resumen-permisos');
+        const lista = document.getElementById('lista-permisos');
+        const enlace = document.getElementById('editar-permisos-rol');
+        const urlBase = "{% url 'apps.empleados:editar_rol' 0 %}";
+        function mostrar() {
+            const funciones = datos[select.value];
+            if (!select.value || !funciones) { caja.hidden = true; return; }
+            caja.hidden = false;
+            enlace.href = urlBase.replace('/0/', '/' + select.value + '/');
+            lista.innerHTML = '';
+            if (!funciones.length) {
+                lista.innerHTML = '<li class="text-muted">Sin acceso al sistema.</li>';
+                return;
+            }
+            funciones.forEach((texto) => {
+                const li = document.createElement('li');
+                li.className = 'py-1';
+                li.innerHTML = '<i class="fa-solid fa-check text-success me-2"></i>';
+                li.appendChild(document.createTextNode(texto));
+                lista.appendChild(li);
+            });
+        }
+        select.addEventListener('change', mostrar);
+        mostrar();
+    })();
+</script>
 {% endblock %}

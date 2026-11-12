@@ -1,7 +1,7 @@
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-from apps.permisos.roles import es_admin_o_vendedor
+from apps.permisos.roles import requiere
 
 
 def inicio(request):
@@ -9,7 +9,7 @@ def inicio(request):
 
 
 @login_required
-@user_passes_test(es_admin_o_vendedor, login_url='/')
+@requiere('ver_panel')
 def resumen_dashboard(request):
     from apps.pedidos.models import Pedido, PagoPedido
     from apps.clientes.models import Cliente

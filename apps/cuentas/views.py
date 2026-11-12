@@ -5,7 +5,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.clientes.models import Cliente
-from apps.permisos.roles import es_admin_o_vendedor
+from apps.permisos.roles import puede, requiere
 from apps.permisos.views import sin_permiso
 from . import services
 from .forms import CargoCuentaForm, PagoCuentaForm
@@ -32,7 +32,7 @@ def _cuentas_con_morosidad():
 # ─────────────────────────────────────────────────────────────
 @login_required
 def listar_cuentas(request):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'ver_cuentas'):
         return sin_permiso(request)
 
     nivel = request.GET.get('nivel', '').strip()
@@ -64,7 +64,7 @@ def listar_cuentas(request):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def ver_cuenta(request, pk):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'ver_cuentas'):
         return sin_permiso(request)
 
     cuenta = get_object_or_404(
@@ -86,7 +86,7 @@ def ver_cuenta(request, pk):
 @login_required
 def cuenta_de_cliente(request, cliente_pk):
     """Abre (o crea) la cuenta corriente de un cliente y redirige a su detalle."""
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'ver_cuentas'):
         return sin_permiso(request)
 
     cliente = get_object_or_404(Cliente, pk=cliente_pk)
@@ -99,7 +99,7 @@ def cuenta_de_cliente(request, cliente_pk):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def registrar_cargo(request, pk):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'registrar_movimientos_cuenta'):
         return sin_permiso(request)
     if request.method != 'POST':
         return redirect('apps.cuentas:ver_cuenta', pk=pk)
@@ -125,7 +125,7 @@ def registrar_cargo(request, pk):
 
 @login_required
 def registrar_pago(request, pk):
-    if not es_admin_o_vendedor(request.user):
+    if not puede(request.user, 'registrar_movimientos_cuenta'):
         return sin_permiso(request)
     if request.method != 'POST':
         return redirect('apps.cuentas:ver_cuenta', pk=pk)

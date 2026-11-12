@@ -132,11 +132,62 @@ class EmpleadoForm(forms.ModelForm):
         return empleado
 
 class RolEmpleadoForm(forms.ModelForm):
+    """Rol con sus funciones (checkboxes agrupados por área)."""
+
+    funciones = forms.ModelMultipleChoiceField(
+        queryset=None, required=False, widget=forms.CheckboxSelectMultiple,
+        label='Qué puede hacer',
+    )
+
     class Meta:
         model = RolEmpleado
-        fields = ['nombre', 'descripcion', 'grupo_permisos']
+        fields = ['nombre', 'descripcion', 'funciones']
         widgets = {
-            'grupo_permisos': forms.Select(attrs={'class': _SELECT}),
-            'nombre': forms.TextInput(attrs={'class': _INPUT}),
-            'descripcion': forms.Textarea(attrs={'class': _INPUT, 'rows': 3}),
+            'nombre': forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Ej: Repartidor, Vendedor de mostrador'}),
+            'descripcion': forms.Textarea(attrs={'class': _INPUT, 'rows': 2,
+                                                 'placeholder': 'Para qué sirve este rol (opcional)'}),
         }
+
+    def __init__(self, *args, usuario=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        from django.contrib.auth.models import Permission
+        from apps.permisos.funciones import CODIGOS
+        self.usuario = usuario
+        permisos = Permission.objects.filter(content_type__app_label='permisos', codename__in=CODIGOS)
+        self.fields['funciones'].queryset = permisos
+        self.fields['funciones'].label_from_instance = lambda permiso: permiso.name
+        self._codigo_por_pk = {p.pk: p.codename for p in permisos}
+
+    def funciones_por_area(self):
+        """[(área, [(código, checkbox), ...]), ...] en el orden del catálogo."""
+        from apps.permisos.funciones import FUNCIONES_POR_AREA
+        por_codigo = {self._codigo_por_pk.get(int(str(checkbox.data['value']))): checkbox
+                      for checkbox in self['funciones']}
+        return [(area, [(codigo, por_codigo[codigo]) for codigo, _ in funciones if codigo in por_codigo])
+                for area, funciones in FUNCIONES_POR_AREA]
+
+    def clean(self):
+        datos = super().clean()
+        codigos = {p.codename for p in datos.get('funciones') or []}
+        # Nadie (salvo el superusuario) puede sacarse a sí mismo la gestión de empleados.
+        usuario = self.usuario
+        if (usuario is not None and not usuario.is_superuser and self.instance.pk
+                and getattr(getattr(usuario, 'perfil_empleado', None), 'rol_id', None) == self.instance.pk
+                and 'gestionar_empleados' not in codigos):
+            self.add_error('funciones', 'No podés quitarle a tu propio rol la gestión de empleados: '
+                                        'te quedarías sin acceso a esta pantalla.')
+        return datos
+
+    def save(self, commit=True):
+        rol = super().save(commit=False)
+        codigos = {p.codename for p in self.cleaned_data.get('funciones') or []}
+        # El tipo de acceso se deduce de las funciones (lo usan el menú y los grupos de Django).
+        rol.grupo_permisos = ('Vendedor' if 'ver_panel' in codigos
+                              else 'Repartidor' if 'realizar_entregas' in codigos else '')
+        if commit:
+            rol.save()
+            self.save_m2m()
+            from apps.permisos.roles import sincronizar_grupo_empleado
+            for empleado in rol.empleados.select_related('usuario'):
+                sincronizar_grupo_empleado(empleado)
+        return rol

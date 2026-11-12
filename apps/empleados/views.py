@@ -5,7 +5,8 @@ from django.core.paginator import Paginator
 from django.db.models import Count
 from django.http import HttpResponseNotAllowed
 
-from apps.permisos.roles import es_admin_o_vendedor
+from apps.permisos.views import sin_permiso
+from apps.permisos.roles import puede, requiere
 from distribuidora.utils import normalizar_texto
 
 from .models import Empleado, RolEmpleado
@@ -13,9 +14,8 @@ from .forms import EmpleadoForm, RolEmpleadoForm
 
 @login_required
 def listar_empleados(request):
-    if not es_admin_o_vendedor(request.user):
-        messages.error(request, 'No tienes permisos para acceder a esta sección.')
-        return redirect('inicio')
+    if not puede(request.user, 'gestionar_empleados'):
+        return sin_permiso(request)
 
     query = request.GET.get('q', '')
     rol_id = request.GET.get('rol', '')
@@ -56,9 +56,8 @@ def listar_empleados(request):
 
 @login_required
 def crear_empleado(request):
-    if not es_admin_o_vendedor(request.user):
-        messages.error(request, 'No tienes permisos para acceder a esta sección.')
-        return redirect('apps.empleados:listar_empleados')
+    if not puede(request.user, 'gestionar_empleados'):
+        return sin_permiso(request)
 
     if request.method == 'POST':
         form = EmpleadoForm(request.POST, user=request.user)
@@ -71,23 +70,22 @@ def crear_empleado(request):
 
     return render(request, 'empleados/form_empleado.html', {
         'form': form,
-        'titulo': 'Crear Empleado'
+        'titulo': 'Crear Empleado',
+        'funciones_por_rol': _funciones_por_rol(),
     })
 
 @login_required
 def ver_empleado(request, pk):
-    if not es_admin_o_vendedor(request.user):
-        messages.error(request, 'No tienes permisos para acceder a esta sección.')
-        return redirect('apps.empleados:listar_empleados')
+    if not puede(request.user, 'gestionar_empleados'):
+        return sin_permiso(request)
         
     empleado = get_object_or_404(Empleado, pk=pk)
     return render(request, 'empleados/ver_empleado.html', {'empleado': empleado})
 
 @login_required
 def editar_empleado(request, pk):
-    if not es_admin_o_vendedor(request.user):
-        messages.error(request, 'No tienes permisos para acceder a esta sección.')
-        return redirect('apps.empleados:listar_empleados')
+    if not puede(request.user, 'gestionar_empleados'):
+        return sin_permiso(request)
 
     empleado = get_object_or_404(Empleado, pk=pk)
     
@@ -103,14 +101,14 @@ def editar_empleado(request, pk):
     return render(request, 'empleados/form_empleado.html', {
         'form': form,
         'empleado': empleado,
-        'titulo': 'Editar Empleado'
+        'titulo': 'Editar Empleado',
+        'funciones_por_rol': _funciones_por_rol(),
     })
 
 @login_required
 def cambiar_estado_empleado(request, pk):
-    if not es_admin_o_vendedor(request.user):
-        messages.error(request, 'No tienes permisos para acceder a esta sección.')
-        return redirect('apps.empleados:listar_empleados')
+    if not puede(request.user, 'gestionar_empleados'):
+        return sin_permiso(request)
 
     if request.method == 'POST':
         empleado = get_object_or_404(Empleado, pk=pk)
@@ -123,9 +121,8 @@ def cambiar_estado_empleado(request, pk):
 
 @login_required
 def eliminar_empleado(request, pk):
-    if not es_admin_o_vendedor(request.user):
-        messages.error(request, 'No tienes permisos para acceder a esta sección.')
-        return redirect('apps.empleados:listar_empleados')
+    if not puede(request.user, 'gestionar_empleados'):
+        return sin_permiso(request)
 
     if request.method == 'POST':
         empleado = get_object_or_404(Empleado, pk=pk)
@@ -134,63 +131,81 @@ def eliminar_empleado(request, pk):
         return redirect('apps.empleados:listar_empleados')
     return HttpResponseNotAllowed(['POST'])
 
+def _funciones_por_rol():
+    """{id_rol: [descripción de cada función]} para mostrar qué puede hacer cada rol."""
+    from apps.permisos.funciones import FUNCIONES, POR_DEFECTO
+    nombres = dict(FUNCIONES)
+    datos = {}
+    for rol in RolEmpleado.objects.prefetch_related('funciones'):
+        codigos = rol.codigos_funciones() or set(POR_DEFECTO.get(rol.grupo_permisos, ()))
+        datos[rol.pk] = [nombres[c] for c, _ in FUNCIONES if c in codigos]
+    return datos
+
+
+def _plantillas():
+    """Roles base para precargar las casillas: [(nombre, 'cod1,cod2,...'), ...]."""
+    from apps.permisos.funciones import CODIGOS, POR_DEFECTO
+    return [(nombre, ','.join(c for c in CODIGOS if c in codigos)) for nombre, codigos in POR_DEFECTO.items()]
+
+
 @login_required
 def listar_roles(request):
-    if not request.user.is_superuser:
-        messages.error(request, 'Solo los administradores principales pueden gestionar roles.')
-        return redirect('apps.empleados:listar_empleados')
+    if not puede(request.user, 'gestionar_empleados'):
+        return sin_permiso(request)
 
-    roles = RolEmpleado.objects.annotate(empleados_count=Count('empleados'))
+    roles = RolEmpleado.objects.annotate(
+        empleados_count=Count('empleados', distinct=True),
+        funciones_count=Count('funciones', distinct=True),
+    ).prefetch_related('funciones')
     return render(request, 'empleados/roles/listar_roles.html', {'roles': roles})
 
 @login_required
 def crear_rol(request):
-    if not request.user.is_superuser:
-        messages.error(request, 'Solo los administradores principales pueden gestionar roles.')
-        return redirect('apps.empleados:listar_roles')
+    if not puede(request.user, 'gestionar_empleados'):
+        return sin_permiso(request)
 
     if request.method == 'POST':
-        form = RolEmpleadoForm(request.POST)
+        form = RolEmpleadoForm(request.POST, usuario=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, 'Rol creado exitosamente.')
             return redirect('apps.empleados:listar_roles')
     else:
-        form = RolEmpleadoForm()
+        form = RolEmpleadoForm(usuario=request.user)
 
     return render(request, 'empleados/roles/form_rol.html', {
         'form': form,
-        'titulo': 'Crear Rol'
+        'titulo': 'Nuevo rol',
+        'plantillas': _plantillas(),
     })
 
 @login_required
 def editar_rol(request, pk):
-    if not request.user.is_superuser:
-        messages.error(request, 'Solo los administradores principales pueden gestionar roles.')
-        return redirect('apps.empleados:listar_roles')
+    if not puede(request.user, 'gestionar_empleados'):
+        return sin_permiso(request)
 
     rol = get_object_or_404(RolEmpleado, pk=pk)
     
     if request.method == 'POST':
-        form = RolEmpleadoForm(request.POST, instance=rol)
+        form = RolEmpleadoForm(request.POST, instance=rol, usuario=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, 'Rol actualizado exitosamente.')
             return redirect('apps.empleados:listar_roles')
     else:
-        form = RolEmpleadoForm(instance=rol)
+        form = RolEmpleadoForm(instance=rol, usuario=request.user)
 
     return render(request, 'empleados/roles/form_rol.html', {
         'form': form,
         'rol': rol,
-        'titulo': 'Editar Rol'
+        'titulo': f'Permisos del rol «{rol.nombre}»',
+        'plantillas': _plantillas(),
     })
 
 @login_required
 def eliminar_rol(request, pk):
-    if not request.user.is_superuser:
-        messages.error(request, 'Solo los administradores principales pueden gestionar roles.')
-        return redirect('apps.empleados:listar_roles')
+    if not puede(request.user, 'gestionar_empleados'):
+        return sin_permiso(request)
 
     if request.method == 'POST':
         rol = get_object_or_404(RolEmpleado, pk=pk)

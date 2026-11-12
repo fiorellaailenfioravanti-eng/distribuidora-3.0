@@ -19,11 +19,14 @@ from django.template.loader import render_to_string
 
 
 def destino_personal(user):
-    """Pantalla de inicio de cada empleado: el repartidor su recorrido, el resto el panel."""
-    from .roles import es_admin_o_vendedor, es_repartidor
-    if es_repartidor(user) and not es_admin_o_vendedor(user):
+    """Pantalla de inicio de cada empleado según sus funciones:
+    el panel, su recorrido o, si no tiene ninguna de las dos, su perfil."""
+    from .roles import puede, puede_alguna
+    if puede(user, 'ver_panel'):
+        return 'dashboard'
+    if puede_alguna(user, 'realizar_entregas', 'ver_todas_las_rutas', 'planificar_repartos'):
         return 'apps.logistica:mi_ruta_hoy'
-    return 'dashboard'
+    return 'apps.autenticacion:perfil'
 
 
 def solo_clientes(request):

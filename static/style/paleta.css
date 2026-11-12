@@ -425,3 +425,4 @@ a:hover > .marca-rana { transform: rotate(-6deg) scale(1.06); }
 }
 .avatar--md { width: 40px; height: 40px; font-size: 0.95rem; }
 .avatar--sm { width: 32px; height: 32px; font-size: 0.8rem; }
+.avatar--lg { width: 64px; height: 64px; font-size: 1.4rem; }

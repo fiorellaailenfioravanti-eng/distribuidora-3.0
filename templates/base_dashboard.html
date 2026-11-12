@@ -17,8 +17,8 @@
     <!-- Estilo Global Dashboard -->
     <link rel="stylesheet" href="{% static 'style/dashboard.css' %}?v=8">
     <link rel="stylesheet" href="{% static 'style/productos.css' %}?v=6">
-    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=8">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=9">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     {% include 'includes/favicon.html' %}
     <title>{% block title %}{% endblock %} · Aquadelluvia</title>
     <style>
@@ -226,9 +226,7 @@
                                     {% include 'includes/avatar.html' with tamano='md' %}
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2" aria-labelledby="dropdownUser">
-                                    {% if user.perfil_empleado and es_vendedor %}
-                                        <li><a class="dropdown-item py-2" href="{% url 'apps.empleados:ver_empleado' user.perfil_empleado.id_empleado %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi Perfil</a></li>
-                                    {% elif not es_personal_interno %}
+                                    {% if not es_personal_interno %}
                                         <li><a class="dropdown-item py-2" href="{% url 'apps.clientes:mi_perfil' %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi Perfil</a></li>
                                     {% else %}
                                         <li><a class="dropdown-item py-2" href="{% url 'apps.autenticacion:perfil' %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi Perfil</a></li>

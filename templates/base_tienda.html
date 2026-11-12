@@ -17,8 +17,8 @@
     <!-- Estilo Global Aquadelluvia (Tienda) -->
     <link rel="stylesheet" href="{% static 'style/aquadelluvia.css' %}?v=7">
     <link rel="stylesheet" href="{% static 'style/productos.css' %}?v=7">
-    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=8">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=9">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     {% include 'includes/favicon.html' %}
     <title>{% block title %}{% endblock %} · Aquadelluvia</title>
     <style>
@@ -146,7 +146,8 @@
                                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2 w-100 w-lg-auto" aria-labelledby="dropdownUserStore">
                                         {% if es_vendedor %}
                                             <li><a class="dropdown-item py-3 py-lg-2" href="{% url 'dashboard' %}"><i class="fa-solid fa-border-all me-2 text-muted"></i> Dashboard</a></li>
-                                            <li><a class="dropdown-item py-3 py-lg-2" href="{% url 'apps.pedidos:listar_pedidos' %}"><i class="fa-solid fa-boxes-packing me-2 text-muted"></i> Gestión de Pedidos</a></li>
+                                            <li><a class="dropdown-item py-3 py-lg-2" href="{% url 'apps.pedidos:listar_pedidos' %}"><i class="fa-solid fa-box-open me-2 text-muted"></i> Gestión de Pedidos</a></li>
+                                            <li><a class="dropdown-item py-3 py-lg-2" href="{% url 'apps.autenticacion:perfil' %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi perfil</a></li>
                                         {% elif es_repartidor %}
                                             <li><a class="dropdown-item py-3 py-lg-2" href="{% url 'apps.logistica:mi_ruta_hoy' %}"><i class="fa-solid fa-truck-fast me-2 text-muted"></i> Mi recorrido</a></li>
                                             <li><a class="dropdown-item py-3 py-lg-2" href="{% url 'apps.autenticacion:perfil' %}"><i class="fa-solid fa-user me-2 text-muted"></i> Mi perfil</a></li>

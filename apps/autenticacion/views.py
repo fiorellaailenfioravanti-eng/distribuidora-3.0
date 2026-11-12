@@ -1,12 +1,14 @@
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
+from django.db import transaction
 from django.shortcuts import render, redirect
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.permisos.roles import es_personal_interno
 from apps.permisos.views import destino_personal
-from .forms import RegistroUsuarioForm, IngresarUsuarioForm
+from .forms import IngresarUsuarioForm, PerfilUsuarioForm, RegistroUsuarioForm
 
 
 # Páginas de la tienda que sólo usan los clientes.
@@ -79,5 +81,47 @@ def cerrar_sesion(request):
 
 @login_required
 def perfil_usuario(request):
-    return render(request, 'autenticacion/perfil.html')
+    """Perfil del personal: editar sus datos y cambiar la contraseña.
+
+    Los clientes tienen su propia pantalla (`clientes:mi_perfil`).
+    """
+    if not es_personal_interno(request.user):
+        return redirect('apps.clientes:mi_perfil')
+
+    usuario = request.user
+    form_datos = PerfilUsuarioForm(instance=usuario)
+    form_password = PasswordChangeForm(usuario)
+
+    if request.method == 'POST' and 'form_password' in request.POST:
+        form_password = PasswordChangeForm(usuario, request.POST)
+        if form_password.is_valid():
+            form_password.save()
+            update_session_auth_hash(request, form_password.user)  # no cerrar la sesión
+            messages.success(request, 'Tu contraseña se cambió correctamente.')
+            return redirect('apps.autenticacion:perfil')
+        messages.error(request, 'No se pudo cambiar la contraseña: revisá los campos marcados.')
+
+    elif request.method == 'POST':
+        form_datos = PerfilUsuarioForm(request.POST, instance=usuario)
+        if form_datos.is_valid():
+            with transaction.atomic():
+                usuario = form_datos.save()
+                empleado = getattr(usuario, 'perfil_empleado', None)
+                if empleado is not None:
+                    # La ficha de empleado muestra los mismos datos: se mantienen iguales.
+                    empleado.nombre = usuario.first_name
+                    empleado.apellido = usuario.last_name
+                    empleado.email = usuario.email
+                    empleado.celular = usuario.celular1 or ''
+                    empleado.save(update_fields=['nombre', 'apellido', 'email', 'celular'])
+            messages.success(request, 'Tus datos se actualizaron.')
+            return redirect('apps.autenticacion:perfil')
+        messages.error(request, 'No se guardaron los cambios: revisá los campos marcados.')
+
+    for campo in form_password.fields.values():
+        campo.widget.attrs['class'] = 'form-control'
+    return render(request, 'autenticacion/perfil.html', {
+        'form_datos': form_datos,
+        'form_password': form_password,
+    })
 

@@ -122,3 +122,51 @@ class RegistroValidacionesTests(TestCase):
         self.client.force_login(usuario)
         for nombre in ('ingresar', 'registrar'):
             self.assertEqual(self.client.get(reverse(f'apps.autenticacion:{nombre}')).status_code, 302)
+
+
+class PerfilPersonalTests(TestCase):
+    """El personal edita sus datos y cambia su contraseña desde /auth/perfil/."""
+
+    def setUp(self):
+        from django.contrib.auth.models import Group
+        from apps.empleados.models import Empleado, RolEmpleado
+        Usuario = get_user_model()
+        self.usuario = Usuario.objects.create_user('vend', 'v@x.com', 'Agua-Lluvia-2026')
+        self.usuario._es_empleado = True
+        self.usuario.groups.add(Group.objects.get(name='Vendedor'))
+        rol = RolEmpleado.objects.create(nombre='Vendedor QA', grupo_permisos='Vendedor')
+        self.empleado = Empleado.objects.create(usuario=self.usuario, nombre='Viejo', apellido='Nombre',
+                                                dni='30111222', rol=rol)
+        self.client.force_login(self.usuario)
+        self.url = reverse('apps.autenticacion:perfil')
+
+    def test_edita_datos_y_sincroniza_empleado(self):
+        respuesta = self.client.post(self.url, {'form_datos': '1', 'first_name': 'Ana', 'last_name': 'Paz',
+                                                'email': 'ana@x.com', 'celular1': '3624 111222'})
+        self.assertRedirects(respuesta, self.url)
+        self.empleado.refresh_from_db()
+        self.assertEqual((self.empleado.nombre, self.empleado.apellido, self.empleado.email, self.empleado.celular),
+                         ('Ana', 'Paz', 'ana@x.com', '3624 111222'))
+
+    def test_email_de_otra_cuenta(self):
+        get_user_model().objects.create_user('otro', 'otro@x.com', 'Agua-Lluvia-2026')
+        respuesta = self.client.post(self.url, {'form_datos': '1', 'first_name': 'Ana', 'last_name': 'Paz',
+                                                'email': 'OTRO@x.com', 'celular1': ''})
+        self.assertEqual(respuesta.status_code, 200)
+        self.usuario.refresh_from_db()
+        self.assertEqual(self.usuario.email, 'v@x.com')
+
+    def test_cambia_contrasena_sin_cerrar_sesion(self):
+        respuesta = self.client.post(self.url, {
+            'form_password': '1', 'old_password': 'Agua-Lluvia-2026',
+            'new_password1': 'Otra-Clave-2026x', 'new_password2': 'Otra-Clave-2026x',
+        })
+        self.assertRedirects(respuesta, self.url)
+        self.usuario.refresh_from_db()
+        self.assertTrue(self.usuario.check_password('Otra-Clave-2026x'))
+        self.assertEqual(self.client.get(self.url).status_code, 200)
+
+    def test_cliente_va_a_su_perfil(self):
+        cliente = get_user_model().objects.create_user('cli', 'c@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(cliente)
+        self.assertRedirects(self.client.get(self.url), reverse('apps.clientes:mi_perfil'))

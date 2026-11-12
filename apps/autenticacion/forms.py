@@ -1,7 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm, UserCreationForm
 
-from distribuidora.validadores import ATTRS_TELEFONO, aplicar_attrs, solo_digitos, validar_telefono
+from distribuidora.validadores import (
+    ATTRS_NOMBRE, ATTRS_TELEFONO, aplicar_attrs, solo_digitos, validar_nombre, validar_telefono,
+)
 from .models import Usuario
 
 
@@ -103,3 +105,37 @@ class NuevaContrasenaForm(SetPasswordForm):
         super().__init__(*args, **kwargs)
         for campo in self.fields.values():
             campo.widget.attrs['class'] = 'form-control rounded-3 py-2 px-3'
+
+
+class PerfilUsuarioForm(forms.ModelForm):
+    """Datos propios del personal (nombre, apellido, email y celular)."""
+
+    class Meta:
+        model = Usuario
+        fields = ('first_name', 'last_name', 'email', 'celular1')
+        labels = {'first_name': 'Nombre', 'last_name': 'Apellido', 'email': 'Email', 'celular1': 'Celular'}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for nombre in ('first_name', 'last_name', 'email'):
+            self.fields[nombre].required = True
+        for campo in self.fields.values():
+            campo.widget.attrs['class'] = 'form-control'
+        aplicar_attrs(self, 'celular1', ATTRS_TELEFONO)
+        aplicar_attrs(self, 'first_name', ATTRS_NOMBRE)
+        aplicar_attrs(self, 'last_name', ATTRS_NOMBRE)
+
+    def clean_first_name(self):
+        return validar_nombre(self.cleaned_data.get('first_name'))
+
+    def clean_last_name(self):
+        return validar_nombre(self.cleaned_data.get('last_name'), 'El apellido')
+
+    def clean_email(self):
+        email = (self.cleaned_data.get('email') or '').strip()
+        if Usuario.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('Ya existe otra cuenta con ese email.')
+        return email
+
+    def clean_celular1(self):
+        return validar_telefono(self.cleaned_data.get('celular1'))

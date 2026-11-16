@@ -1,0 +1,9 @@
+{% autoescape off %}Hola {{ usuario.first_name|default:usuario.username }}:
+
+La contraseña de tu cuenta de Aguadelluvia ({{ usuario.username }}) se cambió el {{ fecha|date:"d/m/Y" }} a las {{ fecha|time:"H:i" }}.
+Por seguridad cerramos las sesiones abiertas en otros dispositivos.
+
+¿No fuiste vos? Pedí un código nuevo desde «¿Olvidaste tu contraseña?» para recuperar tu cuenta y avisanos enseguida.
+
+Aguadelluvia · Distribuidora de agua
+{% endautoescape %}

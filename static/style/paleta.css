@@ -529,3 +529,42 @@ a:hover > .marca-rana { transform: rotate(-6deg) scale(1.06); }
     color: #fff;
     font-size: 0.85rem;
 }
+
+/* ── Inicio de la tienda ── */
+.inicio-logo { width: 340px; }
+.inicio-icono {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; border-radius: 0.85rem; font-size: 1.1rem;
+}
+.inicio-icono--agua    { background: var(--aq-agua-suave);  color: var(--aq-agua); }
+.inicio-icono--rana    { background: var(--aq-rana-suave);  color: var(--aq-rana); }
+.inicio-icono--cachete { background: var(--bs-danger-bg-subtle); color: var(--aq-cachete); }
+.inicio-beneficio { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+.inicio-beneficio:hover { transform: translateY(-3px); box-shadow: 0 0.5rem 1.25rem rgba(19, 34, 63, 0.08); }
+.inicio-producto-img { height: 150px; object-fit: contain; }
+.inicio-promo {
+    background: linear-gradient(135deg, var(--aq-agua-suave), var(--aq-rana-suave));
+    border: 1px solid var(--bs-primary-border-subtle);
+}
+.inicio-pasos { display: flex; flex-direction: column; gap: 1.25rem; }
+.inicio-pasos li { display: flex; gap: 1rem; align-items: flex-start; }
+.inicio-paso-num {
+    flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--aq-agua); color: var(--aq-sobre-primario);
+    font-family: var(--font-heading, 'Nunito', sans-serif); font-weight: 800;
+}
+@media (max-width: 575.98px) {
+    .inicio-logo { width: 200px; }
+    .inicio-producto-img { height: 110px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .inicio-beneficio, .inicio-beneficio:hover { transition: none; transform: none; }
+}
+
+/* Código de recuperación de contraseña: 6 dígitos bien separados */
+.codigo-recuperacion {
+    font-family: var(--font-heading, 'Nunito', sans-serif);
+    font-weight: 800; font-size: 1.9rem; letter-spacing: 0.5em;
+    padding-left: 0.5em;
+}

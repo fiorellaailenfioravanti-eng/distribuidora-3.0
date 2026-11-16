@@ -1,9 +1,15 @@
+import re
+from datetime import timedelta
+
 from django.core import mail
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
+from . import recuperacion
 from .forms import RegistroUsuarioForm
+from .models import CodigoRecuperacion
 
 
 class SesionTests(TestCase):
@@ -98,30 +104,90 @@ class RegistroTelefonosTests(TestCase):
 
 
 class RecuperarContrasenaTests(TestCase):
-    """«Olvidé mi contraseña»: enlace por email y nueva contraseña."""
+    """«Olvidé mi contraseña»: código temporal por email y nueva contraseña."""
 
     def setUp(self):
         self.usuario = get_user_model().objects.create_user('ana', 'ana@x.com', 'Agua-Lluvia-2026')
+        self.url = reverse('apps.autenticacion:recuperar')
+        self.url_codigo = reverse('apps.autenticacion:recuperar_codigo')
+
+    def _pedir(self, email='ana@x.com'):
+        return self.client.post(self.url, {'email': email})
+
+    def _codigo_del_correo(self, indice=-1):
+        return re.search(r'Tu código es: (\d{6})', mail.outbox[indice].body).group(1)
 
     def test_flujo_completo(self):
-        respuesta = self.client.post(reverse('apps.autenticacion:recuperar'), {'email': 'ANA@x.com'})
-        self.assertRedirects(respuesta, reverse('apps.autenticacion:recuperar_enviado'))
+        respuesta = self._pedir('ANA@x.com')
+        self.assertRedirects(respuesta, self.url_codigo)
         self.assertEqual(len(mail.outbox), 1)
-        enlace = next(linea for linea in mail.outbox[0].body.splitlines() if '/auth/recuperar/' in linea)
-        ruta = enlace.strip().split('testserver', 1)[1]
-        # Django guarda el token en la sesión y redirige a la URL con "set-password".
-        respuesta = self.client.get(ruta, follow=True)
-        url_form = respuesta.redirect_chain[-1][0]
-        respuesta = self.client.post(url_form, {'new_password1': 'Otra-Clave-2026x',
-                                                'new_password2': 'Otra-Clave-2026x'})
+        self.assertEqual(mail.outbox[0].to, ['ana@x.com'])
+        self.assertTrue(mail.outbox[0].alternatives)  # versión HTML
+        codigo = self._codigo_del_correo()
+        respuesta = self.client.post(self.url_codigo, {'codigo': f'{codigo[:3]} {codigo[3:]}'})
+        self.assertRedirects(respuesta, reverse('apps.autenticacion:recuperar_nueva'))
+        respuesta = self.client.post(reverse('apps.autenticacion:recuperar_nueva'),
+                                     {'new_password1': 'Otra-Clave-2026x', 'new_password2': 'Otra-Clave-2026x'})
         self.assertRedirects(respuesta, reverse('apps.autenticacion:recuperar_listo'))
         self.usuario.refresh_from_db()
         self.assertTrue(self.usuario.check_password('Otra-Clave-2026x'))
+        self.assertIn('se cambió', mail.outbox[-1].subject)  # aviso de cambio
+        # El código no se puede volver a usar.
+        self.assertFalse(CodigoRecuperacion.objects.filter(usado=False).exists())
+
+    def test_el_codigo_no_se_guarda_en_claro(self):
+        self._pedir()
+        codigo = self._codigo_del_correo()
+        self.assertNotIn(codigo, CodigoRecuperacion.objects.get().codigo_hash)
 
     def test_email_desconocido_no_revela_nada(self):
-        respuesta = self.client.post(reverse('apps.autenticacion:recuperar'), {'email': 'nadie@x.com'})
-        self.assertRedirects(respuesta, reverse('apps.autenticacion:recuperar_enviado'))
+        respuesta = self._pedir('nadie@x.com')
+        self.assertRedirects(respuesta, self.url_codigo)
         self.assertEqual(len(mail.outbox), 0)
+        respuesta = self.client.post(self.url_codigo, {'codigo': '123456'})
+        self.assertContains(respuesta, 'incorrecto o venció')
+
+    def test_sin_codigo_validado_no_se_cambia(self):
+        self._pedir()
+        respuesta = self.client.get(reverse('apps.autenticacion:recuperar_nueva'))
+        self.assertRedirects(respuesta, self.url)
+
+    def test_codigo_vencido(self):
+        self._pedir()
+        codigo = self._codigo_del_correo()
+        CodigoRecuperacion.objects.update(vence=timezone.now() - timedelta(seconds=1))
+        respuesta = self.client.post(self.url_codigo, {'codigo': codigo})
+        self.assertContains(respuesta, 'incorrecto o venció')
+
+    def test_se_anula_tras_cinco_intentos(self):
+        self._pedir()
+        codigo = self._codigo_del_correo()
+        malo = '000000' if codigo != '000000' else '111111'
+        for _ in range(recuperacion.MAX_INTENTOS):
+            self.client.post(self.url_codigo, {'codigo': malo})
+        respuesta = self.client.post(self.url_codigo, {'codigo': codigo})
+        self.assertContains(respuesta, 'incorrecto o venció')
+
+    def test_codigo_nuevo_anula_el_anterior_y_hay_espera(self):
+        self._pedir()
+        viejo = self._codigo_del_correo()
+        self._pedir()  # dentro de la espera: no manda otro
+        self.assertEqual(len(mail.outbox), 1)
+        CodigoRecuperacion.objects.update(creado=timezone.now() - timedelta(minutes=2))
+        self.client.post(reverse('apps.autenticacion:recuperar_reenviar'))
+        self.assertEqual(len(mail.outbox), 2)
+        nuevo = self._codigo_del_correo()
+        if viejo != nuevo:
+            respuesta = self.client.post(self.url_codigo, {'codigo': viejo})
+            self.assertContains(respuesta, 'incorrecto o venció')
+        respuesta = self.client.post(self.url_codigo, {'codigo': nuevo})
+        self.assertRedirects(respuesta, reverse('apps.autenticacion:recuperar_nueva'))
+
+    def test_limite_por_hora(self):
+        for _ in range(recuperacion.MAX_POR_HORA + 2):
+            CodigoRecuperacion.objects.update(creado=timezone.now() - timedelta(minutes=5))
+            self._pedir()
+        self.assertEqual(len(mail.outbox), recuperacion.MAX_POR_HORA)
 
 
 class RegistroValidacionesTests(TestCase):

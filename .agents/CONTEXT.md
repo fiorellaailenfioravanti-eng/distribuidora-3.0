@@ -161,6 +161,17 @@ class Usuario(AbstractUser):
 **Vistas:** `registrar_usuario`, `ingresar_usuario` (respeta `?next=` interno),
 `cerrar_sesion` (**sólo POST**), `perfil_usuario`.
 
+**Recuperar contraseña con código temporal** (16/11/2026, `apps/autenticacion/recuperacion.py`,
+vistas de función `recuperar_contrasena` → `recuperar_codigo` → `recuperar_nueva` → `recuperar_listo`,
+más `recuperar_reenviar`). Modelo `CodigoRecuperacion` (usuario, `codigo_hash`, creado, vence,
+intentos, verificado_en, usado). Reglas: código de 6 dígitos con `secrets`; en la base sólo su
+HMAC; vence a los 10 minutos y sirve una vez; 5 intentos fallidos lo anulan; máximo 3 códigos por
+hora y 60 s entre envíos; un código nuevo anula los anteriores; la pantalla no revela si el email
+tiene cuenta y el correo sale en segundo plano; tras validar hay 10 minutos para elegir la
+contraseña (con `cycle_key` de la sesión); al cambiarla se cierran las otras sesiones y se envía
+un aviso. Correos HTML + texto en `templates/autenticacion/correos/`, enviados con la cuenta de
+Configuración (o la del servidor). Reemplaza al enlace de `PasswordResetView` (resuelve QA-09).
+
 > El filtro `has_group` se eliminó (auditoría R-5): los templates usan las variables
 > del context processor `roles_usuario`, por ejemplo `{% if es_vendedor %}`.
 
@@ -718,10 +729,11 @@ Camion ← RutaReparto → Zona
 /auth/ingresar/                → ingresar_usuario
 /auth/cerrar_sesion/           → cerrar_sesion
 /auth/perfil/                  → perfil_usuario        [🔒 Login]
-/auth/recuperar/               → PasswordResetView (email con enlace, vence en 24 h)
-/auth/recuperar/enviado/       → PasswordResetDoneView
-/auth/recuperar/<uidb64>/<token>/ → PasswordResetConfirmView
-/auth/recuperar/listo/         → PasswordResetCompleteView
+/auth/recuperar/               → recuperar_contrasena (pide el email y envía el código)
+/auth/recuperar/codigo/        → recuperar_codigo (valida los 6 dígitos)
+/auth/recuperar/reenviar/      → recuperar_reenviar (POST: otro código)
+/auth/recuperar/nueva/         → recuperar_nueva (contraseña nueva)
+/auth/recuperar/listo/         → recuperar_listo
 
 /carrito/                      → ver_carrito           [🔒 Login]
 /carrito/agregar/<id>/         → agregar_al_carrito    [🔒 Login]

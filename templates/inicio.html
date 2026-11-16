@@ -3,26 +3,163 @@
 {% block title %}Inicio{% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<div class="px-3 px-md-4 py-5 my-4 my-md-5 text-center bg-surface rounded-4 shadow-sm border position-relative overflow-hidden">
-    <!-- Decoración sutil de fondo -->
-    <div class="position-absolute top-0 start-0 w-100 h-100 marca-fondo-suave" style="z-index: 0;"></div>
-    
-    <div class="position-relative" style="z-index: 1;">
-        <img src="/media/perfiles/1cd593ab-a347-43bf-9c4d-0d9079d39cfe.png"
-        <!-- <img src="{% static 'img/marca/logo-color-480.webp' %}" -->
-             srcset="{% static 'img/marca/logo-color-480.webp' %} 480w, {% static 'img/marca/logo-color-960.webp' %} 960w"
-             sizes="(max-width: 576px) 220px, 300px"
-             alt="Agua de Lluvia" class="marca-logo-hero mb-3 mb-md-4" width="300" height="237">
-        <h1 class="display-6 fw-bold text-body-emphasis tracking-tight mb-3">Pureza en cada gota</h1>
-        <div class="col-lg-6 mx-auto">
-            <p class="mb-4 text-muted">Bienvenido a la distribuidora oficial de <strong>Agua de Lluvia</strong>. Llevamos la frescura de la naturaleza directamente a tu mesa, con envíos rápidos y el mejor servicio.</p>
-            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
-                <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-primary btn-glow px-4 py-2 gap-3 rounded-pill fw-bold shadow-sm">
-                    <i class="fa-solid fa-shop me-2"></i> Ver Catálogo
+<!-- Portada -->
+<section class="inicio-hero bg-surface rounded-4 shadow-sm border position-relative overflow-hidden mb-5">
+    <div class="position-absolute top-0 start-0 w-100 h-100 marca-fondo-suave" aria-hidden="true"></div>
+    <div class="row align-items-center g-4 position-relative px-3 px-md-5 py-5">
+        <div class="col-lg-7 text-center text-lg-start order-2 order-lg-1">
+            <span class="badge rounded-pill bg-success-subtle text-success-emphasis px-3 py-2 mb-3">
+                <i class="fa-solid fa-truck-fast me-1"></i> Reparto a domicilio por zonas
+            </span>
+            <h1 class="display-5 fw-bold text-body-emphasis tracking-tight mb-3">Pureza en cada gota</h1>
+            <p class="lead text-muted mb-4">
+                Agua de mesa, bidones retornables y dispensers de <strong>Agua de Lluvia</strong>.
+                Pedís por la web y te lo llevamos el día de reparto de tu barrio.
+            </p>
+            <div class="d-grid gap-2 d-sm-flex justify-content-center justify-content-lg-start">
+                <a href="{% url 'apps.productos:listar_productos' %}" class="btn btn-primary btn-glow btn-lg px-4">
+                    <i class="fa-solid fa-shop me-2"></i>Ver catálogo
                 </a>
+                {% if not user.is_authenticated %}
+                <a href="{% url 'apps.autenticacion:registrar' %}" class="btn btn-outline-primary btn-lg px-4">
+                    <i class="fa-solid fa-user-plus me-2"></i>Crear mi cuenta
+                </a>
+                {% elif not es_personal_interno %}
+                <a href="{% url 'apps.carrito:ver_carrito' %}" class="btn btn-outline-primary btn-lg px-4">
+                    <i class="fa-solid fa-cart-shopping me-2"></i>Ir a mi carrito
+                </a>
+                {% endif %}
             </div>
         </div>
+        <div class="col-lg-5 text-center order-1 order-lg-2">
+            <img src="{% static 'img/marca/logo-color-480.webp' %}"
+                 srcset="{% static 'img/marca/logo-color-480.webp' %} 480w, {% static 'img/marca/logo-color-960.webp' %} 960w"
+                 sizes="(max-width: 576px) 220px, 340px"
+                 alt="Agua de Lluvia" class="marca-logo-hero inicio-logo" width="340" height="269">
+        </div>
     </div>
-</div>
+</section>
+
+<!-- Beneficios -->
+<section class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 mb-5" aria-label="Por qué elegirnos">
+    <div class="col">
+        <div class="inicio-beneficio h-100 bg-surface border rounded-4 p-4">
+            <span class="inicio-icono inicio-icono--agua"><i class="fa-solid fa-droplet"></i></span>
+            <h2 class="h6 fw-bold mt-3 mb-1">Agua pura</h2>
+            <p class="small text-muted mb-0">Purificada y envasada para tu casa o tu negocio.</p>
+        </div>
+    </div>
+    <div class="col">
+        <div class="inicio-beneficio h-100 bg-surface border rounded-4 p-4">
+            <span class="inicio-icono inicio-icono--rana"><i class="fa-solid fa-truck"></i></span>
+            <h2 class="h6 fw-bold mt-3 mb-1">Reparto en tu zona</h2>
+            <p class="small text-muted mb-0">Pasamos por tu barrio en días fijos de la semana.</p>
+        </div>
+    </div>
+    <div class="col">
+        <div class="inicio-beneficio h-100 bg-surface border rounded-4 p-4">
+            <span class="inicio-icono inicio-icono--agua"><i class="fa-solid fa-recycle"></i></span>
+            <h2 class="h6 fw-bold mt-3 mb-1">Bidones retornables</h2>
+            <p class="small text-muted mb-0">Entregás el vacío y te llevás el lleno: lo recargamos en planta.</p>
+        </div>
+    </div>
+    <div class="col">
+        <div class="inicio-beneficio h-100 bg-surface border rounded-4 p-4">
+            <span class="inicio-icono inicio-icono--cachete"><i class="fa-solid fa-tags"></i></span>
+            <h2 class="h6 fw-bold mt-3 mb-1">Promos y abonos</h2>
+            <p class="small text-muted mb-0">Packs que ahorran y abonos mensuales para no quedarte sin agua.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Productos destacados -->
+{% if destacados %}
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-3">
+        <h2 class="h3 fw-bold text-body-emphasis mb-0">Productos destacados</h2>
+        <a href="{% url 'apps.productos:listar_productos' %}" class="fw-semibold text-decoration-none">
+            Ver todo <i class="fa-solid fa-arrow-right ms-1"></i>
+        </a>
+    </div>
+    <div class="row row-cols-2 row-cols-lg-4 g-3 g-md-4">
+        {% for p in destacados %}
+        <div class="col">
+            <a href="{% url 'apps.productos:ver_producto' p.id_producto %}" class="card h-100 product-card shadow-sm rounded-4 hover-lift border-0 overflow-hidden text-decoration-none">
+                <div class="product-img-container text-center p-3">
+                    {% if p.imagen %}
+                        <img src="{{ p.imagen.url }}" alt="{{ p.nombre }}" class="img-fluid inicio-producto-img" loading="lazy">
+                    {% else %}
+                        <img src="{% static 'img/no-image.png' %}" alt="" class="img-fluid inicio-producto-img" loading="lazy">
+                    {% endif %}
+                </div>
+                <div class="card-body pt-2">
+                    <h3 class="h6 fw-bold text-body-emphasis mb-1">{{ p.nombre }}</h3>
+                    <span class="fw-bold h5 mb-0 text-primary">${{ p.precio }}</span>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Promociones vigentes -->
+{% if promociones %}
+<section class="mb-5">
+    <h2 class="h3 fw-bold text-body-emphasis mb-3">Promociones</h2>
+    <div class="row row-cols-1 row-cols-md-3 g-3">
+        {% for promo in promociones %}
+        <div class="col">
+            <div class="inicio-promo h-100 rounded-4 p-4">
+                <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis mb-2">
+                    Pagás {{ promo.cant_paga }}, llevás {{ promo.cant_lleva }}
+                </span>
+                <h3 class="h5 fw-bold text-body-emphasis mb-1">{{ promo.nombre }}</h3>
+                <p class="small text-muted mb-3">{{ promo.producto.nombre }} · {{ promo.dias_validez }} días para retirar</p>
+                <span class="h4 fw-bold text-primary mb-0">${{ promo.precio }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <p class="small text-muted mt-2 mb-0"><i class="fa-solid fa-circle-info me-1"></i>Pedíselas a tu repartidor o al vendedor.</p>
+</section>
+{% endif %}
+
+<!-- Cómo comprar + zonas -->
+<section class="row g-4 mb-5">
+    <div class="{% if zonas %}col-lg-7{% else %}col-12{% endif %}">
+        <div class="bg-surface border rounded-4 p-4 p-md-5 h-100">
+            <h2 class="h3 fw-bold text-body-emphasis mb-4">Cómo comprar</h2>
+            <ol class="inicio-pasos list-unstyled mb-0">
+                <li>
+                    <span class="inicio-paso-num">1</span>
+                    <div><strong>Creá tu cuenta</strong> con tu domicilio de entrega y un teléfono.</div>
+                </li>
+                <li>
+                    <span class="inicio-paso-num">2</span>
+                    <div><strong>Armá tu pedido</strong> desde el catálogo: lo que agregás queda reservado.</div>
+                </li>
+                <li>
+                    <span class="inicio-paso-num">3</span>
+                    <div><strong>Recibilo en casa</strong> el día de reparto de tu zona y pagás al recibir.</div>
+                </li>
+            </ol>
+        </div>
+    </div>
+    {% if zonas %}
+    <div class="col-lg-5">
+        <div class="bg-surface border rounded-4 p-4 p-md-5 h-100">
+            <h2 class="h3 fw-bold text-body-emphasis mb-4">Días de reparto</h2>
+            <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
+                {% for zona in zonas %}
+                <li class="d-flex justify-content-between align-items-start gap-3">
+                    <span class="fw-semibold"><i class="fa-solid fa-location-dot text-success me-2"></i>{{ zona.nombre }}</span>
+                    <span class="text-muted small text-end">{{ zona.dias|join:", " }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+</section>
 {% endblock %}

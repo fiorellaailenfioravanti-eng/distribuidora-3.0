@@ -1,0 +1,13 @@
+{% autoescape off %}Hola {{ usuario.first_name|default:usuario.username }}:
+
+Recibimos un pedido para cambiar la contraseña de tu cuenta de Aguadelluvia ({{ usuario.username }}).
+
+Tu código es: {{ codigo }}
+
+Vence en {{ minutos }} minutos y sirve una sola vez.
+
+¿No lo pediste vos? Ignorá este correo: tu contraseña no cambia.
+Nunca te vamos a pedir este código por teléfono ni por WhatsApp.
+
+Aguadelluvia · Distribuidora de agua
+{% endautoescape %}

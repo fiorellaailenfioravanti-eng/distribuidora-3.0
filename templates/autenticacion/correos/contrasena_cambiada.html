@@ -1,0 +1,15 @@
+{% extends 'autenticacion/correos/_base.html' %}
+{% block resumen %}La contraseña de tu cuenta se cambió el {{ fecha|date:"d/m/Y" }} a las {{ fecha|time:"H:i" }}.{% endblock %}
+{% block contenido %}
+<h1 style="margin:0 0 12px;font-size:22px;color:#13223F;">Tu contraseña se cambió</h1>
+<p style="margin:0 0 20px;font-size:15px;line-height:22px;color:#55657F;">
+  Hola {{ usuario.first_name|default:usuario.username }}, la contraseña de tu cuenta
+  <strong style="color:#13223F;">{{ usuario.username }}</strong> se cambió el
+  <strong style="color:#13223F;">{{ fecha|date:"d/m/Y" }} a las {{ fecha|time:"H:i" }}</strong>.
+  Por seguridad cerramos las sesiones abiertas en otros dispositivos.
+</p>
+<div style="padding:14px 16px;background:#FCE9E7;border-radius:10px;font-size:13px;line-height:19px;color:#861A12;">
+  <strong>¿No fuiste vos?</strong> Pedí un código nuevo desde «¿Olvidaste tu contraseña?» para recuperar tu cuenta
+  y avisanos enseguida.
+</div>
+{% endblock %}

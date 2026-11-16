@@ -1,6 +1,6 @@
 ---
 tipo: hallazgo
-estado: abierto
+estado: resuelto
 severidad: baja
 fecha: 2026-11-12
 apps:
@@ -21,3 +21,6 @@ La regla del proyecto es usar vistas de función. La recuperación usa las vista
 
 ## Arreglo propuesto
 Aceptarlo como excepción documentada (son vistas probadas de Django) o envolverlas en funciones.
+
+## Resolución
+2026-11-16 ([[2026-11-16]]): la recuperación se rehízo con vistas de función y código temporal por email (`apps/autenticacion/recuperacion.py`).

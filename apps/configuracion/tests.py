@@ -59,3 +59,15 @@ class ConfiguracionCorreoTests(TestCase):
         self.assertEqual(pedidos[0][1]['host'], 'smtp.x.com')
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].from_email, 'Agua de Lluvia <envios@x.com>')
+
+    def test_prueba_sin_email_del_admin_va_a_la_cuenta_que_envia(self):
+        self.client.force_login(self.admin)
+        self._guardar()
+        self.admin.email = ''
+        self.admin.save()
+        original = mail.get_connection
+        with mock.patch('django.core.mail.get_connection',
+                        side_effect=lambda backend=None, **o: original('django.core.mail.backends.locmem.EmailBackend')):
+            self.client.post(reverse('apps.configuracion:probar_correo'))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['envios@x.com'])

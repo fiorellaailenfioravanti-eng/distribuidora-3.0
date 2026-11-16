@@ -4,8 +4,35 @@ from django.shortcuts import render
 from apps.permisos.roles import requiere
 
 
+DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+
+
 def inicio(request):
-    return render(request, 'inicio.html')
+    """Portada de la tienda: productos destacados (con stock disponible),
+    promociones activas y zonas de reparto con sus días."""
+    from apps.logistica.models import Zona
+    from apps.productos.models import Producto
+    from apps.productos.views import agotados_al_final
+    from apps.promociones.models import Promocion
+
+    destacados = agotados_al_final(
+        Producto.objects.filter(activo=True, es_envase=False)
+    ).filter(disponible__gt=0)[:4]
+
+    promociones = (Promocion.objects.filter(activa=True, producto__activo=True)
+                   .select_related('producto')[:3])
+
+    zonas = []
+    for zona in Zona.objects.vigentes().exclude(dias_reparto=''):
+        dias = zona.get_dias_reparto()
+        if dias:
+            zonas.append({'nombre': zona.nombre, 'dias': [DIAS_SEMANA[d] for d in dias]})
+
+    return render(request, 'inicio.html', {
+        'destacados': destacados,
+        'promociones': promociones,
+        'zonas': zonas,
+    })
 
 
 @login_required

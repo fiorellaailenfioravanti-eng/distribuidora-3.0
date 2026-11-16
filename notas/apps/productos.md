@@ -25,3 +25,4 @@ Catálogo: categorías y productos (con envase retornable).
 - 2026-11-14 ([[2026-11-14]]): interruptor único «Bidón retornable» (reparto + recarga, exige envase); sin tarjeta de consejos; inventario ordenable por columna.
 - 2026-11-14 ([[2026-11-14]]): categorías con baja lógica («Categorías eliminadas» + Restaurar); catálogo con agotados al final.
 - 2026-11-14 ([[2026-11-14]]): catálogo, ficha y buscador muestran el stock disponible (descuenta lo reservado); inventario con disponible, reservado y depósito; botón para cancelar la selección de cantidad.
+- 2026-11-16 ([[2026-11-16]]): el inicio de la tienda muestra hasta 4 productos destacados con stock.

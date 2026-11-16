@@ -6,13 +6,12 @@
     <div class="col-md-6 col-lg-5">
         <div class="card border-0 shadow-sm rounded-4 bg-surface mt-4">
             <div class="card-body p-4 p-md-5">
-                {% if validlink %}
                 <div class="text-center mb-4">
                     <div class="icono-circulo mx-auto mb-3"><i class="fa-solid fa-lock"></i></div>
                     <h1 class="h3 fw-bold mb-2">Creá tu nueva contraseña</h1>
                     <p class="text-muted mb-0">Usá al menos 8 caracteres y que no sea fácil de adivinar.</p>
                 </div>
-                <form method="post">
+                <form method="post" data-sin-aviso>
                     {% csrf_token %}
                     {% for field in form %}
                     <div class="mb-4">
@@ -25,14 +24,6 @@
                         <button type="submit" class="btn btn-primary btn-glow btn-lg rounded-pill fw-bold">Guardar contraseña</button>
                     </div>
                 </form>
-                {% else %}
-                <div class="text-center">
-                    <div class="icono-circulo icono-circulo--peligro mx-auto mb-3"><i class="fa-solid fa-link-slash"></i></div>
-                    <h1 class="h3 fw-bold mb-3">El enlace ya no es válido</h1>
-                    <p class="text-muted">Puede que haya vencido o que ya se haya usado. Pedí uno nuevo.</p>
-                    <a href="{% url 'apps.autenticacion:recuperar' %}" class="btn btn-primary rounded-pill px-4 mt-2">Pedir otro enlace</a>
-                </div>
-                {% endif %}
             </div>
         </div>
     </div>

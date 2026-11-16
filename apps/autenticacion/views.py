@@ -10,7 +10,11 @@ from apps.permisos.roles import es_personal_interno
 from apps.permisos.views import destino_personal
 from apps.clientes.forms import DireccionRegistroForm
 from apps.clientes.services import guardar_telefonos, leer_telefonos
-from .forms import IngresarUsuarioForm, PerfilUsuarioForm, RegistroClienteWebForm
+from . import recuperacion
+from .forms import (
+    CodigoRecuperacionForm, IngresarUsuarioForm, NuevaContrasenaForm, PerfilUsuarioForm,
+    RecuperarContrasenaForm, RegistroClienteWebForm,
+)
 
 
 # Páginas de la tienda que sólo usan los clientes.
@@ -140,3 +144,79 @@ def perfil_usuario(request):
         'form_password': form_password,
     })
 
+
+
+# ── Recuperar contraseña con código temporal (ver recuperacion.py) ──────────
+
+SESION_EMAIL = 'recuperar_email'
+SESION_VERIFICADO = 'recuperar_verificado'
+
+
+def recuperar_contrasena(request):
+    """Paso 1: email. Siempre sigue al paso 2, exista o no la cuenta."""
+    form = RecuperarContrasenaForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        email = form.cleaned_data['email']
+        usuario = recuperacion.buscar_usuario(email)
+        if usuario:
+            recuperacion.solicitar_codigo(usuario)
+        request.session[SESION_EMAIL] = email
+        request.session.pop(SESION_VERIFICADO, None)
+        return redirect('apps.autenticacion:recuperar_codigo')
+    return render(request, 'autenticacion/recuperar_contrasena.html', {'form': form})
+
+
+def recuperar_codigo(request):
+    """Paso 2: el código de 6 dígitos que llegó por email."""
+    email = request.session.get(SESION_EMAIL)
+    if not email:
+        return redirect('apps.autenticacion:recuperar')
+    form = CodigoRecuperacionForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        usuario = recuperacion.buscar_usuario(email)
+        registro = usuario and recuperacion.verificar_codigo(usuario, form.cleaned_data['codigo'])
+        if registro:
+            request.session.cycle_key()  # sesión nueva: evita fijación de sesión
+            request.session[SESION_VERIFICADO] = {'codigo': registro.pk, 'usuario': usuario.pk}
+            return redirect('apps.autenticacion:recuperar_nueva')
+        form.add_error('codigo', 'El código es incorrecto o venció. Revisalo o pedí uno nuevo.')
+    return render(request, 'autenticacion/recuperar_codigo.html', {
+        'form': form,
+        'email': recuperacion.enmascarar_email(email),
+        'minutos': recuperacion.VIGENCIA_MINUTOS,
+    })
+
+
+def recuperar_reenviar(request):
+    """Pide otro código (respeta la espera y el límite por hora)."""
+    email = request.session.get(SESION_EMAIL)
+    if request.method != 'POST' or not email:
+        return redirect('apps.autenticacion:recuperar')
+    usuario = recuperacion.buscar_usuario(email)
+    if usuario and not recuperacion.solicitar_codigo(usuario):
+        messages.warning(request, 'Esperá un momento antes de pedir otro código.')
+    else:
+        messages.info(request, 'Si el email corresponde a una cuenta, te enviamos un código nuevo.')
+    return redirect('apps.autenticacion:recuperar_codigo')
+
+
+def recuperar_nueva(request):
+    """Paso 3: la contraseña nueva (sólo con un código recién validado)."""
+    datos = request.session.get(SESION_VERIFICADO) or {}
+    registro = recuperacion.codigo_verificado(datos.get('codigo'), datos.get('usuario'))
+    if registro is None:
+        request.session.pop(SESION_VERIFICADO, None)
+        messages.error(request, 'Se venció el tiempo para cambiar la contraseña. Pedí un código nuevo.')
+        return redirect('apps.autenticacion:recuperar')
+    form = NuevaContrasenaForm(registro.usuario, request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        recuperacion.cerrar_recuperacion(registro)
+        request.session.pop(SESION_VERIFICADO, None)
+        request.session.pop(SESION_EMAIL, None)
+        return redirect('apps.autenticacion:recuperar_listo')
+    return render(request, 'autenticacion/recuperar_nueva.html', {'form': form})
+
+
+def recuperar_listo(request):
+    return render(request, 'autenticacion/recuperar_listo.html')

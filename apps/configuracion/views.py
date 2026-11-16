@@ -26,18 +26,17 @@ def configuracion(request):
 
 @login_required
 def probar_correo(request):
-    """Envía un correo de prueba al email del administrador con la cuenta configurada."""
+    """Envía un correo de prueba con la cuenta configurada: al email del
+    administrador o, si no tiene, a la misma cuenta que envía."""
     if not es_admin(request.user):
         return sin_permiso(request)
     if request.method != 'POST':
         return redirect('apps.configuracion:configuracion')
-    destino = request.user.email
     conexion, remitente = conexion_y_remitente()
     if conexion is None:
         messages.error(request, 'Primero completá la cuenta de correo, activala y guardá.')
-    elif not destino:
-        messages.error(request, 'Tu usuario no tiene email: cargalo en «Mi perfil» para recibir la prueba.')
     else:
+        destino = request.user.email or ConfiguracionCorreo.actual().correo_remitente
         try:
             EmailMessage('Prueba de correo — Aguadelluvia',
                          'Si recibiste este mensaje, la cuenta para recuperar contraseñas funciona.',

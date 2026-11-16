@@ -64,7 +64,7 @@
                     <form method="post" action="{% url 'apps.configuracion:probar_correo' %}" class="d-flex flex-wrap align-items-center gap-3">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-light"><i class="fa-solid fa-paper-plane me-2"></i>Enviar correo de prueba</button>
-                        <span class="small text-muted">Llega a {{ user.email|default:"tu email (cargalo en «Mi perfil»)" }}.</span>
+                        <span class="small text-muted">Llega a {{ user.email|default:cfg.correo_remitente|default:"la cuenta que envía" }}.</span>
                     </form>
                 </div>
             </div>

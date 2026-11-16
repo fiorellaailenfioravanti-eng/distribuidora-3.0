@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm, UserCreationForm
+from django.contrib.auth.forms import SetPasswordForm, UserCreationForm
 
 from distribuidora.validadores import (
     ATTRS_NOMBRE, ATTRS_TELEFONO, aplicar_attrs, solo_digitos, validar_nombre, validar_telefono,
@@ -139,42 +139,36 @@ class IngresarUsuarioForm(forms.Form):
     )
 
 
-class RecuperarContrasenaForm(PasswordResetForm):
+class RecuperarContrasenaForm(forms.Form):
     """Pide el email de la cuenta. Por seguridad no revela si el email existe."""
+    email = forms.EmailField(
+        label='Email de tu cuenta', max_length=254,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control rounded-3 py-2 px-3', 'placeholder': 'tu@email.com',
+            'autofocus': True, 'autocomplete': 'email',
+        }))
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['email'].label = 'Email de tu cuenta'
-        self.fields['email'].widget.attrs.update({
-            'class': 'form-control rounded-3 py-2 px-3', 'placeholder': 'tu@email.com', 'autofocus': True,
-        })
 
-    def send_mail(self, subject_template_name, email_template_name, context, from_email,
-                  to_email, html_email_template_name=None):
-        """Envía con la cuenta de correo que el administrador cargó en Configuración
-        (si está activa); si no, con la del servidor."""
-        from django.core.mail import EmailMultiAlternatives
-        from django.template import loader
-        from apps.configuracion.models import conexion_y_remitente
+class CodigoRecuperacionForm(forms.Form):
+    """Los 6 dígitos que llegaron por email."""
+    codigo = forms.CharField(
+        label='Código de 6 dígitos', max_length=9,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control form-control-lg text-center codigo-recuperacion',
+            'inputmode': 'numeric', 'autocomplete': 'one-time-code', 'autofocus': True,
+            'placeholder': '••••••', 'pattern': '[0-9 -]*', 'maxlength': '9',
+        }))
 
-        conexion, remitente = conexion_y_remitente()
-        if conexion is None:
-            return super().send_mail(subject_template_name, email_template_name, context,
-                                     from_email, to_email, html_email_template_name)
-        asunto = ''.join(loader.render_to_string(subject_template_name, context).splitlines())
-        cuerpo = loader.render_to_string(email_template_name, context)
-        mensaje = EmailMultiAlternatives(asunto, cuerpo, remitente, [to_email], connection=conexion)
-        if html_email_template_name:
-            mensaje.attach_alternative(loader.render_to_string(html_email_template_name, context), 'text/html')
-        try:
-            mensaje.send()
-        except Exception:
-            import logging
-            logging.getLogger('django.contrib.auth').exception('No se pudo enviar el correo de recuperación')
+    def clean_codigo(self):
+        from .recuperacion import normalizar_codigo
+        codigo = normalizar_codigo(self.cleaned_data.get('codigo'))
+        if len(codigo) != 6:
+            raise forms.ValidationError('El código tiene 6 números.')
+        return codigo
 
 
 class NuevaContrasenaForm(SetPasswordForm):
-    """Nueva contraseña desde el enlace del email (mismos validadores que el registro)."""
+    """Nueva contraseña tras validar el código (mismos validadores que el registro)."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

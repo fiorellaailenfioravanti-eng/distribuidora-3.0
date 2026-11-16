@@ -31,3 +31,4 @@ Ajustes del sistema que el administrador cambia desde el panel (menú «Configur
 
 ## Notas
 - Resuelve [[QA-06 Email de producción sin configurar]]. Ver [[2026-11-14]].
+- 2026-11-16 ([[2026-11-16]]): el correo de prueba va a la cuenta que envía si el administrador no tiene email.

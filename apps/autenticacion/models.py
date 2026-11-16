@@ -20,3 +20,25 @@ class Usuario(AbstractUser):
 
         return reverse('inicio')
     
+
+class CodigoRecuperacion(models.Model):
+    """Código temporal de 6 dígitos para recuperar la contraseña.
+
+    Nunca se guarda el código en claro: sólo su HMAC (ver `recuperacion.py`).
+    Vence a los pocos minutos, admite pocos intentos y sirve una sola vez.
+    """
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='codigos_recuperacion')
+    codigo_hash = models.CharField(max_length=64)
+    creado = models.DateTimeField(auto_now_add=True)
+    vence = models.DateTimeField()
+    intentos = models.PositiveSmallIntegerField(default=0)
+    verificado_en = models.DateTimeField(null=True, blank=True)
+    usado = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-creado']
+        verbose_name = 'Código de recuperación'
+        verbose_name_plural = 'Códigos de recuperación'
+
+    def __str__(self):
+        return f'Código de {self.usuario} ({self.creado:%d/%m/%Y %H:%M})'

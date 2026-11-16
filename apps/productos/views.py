@@ -131,12 +131,43 @@ def envases(request):
                                   + (f' y asociado a {asociados} bidón(es).' if asociados else '.'))
         return redirect('apps.productos:envases')
     bidones = bidones_retornables()
+    todos = Producto.objects.filter(es_envase=True).prefetch_related('productos_que_lo_usan').order_by('nombre')
     return render(request, 'productos/envases.html', {
         'form': form,
-        'envases': Producto.objects.filter(es_envase=True)
-                   .prefetch_related('productos_que_lo_usan').order_by('-activo', 'nombre'),
+        'envases': todos.filter(activo=True),
+        'eliminados': todos.filter(activo=False),
         'sin_envase': [b for b in bidones if b.envase_id is None],
     })
+
+
+@login_required
+@requiere('gestionar_productos')
+def eliminar_envase(request, pk):
+    """Baja lógica de un envase: sale de «Envases asociados» y de «Stock de bidones».
+    No se permite mientras un bidón activo lo use (la planta lo necesita para recargar)."""
+    envase = get_object_or_404(Producto, id_producto=pk, es_envase=True)
+    if request.method == 'POST':
+        en_uso = list(envase.productos_que_lo_usan.filter(activo=True).values_list('nombre', flat=True))
+        if en_uso:
+            messages.error(request, f'«{envase.nombre}» lo usan: {", ".join(en_uso)}. '
+                                    'Asociales otro envase antes de eliminarlo.')
+        else:
+            envase.activo = False
+            envase.save(update_fields=['activo'])
+            messages.success(request, f'Envase «{envase.nombre}» eliminado. '
+                                      'Lo podés restaurar desde «Envases eliminados».')
+    return redirect('apps.productos:envases')
+
+
+@login_required
+@requiere('gestionar_productos')
+def restaurar_envase(request, pk):
+    envase = get_object_or_404(Producto, id_producto=pk, es_envase=True)
+    if request.method == 'POST':
+        envase.activo = True
+        envase.save(update_fields=['activo'])
+        messages.success(request, f'Envase «{envase.nombre}» restaurado.')
+    return redirect('apps.productos:envases')
 
 
 # ─────────────────────────────────────────────────────────────

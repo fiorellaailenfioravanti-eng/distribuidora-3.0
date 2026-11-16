@@ -12,7 +12,7 @@
             <h1 class="h3 fw-bold mb-0 text-main">{{ cliente.nombre_completo }}</h1>
             {% if cliente.numero %}<span class="badge bg-primary-subtle text-primary-emphasis rounded-pill px-3 py-1">N° {{ cliente.numero }}</span>{% endif %}
             {% if cliente.tipo_cliente == 'Premium' %}
-                <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-3 py-1 fs-6">
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 fs-6">
                     <i class="fa-solid fa-star me-1"></i>VIP Premium
                 </span>
             {% else %}
@@ -122,14 +122,15 @@
                     <dd class="col-sm-7">{{ cliente.get_tipo_cliente_display }}</dd>
                 </dl>
 
-                {# Toggle Normal / Premium #}
+                {# Toggle Normal / Premium (sólo quien puede cambiar el tipo) #}
+                {% if 'cambiar_tipo_cliente' in puede %}
                 <hr class="text-muted opacity-25">
                 <form method="post" action="{% url 'apps.clientes:cambiar_tipo' cliente.pk %}">
                     {% csrf_token %}
                     {% if cliente.tipo_cliente == 'Normal' %}
                         <input type="hidden" name="tipo_cliente" value="Premium">
-                        <button type="submit" class="btn btn-warning bg-opacity-25 text-warning rounded-pill fw-bold btn-sm w-100 border-0 hover-lift"
-                                data-confirmar="¿Promover a VIP Premium?">
+                        <button type="submit" class="btn btn-premium btn-sm w-100 hover-lift"
+                                data-confirmar="¿Promover a VIP Premium? Se habilita el fiado.">
                             <i class="fa-solid fa-star me-1"></i> Promover a Premium
                         </button>
                     {% else %}
@@ -140,6 +141,7 @@
                         </button>
                     {% endif %}
                 </form>
+                {% endif %}
             </div>
         </div>
 
@@ -375,13 +377,13 @@
 
 <!-- Pedido automático (RF-18) -->
 <div class="row mt-4">
-    <div class="col-12">{% include "pedidos/_suscripcion.html" %}</div>
+    <div class="col-12">{% include "pedidos/_suscripcion.html" with desplegable="pedido-automatico" %}</div>
 </div>
 
 <!-- Envases prestados (RF-08) -->
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden" data-desplegable="envases-prestados">
             <div class="card-header border-0 bg-transparent fw-bold text-main d-flex justify-content-between align-items-center pt-4 px-4 fs-5">
                 <span><i class="fa-solid fa-bottle-water me-2 text-primary"></i>Envases prestados</span>
                 <span class="badge {% if cliente.bidones_prestados < 0 %}bg-warning text-warning{% else %}bg-info text-info{% endif %} bg-opacity-25 rounded-pill">
@@ -453,7 +455,7 @@
 <!-- Promociones prepagas (RF-09 / RF-10) -->
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden" data-desplegable="promociones-prepagas">
             <div class="card-header border-0 bg-transparent fw-bold text-main d-flex justify-content-between align-items-center pt-4 px-4 fs-5">
                 <span><i class="fa-solid fa-tags me-2 text-primary"></i>Promociones prepagas</span>
                 {% if saldos_promocion %}<span class="badge bg-success bg-opacity-25 text-success rounded-pill">{{ saldos_promocion|length }} vigente(s)</span>{% endif %}
@@ -526,7 +528,7 @@
 <!-- Historial de Pedidos del Cliente -->
 <div class="row mt-4 mb-4">
     <div class="col-12">
-        <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden" data-desplegable="historial-pedidos">
             <div class="card-header border-0 bg-transparent fw-bold text-main d-flex justify-content-between align-items-center pt-4 px-4 fs-5">
                 <span><i class="fa-solid fa-boxes-packing me-2 text-primary"></i>Historial de Pedidos y Compras</span>
                 <span class="badge bg-info bg-opacity-25 text-info rounded-pill">{{ pedidos|length }} Pedido(s)</span>

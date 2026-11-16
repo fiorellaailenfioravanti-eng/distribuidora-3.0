@@ -1,5 +1,5 @@
-{# Pedido automático de reposición (RF-18). Variables: cliente, suscripcion, form_suscripcion #}
-<div class="card border-0 shadow-sm rounded-4 bg-surface surface-card overflow-hidden">
+{# Pedido automático de reposición (RF-18). Variables: cliente, suscripcion, form_suscripcion; desplegable (opcional: clave para plegarlo) #}
+<div class="card border-0 shadow-sm rounded-4 bg-surface surface-card overflow-hidden"{% if desplegable %} data-desplegable="{{ desplegable }}"{% endif %}>
     <div class="card-header border-0 bg-transparent fw-bold text-main d-flex justify-content-between align-items-center pt-4 px-4 fs-5">
         <span><i class="fa-solid fa-arrows-rotate me-2 text-primary"></i>Pedido automático</span>
         {% if suscripcion and suscripcion.activa %}

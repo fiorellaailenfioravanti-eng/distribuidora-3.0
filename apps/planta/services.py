@@ -88,7 +88,7 @@ def resumen_stock():
     from apps.clientes.models import Cliente
 
     grupos = []
-    envases = Producto.objects.filter(es_envase=True).order_by('nombre')
+    envases = Producto.objects.filter(es_envase=True, activo=True).order_by('nombre')  # sin los eliminados
     for envase in envases:
         llenos = list(Producto.objects.filter(envase=envase, activo=True).order_by('-es_recargable', 'nombre'))
         grupos.append({

@@ -17,6 +17,8 @@ urlpatterns = [
 
     # Envases asociados (panel)
     path('envases/', views.envases, name='envases'),
+    path('envases/<int:pk>/eliminar/', views.eliminar_envase, name='eliminar_envase'),
+    path('envases/<int:pk>/restaurar/', views.restaurar_envase, name='restaurar_envase'),
 
     # Categorías (panel)
     path('categorias/', views.listar_categorias, name='listar_categorias'),

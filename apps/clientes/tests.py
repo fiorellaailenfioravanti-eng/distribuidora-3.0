@@ -414,3 +414,30 @@ class FichaDomiciliosTests(TestCase):
         sin_telefono = Cliente.objects.create(nombre='Leo', apellido='Paz')
         respuesta = self.client.get(reverse('apps.clientes:ver_cliente', args=[sin_telefono.pk]))
         self.assertContains(respuesta, 'Mín. 1 requerido')
+
+
+class BotonPremiumTests(TestCase):
+    """«Promover a Premium» en la ficha: lo ve y lo usa quien puede cambiar el tipo."""
+
+    def setUp(self):
+        self.cliente = Cliente.objects.create(nombre='Ana', apellido='Pérez')
+        self.url = reverse('apps.clientes:ver_cliente', args=[self.cliente.pk])
+
+    def test_admin_promueve(self):
+        admin = get_user_model().objects.create_superuser('jefe', 'jefe@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(admin)
+        self.assertContains(self.client.get(self.url), 'Promover a Premium')
+        self.client.post(reverse('apps.clientes:cambiar_tipo', args=[self.cliente.pk]), {'tipo_cliente': 'Premium'})
+        self.cliente.refresh_from_db()
+        self.assertEqual(self.cliente.tipo_cliente, 'Premium')
+        self.assertTrue(self.cliente.permite_fiado)
+        self.assertContains(self.client.get(self.url), 'Cambiar a Normal')
+
+    def test_sin_permiso_no_ve_el_boton(self):
+        from django.contrib.auth.models import Permission
+        usuario = get_user_model().objects.create_user('mira', 'm@x.com', 'Agua-Lluvia-2026')
+        usuario.user_permissions.add(Permission.objects.get(codename='ver_clientes'))
+        self.client.force_login(usuario)
+        respuesta = self.client.get(self.url)
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertNotContains(respuesta, 'Promover a Premium')

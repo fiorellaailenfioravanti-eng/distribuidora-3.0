@@ -46,7 +46,6 @@
                             <tr>
                                 <td class="ps-4">
                                     <span class="fw-bold text-main">{{ e.nombre }}</span>
-                                    {% if not e.activo %}<span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill ms-1">Eliminado</span>{% endif %}
                                     <div class="text-muted small">${{ e.precio }}</div>
                                 </td>
                                 <td class="text-end fw-bold">{{ e.stock }}</td>
@@ -57,15 +56,22 @@
                                     <span class="text-muted small">Ninguno</span>
                                     {% endfor %}
                                 </td>
-                                <td class="pe-4 text-end">
+                                <td class="pe-4 text-end text-nowrap">
                                     <a href="{% url 'apps.productos:editar_producto' e.pk %}" class="btn btn-sm btn-light border-0 shadow-sm" title="Editar {{ e.nombre }}" aria-label="Editar {{ e.nombre }}">
                                         <i class="fa-solid fa-pen text-primary"></i>
                                     </a>
+                                    <form method="post" action="{% url 'apps.productos:eliminar_envase' e.pk %}" class="d-inline"
+                                          data-confirmar="¿Eliminar el envase «{{ e.nombre }}»? Deja de verse acá y en Stock de bidones; lo podés restaurar." data-peligro>
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-light border-0 shadow-sm ms-1" title="Eliminar {{ e.nombre }}" aria-label="Eliminar {{ e.nombre }}">
+                                            <i class="fa-solid fa-trash text-danger"></i>
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-4">Todavía no hay envases. Generá el primero con el formulario.</td>
+                                <td colspan="4" class="text-center text-muted py-4">No hay envases activos. Generá uno con el formulario.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -128,5 +134,49 @@
             </div>
         </div>
     </div>
+
+    {# ── Envases eliminados (baja lógica: no se ven acá ni en Stock de bidones) ── #}
+    {% if eliminados %}
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-surface mt-4">
+        <button class="btn w-100 text-start d-flex justify-content-between align-items-center p-3 px-4 border-0"
+                type="button" data-bs-toggle="collapse" data-bs-target="#envasesEliminados" aria-expanded="false" aria-controls="envasesEliminados">
+            <span class="fw-bold text-main"><i class="fa-solid fa-box-archive me-2 text-muted"></i>Envases eliminados
+                <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis ms-1">{{ eliminados|length }}</span>
+            </span>
+            <i class="fa-solid fa-chevron-down text-muted"></i>
+        </button>
+        <div class="collapse" id="envasesEliminados">
+            <p class="small text-muted px-4 mb-2">No se ven en Stock de bidones ni se usan al recargar. Su historial se conserva.</p>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light text-muted small text-uppercase">
+                        <tr>
+                            <th class="ps-4 py-3 border-bottom-0" scope="col">Envase</th>
+                            <th class="py-3 border-bottom-0 text-end" scope="col">Vacíos</th>
+                            <th class="pe-4 py-3 border-bottom-0 text-end" scope="col">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in eliminados %}
+                        <tr class="opacity-75">
+                            <td class="ps-4"><span class="fw-semibold text-main">{{ e.nombre }}</span><div class="text-muted small">${{ e.precio }}</div></td>
+                            <td class="text-end text-muted">{{ e.stock }}</td>
+                            <td class="pe-4 text-end text-nowrap">
+                                <form method="post" action="{% url 'apps.productos:restaurar_envase' e.pk %}" class="d-inline"
+                                      data-confirmar="¿Restaurar el envase «{{ e.nombre }}»?">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">
+                                        <i class="fa-solid fa-rotate-left me-1"></i>Restaurar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

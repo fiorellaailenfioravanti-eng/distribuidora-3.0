@@ -17,7 +17,7 @@
     <!-- Estilo Global Aguadelluvia (Tienda) -->
     <link rel="stylesheet" href="{% static 'style/aquadelluvia.css' %}?v=7">
     <link rel="stylesheet" href="{% static 'style/productos.css' %}?v=7">
-    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=17">
+    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=19">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     {% include 'includes/favicon.html' %}
     <title>{% block title %}{% endblock %} · Aguadelluvia</title>
@@ -137,7 +137,7 @@
                         <div class="pt-3 pt-lg-0 ps-lg-2 w-100 w-lg-auto">
                             {% if user.is_authenticated %}
                                 <div class="dropdown">
-                                    <a href="#" class="d-flex align-items-center justify-content-between justify-content-lg-start text-decoration-none dropdown-toggle text-body-emphasis p-2 p-lg-1 pe-lg-3 rounded-pill border hover-bg-light shadow-sm bg-white" id="dropdownUserStore" data-bs-toggle="dropdown" aria-expanded="false" style="height: 42px;">
+                                    <a href="#" class="d-flex align-items-center justify-content-between justify-content-lg-start text-decoration-none dropdown-toggle text-body-emphasis p-2 p-lg-1 pe-lg-3 rounded-pill border hover-bg-light shadow-sm bg-surface" id="dropdownUserStore" data-bs-toggle="dropdown" aria-expanded="false" style="height: 42px;">
                                         <div class="d-flex align-items-center">
                                             <span class="me-2">{% include 'includes/avatar.html' with tamano='sm' %}</span>
                                             <span class="fw-bold fs-6 me-1">{{ user.username|truncatechars:12 }}</span>

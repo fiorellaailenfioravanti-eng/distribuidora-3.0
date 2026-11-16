@@ -568,3 +568,28 @@ a:hover > .marca-rana { transform: rotate(-6deg) scale(1.06); }
     font-weight: 800; font-size: 1.9rem; letter-spacing: 0.5em;
     padding-left: 0.5em;
 }
+
+/* Secciones desplegables (static/js/secciones_desplegables.js) */
+.seccion-desplegable__encabezado { cursor: pointer; user-select: none; }
+.seccion-desplegable--plegada > .seccion-desplegable__encabezado { padding-bottom: 1.25rem; }
+.seccion-desplegable__encabezado:hover { color: var(--aq-agua); }
+.seccion-desplegable__encabezado:focus-visible { outline: 2px solid var(--aq-agua); outline-offset: -4px; border-radius: 1rem; }
+.seccion-desplegable__encabezado > span:first-child { margin-right: auto; }
+.seccion-desplegable__flecha { color: var(--text-muted); transition: transform 0.25s ease; }
+.seccion-desplegable--plegada .seccion-desplegable__flecha { transform: rotate(-90deg); }
+@media (prefers-reduced-motion: reduce) { .seccion-desplegable__flecha { transition: none; } }
+
+/* Botón «Promover a Premium»: ámbar legible en los dos temas (AA) */
+.btn-premium {
+    --bs-btn-color: var(--bs-warning-text-emphasis);
+    --bs-btn-bg: var(--bs-warning-bg-subtle);
+    --bs-btn-border-color: rgba(var(--bs-warning-rgb), 0.55);
+    --bs-btn-hover-color: var(--bs-warning-text-emphasis);
+    --bs-btn-hover-bg: rgba(var(--bs-warning-rgb), 0.28);
+    --bs-btn-hover-border-color: rgba(var(--bs-warning-rgb), 0.8);
+    --bs-btn-active-color: var(--bs-warning-text-emphasis);
+    --bs-btn-active-bg: rgba(var(--bs-warning-rgb), 0.35);
+    --bs-btn-active-border-color: rgba(var(--bs-warning-rgb), 0.8);
+    --bs-btn-focus-shadow-rgb: var(--bs-warning-rgb);
+}
+.btn-premium .fa-star { color: var(--bs-warning); }

@@ -29,3 +29,4 @@ Suma al stock de llenos y descuenta los envases vacíos del mismo tamaño.
 
 ## Notas
 - Permisos: [[Roles y permisos]]
+- 2026-11-16 ([[2026-11-16]]): Stock de bidones ignora los envases eliminados.

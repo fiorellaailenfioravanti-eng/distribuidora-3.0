@@ -234,3 +234,38 @@ class GenerarEnvaseTests(TestCase):
         self.client.force_login(cliente)
         self.client.post(self.url, {'nombre': 'Envase X', 'precio': '10', 'stock': '1'})
         self.assertFalse(Producto.objects.filter(es_envase=True).exists())
+
+
+class EliminarEnvaseTests(GenerarEnvaseTests):
+    """Eliminar un envase desde «Envases asociados»: sale de ahí y de Stock de bidones."""
+
+    def _envase(self, nombre='Envase 20 L', **extra):
+        return Producto.objects.create(nombre=nombre, descripcion='Vacío', precio=Decimal('8500'),
+                                       stock=17, es_envase=True, **extra)
+
+    def test_eliminar_y_restaurar(self):
+        from apps.planta.services import resumen_stock
+        envase = self._envase()
+        self.client.post(reverse('apps.productos:eliminar_envase', args=[envase.pk]))
+        envase.refresh_from_db()
+        self.assertFalse(envase.activo)
+        respuesta = self.client.get(self.url)
+        self.assertNotIn(envase, list(respuesta.context['envases']))
+        self.assertIn(envase, list(respuesta.context['eliminados']))
+        self.assertNotIn(envase, [g['envase'] for g in resumen_stock()[0]])
+        self.client.post(reverse('apps.productos:restaurar_envase', args=[envase.pk]))
+        envase.refresh_from_db()
+        self.assertTrue(envase.activo)
+        self.assertIn(envase, [g['envase'] for g in resumen_stock()[0]])
+
+    def test_no_se_elimina_si_un_bidon_lo_usa(self):
+        envase = self._envase()
+        self.bidon.envase = envase
+        self.bidon.save()
+        self.client.post(reverse('apps.productos:eliminar_envase', args=[envase.pk]))
+        envase.refresh_from_db()
+        self.assertTrue(envase.activo)
+
+    def test_no_elimina_productos_que_no_son_envases(self):
+        respuesta = self.client.post(reverse('apps.productos:eliminar_envase', args=[self.bidon.pk]))
+        self.assertEqual(respuesta.status_code, 404)

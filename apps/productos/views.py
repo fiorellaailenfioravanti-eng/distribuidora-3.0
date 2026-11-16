@@ -6,7 +6,7 @@ from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.permisos.roles import puede, requiere
-from .forms import CategoriaForm, ProductoForm
+from .forms import CategoriaForm, EnvaseForm, ProductoForm, bidones_retornables
 from .models import Categoria, Producto
 
 
@@ -112,6 +112,31 @@ def restaurar_producto(request, pk):
         producto.save(update_fields=['activo'])
         messages.success(request, f'«{producto.nombre}» volvió a la tienda.')
     return redirect('apps.productos:listar_productos_admin')
+
+
+# ─────────────────────────────────────────────────────────────
+# ENVASES ASOCIADOS
+# ─────────────────────────────────────────────────────────────
+@login_required
+@requiere('gestionar_productos')
+def envases(request):
+    """Envases vacíos, bidones sin envase y mini alta para generar uno y asociarlo."""
+    bidon = request.GET.get('bidon', '')
+    form = EnvaseForm(request.POST or None,
+                      initial={'bidones': [bidon]} if bidon.isdigit() else None)
+    if request.method == 'POST' and form.is_valid():
+        envase = form.save()
+        asociados = len(form.cleaned_data['bidones'])
+        messages.success(request, f'Envase «{envase.nombre}» generado'
+                                  + (f' y asociado a {asociados} bidón(es).' if asociados else '.'))
+        return redirect('apps.productos:envases')
+    bidones = bidones_retornables()
+    return render(request, 'productos/envases.html', {
+        'form': form,
+        'envases': Producto.objects.filter(es_envase=True)
+                   .prefetch_related('productos_que_lo_usan').order_by('-activo', 'nombre'),
+        'sin_envase': [b for b in bidones if b.envase_id is None],
+    })
 
 
 # ─────────────────────────────────────────────────────────────

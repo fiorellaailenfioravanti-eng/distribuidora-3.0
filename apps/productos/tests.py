@@ -170,3 +170,67 @@ class CatalogoAgotadosAlFinalTests(TestCase):
         respuesta = self.client.get(reverse('apps.productos:listar_productos'))
         nombres = [p.nombre for p in respuesta.context['productos']]
         self.assertEqual(nombres, ['B con stock', 'C con stock', 'A agotado'])
+
+
+class GenerarEnvaseTests(TestCase):
+    """Mini apartado «Envases asociados»: genera el envase vacío y lo asocia a los bidones."""
+
+    def setUp(self):
+        Usuario = get_user_model()
+        self.vendedor = Usuario.objects.create_user('vend', 'v@x.com', 'Agua-Lluvia-2026')
+        self.vendedor.groups.add(Group.objects.get(name='Vendedor'))
+        self.bidon = Producto.objects.create(
+            nombre='Bidón 20 L primera marca', descripcion='Agua', precio=Decimal('1500'),
+            stock=10, es_botellon=True, es_recargable=True)
+        self.otro = Producto.objects.create(
+            nombre='Bidón 20 L segunda marca', descripcion='Agua', precio=Decimal('1200'),
+            stock=5, es_botellon=True, es_recargable=True)
+        self.url = reverse('apps.productos:envases')
+        self.client.force_login(self.vendedor)
+
+    def test_lista_bidones_sin_envase(self):
+        respuesta = self.client.get(self.url)
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(respuesta.context['sin_envase'], [self.bidon, self.otro])
+
+    def test_preselecciona_el_bidon_de_la_url(self):
+        respuesta = self.client.get(f'{self.url}?bidon={self.bidon.pk}')
+        self.assertContains(respuesta, f'value="{self.bidon.pk}"')
+        self.assertEqual(respuesta.context['form'].initial['bidones'], [str(self.bidon.pk)])
+
+    def test_genera_envase_y_lo_asocia(self):
+        respuesta = self.client.post(self.url, {
+            'nombre': '  Envase   bidón 20 L ', 'precio': '9500', 'stock': '40',
+            'bidones': [self.bidon.pk, self.otro.pk]})
+        self.assertRedirects(respuesta, self.url)
+        envase = Producto.objects.get(es_envase=True)
+        self.assertEqual(envase.nombre, 'Envase bidón 20 L')
+        self.assertEqual(envase.stock, 40)
+        self.assertTrue(envase.es_retornable)
+        self.assertEqual(envase.categoria.get().nombre, 'Envases')
+        self.bidon.refresh_from_db()
+        self.otro.refresh_from_db()
+        self.assertEqual(self.bidon.envase, envase)
+        self.assertEqual(self.otro.envase, envase)
+        # El envase generado ya se puede elegir en el formulario del producto.
+        self.assertIn(envase, ProductoForm().fields['envase'].queryset)
+
+    def test_reutiliza_la_categoria_envases(self):
+        Categoria.objects.create(nombre='envases', descripcion='')
+        self.client.post(self.url, {'nombre': 'Envase 10 L', 'precio': '6000', 'stock': '0'})
+        self.assertEqual(Categoria.objects.filter(nombre__iexact='envases').count(), 1)
+
+    def test_no_repite_nombre_ni_acepta_precio_cero(self):
+        Producto.objects.create(nombre='Envase bidón 20 L', descripcion='', precio=1, stock=0, es_envase=True)
+        respuesta = self.client.post(self.url, {'nombre': 'envase bidón 20 l', 'precio': '0', 'stock': '-1'})
+        form = respuesta.context['form']
+        self.assertIn('nombre', form.errors)
+        self.assertIn('precio', form.errors)
+        self.assertIn('stock', form.errors)
+        self.assertEqual(Producto.objects.filter(es_envase=True).count(), 1)
+
+    def test_cliente_no_puede_entrar(self):
+        cliente = get_user_model().objects.create_user('cli', 'c@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(cliente)
+        self.client.post(self.url, {'nombre': 'Envase X', 'precio': '10', 'stock': '1'})
+        self.assertFalse(Producto.objects.filter(es_envase=True).exists())

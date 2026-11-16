@@ -718,6 +718,7 @@ Camion ← RutaReparto → Zona
 /productos/editar/<pk>         → editar_producto       [🔒 Vendedor/Admin]
 /productos/eliminar/<pk>       → eliminar_producto     [🔒 gestionar_productos] (desactiva)
 /productos/restaurar/<pk>      → restaurar_producto    [🔒 gestionar_productos]
+/productos/envases/             → envases               [🔒 gestionar_productos] (envases vacíos + generar envase y asociarlo a bidones)
 /planta/recarga/               → recarga_diaria        [🔒 registrar_recargas]
 /planta/stock/                 → stock_bidones         [🔒 ver_stock_bidones]
 /productos/categorias/         → listar_categorias     [🔒 Vendedor/Admin] (listado + alta)

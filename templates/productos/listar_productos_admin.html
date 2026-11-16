@@ -8,9 +8,12 @@
         <div>
             <h1 class="h3 fw-bold mb-0 text-main">Inventario de Productos</h1>
         </div>
-        <div class="d-flex gap-2 w-100 justify-content-md-end" style="max-width: 420px;">
+        <div class="d-flex gap-2 w-100 justify-content-md-end" style="max-width: 560px;">
             <a href="{% url 'apps.productos:listar_categorias' %}" class="btn btn-light border-0 shadow-sm rounded-3 hover-lift fw-bold px-3 flex-fill text-center">
                 <i class="fa-solid fa-tags me-2 text-primary"></i> Categorías
+            </a>
+            <a href="{% url 'apps.productos:envases' %}" class="btn btn-light border-0 shadow-sm rounded-3 hover-lift fw-bold px-3 flex-fill text-center">
+                <i class="fa-solid fa-bottle-water me-2 text-primary"></i> Envases
             </a>
             <a href="{% url 'apps.productos:crear_producto' %}" class="btn btn-primary rounded-3 btn-glow fw-bold px-3 flex-fill text-center">
                 <i class="fa-solid fa-plus me-2"></i> Nuevo producto

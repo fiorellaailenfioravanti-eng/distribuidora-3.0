@@ -15,6 +15,9 @@ urlpatterns = [
     path('eliminar/<int:pk>', views.eliminar_producto, name='eliminar_producto'),
     path('restaurar/<int:pk>', views.restaurar_producto, name='restaurar_producto'),
 
+    # Envases asociados (panel)
+    path('envases/', views.envases, name='envases'),
+
     # Categorías (panel)
     path('categorias/', views.listar_categorias, name='listar_categorias'),
     path('categoria/crear/', views.crear_categoria, name='crear_categoria'),

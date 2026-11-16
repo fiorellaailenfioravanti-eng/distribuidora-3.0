@@ -23,7 +23,8 @@
     <label for="{{ form.envase.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Envase vacío asociado</label>
     {{ form.envase }}
     {% for error in form.envase.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-    <div class="form-text">El bidón vacío que se retira al entregar este producto y que se usa para recargarlo.</div>
+    <div class="form-text">El bidón vacío que se retira al entregar este producto y que se usa para recargarlo.
+        ¿No está en la lista? <a href="{% url 'apps.productos:envases' %}{% if form.instance.pk %}?bidon={{ form.instance.pk }}{% endif %}#generar-envase">Generar un envase</a>.</div>
 </div>
 
 <script>

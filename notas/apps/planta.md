@@ -22,7 +22,7 @@ Suma al stock de llenos y descuenta los envases vacíos del mismo tamaño.
 ## Reglas
 - Una recarga por día; se corrige durante el día y se mueve sólo la diferencia.
 - No deja recargar más bidones que los envases vacíos disponibles de ese tamaño.
-- Un producto se marca recargable en Productos › Editar › «Se recarga en planta» + «Envase asociado».
+- Un producto se marca recargable en Productos › Editar › «Bidón retornable» + «Envase asociado». Si el envase no existe, se genera en Inventario › Envases ([[productos]]).
 
 ## Relaciones
 - Usa modelos de [[productos]]

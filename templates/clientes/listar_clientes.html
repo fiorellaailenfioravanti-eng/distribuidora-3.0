@@ -96,7 +96,7 @@
                     {% endif %}
                 </td>
                 <td class="text-center d-none d-lg-table-cell">
-                    <span class="badge {% if cliente.cantidad_telefonos >= 2 %}bg-success bg-opacity-25 text-success{% elif cliente.cantidad_telefonos == 1 %}bg-warning bg-opacity-25 text-warning{% else %}bg-danger bg-opacity-25 text-danger{% endif %} rounded-pill px-2 py-1">
+                    <span class="badge {% if cliente.cantidad_telefonos >= 1 %}bg-success bg-opacity-25 text-success{% else %}bg-danger bg-opacity-25 text-danger{% endif %} rounded-pill px-2 py-1">
                         {{ cliente.cantidad_telefonos }}
                     </span>
                 </td>

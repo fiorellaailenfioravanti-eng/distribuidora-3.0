@@ -252,9 +252,9 @@
     "semantic_hash": "8b30f647a9d1755e740dcb6942fa2515"
   },
   "apps/clientes/forms.py": {
-    "mtime": 1794835075.300342,
-    "seen": 1794836470.1394033,
-    "ast_hash": "28c9b1f606f1de178495a2227292a154",
+    "mtime": 1794836642.0659366,
+    "seen": 1794836832.4615524,
+    "ast_hash": "d691418a220cd18eb31bce3d773e6925",
     "semantic_hash": ""
   },
   "apps/clientes/migrations/0001_initial.py": {
@@ -312,9 +312,9 @@
     "semantic_hash": ""
   },
   "apps/clientes/tests.py": {
-    "mtime": 1794836308.266153,
-    "seen": 1794836470.1394033,
-    "ast_hash": "f678e4383aca0584b473d7ed410ebc07",
+    "mtime": 1794836801.0340106,
+    "seen": 1794836832.4615524,
+    "ast_hash": "4dc45e07db9b20566fb95525032bf326",
     "semantic_hash": ""
   },
   "apps/clientes/urls.py": {
@@ -924,9 +924,9 @@
     "semantic_hash": ""
   },
   "templates/clientes/listar_clientes.html": {
-    "mtime": 1794836273.148716,
-    "seen": 1794836470.1394033,
-    "ast_hash": "c03031ed67a0c9b399070df68fd5c337",
+    "mtime": 1794836691.8098948,
+    "seen": 1794836832.4615524,
+    "ast_hash": "cf0538c208dbe900b020b8abb0f2ca22",
     "semantic_hash": ""
   },
   "templates/clientes/mi_perfil_cliente.html": {
@@ -936,9 +936,9 @@
     "semantic_hash": ""
   },
   "templates/clientes/ver_cliente.html": {
-    "mtime": 1794836332.7678914,
-    "seen": 1794836470.1394033,
-    "ast_hash": "b5b8c7dc4ba78a6ec6924badbdd22232",
+    "mtime": 1794836691.8088942,
+    "seen": 1794836832.4615524,
+    "ast_hash": "ba6973505b9e39f3715a42d3498dd283",
     "semantic_hash": ""
   },
   "templates/cuentas/listar_cuentas.html": {
@@ -1740,9 +1740,9 @@
     "semantic_hash": ""
   },
   "notas/apps/clientes.md": {
-    "mtime": 1794836358.267793,
-    "seen": 1794836470.1394033,
-    "ast_hash": "53345a7f603c04a5d70d0299e6948d25",
+    "mtime": 1794836825.0485373,
+    "seen": 1794836832.4615524,
+    "ast_hash": "34a691fe007a2472d587e4eaeaeb9c69",
     "semantic_hash": ""
   },
   "notas/apps/cuentas.md": {
@@ -2382,9 +2382,9 @@
     "semantic_hash": ""
   },
   "notas/diario/2026-11-16.md": {
-    "mtime": 1794836358.2688763,
-    "seen": 1794836470.1394033,
-    "ast_hash": "895fe22838c62934a4b0de64c949e95f",
+    "mtime": 1794836825.0485373,
+    "seen": 1794836832.4615524,
+    "ast_hash": "0d5ccc7c579fe85a688ddb84dfdbd41b",
     "semantic_hash": ""
   },
   "templates/autenticacion/correos/_base.html": {

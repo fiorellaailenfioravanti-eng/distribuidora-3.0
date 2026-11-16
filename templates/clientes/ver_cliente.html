@@ -68,12 +68,12 @@
     <div class="col-6 col-md-3">
         <div class="card border-0 shadow-sm text-center h-100 rounded-4 bg-surface hover-lift">
             <div class="card-body p-4">
-                <div class="fs-2 fw-bold {% if cliente.cantidad_telefonos >= 2 %}text-success{% else %}text-warning{% endif %}">
+                <div class="fs-2 fw-bold {% if cliente.cantidad_telefonos >= 1 %}text-success{% else %}text-warning{% endif %}">
                     {{ cliente.cantidad_telefonos }}
                 </div>
                 <small class="text-muted fw-semibold">Teléfonos</small>
-                {% if cliente.cantidad_telefonos < 2 %}
-                <div class="mt-1"><span class="badge bg-warning bg-opacity-25 text-warning rounded-pill">Mín. 2 requerido</span></div>
+                {% if cliente.cantidad_telefonos < 1 %}
+                <div class="mt-1"><span class="badge bg-warning bg-opacity-25 text-warning rounded-pill">Mín. 1 requerido</span></div>
                 {% endif %}
             </div>
         </div>
@@ -142,18 +142,6 @@
                 </form>
             </div>
         </div>
-
-        {# Notas internas #}
-        {% if cliente.notas_internas %}
-        <div class="card border-0 shadow-sm mb-4 bg-warning bg-opacity-10 rounded-4">
-            <div class="card-body p-4">
-                <small class="text-warning fw-bold text-uppercase">
-                    <i class="fa-solid fa-lock me-1"></i>Notas internas (solo Admin/Vendedor)
-                </small>
-                <p class="mb-0 mt-2 text-body-emphasis">{{ cliente.notas_internas }}</p>
-            </div>
-        </div>
-        {% endif %}
 
         {# Teléfonos #}
         <div class="card border-0 shadow-sm mb-4 rounded-4 bg-surface overflow-hidden">
@@ -325,10 +313,13 @@
 
             {# Agregar dirección inline #}
             <div class="card-footer bg-transparent p-4 border-top">
-                <p class="fw-bold mb-3 text-main">
-                    <i class="fa-solid fa-plus text-primary me-1"></i>Agregar domicilio
-                </p>
-                <form method="post" action="{% url 'apps.clientes:agregar_direccion' cliente.pk %}">
+                <button class="btn btn-outline-primary rounded-pill fw-bold px-4" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#agregarDomicilio"
+                        aria-expanded="{% if form_dir.errors %}true{% else %}false{% endif %}" aria-controls="agregarDomicilio">
+                    <i class="fa-solid fa-plus me-1"></i>Agregar domicilio
+                </button>
+                <div class="collapse{% if form_dir.errors %} show{% endif %}" id="agregarDomicilio">
+                <form method="post" action="{% url 'apps.clientes:agregar_direccion' cliente.pk %}" class="mt-3">
                     {% csrf_token %}
                     <div class="row g-3">
                         <div class="col-md-4">
@@ -339,13 +330,9 @@
                             <label class="form-label small fw-semibold text-muted">Altura</label>
                             {{ form_dir.altura }}
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-6">
                             <label class="form-label small fw-semibold text-muted">Piso/Dpto</label>
                             {{ form_dir.piso_depto }}
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold text-muted">Zona (Asignar)</label>
-                            {{ form_dir.zona }}
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold text-muted">Barrio</label>
@@ -369,11 +356,7 @@
                                 </p>
                             {% endif %}
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold text-muted">Coordenadas (opcional)</label>
-                            {{ form_dir.coordenadas }}
-                        </div>
-                        <div class="col-md-6 d-flex align-items-end gap-2">
+                        <div class="col-12 d-flex align-items-end gap-2">
                             <div class="d-flex align-items-center gap-2 mb-1">
                                 {{ form_dir.es_principal }}
                                 <label class="form-check-label small">Principal</label>
@@ -384,6 +367,7 @@
                         </div>
                     </div>
                 </form>
+                </div>
             </div>
         </div>
     </div>

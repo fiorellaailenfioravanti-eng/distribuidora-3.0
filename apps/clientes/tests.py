@@ -384,3 +384,33 @@ class EnlaceGoogleMapsTests(TestCase):
         respuesta = self.client.get(reverse('apps.clientes:ver_cliente', args=[self.cliente.pk]))
         self.assertContains(respuesta, 'href="https://www.google.com/maps/search/?api=1&amp;query=')
         self.assertContains(respuesta, 'target="_blank" rel="noopener noreferrer"')
+
+
+class FichaDomiciliosTests(TestCase):
+    """Alta de domicilio desplegable, sin coordenadas, y ficha sin la tarjeta de notas internas."""
+
+    def setUp(self):
+        vendedor = get_user_model().objects.create_user('vend_ficha', 'vf@x.com', 'Agua-Lluvia-2026')
+        vendedor.groups.add(Group.objects.get(name='Vendedor'))
+        self.client.force_login(vendedor)
+        self.cliente = Cliente.objects.create(nombre='Eva', apellido='Ruiz', notas_internas='Importado del Excel')
+
+    def test_el_formulario_de_domicilio_no_pide_coordenadas(self):
+        from .forms import DireccionEntregaForm
+        self.assertNotIn('coordenadas', DireccionEntregaForm(is_staff_or_admin=True).fields)
+
+    def test_agregar_domicilio_es_desplegable_y_sin_notas_internas(self):
+        respuesta = self.client.get(reverse('apps.clientes:ver_cliente', args=[self.cliente.pk]))
+        self.assertContains(respuesta, 'data-bs-target="#agregarDomicilio"')
+        self.assertContains(respuesta, 'class="collapse" id="agregarDomicilio"')
+        self.assertNotContains(respuesta, 'Coordenadas (opcional)')
+        self.assertNotContains(respuesta, 'Importado del Excel')
+
+    def test_un_telefono_alcanza(self):
+        from .models import TelefonoContacto
+        TelefonoContacto.objects.create(cliente=self.cliente, numero='3624111111', desc_relacion='Titular')
+        respuesta = self.client.get(reverse('apps.clientes:ver_cliente', args=[self.cliente.pk]))
+        self.assertNotContains(respuesta, 'requerido')
+        sin_telefono = Cliente.objects.create(nombre='Leo', apellido='Paz')
+        respuesta = self.client.get(reverse('apps.clientes:ver_cliente', args=[sin_telefono.pk]))
+        self.assertContains(respuesta, 'Mín. 1 requerido')

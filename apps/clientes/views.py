@@ -278,6 +278,11 @@ def eliminar_cliente(request, pk):
     cliente.dar_de_baja()
     messages.success(request, f'«{cliente.nombre_completo()}» se eliminó. '
                               'Lo podés restaurar desde «Clientes eliminados».')
+    # Desde el directorio vuelve a la misma página y filtro (sólo rutas internas).
+    volver = request.POST.get('volver', '')
+    if volver.startswith('/') and url_has_allowed_host_and_scheme(
+            volver, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return redirect(volver)
     return redirect('apps.clientes:listar_clientes')
 
 

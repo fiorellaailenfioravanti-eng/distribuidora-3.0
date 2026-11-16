@@ -300,9 +300,9 @@
     "semantic_hash": "fddbb88f6f242d772f5f7b171bc45323"
   },
   "apps/clientes/models.py": {
-    "mtime": 1794832581.4028056,
-    "seen": 1794832874.7889116,
-    "ast_hash": "fab9657e910454a6d07d9aca9a7cc982",
+    "mtime": 1794835268.8140965,
+    "seen": 1794835654.1150353,
+    "ast_hash": "f7cbd14c90839148b27893ff847c30d4",
     "semantic_hash": ""
   },
   "apps/clientes/signals.py": {
@@ -312,9 +312,9 @@
     "semantic_hash": ""
   },
   "apps/clientes/tests.py": {
-    "mtime": 1794832581.4028056,
-    "seen": 1794832874.7889116,
-    "ast_hash": "8de2d8bea34fed2f7a9bc7a230e2d84d",
+    "mtime": 1794835268.81511,
+    "seen": 1794835654.1150353,
+    "ast_hash": "84b2a75c5e017024bc556441b61b7096",
     "semantic_hash": ""
   },
   "apps/clientes/urls.py": {
@@ -324,9 +324,9 @@
     "semantic_hash": ""
   },
   "apps/clientes/views.py": {
-    "mtime": 1794832581.4028056,
-    "seen": 1794832874.7889116,
-    "ast_hash": "a2db8fc6b574245d00958d62cc09b9a1",
+    "mtime": 1794835117.3563619,
+    "seen": 1794835654.1150353,
+    "ast_hash": "22a2b7c1957bff2fe975186dff3690a9",
     "semantic_hash": ""
   },
   "apps/cuentas/__init__.py": {
@@ -798,9 +798,9 @@
     "semantic_hash": ""
   },
   ".agents/CONTEXT.md": {
-    "mtime": 1794833844.543177,
-    "seen": 1794833856.9415095,
-    "ast_hash": "58193d59fabe2346fe0900094747819e",
+    "mtime": 1794835494.371422,
+    "seen": 1794835654.1150353,
+    "ast_hash": "e06b7c31c5e4f064309a73123c5d621f",
     "semantic_hash": ""
   },
   ".agents/DESIGN.md": {
@@ -924,9 +924,9 @@
     "semantic_hash": ""
   },
   "templates/clientes/listar_clientes.html": {
-    "mtime": 1794832581.6117969,
-    "seen": 1794832874.7889116,
-    "ast_hash": "ebe2e2dddf373b81b27ff41ba4c99a27",
+    "mtime": 1794835117.3563619,
+    "seen": 1794835654.1150353,
+    "ast_hash": "a0e52735ecd47a2d4f95f393f94c6cc4",
     "semantic_hash": ""
   },
   "templates/clientes/mi_perfil_cliente.html": {
@@ -936,9 +936,9 @@
     "semantic_hash": ""
   },
   "templates/clientes/ver_cliente.html": {
-    "mtime": 1794832581.6124096,
-    "seen": 1794832874.7889116,
-    "ast_hash": "59a03c871f08aa4e63d1c7540cfd3147",
+    "mtime": 1794835122.3219693,
+    "seen": 1794835654.1150353,
+    "ast_hash": "f199741c52269b1e6a0956b0f76565c7",
     "semantic_hash": ""
   },
   "templates/cuentas/listar_cuentas.html": {
@@ -1746,9 +1746,9 @@
     "semantic_hash": ""
   },
   "notas/apps/clientes.md": {
-    "mtime": 1794832581.5621214,
-    "seen": 1794832874.7889116,
-    "ast_hash": "ae0a234b6044da99d09bf59c10a2b941",
+    "mtime": 1794835494.371422,
+    "seen": 1794835654.1150353,
+    "ast_hash": "a98406ca6a78cee1fff288eb2d1a5230",
     "semantic_hash": ""
   },
   "notas/apps/cuentas.md": {
@@ -2427,6 +2427,12 @@
     "mtime": 1794833625.3994958,
     "seen": 1794833856.9415095,
     "ast_hash": "d5fc47b71fd45c64a1b7fa3cec15094a",
+    "semantic_hash": ""
+  },
+  "apps/clientes/migrations/0015_numero_cliente.py": {
+    "mtime": 1794835131.5585878,
+    "seen": 1794835654.1150353,
+    "ast_hash": "9d9aa1ac8165f9a2ce32e28c24c8c24a",
     "semantic_hash": ""
   }
 }

@@ -32,3 +32,4 @@ Clientes, teléfonos, direcciones de entrega e historial de envases (RF-08).
 - 2026-11-14 ([[2026-11-14]]): baja lógica con «Clientes eliminados» y Restaurar (bloquea la cuenta web y lo saca de los selectores); orden por columnas en el directorio; teléfonos dinámicos (uno obligatorio + los que haga falta, validados) en registro y alta; límites de largo con CHECK en la base.
 - 2026-11-14 ([[2026-11-14]]): teléfonos y direcciones con baja lógica (lista plegable en la ficha + Restaurar); al eliminar el principal, pasa a otro.
 - 2026-11-16 ([[2026-11-16]]): **Nro de cliente** (`Cliente.numero`): los importados conservan su número del sistema anterior; los nuevos arrancan en 0000001. Se muestra en el directorio y la ficha y se puede buscar. Importados los clientes de la hoja W3W de «Recorridos 12-11-25».
+- 2026-11-16 ([[2026-11-16]]): botón **Eliminar** en cada fila del directorio (baja lógica con confirmación; vuelve a la misma página y búsqueda).

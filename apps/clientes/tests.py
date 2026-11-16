@@ -247,6 +247,17 @@ class BajaLogicaClienteTests(TestCase):
         self.assertIn(self.cliente, list(lista.context['eliminados']))
         self.assertNotIn(self.cliente, AbonoForm().fields['cliente'].queryset)
 
+    def test_eliminar_desde_el_directorio_vuelve_a_la_misma_pagina(self):
+        lista = self.client.get(reverse('apps.clientes:listar_clientes'))
+        self.assertContains(lista, reverse('apps.clientes:eliminar_cliente', args=[self.cliente.pk]))
+        url = reverse('apps.clientes:eliminar_cliente', args=[self.cliente.pk])
+        volver = reverse('apps.clientes:listar_clientes') + '?page=2&q=ana'
+        self.assertRedirects(self.client.post(url, {'volver': volver}), volver, fetch_redirect_response=False)
+        # Una dirección externa se ignora.
+        self.cliente.restaurar()
+        respuesta = self.client.post(url, {'volver': '//sitio-externo.com/'})
+        self.assertRedirects(respuesta, reverse('apps.clientes:listar_clientes'), fetch_redirect_response=False)
+
     def test_restaurar(self):
         self.cliente.dar_de_baja()
         self.client.post(reverse('apps.clientes:restaurar_cliente', args=[self.cliente.pk]))

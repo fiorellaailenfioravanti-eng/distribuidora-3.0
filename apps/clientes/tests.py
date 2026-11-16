@@ -321,3 +321,23 @@ class BajaLogicaTelefonoDireccionTests(TestCase):
         self.assertIn(self.dir.pk, [d.pk for d in ficha.context['direcciones_eliminadas']])
         self.client.post(reverse('apps.clientes:restaurar_direccion', args=[self.dir.pk]))
         self.assertEqual(self.cliente.direcciones.count(), 1)
+
+
+class NumeroClienteTests(TestCase):
+    """Nro de cliente: los importados conservan el suyo y los nuevos arrancan en 0000001."""
+
+    def test_nuevos_desde_cero_y_respeta_importados(self):
+        from .models import Cliente
+        importado = Cliente.objects.create(nombre='Leonardo', apellido='Fuentecilla', numero='1003389')
+        primero = Cliente.objects.create(nombre='Ana', apellido='Pérez')
+        segundo = Cliente.objects.create(nombre='Juan', apellido='Gómez')
+        self.assertEqual(importado.numero, '1003389')
+        self.assertEqual((primero.numero, segundo.numero), ('0000001', '0000002'))
+
+    def test_saltea_numeros_importados_que_empiezan_con_cero(self):
+        from .models import Cliente
+        Cliente.objects.create(nombre='Natalia', apellido='Enciso', numero='0000002')
+        Cliente.objects.create(nombre='Otra', apellido='Importada', numero='0010059')
+        nuevo = Cliente.objects.create(nombre='Ana', apellido='Pérez')
+        siguiente = Cliente.objects.create(nombre='Juan', apellido='Gómez')
+        self.assertEqual((nuevo.numero, siguiente.numero), ('0000003', '0000004'))

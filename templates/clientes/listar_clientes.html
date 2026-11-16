@@ -67,6 +67,7 @@
             <tr>
                 <td class="ps-4">
                     <div class="fw-bold text-main">{{ cliente.nombre_completo }}</div>
+                    {% if cliente.numero %}<small class="text-muted me-1">N° {{ cliente.numero }}</small>{% endif %}
                     {% if cliente.tiene_cuenta %}
                         <small class="text-muted">@{{ cliente.usuario.username }}</small>
                     {% else %}

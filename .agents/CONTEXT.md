@@ -310,6 +310,11 @@ class Cliente(models.Model):
     usuario          = OneToOneField('autenticacion.Usuario',
                                      on_delete=SET_NULL, null=True, blank=True,
                                      related_name='perfil_cliente')
+    numero           = CharField(max_length=10, unique=True, null=True, editable=False)
+                       # «Nro de cliente»: los importados conservan el del sistema anterior
+                       # (ej. 1003389); los nuevos se numeran 0000001, 0000002… y se saltean
+                       # los ya usados (siguiente_numero_cliente). Se ve en el directorio y la
+                       # ficha, y se puede buscar. (16/11/2026)
     nombre           = CharField(max_length=100, blank=True)
     apellido         = CharField(max_length=100, blank=True)
     email_contacto   = EmailField(blank=True)

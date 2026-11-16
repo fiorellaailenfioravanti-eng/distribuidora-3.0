@@ -36,11 +36,13 @@
         <a href="{% url 'apps.empleados:editar_empleado' empleado.id_empleado %}" class="btn btn-primary px-3">
             <i class="fa-solid fa-pen me-1"></i> Editar
         </a>
+        {% if empleado.usuario_id != request.user.pk %}
         <form method="POST" action="{% url 'apps.empleados:eliminar_empleado' empleado.id_empleado %}" class="d-inline"
               data-confirmar="¿Eliminar a {{ empleado.nombre }} {{ empleado.apellido }}? No podrá ingresar al sistema; lo podés restaurar después." data-peligro>
             {% csrf_token %}
             <button type="submit" class="btn btn-danger px-3"><i class="fa-solid fa-trash me-1"></i> Eliminar</button>
         </form>
+        {% endif %}
         {% endif %}
     </div>
 </div>

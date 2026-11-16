@@ -153,6 +153,21 @@ class BajaLogicaYFotoEmpleadoTests(TestCase):
         self.assertFalse(self.empleado.eliminado)
         self.assertTrue(self.empleado.activo and self.empleado.usuario.is_active)
 
+    def test_el_listado_tiene_boton_eliminar_en_la_fila(self):
+        lista = self.client.get(reverse('apps.empleados:listar_empleados'))
+        self.assertContains(lista, reverse('apps.empleados:eliminar_empleado', args=[self.empleado.pk]))
+
+    def test_no_puede_eliminarse_a_si_mismo(self):
+        propio = Empleado.objects.create(usuario=self.admin, nombre='Jefe', apellido='Uno',
+                                         dni='20999888', rol=self.rol)
+        lista = self.client.get(reverse('apps.empleados:listar_empleados'))
+        self.assertNotContains(lista, reverse('apps.empleados:eliminar_empleado', args=[propio.pk]))
+        self.client.post(reverse('apps.empleados:eliminar_empleado', args=[propio.pk]))
+        propio.refresh_from_db()
+        self.admin.refresh_from_db()
+        self.assertFalse(propio.eliminado)
+        self.assertTrue(self.admin.is_active)
+
     def test_subir_foto_de_perfil(self):
         import io
         from PIL import Image

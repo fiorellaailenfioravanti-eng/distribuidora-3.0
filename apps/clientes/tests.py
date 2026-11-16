@@ -247,6 +247,10 @@ class BajaLogicaClienteTests(TestCase):
         self.assertIn(self.cliente, list(lista.context['eliminados']))
         self.assertNotIn(self.cliente, AbonoForm().fields['cliente'].queryset)
 
+    def test_el_listado_tiene_boton_eliminar_en_la_fila(self):
+        lista = self.client.get(reverse('apps.clientes:listar_clientes'))
+        self.assertContains(lista, reverse('apps.clientes:eliminar_cliente', args=[self.cliente.pk]))
+
     def test_restaurar(self):
         self.cliente.dar_de_baja()
         self.client.post(reverse('apps.clientes:restaurar_cliente', args=[self.cliente.pk]))

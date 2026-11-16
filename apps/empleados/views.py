@@ -129,6 +129,9 @@ def eliminar_empleado(request, pk):
     # Baja lógica (como los productos): no se borra, queda oculto y sin acceso.
     if request.method == 'POST':
         empleado = get_object_or_404(Empleado, pk=pk)
+        if empleado.usuario_id == request.user.pk:
+            messages.error(request, 'No podés eliminarte a vos mismo: perderías el acceso al sistema.')
+            return redirect('apps.empleados:listar_empleados')
         empleado.dar_de_baja()
         messages.success(request, f'«{empleado.nombre_completo()}» se eliminó. '
                                   'Lo podés restaurar desde «Empleados eliminados».')

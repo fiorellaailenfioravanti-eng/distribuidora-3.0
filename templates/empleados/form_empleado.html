@@ -13,7 +13,7 @@
 <div class="card shadow-sm rounded-4 mb-5">
 
     <div class="card-body p-4 p-md-5 pt-4">
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             {% if form.non_field_errors %}
             <div class="alert alert-danger rounded-3">
@@ -22,6 +22,29 @@
             {% endif %}
             
             {# ── DATOS PERSONALES ── #}
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    {% if empleado.foto %}
+                    <img id="foto-vista" src="{{ empleado.foto.url }}" alt="Foto actual" class="foto-empleado foto-empleado--lg shadow-sm">
+                    {% else %}
+                    <img id="foto-vista" src="" alt="" class="foto-empleado foto-empleado--lg shadow-sm d-none">
+                    <span id="foto-iniciales" class="avatar avatar--lg">{% if empleado %}{{ empleado.iniciales }}{% else %}<i class="fa-solid fa-user"></i>{% endif %}</span>
+                    {% endif %}
+                    <div class="flex-grow-1">
+                        <label for="{{ form.foto.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Foto de perfil</label>
+                        <input type="file" name="foto" id="{{ form.foto.id_for_label }}" class="form-control" accept="image/*">
+                        {% if empleado.foto %}
+                        <div class="form-check mt-2">
+                            <input type="checkbox" name="foto-clear" id="foto-clear" class="form-check-input">
+                            <label for="foto-clear" class="form-check-label small">Quitar la foto actual</label>
+                        </div>
+                        {% endif %}
+                        <div class="form-text">JPG o PNG, hasta 3 MB. Se ve en la lista de empleados y en su menú de usuario.</div>
+                        {% if form.foto.errors %}
+                        <div class="invalid-feedback d-block">{{ form.foto.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label for="{{ form.nombre.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Nombre <span class="text-danger">*</span></label>
@@ -183,6 +206,21 @@
         }
         select.addEventListener('change', mostrar);
         mostrar();
+    })();
+
+    // Vista previa de la foto elegida
+    (function () {
+        const entrada = document.getElementById('{{ form.foto.id_for_label }}');
+        const vista = document.getElementById('foto-vista');
+        const iniciales = document.getElementById('foto-iniciales');
+        if (!entrada || !vista) return;
+        entrada.addEventListener('change', () => {
+            const archivo = entrada.files && entrada.files[0];
+            if (!archivo) return;
+            vista.src = URL.createObjectURL(archivo);
+            vista.classList.remove('d-none');
+            if (iniciales) iniciales.classList.add('d-none');
+        });
     })();
 </script>
 {% endblock %}

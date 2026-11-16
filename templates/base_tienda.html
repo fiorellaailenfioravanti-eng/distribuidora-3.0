@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="es" data-bs-theme="light">
+<html lang="es-AR" data-bs-theme="light">
 <head>
     <script>
         /* Tema antes de dibujar la página (evita el destello): claro por defecto,
@@ -14,13 +14,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <!-- Estilo Global Aquadelluvia (Tienda) -->
+    <!-- Estilo Global Aguadelluvia (Tienda) -->
     <link rel="stylesheet" href="{% static 'style/aquadelluvia.css' %}?v=7">
     <link rel="stylesheet" href="{% static 'style/productos.css' %}?v=7">
-    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=11">
+    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=15">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     {% include 'includes/favicon.html' %}
-    <title>{% block title %}{% endblock %} · Aquadelluvia</title>
+    <title>{% block title %}{% endblock %} · Aguadelluvia</title>
     <style>
     /* Estilo para que el dropdown se abra al pasar el mouse */
     .nav-item.dropdown:hover .dropdown-menu {
@@ -39,7 +39,7 @@
                 <!-- Logo -->
                 <a class="navbar-brand d-flex align-items-center gap-2 me-auto me-lg-4" href="{% url 'inicio' %}">
                     <img src="{% static 'img/marca/rana-128.webp' %}" alt="" class="marca-rana" width="46" height="46">
-                    <span class="marca-nombre">Aquadelluvia</span>
+                    <span class="marca-nombre">Aguadelluvia</span>
                 </a>
                 
                 <!-- Iconos móviles (siempre visibles) -->
@@ -73,7 +73,7 @@
                     <!-- Buscador (Móvil) -->
                     <form class="d-flex d-lg-none mb-3 w-100" role="search" action="{% url 'apps.buscador:buscar_productos' %}" method="get">
                         <div class="input-group shadow-sm rounded-pill overflow-hidden">
-                            <input class="form-control border-0 ps-4 py-2 shadow-none bg-light" type="search" name="q" placeholder="Buscar productos..." value="{{ query }}">
+                            <input maxlength="100" class="form-control border-0 ps-4 py-2 shadow-none bg-light" type="search" name="q" placeholder="Buscar productos..." value="{{ query }}">
                             <button class="btn btn-light border-0 px-4 text-primary bg-light" type="submit">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                             </button>
@@ -106,7 +106,7 @@
                     <!-- Buscador (Escritorio) -->
                     <form class="d-none d-lg-flex mx-lg-3 flex-grow-1" style="max-width: 350px;" role="search" action="{% url 'apps.buscador:buscar_productos' %}" method="get">
                         <div class="input-group shadow-sm rounded-pill overflow-hidden border">
-                            <input class="form-control border-0 ps-4 shadow-none bg-light" type="search" name="q" placeholder="Buscar productos..." value="{{ query }}">
+                            <input maxlength="100" class="form-control border-0 ps-4 shadow-none bg-light" type="search" name="q" placeholder="Buscar productos..." value="{{ query }}">
                             <button class="btn btn-light border-0 px-3 text-primary bg-light hover-lift" type="submit">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                             </button>
@@ -186,7 +186,7 @@
     
     <footer class="footer mt-auto py-4 text-center border-top">
         <div class="container">
-            <span class="text-muted">&copy; 2026 Distribuidora Aquadelluvia - Tienda Oficial</span>
+            <span class="text-muted">&copy; 2026 Distribuidora Aguadelluvia - Tienda Oficial</span>
         </div>
     </footer>
     

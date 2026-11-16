@@ -1,4 +1,4 @@
-# Distribuidora 3.0 / Aquadelluvia
+# Distribuidora 3.0 / Aguadelluvia
 
 Las reglas del workspace viven en `.agents/AGENTS.md` y se importan acá para que Claude Code las lea al abrir el proyecto:
 

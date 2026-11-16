@@ -1,6 +1,7 @@
 from django.db import models
 from apps.clientes.models import Cliente, DireccionEntrega
 from apps.productos.models import Producto
+from distribuidora.limites import LARGO_NOMBRE, LARGO_TEXTO, limite_largo
 
 
 ESTADOS_PEDIDO = [
@@ -49,14 +50,15 @@ PERIODICIDADES = [
 
 class MetodoPago(models.Model):
     id_metodo   = models.AutoField(primary_key=True)
-    nombre      = models.CharField(max_length=100)
-    descripcion = models.TextField(blank=True)
+    nombre      = models.CharField(max_length=LARGO_NOMBRE)
+    descripcion = models.TextField(max_length=LARGO_TEXTO, blank=True)
     codigo      = models.CharField(max_length=50, unique=True, help_text="Ej: EFECTIVO, MERCADOPAGO")
     activo      = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = 'Método de Pago'
         verbose_name_plural = 'Métodos de Pago'
+        constraints = limite_largo(nombre=LARGO_NOMBRE, descripcion=LARGO_TEXTO)
 
     def __str__(self):
         return self.nombre
@@ -94,7 +96,7 @@ class Pedido(models.Model):
         verbose_name='Método de pago'
     )
     total              = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    notas_cliente      = models.TextField(blank=True, verbose_name='Notas de entrega')
+    notas_cliente      = models.TextField(max_length=LARGO_TEXTO, blank=True, verbose_name='Notas de entrega')
     origen             = models.CharField(
         max_length=15,
         choices=ORIGENES_PEDIDO,
@@ -123,6 +125,7 @@ class Pedido(models.Model):
         ordering = ['-fecha_pedido']
         verbose_name = 'Pedido'
         verbose_name_plural = 'Pedidos'
+        constraints = limite_largo(notas_cliente=LARGO_TEXTO)
 
     def __str__(self):
         cliente_str = self.cliente.nombre_completo() if self.cliente else "Cliente anónimo"

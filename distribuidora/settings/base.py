@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'apps.promociones',
     'apps.permisos',
     'apps.planta',
+    'apps.configuracion',
 ]
 
 MIDDLEWARE = [
@@ -80,6 +81,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'apps.carrito.context_processors.carrito_total',
                 'apps.permisos.context_processors.roles_usuario',
+                'apps.pedidos.context_processors.pedidos_pendientes',
             ],
         },
     },
@@ -170,5 +172,5 @@ EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Aquadelluvia <no-responder@aquadelluvia.com.ar>')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Aguadelluvia <no-responder@aquadelluvia.com.ar>')
 PASSWORD_RESET_TIMEOUT = 60 * 60 * 24  # el enlace vence en 24 horas

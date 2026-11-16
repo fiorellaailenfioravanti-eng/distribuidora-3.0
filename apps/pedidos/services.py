@@ -246,6 +246,27 @@ def stock_disponible(producto, excluir_pedido=None):
     return producto.stock - stock_comprometido(producto, excluir_pedido)
 
 
+def con_stock_disponible(productos):
+    """Anota en cada producto `reservado` (stock temporal de pedidos Pendientes o
+    Confirmados que todavía no salieron en un camión) y `disponible`
+    (stock en depósito − reservado), que es lo que ve el cliente."""
+    from django.db.models import F, IntegerField, OuterRef, Subquery, Value
+    from django.db.models.functions import Coalesce
+    from .models import DetallePedido
+    reservado = (DetallePedido.objects
+                 .filter(producto=OuterRef('pk'), pedido__estado__in=ESTADOS_QUE_COMPROMETEN)
+                 .values('producto').annotate(total=Sum('cantidad')).values('total'))
+    return (productos
+            .annotate(reservado=Coalesce(Subquery(reservado, output_field=IntegerField()), Value(0)))
+            .annotate(disponible=F('stock') - F('reservado')))
+
+
+def stock_reservado_por_producto():
+    """Productos con unidades reservadas por pedidos que esperan confirmación o entrega."""
+    from apps.productos.models import Producto
+    return con_stock_disponible(Producto.objects.all()).filter(reservado__gt=0).order_by('nombre')
+
+
 # ─────────────────────────────────────────────────────────────
 # RF-18 — PEDIDO AUTOMÁTICO DE REPOSICIÓN
 # ─────────────────────────────────────────────────────────────

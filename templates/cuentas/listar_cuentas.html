@@ -7,7 +7,6 @@
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
         <div>
             <h1 class="h3 fw-bold mb-0 text-main">Cuentas Corrientes</h1>
-            <p class="text-muted small mb-0">Fiados, deudas y semaforización de morosidad (RF-14).</p>
         </div>
         <a href="{% url 'apps.clientes:listar_clientes' %}" class="btn btn-outline-primary rounded-3 fw-bold px-4 w-100 w-md-auto text-center">
             <i class="fa-solid fa-users me-2"></i> Ir a Clientes
@@ -55,7 +54,7 @@
         <div class="card-body p-3">
             <form method="get" class="row g-2 align-items-center">
                 <div class="col-md-6">
-                    <input type="text" name="q" value="{{ q }}" class="form-control rounded-3" placeholder="Buscar cliente por nombre...">
+                    <input maxlength="100" type="text" name="q" value="{{ q }}" class="form-control rounded-3" placeholder="Buscar cliente por nombre...">
                 </div>
                 <div class="col-md-4">
                     <select name="nivel" class="form-select rounded-3">

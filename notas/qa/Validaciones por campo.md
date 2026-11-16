@@ -32,3 +32,23 @@ Los errores se muestran en un popup con el nombre del campo. Relacionado: [[QA 2
 | Cantidad de envases | Ficha del cliente | > 0 (en *Ajuste* ≠ 0); máximo 500 | «La cantidad debe ser mayor a cero…» |
 | Cantidad al carrito | Tienda | > 0 | «La cantidad debe ser un número mayor a cero.» |
 | Día de facturación | Abonos | 1 a 28 | (ya existía) |
+
+## Límites de caracteres (base de datos)
+Definidos en `distribuidora/limites.py`. Cada uno es `max_length` en el modelo **y** una restricción CHECK en la base, así SQLite también los respeta. El HTML lleva el mismo `maxlength`.
+
+| Dato | Máximo |
+|---|---|
+| Nombres, apellidos y títulos (productos, categorías, zonas, barrios, clientes, empleados, roles, promociones, usuarios) | 64 |
+| Descripciones, observaciones y notas | 500 |
+| Teléfono / celular | 20 |
+| «De quién es» (relación del teléfono) | 40 |
+| Calle | 100 |
+| Altura | 10 |
+| Piso / depto | 30 |
+| Ciudad | 64 |
+| Coordenadas | 40 |
+| Email de contacto del cliente | 120 |
+| DNI | 15 (el formato exige 7 u 8 dígitos) |
+
+## Teléfonos en las altas
+Registro web y alta por el vendedor: el primero es **obligatorio**; con «Agregar otro teléfono» se suman más. Se valida formato, largo y que no se repitan (`apps/clientes/services.leer_telefonos`). Ver [[2026-11-14]].

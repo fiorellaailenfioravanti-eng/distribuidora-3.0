@@ -1,0 +1,74 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Configuración{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <h1 class="h3 fw-bold mb-4 text-main">Configuración</h1>
+
+    <div class="row">
+        <div class="col-xl-8">
+            <div class="card border-0 shadow-sm rounded-4 bg-surface">
+                <div class="card-body p-4 p-md-5">
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                        <div>
+                            <h2 class="h5 fw-bold mb-1"><i class="fa-solid fa-envelope me-2 text-primary"></i>Correo de recuperación de contraseña</h2>
+                            <p class="small text-muted mb-0">La cuenta que envía el enlace de «¿Olvidaste tu contraseña?».</p>
+                        </div>
+                        {% if cfg.lista %}
+                        <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-3 py-2">En uso</span>
+                        {% else %}
+                        <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-3 py-2">Usa la del servidor</span>
+                        {% endif %}
+                    </div>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}<div class="alert alert-danger small">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+
+                        <div class="form-check form-switch mb-4">
+                            {{ form.activo }}
+                            <label class="form-check-label fw-semibold" for="{{ form.activo.id_for_label }}">{{ form.activo.label }}</label>
+                            <div class="form-text">{{ form.activo.help_text }}</div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">{% include 'autenticacion/_campo.html' with campo=form.correo_remitente %}</div>
+                            <div class="col-md-6">{% include 'autenticacion/_campo.html' with campo=form.nombre_remitente %}</div>
+                            <div class="col-md-6">{% include 'autenticacion/_campo.html' with campo=form.clave %}
+                                {% if cfg.clave %}<div class="form-text text-success"><i class="fa-solid fa-check me-1"></i>Hay una contraseña guardada.</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">{% include 'autenticacion/_campo.html' with campo=form.usuario %}</div>
+                        </div>
+
+                        <details class="mt-4">
+                            <summary class="fw-semibold small text-muted">Servidor de correo (avanzado)</summary>
+                            <div class="row g-3 mt-1">
+                                <div class="col-md-6">{% include 'autenticacion/_campo.html' with campo=form.servidor %}</div>
+                                <div class="col-md-3">{% include 'autenticacion/_campo.html' with campo=form.puerto %}</div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <div class="form-check form-switch mb-2">
+                                        {{ form.usar_tls }}
+                                        <label class="form-check-label" for="{{ form.usar_tls.id_for_label }}">{{ form.usar_tls.label }}</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
+
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-2"></i>Guardar</button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+                    <form method="post" action="{% url 'apps.configuracion:probar_correo' %}" class="d-flex flex-wrap align-items-center gap-3">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-light"><i class="fa-solid fa-paper-plane me-2"></i>Enviar correo de prueba</button>
+                        <span class="small text-muted">Llega a {{ user.email|default:"tu email (cargalo en «Mi perfil»)" }}.</span>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

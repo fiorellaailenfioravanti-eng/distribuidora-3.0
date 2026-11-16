@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import HttpResponseNotAllowed
 
 from apps.permisos.views import sin_permiso
@@ -21,7 +21,8 @@ def listar_empleados(request):
     rol_id = request.GET.get('rol', '')
     estado = request.GET.get('estado', '')
 
-    empleados = Empleado.objects.select_related('rol').all()
+    empleados = Empleado.objects.select_related('rol').filter(eliminado=False)
+    eliminados = Empleado.objects.select_related('rol').filter(eliminado=True)
 
     if query:
         q_norm = normalizar_texto(query)
@@ -52,6 +53,7 @@ def listar_empleados(request):
         'rol_id': rol_id,
         'estado': estado,
         'roles': roles,
+        'eliminados': eliminados,
     })
 
 @login_required
@@ -60,7 +62,7 @@ def crear_empleado(request):
         return sin_permiso(request)
 
     if request.method == 'POST':
-        form = EmpleadoForm(request.POST, user=request.user)
+        form = EmpleadoForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, 'Empleado creado exitosamente.')
@@ -90,7 +92,7 @@ def editar_empleado(request, pk):
     empleado = get_object_or_404(Empleado, pk=pk)
     
     if request.method == 'POST':
-        form = EmpleadoForm(request.POST, instance=empleado, user=request.user)
+        form = EmpleadoForm(request.POST, request.FILES, instance=empleado, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, 'Empleado actualizado exitosamente.')
@@ -124,10 +126,25 @@ def eliminar_empleado(request, pk):
     if not puede(request.user, 'gestionar_empleados'):
         return sin_permiso(request)
 
+    # Baja lógica (como los productos): no se borra, queda oculto y sin acceso.
     if request.method == 'POST':
         empleado = get_object_or_404(Empleado, pk=pk)
-        empleado.delete()
-        messages.success(request, 'Empleado eliminado exitosamente.')
+        empleado.dar_de_baja()
+        messages.success(request, f'«{empleado.nombre_completo()}» se eliminó. '
+                                  'Lo podés restaurar desde «Empleados eliminados».')
+        return redirect('apps.empleados:listar_empleados')
+    return HttpResponseNotAllowed(['POST'])
+
+
+@login_required
+def restaurar_empleado(request, pk):
+    if not puede(request.user, 'gestionar_empleados'):
+        return sin_permiso(request)
+
+    if request.method == 'POST':
+        empleado = get_object_or_404(Empleado, pk=pk)
+        empleado.restaurar()
+        messages.success(request, f'«{empleado.nombre_completo()}» volvió a la lista de empleados.')
         return redirect('apps.empleados:listar_empleados')
     return HttpResponseNotAllowed(['POST'])
 
@@ -154,10 +171,13 @@ def listar_roles(request):
         return sin_permiso(request)
 
     roles = RolEmpleado.objects.annotate(
-        empleados_count=Count('empleados', distinct=True),
+        empleados_count=Count('empleados', filter=Q(empleados__eliminado=False), distinct=True),
         funciones_count=Count('funciones', distinct=True),
     ).prefetch_related('funciones')
-    return render(request, 'empleados/roles/listar_roles.html', {'roles': roles})
+    return render(request, 'empleados/roles/listar_roles.html', {
+        'roles': roles,
+        'eliminados': RolEmpleado.todos.filter(eliminado=True).order_by('nombre'),
+    })
 
 @login_required
 def crear_rol(request):
@@ -209,10 +229,25 @@ def eliminar_rol(request, pk):
 
     if request.method == 'POST':
         rol = get_object_or_404(RolEmpleado, pk=pk)
-        if rol.empleados.exists():
+        if rol.empleados.filter(eliminado=False).exists():
             messages.error(request, 'No se puede eliminar el rol porque tiene empleados asignados.')
         else:
-            rol.delete()
-            messages.success(request, 'Rol eliminado exitosamente.')
+            # Baja lógica: deja de ofrecerse al cargar empleados.
+            rol.eliminado = True
+            rol.save(update_fields=['eliminado'])
+            messages.success(request, f'Rol «{rol.nombre}» eliminado. Lo podés restaurar desde «Roles eliminados».')
+        return redirect('apps.empleados:listar_roles')
+    return HttpResponseNotAllowed(['POST'])
+
+
+@login_required
+def restaurar_rol(request, pk):
+    if not puede(request.user, 'gestionar_empleados'):
+        return sin_permiso(request)
+    if request.method == 'POST':
+        rol = get_object_or_404(RolEmpleado.todos, pk=pk)
+        rol.eliminado = False
+        rol.save(update_fields=['eliminado'])
+        messages.success(request, f'Rol «{rol.nombre}» restaurado.')
         return redirect('apps.empleados:listar_roles')
     return HttpResponseNotAllowed(['POST'])

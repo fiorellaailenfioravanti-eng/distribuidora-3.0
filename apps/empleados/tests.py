@@ -117,3 +117,66 @@ class PantallasDeRolesTests(TestCase):
         respuesta = self.client.get(reverse('apps.empleados:listar_roles'))
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, 'Chofer')
+
+
+class BajaLogicaYFotoEmpleadoTests(TestCase):
+    """Eliminar un empleado no lo borra: queda oculto, sin acceso y se puede restaurar."""
+
+    def setUp(self):
+        import tempfile
+        from django.test import override_settings
+        self._media = override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+        self._media.enable()
+        self.addCleanup(self._media.disable)
+        Usuario = get_user_model()
+        self.admin = Usuario.objects.create_superuser('jefe', 'jefe@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(self.admin)
+        self.rol = RolEmpleado.objects.create(nombre='Chofer', grupo_permisos='Repartidor')
+        usuario = Usuario.objects.create_user('chofer1', 'ch@x.com', 'Agua-Lluvia-2026')
+        self.empleado = Empleado.objects.create(usuario=usuario, nombre='Juan', apellido='Paz',
+                                                dni='30111222', rol=self.rol)
+
+    def test_eliminar_es_logico_y_bloquea_el_acceso(self):
+        self.client.post(reverse('apps.empleados:eliminar_empleado', args=[self.empleado.pk]))
+        self.empleado.refresh_from_db()
+        self.assertTrue(self.empleado.eliminado)
+        self.assertFalse(self.empleado.activo)
+        self.assertFalse(self.empleado.usuario.is_active)
+        lista = self.client.get(reverse('apps.empleados:listar_empleados'))
+        self.assertNotIn(self.empleado, list(lista.context['empleados']))
+        self.assertIn(self.empleado, list(lista.context['eliminados']))
+
+    def test_restaurar(self):
+        self.empleado.dar_de_baja()
+        self.client.post(reverse('apps.empleados:restaurar_empleado', args=[self.empleado.pk]))
+        self.empleado.refresh_from_db()
+        self.assertFalse(self.empleado.eliminado)
+        self.assertTrue(self.empleado.activo and self.empleado.usuario.is_active)
+
+    def test_subir_foto_de_perfil(self):
+        import io
+        from PIL import Image
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        buffer = io.BytesIO()
+        Image.new('RGB', (10, 10), 'blue').save(buffer, 'PNG')
+        foto = SimpleUploadedFile('cara.png', buffer.getvalue(), content_type='image/png')
+        self.client.post(reverse('apps.empleados:editar_empleado', args=[self.empleado.pk]), {
+            'foto': foto, 'nombre': 'Juan', 'apellido': 'Paz', 'dni': '30111222',
+            'celular': '', 'email': 'ch@x.com', 'rol': self.rol.pk, 'activo': 'on', 'notas': '',
+        })
+        self.empleado.refresh_from_db()
+        self.assertTrue(self.empleado.foto.name.startswith('empleados/'))
+
+
+class BajaLogicaRolTests(TestCase):
+    def setUp(self):
+        self.client.force_login(get_user_model().objects.create_superuser('jefe_rol', 'jrol@x.com', 'Agua-Lluvia-2026'))
+        self.rol = RolEmpleado.objects.create(nombre='Temporal', grupo_permisos='')
+
+    def test_eliminar_restaurar_y_nombre_reservado(self):
+        self.client.post(reverse('apps.empleados:eliminar_rol', args=[self.rol.pk]))
+        self.assertFalse(RolEmpleado.objects.filter(pk=self.rol.pk).exists())
+        from .forms import RolEmpleadoForm
+        self.assertFalse(RolEmpleadoForm(data={'nombre': 'temporal'}).is_valid())
+        self.client.post(reverse('apps.empleados:restaurar_rol', args=[self.rol.pk]))
+        self.assertTrue(RolEmpleado.objects.filter(pk=self.rol.pk).exists())

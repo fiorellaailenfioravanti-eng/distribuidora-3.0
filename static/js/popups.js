@@ -1,5 +1,5 @@
 /*
- * Popups de Aquadelluvia (SweetAlert2).
+ * Popups de Aguadelluvia (SweetAlert2).
  *
  * 1. Mensajes de Django (messages framework): éxito e info como aviso flotante
  *    que se cierra solo; advertencias y errores como ventana que hay que cerrar.
@@ -116,6 +116,8 @@
         info: (texto) => avisar({ icon: 'info', title: texto }),
         advertencia: (texto) => ventana({ icon: 'warning', title: TITULOS.warning, text: texto }),
         error: (texto) => ventana({ icon: 'error', title: TITULOS.error, text: texto }),
+        // Ventana con el estilo de la app (otros scripts: aviso de cambios sin guardar).
+        ventana: ventana,
     };
 
     // ── 1. Mensajes de Django ──────────────────────────────────────────

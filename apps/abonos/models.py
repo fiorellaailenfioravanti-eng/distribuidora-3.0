@@ -7,6 +7,7 @@ from django.db import models
 
 from apps.clientes.models import Cliente
 from apps.productos.models import Producto
+from distribuidora.limites import LARGO_NOMBRE, LARGO_TEXTO, limite_largo
 
 
 # ────────────────────────────────────────────────
@@ -70,7 +71,7 @@ class Abono(models.Model):
         blank=True,
         verbose_name='Última facturación'
     )
-    observaciones     = models.TextField(blank=True, verbose_name='Observaciones')
+    observaciones     = models.TextField(max_length=LARGO_TEXTO, blank=True, verbose_name='Observaciones')
     fecha_creacion    = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
 
@@ -78,6 +79,7 @@ class Abono(models.Model):
         ordering            = ['-fecha_inicio', 'cliente__apellido']
         verbose_name        = 'Abono'
         verbose_name_plural = 'Abonos'
+        constraints = limite_largo(observaciones=LARGO_TEXTO)
 
     def __str__(self):
         return f"Abono #{self.id_abono} — {self.cliente.nombre_completo()} / {self.producto.nombre}"

@@ -5,7 +5,7 @@ from .models import Producto, Categoria
 
 class ProductoForm(forms.ModelForm):
     categoria = forms.ModelChoiceField(
-        queryset=Categoria.objects.all(),
+        queryset=Categoria.objects.vigentes(),
         widget=forms.Select(attrs={'class': 'form-select'}),
         required=True,
         label="Categoría",
@@ -14,7 +14,7 @@ class ProductoForm(forms.ModelForm):
 
     class Meta:
         model = Producto
-        fields = ['nombre', 'descripcion', 'categoria', 'precio', 'stock', 'imagen', 'activo', 'es_botellon', 'es_recargable', 'envase']
+        fields = ['nombre', 'descripcion', 'categoria', 'precio', 'stock', 'imagen', 'activo', 'es_botellon', 'envase']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Botellón 20L'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción detallada...'}),
@@ -25,7 +25,6 @@ class ProductoForm(forms.ModelForm):
             'imagen': forms.FileInput(attrs={'class': 'form-control'}),
             'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'es_botellon': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'es_recargable': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'envase': forms.Select(attrs={'class': 'form-select'}),
         }
 
@@ -39,6 +38,8 @@ class ProductoForm(forms.ModelForm):
             cat_actual = self.instance.categoria.first()
             if cat_actual:
                 self.fields['categoria'].initial = cat_actual.pk
+            # Reparto y recarga se manejan con un solo interruptor («Bidón retornable»).
+            self.initial['es_botellon'] = self.instance.es_botellon or self.instance.es_recargable
 
     def clean_precio(self):
         precio = self.cleaned_data.get('precio')
@@ -54,8 +55,11 @@ class ProductoForm(forms.ModelForm):
 
     def clean(self):
         datos = super().clean()
-        if datos.get('es_recargable') and not datos.get('envase'):
-            self.add_error('envase', 'Un bidón que se recarga necesita su envase vacío asociado.')
+        es_bidon = bool(datos.get('es_botellon'))
+        if es_bidon and not datos.get('envase'):
+            self.add_error('envase', 'Elegí el envase vacío de este bidón: se retira al entregar y se usa al recargar.')
+        # Un bidón retornable se reparte y también se recarga en la planta.
+        self.instance.es_recargable = es_bidon
         return datos
 
     def clean_categoria(self):

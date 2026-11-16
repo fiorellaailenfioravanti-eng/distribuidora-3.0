@@ -6,7 +6,6 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 fw-bold mb-0 text-main">Registrar Nuevo Producto</h1>
-            <p class="text-muted small mb-0">Añade un nuevo ítem al catálogo de la tienda.</p>
         </div>
         <a href="{% url 'apps.productos:listar_productos_admin' %}" class="btn btn-light shadow-sm fw-bold">
             <i class="fa-solid fa-arrow-left me-2"></i> Volver al inventario
@@ -14,7 +13,7 @@
     </div>
 
     <div class="row">
-        <div class="col-lg-8">
+        <div class="col-xl-10">
             <div class="card shadow-sm border-0 rounded-4 bg-surface">
                 <div class="card-body p-4 p-md-5">
                     <form method="post" enctype="multipart/form-data">
@@ -57,32 +56,7 @@
                                 {{ form.imagen }}
                                 {{ form.imagen.errors }}
                             </div>
-                            <div class="col-md-12">
-                                <div class="form-check">
-                                    {{ form.activo }}
-                                    <label for="{{ form.activo.id_for_label }}" class="form-check-label fw-semibold">Visible en la tienda</label>
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="form-check">
-                                    {{ form.es_botellon }}
-                                    <label for="{{ form.es_botellon.id_for_label }}" class="form-check-label fw-semibold">Botellón lleno de reparto</label>
-                                </div>
-                                <div class="form-text">{{ form.es_botellon.help_text }}</div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    {{ form.es_recargable }}
-                                    <label for="{{ form.es_recargable.id_for_label }}" class="form-check-label fw-semibold">Se recarga en planta</label>
-                                </div>
-                                <div class="form-text">{{ form.es_recargable.help_text }}</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="{{ form.envase.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Envase asociado</label>
-                                {{ form.envase }}
-                                {% for error in form.envase.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-                                <div class="form-text">Envase vacío que se retira al entregar y que se usa al recargar.</div>
-                            </div>
+                            {% include 'productos/_opciones_producto.html' %}
 
                             <!-- Descripción -->
                             <div class="col-md-12">
@@ -101,20 +75,6 @@
                             </button>
                         </div>
                     </form>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Tarjeta de ayuda lateral -->
-        <div class="col-lg-4 d-none d-lg-block">
-            <div class="card shadow-sm border-0 rounded-4 bg-primary bg-opacity-10 text-primary">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-lightbulb me-2"></i>Consejos</h5>
-                    <ul class="mb-0 small ps-3">
-                        <li class="mb-2">Asegúrate de que la <strong>imagen</strong> tenga fondo transparente (PNG) para que luzca bien en la tienda.</li>
-                        <li class="mb-2">El <strong>stock</strong> se actualizará automáticamente con cada venta.</li>
-                        <li>Las <strong>categorías</strong> nuevas se pueden crear desde el panel de administrador de Django.</li>
-                    </ul>
                 </div>
             </div>
         </div>

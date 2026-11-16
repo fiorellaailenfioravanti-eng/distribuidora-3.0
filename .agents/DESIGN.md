@@ -1,4 +1,4 @@
-# 🎨 Patrón de Diseño Visual — Aquadelluvia (Distribuidora 3.0)
+# 🎨 Patrón de Diseño Visual — Aguadelluvia (Distribuidora 3.0)
 
 > [!important] Actualización 12/11/2026 — identidad «Agua de Lluvia»
 > - **Fuente única de colores:** `static/style/paleta.css` (tienda y panel). `aquadelluvia.css` y `dashboard.css` ya no definen colores.

@@ -14,8 +14,9 @@ _CHECK = 'form-check-input'
 class EmpleadoForm(forms.ModelForm):
     class Meta:
         model = Empleado
-        fields = ['nombre', 'apellido', 'dni', 'celular', 'email', 'rol', 'activo', 'notas']
+        fields = ['foto', 'nombre', 'apellido', 'dni', 'celular', 'email', 'rol', 'activo', 'notas']
         widgets = {
+            'foto': forms.ClearableFileInput(attrs={'class': _INPUT, 'accept': 'image/*'}),
             'nombre': forms.TextInput(attrs={'class': _INPUT}),
             'apellido': forms.TextInput(attrs={'class': _INPUT}),
             'dni': forms.TextInput(attrs={'class': _INPUT}),
@@ -57,6 +58,14 @@ class EmpleadoForm(forms.ModelForm):
             self.fields['password'].widget = forms.HiddenInput()
         else:
             self.fields['email'].required = True
+
+    FOTO_MAX_MB = 3
+
+    def clean_foto(self):
+        foto = self.cleaned_data.get('foto')
+        if foto and hasattr(foto, 'size') and foto.size > self.FOTO_MAX_MB * 1024 * 1024:
+            raise ValidationError(f'La foto no puede pesar más de {self.FOTO_MAX_MB} MB.')
+        return foto
 
     def clean_nombre(self):
         return validar_nombre(self.cleaned_data.get('nombre'))
@@ -157,6 +166,15 @@ class RolEmpleadoForm(forms.ModelForm):
         self.fields['funciones'].queryset = permisos
         self.fields['funciones'].label_from_instance = lambda permiso: permiso.name
         self._codigo_por_pk = {p.pk: p.codename for p in permisos}
+
+    def clean_nombre(self):
+        nombre = ' '.join((self.cleaned_data.get('nombre') or '').split())
+        otros = RolEmpleado.todos.filter(nombre__iexact=nombre).exclude(pk=self.instance.pk)
+        if otros.filter(eliminado=False).exists():
+            raise forms.ValidationError('Ya existe un rol con ese nombre.')
+        if otros.filter(eliminado=True).exists():
+            raise forms.ValidationError('Hay un rol eliminado con ese nombre: restauralo desde «Roles eliminados».')
+        return nombre
 
     def funciones_por_area(self):
         """[(área, [(código, checkbox), ...]), ...] en el orden del catálogo."""

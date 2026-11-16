@@ -48,7 +48,7 @@
                                     <img src="{% static 'img/no-image.png' %}" alt="Sin imagen" class="img-fluid" style="height: 200px;">
                                 {% endif %}
                                 
-                                {% if e.stock < 5 %}
+                                {% if e.disponible > 0 and e.disponible < 5 %}
                                     <span class="badge bg-danger position-absolute top-0 start-0 m-3 shadow-sm rounded-pill">¡Últimas unidades!</span>
                                 {% endif %}
                             </div>
@@ -64,33 +64,39 @@
                             <div class="d-flex flex-column gap-2 mt-auto">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <span class="fw-bold h5 mb-0 text-primary tracking-tight">${{ e.precio }}</span>
-                                    {% if e.stock > 10 %}
-                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1" style="font-size: 0.75rem;"><i class="fa-solid fa-check me-1"></i> {{ e.stock }}</span>
-                                    {% elif e.stock > 0 %}
-                                        <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2 py-1" style="font-size: 0.75rem;"><i class="fa-solid fa-exclamation me-1"></i> Quedan {{ e.stock }}</span>
+                                    {% if e.disponible > 10 %}
+                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1" style="font-size: 0.75rem;"><i class="fa-solid fa-check me-1"></i> {{ e.disponible }}</span>
+                                    {% elif e.disponible > 0 %}
+                                        <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2 py-1" style="font-size: 0.75rem;"><i class="fa-solid fa-exclamation me-1"></i> Quedan {{ e.disponible }}</span>
                                     {% else %}
                                         <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1" style="font-size: 0.75rem;">Agotado</span>
                                     {% endif %}
                                 </div>
                                 
                                 <div class="add-to-cart-container" id="add-container-{{ e.id_producto }}">
-                                    {% if e.stock > 0 %}
+                                    {% if e.disponible > 0 %}
                                     <!-- Botón inicial -->
                                     <button type="button" class="btn btn-primary btn-glow w-100 rounded-pill text-white fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center hover-lift" id="btn-add-init-{{ e.id_producto }}" onclick="showQuantitySelector({{ e.id_producto }})" style="font-size: 0.9rem;">
                                         <i class="fa-solid fa-cart-plus me-2"></i> Añadir
                                     </button>
                                     
                                     <!-- Selector de cantidad (Oculto inicialmente) -->
-                                    <form action="{% url 'apps.carrito:agregar_al_carrito' e.id_producto %}" method="post" class="d-none" id="qty-form-{{ e.id_producto }}">
+                                    <form action="{% url 'apps.carrito:agregar_al_carrito' e.id_producto %}" method="post" class="d-none" id="qty-form-{{ e.id_producto }}" data-sin-aviso>
                                         {% csrf_token %}
                                         <div class="input-group input-group-sm mb-2 shadow-sm rounded-pill overflow-hidden border">
                                             <button class="btn btn-light px-3 fw-bold text-primary" type="button" onclick="changeQty({{ e.id_producto }}, -1)">-</button>
-                                            <input type="number" name="cantidad" id="qty-input-{{ e.id_producto }}" class="form-control text-center border-0 fw-bold text-main" value="1" min="1" max="{{ e.stock }}" inputmode="numeric" oninput="validateQty(this, {{ e.stock }})" style="min-width: 40px; box-shadow: none;">
+                                            <input type="number" name="cantidad" id="qty-input-{{ e.id_producto }}" class="form-control text-center border-0 fw-bold text-main" value="1" min="1" max="{{ e.disponible }}" inputmode="numeric" oninput="validateQty(this, {{ e.disponible }})" style="min-width: 40px; box-shadow: none;">
                                             <button class="btn btn-light px-3 fw-bold text-primary" type="button" onclick="changeQty({{ e.id_producto }}, 1)">+</button>
                                         </div>
-                                        <button type="submit" class="btn btn-success btn-glow w-100 rounded-pill text-white fw-bold py-1 shadow-sm d-flex align-items-center justify-content-center hover-lift" style="font-size: 0.85rem;">
-                                            <i class="fa-solid fa-check me-2"></i> Añadir <span id="qty-display-{{ e.id_producto }}" class="ms-1">1</span>
-                                        </button>
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-success flex-grow-1 text-white fw-bold py-1 d-flex align-items-center justify-content-center" style="font-size: 0.85rem;">
+                                                <i class="fa-solid fa-check me-2"></i> Añadir <span id="qty-display-{{ e.id_producto }}" class="ms-1">1</span>
+                                            </button>
+                                            <button type="button" class="btn btn-light text-danger py-1 px-3" onclick="hideQuantitySelector({{ e.id_producto }})"
+                                                    title="Cancelar" aria-label="Cancelar la selección">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                        </div>
                                     </form>
                                     {% else %}
                                     <button type="button" class="btn btn-secondary w-100 rounded-pill text-white fw-bold py-2 shadow-sm" disabled style="font-size: 0.9rem;">
@@ -159,6 +165,23 @@
         // Mostrar form
         document.getElementById('qty-form-' + productoId).classList.remove('d-none');
     }
+
+    // Cancelar: vuelve al botón «Añadir» y deja la cantidad en 1
+    function hideQuantitySelector(productoId) {
+        document.getElementById('qty-form-' + productoId).classList.add('d-none');
+        document.getElementById('btn-add-init-' + productoId).classList.remove('d-none');
+        const input = document.getElementById('qty-input-' + productoId);
+        input.value = 1;
+        updateQtyDisplay(productoId, 1);
+    }
+
+    // Tecla Esc: cancela la selección abierta
+    document.addEventListener('keydown', (evento) => {
+        if (evento.key !== 'Escape') return;
+        document.querySelectorAll('form[id^="qty-form-"]:not(.d-none)').forEach((form) => {
+            hideQuantitySelector(form.id.replace('qty-form-', ''));
+        });
+    });
 
     function changeQty(productoId, delta) {
         const input = document.getElementById('qty-input-' + productoId);

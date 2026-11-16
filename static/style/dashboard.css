@@ -1,5 +1,5 @@
 /* =========================================================
-   AQUADELLUVIA - Diseño Visual (Distribuidora 3.0)
+   AGUADELLUVIA - Diseño Visual (Distribuidora 3.0)
    ========================================================= */
 
 /* 1. Variables CSS — los colores están en paleta.css */
@@ -127,6 +127,18 @@ h3 {
     border-right: 1px solid var(--sidebar-border);
     flex-shrink: 0;
     transition: all 0.3s ease;
+    /* En pantallas bajas el menú no entra en 100vh: que se desplace solo el sidebar */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--sidebar-border) transparent;
+}
+
+/* Alturas cortas: menú más compacto para que entre sin desplazar */
+@media (max-height: 820px) {
+    #sidebar .navbar-brand { margin-bottom: 0.75rem !important; }
+    #sidebar .nav { margin-top: 0.5rem !important; }
+    #sidebar .sidebar-link { padding-top: 0.55rem; padding-bottom: 0.55rem; }
 }
 
 #page-content-wrapper {
@@ -168,6 +180,41 @@ h3 {
 [data-bs-theme="dark"] .sidebar-link.active {
     background-color: rgba(129, 140, 248, 0.08);
 }
+
+/* Círculo con la cantidad de pedidos pendientes en el menú */
+.badge-pendientes {
+    display: inline-block;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    padding: 0 0.4rem;
+    border-radius: 999px;
+    background-color: #f5b301;
+    color: #2b2100;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.5rem;
+    text-align: center;
+}
+
+/* Botón para ordenar columnas (static/js/tabla_ordenable.js) */
+.btn-ordenar {
+    display: inline-block;
+    text-decoration: none;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    opacity: 0.45;
+    padding: 0.1rem 0.35rem;
+    margin-left: 0.25rem;
+    border-radius: 0.4rem;
+    font-size: 0.8em;
+    line-height: 1;
+    vertical-align: baseline;
+}
+.btn-ordenar:hover,
+.btn-ordenar:focus-visible { opacity: 1; background-color: rgba(100, 102, 241, 0.1); }
+.columna-ordenada,
+.columna-ordenada .btn-ordenar { color: var(--color-primary) !important; opacity: 1; }
 
 /* Header superior del contenido (Top bar) */
 .top-header {

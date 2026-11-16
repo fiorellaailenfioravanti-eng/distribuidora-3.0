@@ -4,33 +4,75 @@
 {% block title %}Registrar{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-7">
-        <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden mt-4">
-            <div class="card-body p-5">
+<div class="row justify-content-center my-4">
+    <div class="col-lg-9 col-xl-8">
+        <div class="card border-0 shadow-sm rounded-4 bg-surface overflow-hidden">
+            <div class="card-body p-4 p-md-5">
                 <div class="text-center mb-4">
-                    <img src="{% static 'img/marca/rana-128.webp' %}" alt="Agua de Lluvia" class="marca-rana marca-rana--grande mb-3" width="88" height="88">
-                    <h1 class="display-5 fw-bold text-body-emphasis tracking-tight mb-2">Crear Cuenta</h1>
-                    <p class="text-muted mb-0">Únete a nuestra distribuidora para empezar a comprar.</p>
+                    <img src="{% static 'img/marca/rana-128.webp' %}" alt="Agua de Lluvia" class="marca-rana mb-2" width="72" height="72">
+                    <h1 class="h2 fw-bold text-body-emphasis mb-1">Crear cuenta</h1>
+                    <p class="text-muted mb-0">Completá tus datos y te llevamos el agua a tu casa.</p>
                 </div>
-                <hr>
-                
+
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
-                    
-                    {# Renderizado manual para mejor control visual si lo deseas, o dejas form.as_p #}
-                    <div class="mb-3">
-                        {{ form.as_p }}
-                    </div>
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger small">{{ form.non_field_errors|join:" " }}</div>
+                    {% endif %}
 
-                    <div class="d-grid gap-2 mt-5">
-                        <button type="submit" class="btn btn-primary btn-glow btn-lg rounded-pill fw-bold hover-lift">Registrar Usuario</button>
+                    {# ── 1. Tus datos ── #}
+                    <section class="registro-seccion">
+                        <h2 class="registro-titulo"><span class="registro-numero">1</span>Tus datos</h2>
+                        <div class="row g-3">
+                            <div class="col-md-6">{% include 'autenticacion/_campo.html' with campo=form.first_name %}</div>
+                            <div class="col-md-6">{% include 'autenticacion/_campo.html' with campo=form.last_name %}</div>
+                            <div class="col-md-6">{% include 'autenticacion/_campo.html' with campo=form.username %}</div>
+                            <div class="col-md-6">{% include 'autenticacion/_campo.html' with campo=form.email %}</div>
+                            <div class="col-md-6">{% include 'autenticacion/_campo.html' with campo=form.password1 %}</div>
+                            <div class="col-md-6">{% include 'autenticacion/_campo.html' with campo=form.password2 %}</div>
+                        </div>
+                    </section>
+
+                    {# ── 2. Teléfonos ── #}
+                    <section class="registro-seccion">
+                        <h2 class="registro-titulo"><span class="registro-numero">2</span>Teléfonos de contacto</h2>
+                        <p class="small text-muted mb-3">Un celular es obligatorio. Podés sumar otros por si no te encontramos en el primero.</p>
+                        {% include 'includes/telefonos_dinamicos.html' %}
+                    </section>
+
+                    {# ── 3. Domicilio ── #}
+                    <section class="registro-seccion">
+                        <h2 class="registro-titulo"><span class="registro-numero">3</span>Domicilio de entrega</h2>
+                        <p class="small text-muted mb-3">Donde te llevamos los pedidos. Después podés agregar otros desde «Mi cuenta».</p>
+                        {% if form_dir.non_field_errors %}
+                        <div class="alert alert-danger small">{{ form_dir.non_field_errors|join:" " }}</div>
+                        {% endif %}
+                        <div class="row g-3">
+                            <div class="col-md-6">{% include 'autenticacion/_campo.html' with campo=form_dir.calle %}</div>
+                            <div class="col-6 col-md-3">{% include 'autenticacion/_campo.html' with campo=form_dir.altura %}</div>
+                            <div class="col-6 col-md-3">{% include 'autenticacion/_campo.html' with campo=form_dir.piso_depto %}</div>
+                            <div class="col-md-6">{% include 'autenticacion/_campo.html' with campo=form_dir.barrio %}</div>
+                            <div class="col-md-6">{% include 'autenticacion/_campo.html' with campo=form_dir.ciudad %}</div>
+                        </div>
+                    </section>
+
+                    {# ── 4. Foto ── #}
+                    <section class="registro-seccion">
+                        <h2 class="registro-titulo"><span class="registro-numero">4</span>Foto de perfil</h2>
+                        {% include 'autenticacion/_campo.html' with campo=form.imagen_perfil %}
+                    </section>
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fa-solid fa-user-plus me-2"></i>Crear cuenta
+                        </button>
                     </div>
                 </form>
-                
-                <div class="text-center mt-4 border-top pt-4">
-                    <p class="text-muted mb-0">¿Ya tienes una cuenta? <a href="{% url 'apps.autenticacion:ingresar' %}" class="text-primary text-decoration-none fw-bold">Inicia sesión</a></p>
-                </div>
+
+                <p class="text-center text-muted mt-4 mb-0">
+                    ¿Ya tenés una cuenta?
+                    <a href="{% url 'apps.autenticacion:ingresar' %}" class="text-primary text-decoration-none fw-bold">Ingresá</a>
+                </p>
             </div>
         </div>
     </div>

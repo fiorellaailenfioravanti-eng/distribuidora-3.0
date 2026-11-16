@@ -12,7 +12,7 @@
                 </div>
                 <h4 class="fw-bold mb-3 text-main">¿Eliminar {{ tipo }}?</h4>
                 <p class="text-muted mb-4 small">
-                    Estás por eliminar <strong>{{ objeto }}</strong>. Esta acción no se puede deshacer.
+                    Estás por eliminar <strong>{{ objeto }}</strong>.{% if logica %} No se borra: pasa a la lista de eliminadas, desde donde la podés restaurar.{% else %} Esta acción no se puede deshacer.{% endif %}
                 </p>
                 <div class="d-flex gap-3 justify-content-center mt-5">
                     <a href="{% url volver %}" class="btn btn-light fw-bold px-4 hover-lift rounded-pill">

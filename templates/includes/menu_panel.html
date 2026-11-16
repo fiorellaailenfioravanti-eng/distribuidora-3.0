@@ -28,6 +28,9 @@ tiene la función que la habilita (`puede`, ver apps/permisos/context_processors
 <li class="nav-item">
     <a href="{% url 'apps.pedidos:listar_pedidos' %}" class="sidebar-link {% if 'pedidos' in vista %}active{% endif %}">
         <i class="fa-solid fa-box-open"></i> Pedidos
+        {% if pedidos_pendientes > 0 %}
+        <span class="badge-pendientes ms-auto" title="{{ pedidos_pendientes }} pedido{{ pedidos_pendientes|pluralize }} pendiente{{ pedidos_pendientes|pluralize }}" aria-label="{{ pedidos_pendientes }} pendientes">{% if pedidos_pendientes > 99 %}99+{% else %}{{ pedidos_pendientes }}{% endif %}</span>
+        {% endif %}
     </a>
 </li>
 {% endif %}
@@ -98,6 +101,13 @@ tiene la función que la habilita (`puede`, ver apps/permisos/context_processors
 <li class="nav-item">
     <a href="{% url 'apps.empleados:listar_empleados' %}" class="sidebar-link {% if 'empleados' in vista %}active{% endif %}">
         <i class="fa-solid fa-id-badge"></i> Empleados y roles
+    </a>
+</li>
+{% endif %}
+{% if user.is_superuser %}
+<li class="nav-item">
+    <a href="{% url 'apps.configuracion:configuracion' %}" class="sidebar-link {% if 'configuracion' in vista %}active{% endif %}">
+        <i class="fa-solid fa-gear"></i> Configuración
     </a>
 </li>
 {% endif %}

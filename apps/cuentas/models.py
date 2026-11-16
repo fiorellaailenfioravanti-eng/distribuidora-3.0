@@ -200,7 +200,7 @@ class MovimientoCuenta(models.Model):
         if self.tipo == 'Cargo' and self.cuenta_id:
             if not self.cuenta.cliente.permite_fiado:
                 raise ValidationError({
-                    'tipo': 'El cliente no tiene fiado habilitado (RF-05). '
+                    'tipo': 'El cliente no tiene fiado habilitado. '
                             'Cambialo a Premium o activá "permite fiado".'
                 })
 

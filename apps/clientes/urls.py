@@ -16,16 +16,20 @@ urlpatterns = [
 
     path('<int:pk>/',                     views.ver_cliente,              name='ver_cliente'),
     path('<int:pk>/editar/',              views.editar_cliente,           name='editar_cliente'),
+    path('<int:pk>/eliminar/',            views.eliminar_cliente,         name='eliminar_cliente'),
+    path('<int:pk>/restaurar/',           views.restaurar_cliente,        name='restaurar_cliente'),
     path('<int:pk>/tipo/',                views.cambiar_tipo_cliente,     name='cambiar_tipo'),
 
     # ── Teléfonos ──────────────────────────────────────────────
     path('<int:pk>/telefono/nuevo/',      views.agregar_telefono,         name='agregar_telefono'),
     path('telefono/<int:pk>/eliminar/',   views.eliminar_telefono,        name='eliminar_telefono'),
+    path('telefono/<int:pk>/restaurar/',  views.restaurar_telefono,       name='restaurar_telefono'),
 
     # ── Direcciones ────────────────────────────────────────────
     path('<int:pk>/direccion/nueva/',     views.agregar_direccion,        name='agregar_direccion'),
     path('direccion/<int:pk>/editar/',    views.editar_direccion,         name='editar_direccion'),
     path('direccion/<int:pk>/eliminar/',  views.eliminar_direccion,       name='eliminar_direccion'),
+    path('direccion/<int:pk>/restaurar/', views.restaurar_direccion,      name='restaurar_direccion'),
 
     # Envases (RF-08)
     path('<int:pk>/envases/movimiento/',  views.registrar_movimiento_bidon, name='registrar_movimiento_bidon'),

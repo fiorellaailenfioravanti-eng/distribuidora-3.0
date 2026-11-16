@@ -138,3 +138,58 @@ def retirar_perfil_cliente_vacio(usuario):
         cliente.delete()
         return True
     return False
+
+
+# ─────────────────────────────────────────────────────────────
+# Teléfonos cargados en las altas (registro web y alta por el vendedor)
+# ─────────────────────────────────────────────────────────────
+LARGO_TELEFONO = 20
+LARGO_RELACION = 40
+
+
+def leer_telefonos(post, obligatorio=True):
+    """Lee telefono_numero[] / telefono_relacion[] y los valida.
+
+    Devuelve (filas, errores): filas = [{'numero', 'relacion'}] para guardar o
+    volver a mostrar; errores = textos para el usuario. El primero es obligatorio
+    y no se aceptan números repetidos.
+    """
+    from distribuidora.validadores import solo_digitos, validar_telefono
+    numeros = post.getlist('telefono_numero[]')
+    relaciones = post.getlist('telefono_relacion[]')
+    filas, errores, vistos = [], [], set()
+    for i, numero in enumerate(numeros):
+        numero = ' '.join((numero or '').split())
+        relacion = ' '.join((relaciones[i] if i < len(relaciones) else '').split())
+        if not numero and not relacion:
+            continue
+        filas.append({'numero': numero, 'relacion': relacion})
+        posicion = len(filas)
+        try:
+            validar_telefono(numero, obligatorio=True)
+        except ValidationError as error:
+            errores.append(f'Teléfono {posicion}: {error.messages[0]}')
+            continue
+        if len(numero) > LARGO_TELEFONO:
+            errores.append(f'Teléfono {posicion}: puede tener hasta {LARGO_TELEFONO} caracteres.')
+        if len(relacion) > LARGO_RELACION:
+            errores.append(f'Teléfono {posicion}: «De quién es» puede tener hasta {LARGO_RELACION} caracteres.')
+        digitos = solo_digitos(numero)
+        if digitos in vistos:
+            errores.append(f'El número {numero} está repetido.')
+        vistos.add(digitos)
+    if obligatorio and not filas:
+        errores.append('Ingresá al menos un número de teléfono.')
+    return filas, errores
+
+
+def guardar_telefonos(cliente, filas):
+    """Crea los teléfonos validados; el primero queda como principal si no hay otro."""
+    from .models import TelefonoContacto
+    hay_principal = cliente.telefonos.filter(es_principal=True).exists()
+    for i, fila in enumerate(filas):
+        TelefonoContacto.objects.create(
+            cliente=cliente, numero=fila['numero'],
+            desc_relacion=fila['relacion'] or ('Titular' if i == 0 else 'Otro'),
+            es_principal=(i == 0 and not hay_principal),
+        )

@@ -1,6 +1,6 @@
 # 🏁 Plan de Cierre — Fases 4.5 a 7
 
-> **Propósito:** procedimiento detallado para terminar lo que falta de Distribuidora 3.0 / Aquadelluvia
+> **Propósito:** procedimiento detallado para terminar lo que falta de Distribuidora 3.0 / Aguadelluvia
 > después de la Fase 4. Complementa (no reemplaza) el plan general de [`PROCEDURE.md`](PROCEDURE.md) §6.
 >
 > **Fecha:** 20/10/2026 · **Base analizada:** `main` @ `50dc6b2` + cambios sin commitear de Fases 1–4

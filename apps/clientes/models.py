@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from distribuidora.bajas import SinEliminadosManager
+from distribuidora.limites import LARGO_NOMBRE, LARGO_TEXTO, limite_largo
 
 
 # ────────────────────────────────────────────────
@@ -27,6 +29,14 @@ TIPO_REGISTRO_CHOICES = [
 #    Si tiene cuenta: vinculado a autenticacion.Usuario via OneToOne.
 #    Si no tiene cuenta: sus datos se guardan directamente en este modelo.
 # ────────────────────────────────────────────────
+
+def _bloquear_cuenta(usuario, bloquear):
+    """Baja/alta de la cuenta web vinculada. Nunca toca al superusuario."""
+    if usuario is None or usuario.is_superuser:
+        return
+    usuario.is_active = not bloquear
+    usuario.save(update_fields=['is_active'])
+
 class Cliente(models.Model):
     # ── Cuenta web (opcional) ──────────────────────────────────
     usuario          = models.OneToOneField(
@@ -39,16 +49,17 @@ class Cliente(models.Model):
     )
     # ── Datos propios (para clientes sin cuenta) ───────────────
     nombre           = models.CharField(
-        max_length=100,
+        max_length=LARGO_NOMBRE,
         blank=True,
         verbose_name='Nombre'
     )
     apellido         = models.CharField(
-        max_length=100,
+        max_length=LARGO_NOMBRE,
         blank=True,
         verbose_name='Apellido'
     )
     email_contacto   = models.EmailField(
+        max_length=120,
         blank=True,
         verbose_name='Email de contacto',
         help_text='Opcional — para clientes sin cuenta web'
@@ -78,16 +89,17 @@ class Cliente(models.Model):
     bidones_prestados = models.IntegerField(
         default=0,
         verbose_name='Bidones prestados',
-        help_text='Saldo calculado del historial de envases (RF-08). No se edita a mano: '
+        help_text='Saldo calculado del historial de envases. No se edita a mano: '
                   'se registra un movimiento. Negativo = devolvió más de los prestados.'
     )
     permite_fiado    = models.BooleanField(
         default=False,
         verbose_name='Permite fiado',
         help_text='Automático para Premium. A un cliente Normal sólo se le habilita '
-                  'como excepción autorizada (RF-05, decisión A-D6).'
+                  'como excepción autorizada.'
     )
     notas_internas   = models.TextField(
+        max_length=LARGO_TEXTO,
         blank=True,
         verbose_name='Notas internas',
         help_text='Visible solo para Admin/Vendedor'
@@ -98,6 +110,13 @@ class Cliente(models.Model):
         default='registrado',
         verbose_name='Tipo de registro',
         help_text='Los clientes pasajeros son registrados en el reparto y pueden no tener cuenta.'
+    )
+    eliminado        = models.BooleanField(
+        default=False,
+        verbose_name='Eliminado',
+        help_text='Baja lógica: no aparece en el directorio ni en los listados para '
+                  'elegir clientes, y no puede ingresar a la tienda. Se restaura desde '
+                  '«Clientes eliminados». Sus pedidos, cuenta e historial se conservan.'
     )
     es_frecuente     = models.BooleanField(
         default=False,
@@ -114,6 +133,8 @@ class Cliente(models.Model):
         ordering = ['apellido', 'nombre']
         verbose_name = 'Cliente'
         verbose_name_plural = 'Clientes'
+        constraints = limite_largo(nombre=LARGO_NOMBRE, apellido=LARGO_NOMBRE, notas_internas=LARGO_TEXTO,
+                                   email_contacto=120, dni=15)
 
     def __str__(self):
         return f"{self.nombre_completo()} [{self.tipo_cliente}]"
@@ -124,6 +145,22 @@ class Cliente(models.Model):
 
     def es_premium(self):
         return self.tipo_cliente == 'Premium'
+
+    def dar_de_baja(self):
+        """Baja lógica: se oculta y se bloquea su acceso web (si no es personal)."""
+        self.eliminado = True
+        self.es_frecuente = False
+        self.save(update_fields=['eliminado', 'es_frecuente'])
+        u = self.usuario
+        if u is not None and not hasattr(u, 'perfil_empleado'):
+            _bloquear_cuenta(u, True)
+
+    def restaurar(self):
+        self.eliminado = False
+        self.save(update_fields=['eliminado'])
+        u = self.usuario
+        if u is not None and not hasattr(u, 'perfil_empleado'):
+            _bloquear_cuenta(u, False)
 
     def nombre_completo(self):
         """Nombre legíble independientemente de si tiene cuenta o no."""
@@ -147,8 +184,8 @@ class Cliente(models.Model):
         return self.direcciones.count()
 
     def tiene_datos_completos(self):
-        """Indica si el cliente tiene al menos 2 teléfonos y 1 dirección."""
-        return self.cantidad_telefonos() >= 2 and self.cantidad_direcciones() >= 1
+        """Indica si el cliente tiene al menos 1 teléfono y 1 dirección."""
+        return self.cantidad_telefonos() >= 1 and self.cantidad_direcciones() >= 1
 
     def save(self, *args, **kwargs):
         # RF-05 (decisión A-D6): el Premium siempre tiene fiado; un Normal sólo
@@ -175,9 +212,9 @@ class TelefonoContacto(models.Model):
         on_delete=models.CASCADE,
         related_name='telefonos'
     )
-    numero        = models.CharField(max_length=25, verbose_name='Número')
+    numero        = models.CharField(max_length=20, verbose_name='Número')
     desc_relacion = models.CharField(
-        max_length=100,
+        max_length=40,
         verbose_name='Relación',
         help_text='Ej: "Titular", "Cónyuge", "Hijo", "Vecino de confianza"'
     )
@@ -186,14 +223,31 @@ class TelefonoContacto(models.Model):
         verbose_name='Principal'
     )
 
+    eliminado = models.BooleanField(default=False, verbose_name='Eliminado',
+                                    help_text='Baja lógica: se oculta pero no se borra; se puede restaurar.')
+
+    objects = SinEliminadosManager()
+    todos = models.Manager()
+
     class Meta:
         ordering = ['-es_principal', 'desc_relacion']
         verbose_name = 'Teléfono de contacto'
         verbose_name_plural = 'Teléfonos de contacto'
+        constraints = limite_largo(numero=20, desc_relacion=40)
 
     def __str__(self):
         principal = ' ⭐' if self.es_principal else ''
         return f"{self.numero} ({self.desc_relacion}){principal}"
+
+    def dar_de_baja(self):
+        self.eliminado = True
+        era_principal = self.es_principal
+        self.es_principal = False
+        self.save(update_fields=['eliminado', 'es_principal'])
+        if era_principal:
+            otro = TelefonoContacto.objects.filter(cliente=self.cliente).first()
+            if otro:
+                TelefonoContacto.objects.filter(pk=otro.pk).update(es_principal=True)
 
     def save(self, *args, **kwargs):
         # Si se marca como principal, desmarcar los demás del mismo cliente
@@ -215,7 +269,7 @@ class DireccionEntrega(models.Model):
         on_delete=models.CASCADE,
         related_name='direcciones'
     )
-    calle          = models.CharField(max_length=150, verbose_name='Calle')
+    calle          = models.CharField(max_length=100, verbose_name='Calle')
     altura         = models.CharField(max_length=10, verbose_name='Altura / Número')
     piso_depto     = models.CharField(
         max_length=30,
@@ -232,21 +286,22 @@ class DireccionEntrega(models.Model):
         verbose_name='Barrio'
     )
     ciudad         = models.CharField(
-        max_length=100,
+        max_length=LARGO_NOMBRE,
         blank=True,
         default='Resistencia',
         verbose_name='Ciudad / Localidad'
     )
     desc_seguridad = models.TextField(
+        max_length=LARGO_TEXTO,
         blank=True,
         verbose_name='Nota de seguridad',
         help_text=(
             'Información sensible: visible solo para Admin, Vendedor y el '
-            'Repartidor asignado a esa dirección (RNF-02).'
+            'Repartidor asignado a esa dirección.'
         )
     )
     coordenadas    = models.CharField(
-        max_length=60,
+        max_length=40,
         blank=True,
         verbose_name='Coordenadas (lat,lng)',
         help_text='Para futura integración con mapas'
@@ -256,10 +311,18 @@ class DireccionEntrega(models.Model):
         verbose_name='Principal'
     )
 
+    eliminado = models.BooleanField(default=False, verbose_name='Eliminado',
+                                    help_text='Baja lógica: se oculta pero no se borra; se puede restaurar.')
+
+    objects = SinEliminadosManager()
+    todos = models.Manager()
+
     class Meta:
         ordering = ['-es_principal', 'calle', 'altura']
         verbose_name = 'Dirección de entrega'
         verbose_name_plural = 'Direcciones de entrega'
+        constraints = limite_largo(desc_seguridad=LARGO_TEXTO, calle=100, altura=10, piso_depto=30,
+                                   ciudad=LARGO_NOMBRE, coordenadas=40)
 
     def __str__(self):
         extra = f" — {self.piso_depto}" if self.piso_depto else ""
@@ -278,6 +341,16 @@ class DireccionEntrega(models.Model):
         if self.barrio and self.barrio.zona:
             partes.append(str(self.barrio.zona))
         return ', '.join(partes)
+
+    def dar_de_baja(self):
+        self.eliminado = True
+        era_principal = self.es_principal
+        self.es_principal = False
+        self.save(update_fields=['eliminado', 'es_principal'])
+        if era_principal:
+            otra = DireccionEntrega.objects.filter(cliente=self.cliente).first()
+            if otra:
+                DireccionEntrega.objects.filter(pk=otra.pk).update(es_principal=True)
 
     def save(self, *args, **kwargs):
         # Si se marca como principal, desmarcar las demás del mismo cliente

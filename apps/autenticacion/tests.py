@@ -36,26 +36,31 @@ class SesionTests(TestCase):
 
 
 class RegistroTelefonosTests(TestCase):
-    """RF-01 / H-40: el registro exige dos celulares con su relación."""
+    """El registro exige un celular y permite sumar otros (cada uno con su relación)."""
 
     url = None
 
     def setUp(self):
+        from apps.logistica.models import Barrio
         self.url = reverse('apps.autenticacion:registrar')
+        barrio = Barrio.objects.create(nombre='Villa Centenario', ciudad='Resistencia')
         self.datos = {
+            'first_name': 'Nora', 'last_name': 'Paz',
+            'dir-calle': 'Av. Sarmiento', 'dir-altura': '450', 'dir-piso_depto': '',
+            'dir-barrio': barrio.pk, 'dir-ciudad': 'Resistencia',
             'username': 'nuevo', 'email': 'nuevo@x.com',
             'password1': 'Agua-Lluvia-2026', 'password2': 'Agua-Lluvia-2026',
-            'celular1': '3624111111', 'relacion1': 'Titular',
-            'celular2': '3624222222', 'relacion2': 'Esposa',
+            'telefono_numero[]': ['3624111111', '3624222222'],
+            'telefono_relacion[]': ['Titular', 'Esposa'],
         }
 
     def test_registro_sin_celulares_se_rechaza(self):
-        datos = {k: v for k, v in self.datos.items() if not k.startswith(('celular', 'relacion'))}
+        datos = {k: v for k, v in self.datos.items() if not k.startswith('telefono_')}
         self.client.post(self.url, datos)
         self.assertFalse(get_user_model().objects.filter(username='nuevo').exists())
 
     def test_celulares_iguales_se_rechazan(self):
-        self.client.post(self.url, {**self.datos, 'celular2': '3624111111'})
+        self.client.post(self.url, {**self.datos, 'telefono_numero[]': ['3624111111', '3624 111111']})
         self.assertFalse(get_user_model().objects.filter(username='nuevo').exists())
 
     def test_registro_crea_dos_telefonos_con_la_relacion_declarada(self):
@@ -63,6 +68,33 @@ class RegistroTelefonosTests(TestCase):
         usuario = get_user_model().objects.get(username='nuevo')
         relaciones = set(usuario.perfil_cliente.telefonos.values_list('desc_relacion', flat=True))
         self.assertEqual(relaciones, {'Titular', 'Esposa'})
+
+    def test_alcanza_con_un_solo_celular(self):
+        self.client.post(self.url, {**self.datos, 'telefono_numero[]': ['3624111111'],
+                                    'telefono_relacion[]': ['Titular']})
+        cliente = get_user_model().objects.get(username='nuevo').perfil_cliente
+        telefono = cliente.telefonos.get()
+        self.assertTrue(telefono.es_principal)
+
+    def test_puede_cargar_varios_telefonos(self):
+        numeros = ['3624111111', '3624222222', '3624333333', '3624444444']
+        self.client.post(self.url, {**self.datos, 'telefono_numero[]': numeros,
+                                    'telefono_relacion[]': ['Titular', 'Esposa', 'Hija', 'Trabajo']})
+        cliente = get_user_model().objects.get(username='nuevo').perfil_cliente
+        self.assertEqual(cliente.telefonos.count(), 4)
+
+    def test_registro_guarda_nombre_y_domicilio_principal(self):
+        self.client.post(self.url, self.datos)
+        cliente = get_user_model().objects.get(username='nuevo').perfil_cliente
+        self.assertEqual(cliente.nombre_completo(), 'Nora Paz')
+        direccion = cliente.direcciones.get()
+        self.assertTrue(direccion.es_principal)
+        self.assertEqual((direccion.calle, direccion.altura), ('Av. Sarmiento', '450'))
+
+    def test_registro_sin_domicilio_se_rechaza(self):
+        datos = {k: v for k, v in self.datos.items() if not k.startswith('dir-')}
+        self.client.post(self.url, datos)
+        self.assertFalse(get_user_model().objects.filter(username='nuevo').exists())
 
 
 class RecuperarContrasenaTests(TestCase):

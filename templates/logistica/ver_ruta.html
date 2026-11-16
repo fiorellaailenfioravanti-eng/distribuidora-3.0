@@ -31,6 +31,13 @@
             <i class="fa-solid fa-pen me-1"></i> Editar Ruta
         </a>
         {% endif %}
+        {% if ruta.estado == 'Borrador' and 'planificar_repartos' in puede %}
+        <form method="post" action="{% url 'apps.logistica:eliminar_ruta' ruta.id_ruta %}" class="d-inline"
+              data-confirmar="¿Eliminar la hoja de ruta #{{ ruta.id_ruta }}? Sus pedidos quedan libres para otra hoja; la podés restaurar." data-peligro>
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash me-1"></i> Eliminar</button>
+        </form>
+        {% endif %}
         <a href="{% url 'apps.logistica:listar_rutas' %}" class="btn btn-light text-secondary fw-bold shadow-sm hover-lift">
             <i class="fa-solid fa-arrow-left me-1"></i> Volver
         </a>
@@ -242,7 +249,7 @@
                                 {% endif %}
                                 <div class="col-12 {% if d.estado != 'Entregado' %}col-md-4{% endif %}">
                                     <label class="form-label small mb-1" for="n-{{ d.id_detalle }}">Nota</label>
-                                    <input type="text" name="nota_entrega" id="n-{{ d.id_detalle }}" class="form-control form-control-sm" value="{{ d.nota_entrega }}" placeholder="Ej: dejé con el vecino">
+                                    <input maxlength="500" type="text" name="nota_entrega" id="n-{{ d.id_detalle }}" class="form-control form-control-sm" value="{{ d.nota_entrega }}" placeholder="Ej: dejé con el vecino">
                                 </div>
                                 <div class="col-12">
                                     <button type="submit" class="btn btn-sm btn-success rounded-pill fw-bold">Registrar entrega</button>

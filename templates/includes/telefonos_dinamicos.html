@@ -1,0 +1,83 @@
+{% comment %}
+Teléfonos de un cliente: el primero es obligatorio y con «Agregar otro teléfono»
+se suman los que haga falta. Envía telefono_numero[] y telefono_relacion[]
+(los lee apps/clientes/services.leer_telefonos).
+Variables: telefonos (lista de {numero, relacion} para volver a mostrar lo cargado)
+y errores_telefonos (lista de textos).
+{% endcomment %}
+<div class="telefonos-dinamicos" data-telefonos>
+    {% for error in errores_telefonos %}
+    <div class="invalid-feedback d-block mb-2"><i class="fa-solid fa-circle-exclamation me-1"></i>{{ error }}</div>
+    {% endfor %}
+    <div class="vstack gap-2" data-telefonos-filas>
+        {% for t in telefonos|default_if_none:"" %}
+        <div class="row g-2 align-items-start" data-telefono-fila>
+            <div class="col-6 col-md-6">
+                {% if forloop.first %}<label class="form-label fw-semibold small mb-1">Celular <span class="text-danger">*</span></label>{% endif %}
+                <input type="tel" name="telefono_numero[]" value="{{ t.numero }}" class="form-control" inputmode="tel"
+                       maxlength="20" pattern="[\d\s\(\)\+\-]{8,20}" data-solo-telefono placeholder="Ej: 362 4123456"
+                       title="Sólo números (puede llevar espacios, guiones o +). Mínimo 8 dígitos." {% if forloop.first %}required{% endif %}>
+            </div>
+            <div class="col">
+                {% if forloop.first %}<label class="form-label fw-semibold small mb-1">De quién es</label>{% endif %}
+                <input type="text" name="telefono_relacion[]" value="{{ t.relacion }}" class="form-control" maxlength="40"
+                       placeholder="{% if forloop.first %}Ej: Titular{% else %}Ej: Esposo, Hija, Trabajo{% endif %}">
+            </div>
+            <div class="col-auto {% if forloop.first %}pt-4 mt-1{% endif %}">
+                {% if forloop.first %}
+                <span class="btn btn-sm invisible"><i class="fa-solid fa-trash"></i></span>
+                {% else %}
+                <button type="button" class="btn btn-sm btn-light text-danger" data-quitar-telefono title="Quitar este teléfono" aria-label="Quitar este teléfono"><i class="fa-solid fa-trash"></i></button>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="row g-2 align-items-start" data-telefono-fila>
+            <div class="col-6 col-md-6">
+                <label class="form-label fw-semibold small mb-1">Celular <span class="text-danger">*</span></label>
+                <input type="tel" name="telefono_numero[]" class="form-control" inputmode="tel" required
+                       maxlength="20" pattern="[\d\s\(\)\+\-]{8,20}" data-solo-telefono placeholder="Ej: 362 4123456"
+                       title="Sólo números (puede llevar espacios, guiones o +). Mínimo 8 dígitos.">
+            </div>
+            <div class="col">
+                <label class="form-label fw-semibold small mb-1">De quién es</label>
+                <input type="text" name="telefono_relacion[]" value="Titular" class="form-control" maxlength="40" placeholder="Ej: Titular">
+            </div>
+            <div class="col-auto pt-4 mt-1"><span class="btn btn-sm invisible"><i class="fa-solid fa-trash"></i></span></div>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" class="btn btn-sm btn-light mt-2" data-agregar-telefono>
+        <i class="fa-solid fa-plus me-1"></i>Agregar otro teléfono
+    </button>
+    <template data-telefono-plantilla>
+        <div class="row g-2 align-items-start" data-telefono-fila>
+            <div class="col-6 col-md-6">
+                <input type="tel" name="telefono_numero[]" class="form-control" inputmode="tel"
+                       maxlength="20" pattern="[\d\s\(\)\+\-]{8,20}" data-solo-telefono placeholder="Ej: 362 4123456"
+                       title="Sólo números (puede llevar espacios, guiones o +). Mínimo 8 dígitos.">
+            </div>
+            <div class="col">
+                <input type="text" name="telefono_relacion[]" class="form-control" maxlength="40" placeholder="Ej: Esposo, Hija, Trabajo">
+            </div>
+            <div class="col-auto">
+                <button type="button" class="btn btn-sm btn-light text-danger" data-quitar-telefono title="Quitar este teléfono" aria-label="Quitar este teléfono"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        </div>
+    </template>
+</div>
+<script>
+(function () {
+    const caja = document.currentScript.previousElementSibling;
+    const filas = caja.querySelector('[data-telefonos-filas]');
+    const plantilla = caja.querySelector('[data-telefono-plantilla]');
+    caja.querySelector('[data-agregar-telefono]').addEventListener('click', () => {
+        filas.appendChild(plantilla.content.cloneNode(true));
+        filas.lastElementChild.querySelector('input').focus();
+    });
+    filas.addEventListener('click', (e) => {
+        const quitar = e.target.closest('[data-quitar-telefono]');
+        if (quitar) quitar.closest('[data-telefono-fila]').remove();
+    });
+})();
+</script>

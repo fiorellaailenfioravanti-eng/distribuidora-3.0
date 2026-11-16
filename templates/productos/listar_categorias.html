@@ -6,7 +6,6 @@
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
         <div>
             <h1 class="h3 fw-bold mb-0 text-main">Categorías</h1>
-            <p class="text-muted small mb-0 mt-1">Clasificación del catálogo de la tienda y del inventario.</p>
         </div>
         <a href="{% url 'apps.productos:listar_productos_admin' %}" class="btn btn-light border-0 shadow-sm rounded-3 hover-lift fw-bold">
             <i class="fa-solid fa-arrow-left me-1"></i> Volver al inventario
@@ -41,11 +40,9 @@
                                         <i class="fa-solid fa-pen"></i>
                                     </a>
                                     <form method="post" action="{% url 'apps.productos:eliminar_categoria' c.pk %}" class="d-inline"
-                                          data-confirmar="¿Eliminar la categoría «{{ c.nombre }}»?" data-peligro>
+                                          data-confirmar="¿Eliminar la categoría «{{ c.nombre }}»?{% if c.cantidad_productos %} Sus {{ c.cantidad_productos }} producto(s) no cambian.{% endif %}" data-peligro>
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-sm btn-light border-0 text-danger hover-lift rounded-pill px-3 shadow-sm ms-1"
-                                                title="{% if c.cantidad_productos %}Tiene productos: no se puede borrar{% else %}Eliminar{% endif %}"
-                                                {% if c.cantidad_productos %}disabled{% endif %}>
+                                        <button type="submit" class="btn btn-sm btn-light text-danger ms-1" title="Eliminar" aria-label="Eliminar">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
                                     </form>
@@ -63,6 +60,48 @@
                     </table>
                 </div>
             </div>
+
+            {# ── Categorías eliminadas (baja lógica) ── #}
+            {% if eliminadas %}
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-surface mt-4">
+                <button class="btn w-100 text-start d-flex justify-content-between align-items-center p-3 px-4 border-0"
+                        type="button" data-bs-toggle="collapse" data-bs-target="#categoriasEliminadas" aria-expanded="false" aria-controls="categoriasEliminadas">
+                    <span class="fw-bold text-main"><i class="fa-solid fa-box-archive me-2 text-muted"></i>Categorías eliminadas
+                        <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis ms-1">{{ eliminadas|length }}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down text-muted"></i>
+                </button>
+                <div class="collapse" id="categoriasEliminadas">
+                    <p class="small text-muted px-4 mb-2">No se ven en la tienda ni al cargar productos. Sus productos no cambian.</p>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" data-ordenable>
+                            <thead class="table-light text-muted small text-uppercase">
+                                <tr>
+                                    <th class="ps-4 py-3 border-bottom-0 text-nowrap" data-ordenar="texto">Nombre</th>
+                                    <th class="py-3 border-bottom-0 text-center text-nowrap" data-ordenar="numero">Productos</th>
+                                    <th class="pe-4 py-3 border-bottom-0 text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in eliminadas %}
+                                <tr class="opacity-75">
+                                    <td class="ps-4 fw-semibold text-main">{{ c.nombre }}</td>
+                                    <td class="text-center text-muted">{{ c.cantidad_productos }}</td>
+                                    <td class="pe-4 text-end">
+                                        <form method="post" action="{% url 'apps.productos:restaurar_categoria' c.pk %}" class="d-inline"
+                                              data-confirmar="¿Restaurar la categoría «{{ c.nombre }}»?">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-success"><i class="fa-solid fa-rotate-left me-1"></i>Restaurar</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         <div class="col-lg-4">

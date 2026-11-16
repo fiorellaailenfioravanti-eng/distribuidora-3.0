@@ -193,7 +193,7 @@ class TransicionesManualesTests(TestCase):
 
 
 class CheckoutRequiereTelefonosTests(TestCase):
-    """RF-04: sin 2 teléfonos de contacto no se puede comprar."""
+    """RF-04: sin un teléfono de contacto no se puede comprar."""
 
     def setUp(self):
         from apps.carrito.models import Carrito
@@ -214,13 +214,13 @@ class CheckoutRequiereTelefonosTests(TestCase):
             'metodo_pago': MetodoPago.objects.get(codigo='EFECTIVO').pk,
         })
 
-    def test_con_un_telefono_no_compra(self):
+    def test_sin_telefono_no_compra(self):
+        self.TelefonoContacto.objects.filter(cliente=self.cliente).delete()
         self.assertEqual(self.client.get(reverse('apps.pedidos:checkout')).url, reverse('apps.clientes:mi_perfil'))
         self._confirmar()
         self.assertFalse(Pedido.objects.filter(cliente=self.cliente).exists())
 
-    def test_con_dos_telefonos_compra(self):
-        self.TelefonoContacto.objects.create(cliente=self.cliente, numero='3624222222', desc_relacion='Esposa')
+    def test_con_un_telefono_compra(self):
         self._confirmar()
         self.assertTrue(Pedido.objects.filter(cliente=self.cliente).exists())
 
@@ -412,3 +412,56 @@ class PedidoAutomaticoTests(TestCase):
         borrador = construir_borrador(self.hoy + timedelta(days=1), zona)
         self.assertEqual(borrador['frecuentes'], [])
         self.assertEqual(len(borrador['pedidos']), 1)
+
+
+class StockReservadoTests(TestCase):
+    """Lo comprado en la web queda reservado: deja de ofrecerse en el catálogo
+    mientras el pedido está Pendiente o Confirmado, y vuelve si se cancela."""
+
+    def setUp(self):
+        from apps.carrito.models import Carrito
+        from apps.clientes.models import TelefonoContacto
+        from apps.productos.models import Producto
+        self.producto = Producto.objects.create(nombre='Bidón 20 L', descripcion='', precio=Decimal('10'), stock=3)
+        self.usuario = get_user_model().objects.create_user('comprador', 'cmp@x.com', 'Agua-Lluvia-2026')
+        cliente = self.usuario.perfil_cliente
+        self.direccion = DireccionEntrega.objects.create(cliente=cliente, calle='Mitre', altura='1')
+        TelefonoContacto.objects.create(cliente=cliente, numero='3624111111', desc_relacion='Titular')
+        Carrito.objects.create(usuario=self.usuario).items.create(producto=self.producto, cantidad=2)
+        self.client.force_login(self.usuario)
+
+    def _comprar(self):
+        self.client.post(reverse('apps.pedidos:confirmar_pedido'), {
+            'direccion_entrega': self.direccion.pk,
+            'metodo_pago': MetodoPago.objects.get(codigo='EFECTIVO').pk,
+        })
+        return Pedido.objects.get(cliente__usuario=self.usuario)
+
+    def _disponible_en_catalogo(self):
+        respuesta = self.client.get(reverse('apps.productos:listar_productos'))
+        return next(p.disponible for p in respuesta.context['productos'] if p.pk == self.producto.pk)
+
+    def test_comprar_reserva_y_cancelar_libera(self):
+        self.assertEqual(self._disponible_en_catalogo(), 3)
+        pedido = self._comprar()                       # Pendiente: reserva
+        self.assertEqual(self._disponible_en_catalogo(), 1)
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock, 3)        # sigue en el depósito hasta cargar el camión
+        pedido.cambiar_estado_manual('Confirmado')      # confirmado por el administrador: sigue reservado
+        self.assertEqual(self._disponible_en_catalogo(), 1)
+        pedido.cambiar_estado_manual('Cancelado')       # vuelve a estar a la venta
+        self.assertEqual(self._disponible_en_catalogo(), 3)
+
+    def test_no_permite_sobreventa(self):
+        from apps.carrito.models import Carrito
+        self._comprar()                                 # quedan 1 disponible
+        otro = get_user_model().objects.create_user('otro', 'otro@x.com', 'Agua-Lluvia-2026')
+        from apps.clientes.models import TelefonoContacto
+        TelefonoContacto.objects.create(cliente=otro.perfil_cliente, numero='3624999999', desc_relacion='Titular')
+        direccion = DireccionEntrega.objects.create(cliente=otro.perfil_cliente, calle='Roca', altura='2')
+        Carrito.objects.create(usuario=otro).items.create(producto=self.producto, cantidad=2)
+        self.client.force_login(otro)
+        self.client.post(reverse('apps.pedidos:confirmar_pedido'), {
+            'direccion_entrega': direccion.pk, 'metodo_pago': MetodoPago.objects.get(codigo='EFECTIVO').pk,
+        })
+        self.assertFalse(Pedido.objects.filter(cliente__usuario=otro).exists())

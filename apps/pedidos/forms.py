@@ -45,6 +45,7 @@ class CheckoutForm(forms.Form):
         label="Método de Pago"
     )
     notas_cliente = forms.CharField(
+        max_length=500,
         widget=forms.Textarea(attrs={
             'class': 'form-control',
             'rows': 3,

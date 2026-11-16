@@ -8,22 +8,40 @@
         <a href="{% url 'apps.empleados:listar_empleados' %}" class="btn btn-light border-0 shadow-sm rounded-circle p-2 text-muted hover-lift">
             <i class="fa-solid fa-arrow-left"></i>
         </a>
-        <h1 class="h3 fw-bold mb-0 text-main">{{ empleado.nombre }} {{ empleado.apellido }}</h1>
+        {% if empleado.foto %}
+        <img src="{{ empleado.foto.url }}" alt="Foto de {{ empleado.nombre }}" class="foto-empleado foto-empleado--lg shadow-sm">
+        {% else %}
+        <span class="avatar avatar--lg">{{ empleado.iniciales }}</span>
+        {% endif %}
+        <div>
+            <h1 class="h3 fw-bold mb-0 text-main">{{ empleado.nombre }} {{ empleado.apellido }}</h1>
+            {% if empleado.eliminado %}<span class="badge bg-danger bg-opacity-25 text-danger rounded-pill px-2 mt-1"><i class="fa-solid fa-box-archive me-1"></i>Eliminado</span>{% endif %}
+        </div>
     </div>
     <div class="d-flex gap-2 flex-wrap">
+        {% if empleado.eliminado %}
+        <form method="POST" action="{% url 'apps.empleados:restaurar_empleado' empleado.id_empleado %}" class="d-inline"
+              data-confirmar="¿Restaurar a {{ empleado.nombre }} {{ empleado.apellido }}? Vuelve a estar activo y puede ingresar.">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success px-3"><i class="fa-solid fa-rotate-left me-1"></i> Restaurar</button>
+        </form>
+        {% else %}
         <form method="POST" action="{% url 'apps.empleados:cambiar_estado' empleado.id_empleado %}" class="d-inline">
             {% csrf_token %}
-            <button type="submit" class="btn {% if empleado.activo %}btn-light text-warning border-0{% else %}btn-light text-success border-0{% endif %} shadow-sm fw-bold rounded-pill hover-lift px-3">
-                <i class="fa-solid fa-power-off me-1"></i> 
+            <button type="submit" class="btn btn-light {% if empleado.activo %}text-warning{% else %}text-success{% endif %} px-3">
+                <i class="fa-solid fa-power-off me-1"></i>
                 {% if empleado.activo %}Desactivar{% else %}Activar{% endif %}
             </button>
         </form>
-        <a href="{% url 'apps.empleados:editar_empleado' empleado.id_empleado %}" class="btn btn-primary btn-glow fw-bold rounded-pill px-3">
+        <a href="{% url 'apps.empleados:editar_empleado' empleado.id_empleado %}" class="btn btn-primary px-3">
             <i class="fa-solid fa-pen me-1"></i> Editar
         </a>
-        <button type="button" class="btn btn-danger btn-glow fw-bold rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#eliminarModal">
-            <i class="fa-solid fa-trash me-1"></i> Eliminar
-        </button>
+        <form method="POST" action="{% url 'apps.empleados:eliminar_empleado' empleado.id_empleado %}" class="d-inline"
+              data-confirmar="¿Eliminar a {{ empleado.nombre }} {{ empleado.apellido }}? No podrá ingresar al sistema; lo podés restaurar después." data-peligro>
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger px-3"><i class="fa-solid fa-trash me-1"></i> Eliminar</button>
+        </form>
+        {% endif %}
     </div>
 </div>
 
@@ -97,25 +115,4 @@
     {% endif %}
 </div>
 
-<!-- Modal Eliminar -->
-<div class="modal fade" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 bg-surface border-0 shadow">
-            <div class="modal-header border-bottom-0 p-4 pb-0">
-                <h5 class="modal-title fw-bold text-main" id="eliminarModalLabel">Confirmar eliminación</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-                <p class="text-muted">¿Estás seguro de que querés eliminar a <strong class="text-main">{{ empleado.nombre }} {{ empleado.apellido }}</strong>? Esta acción no se puede deshacer.</p>
-            </div>
-            <div class="modal-footer border-top-0 p-4 pt-0 gap-2">
-                <button type="button" class="btn btn-light fw-bold rounded-pill hover-lift px-4" data-bs-dismiss="modal">Cancelar</button>
-                <form method="POST" action="{% url 'apps.empleados:eliminar_empleado' empleado.id_empleado %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger btn-glow fw-bold rounded-pill px-4">Sí, eliminar</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}

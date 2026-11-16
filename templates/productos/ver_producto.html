@@ -39,8 +39,8 @@
 
                 <!-- Botones de acciones principales-->
                 <div class="d-flex flex-column flex-sm-row gap-2 mb-4">
-                    {% if producto.stock > 0 %}
-                        <form method="post" action="{% url 'apps.carrito:agregar_al_carrito' producto.id_producto %}" class="d-flex flex-grow-1">
+                    {% if producto.disponible > 0 %}
+                        <form method="post" action="{% url 'apps.carrito:agregar_al_carrito' producto.id_producto %}" class="d-flex flex-grow-1" data-sin-aviso>
                             {% csrf_token %}
                             <button type="submit" class="btn btn-primary rounded-pill btn-glow shadow-sm d-flex align-items-center justify-content-center px-4 py-2 fw-bold flex-grow-1 hover-lift">
                                 <i class="fas fa-shopping-cart me-2"></i> Añadir al carrito
@@ -71,12 +71,15 @@
                         </div>
                         <div>
                             <p class="mb-0 fw-bold text-body-emphasis small">Stock Disponible</p>
-                            <p class="mb-0 text-muted" style="font-size: 0.75rem;">{{ producto.stock }} unidades</p>
+                            <p class="mb-0 text-muted" style="font-size: 0.75rem;">{{ producto.disponible }} unidades</p>
+                            {% if 'ver_inventario' in puede and producto.reservado %}
+                            <p class="mb-0 text-muted" style="font-size: 0.75rem;">{{ producto.reservado }} reservadas en pedidos · {{ producto.stock }} en depósito</p>
+                            {% endif %}
                         </div>
                     </div>
-                    {% if producto.stock > 10 %}
+                    {% if producto.disponible > 10 %}
                         <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1"><i class="fa-solid fa-check me-1"></i> Disponible</span>
-                    {% elif producto.stock > 0 %}
+                    {% elif producto.disponible > 0 %}
                         <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-1"><i class="fa-solid fa-exclamation me-1"></i> Quedan pocos</span>
                     {% else %}
                         <span class="badge bg-danger bg-opacity-25 text-danger rounded-pill px-2 py-1">Agotado</span>

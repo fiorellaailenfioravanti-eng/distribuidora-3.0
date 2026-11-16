@@ -17,6 +17,9 @@
             {% else %}
                 <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-3 py-1 fs-6">Normal</span>
             {% endif %}
+            {% if cliente.eliminado %}
+                <span class="badge bg-danger bg-opacity-25 text-danger rounded-pill px-3 py-1 fs-6"><i class="fa-solid fa-box-archive me-1"></i>Eliminado</span>
+            {% endif %}
         </div>
         <p class="text-muted small mb-0">
             @{{ cliente.usuario.username }} ·
@@ -31,6 +34,20 @@
         <a href="{% url 'apps.cuentas:cuenta_de_cliente' cliente.pk %}" class="btn btn-outline-danger rounded-pill shadow-sm fw-bold px-4">
             <i class="fa-solid fa-file-invoice-dollar me-1"></i> Cuenta corriente
         </a>
+        {% if 'registrar_clientes' in puede and cliente.eliminado %}
+        <form method="post" action="{% url 'apps.clientes:restaurar_cliente' cliente.pk %}" class="d-inline"
+              data-confirmar="¿Restaurar a {{ cliente.nombre_completo }}?">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success px-4"><i class="fa-solid fa-rotate-left me-1"></i>Restaurar</button>
+        </form>
+        {% endif %}
+        {% if 'registrar_clientes' in puede and not cliente.eliminado %}
+        <form method="post" action="{% url 'apps.clientes:eliminar_cliente' cliente.pk %}" class="d-inline"
+              data-confirmar="¿Eliminar a {{ cliente.nombre_completo }}?" data-peligro>
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger px-4"><i class="fa-solid fa-trash me-1"></i>Eliminar</button>
+        </form>
+        {% endif %}
         <a href="{% url 'apps.clientes:listar_clientes' %}" class="btn btn-light rounded-pill shadow-sm fw-bold px-4">
             <i class="fa-solid fa-arrow-left me-1"></i> Volver
         </a>
@@ -169,16 +186,32 @@
                 <p class="text-muted text-center py-3 small">Sin teléfonos registrados.</p>
                 {% endif %}
             </div>
+            {% if telefonos_eliminados and 'registrar_clientes' in puede %}
+            <details class="px-4 pb-3">
+                <summary class="small fw-semibold text-muted"><i class="fa-solid fa-box-archive me-1"></i>Teléfonos eliminados ({{ telefonos_eliminados|length }})</summary>
+                <ul class="list-group list-group-flush mt-2">
+                    {% for x in telefonos_eliminados %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 opacity-75">
+                        <span class="small">{{ x.numero }} <span class="text-muted">· {{ x.desc_relacion }}</span></span>
+                        <form method="post" action="{% url 'apps.clientes:restaurar_telefono' x.pk %}" data-confirmar="¿Restaurar?">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-success"><i class="fa-solid fa-rotate-left me-1"></i>Restaurar</button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </details>
+            {% endif %}
             {# Agregar teléfono inline #}
             <div class="card-footer bg-transparent p-4 border-top">
                 <form method="post" action="{% url 'apps.clientes:agregar_telefono' cliente.pk %}">
                     {% csrf_token %}
                     <div class="row g-2">
                         <div class="col-5">
-                            <input type="text" name="numero" class="form-control rounded-3 bg-light border-0" placeholder="Número">
+                            <input maxlength="20" type="text" name="numero" class="form-control rounded-3 bg-light border-0" placeholder="Número">
                         </div>
                         <div class="col-5">
-                            <input type="text" name="desc_relacion" class="form-control rounded-3 bg-light border-0" placeholder="Relación">
+                            <input maxlength="40" type="text" name="desc_relacion" class="form-control rounded-3 bg-light border-0" placeholder="Relación">
                         </div>
                         <div class="col-2">
                             <button type="submit" class="btn btn-primary rounded-3 w-100 hover-lift">
@@ -266,6 +299,22 @@
                 <p class="text-muted text-center py-4 small">Sin domicilios registrados.</p>
                 {% endif %}
             </div>
+            {% if direcciones_eliminadas and 'registrar_clientes' in puede %}
+            <details class="px-4 pb-3">
+                <summary class="small fw-semibold text-muted"><i class="fa-solid fa-box-archive me-1"></i>Domicilios eliminados ({{ direcciones_eliminadas|length }})</summary>
+                <ul class="list-group list-group-flush mt-2">
+                    {% for x in direcciones_eliminadas %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 opacity-75">
+                        <span class="small">{{ x.calle }} {{ x.altura }}{% if x.piso_depto %} · {{ x.piso_depto }}{% endif %}</span>
+                        <form method="post" action="{% url 'apps.clientes:restaurar_direccion' x.pk %}" data-confirmar="¿Restaurar?">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-success"><i class="fa-solid fa-rotate-left me-1"></i>Restaurar</button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </details>
+            {% endif %}
 
             {# Agregar dirección inline #}
             <div class="card-footer bg-transparent p-4 border-top">

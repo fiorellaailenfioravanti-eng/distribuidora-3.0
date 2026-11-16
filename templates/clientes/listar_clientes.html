@@ -7,7 +7,6 @@
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
         <div>
             <h1 class="h3 fw-bold mb-0 text-main">Directorio de Clientes</h1>
-            <p class="text-muted small mb-0">Gestión de cuentas y perfiles de clientes.</p>
         </div>
         <a href="{% url 'apps.clientes:crear_cliente' %}" class="btn btn-primary rounded-3 btn-glow fw-bold px-4 w-100 text-center" style="max-width: 250px;">
             <i class="fa-solid fa-user-plus me-2"></i> Nuevo Cliente
@@ -52,14 +51,14 @@
     <table class="table table-hover align-middle mb-0">
         <thead class="table-light text-muted small text-uppercase">
             <tr>
-                <th class="ps-4 py-3 border-bottom-0">Cliente</th>
-                <th class="py-3 border-bottom-0 d-none d-md-table-cell">Email</th>
-                <th class="py-3 border-bottom-0 d-none d-md-table-cell">DNI</th>
-                <th class="py-3 border-bottom-0 d-none d-lg-table-cell">Tipo</th>
-                <th class="py-3 border-bottom-0 text-center d-none d-lg-table-cell">Teléfonos</th>
-                <th class="py-3 border-bottom-0 text-center d-none d-lg-table-cell">Domicilios</th>
-                <th class="py-3 border-bottom-0 text-center">Bidones</th>
-                <th class="py-3 border-bottom-0 d-none d-xl-table-cell">Alta</th>
+                <th class="ps-4 py-3 border-bottom-0 text-nowrap{% if columnas.cliente.dir %} columna-ordenada{% endif %}"{% if columnas.cliente.dir %} aria-sort="{% if columnas.cliente.dir == 'asc' %}ascending{% else %}descending{% endif %}"{% endif %}>Cliente<a href="{{ columnas.cliente.url }}" class="btn-ordenar" title="Ordenar por cliente" aria-label="Ordenar por cliente"><i class="fa-solid {% if columnas.cliente.dir == 'asc' %}fa-arrow-up-a-z{% elif columnas.cliente.dir == 'desc' %}fa-arrow-down-z-a{% else %}fa-sort{% endif %}"></i></a></th>
+                <th class="py-3 border-bottom-0 d-none d-md-table-cell text-nowrap{% if columnas.email.dir %} columna-ordenada{% endif %}"{% if columnas.email.dir %} aria-sort="{% if columnas.email.dir == 'asc' %}ascending{% else %}descending{% endif %}"{% endif %}>Email<a href="{{ columnas.email.url }}" class="btn-ordenar" title="Ordenar por email" aria-label="Ordenar por email"><i class="fa-solid {% if columnas.email.dir == 'asc' %}fa-arrow-up-a-z{% elif columnas.email.dir == 'desc' %}fa-arrow-down-z-a{% else %}fa-sort{% endif %}"></i></a></th>
+                <th class="py-3 border-bottom-0 d-none d-md-table-cell text-nowrap{% if columnas.dni.dir %} columna-ordenada{% endif %}"{% if columnas.dni.dir %} aria-sort="{% if columnas.dni.dir == 'asc' %}ascending{% else %}descending{% endif %}"{% endif %}>DNI<a href="{{ columnas.dni.url }}" class="btn-ordenar" title="Ordenar por dni" aria-label="Ordenar por dni"><i class="fa-solid {% if columnas.dni.dir == 'asc' %}fa-arrow-up-a-z{% elif columnas.dni.dir == 'desc' %}fa-arrow-down-z-a{% else %}fa-sort{% endif %}"></i></a></th>
+                <th class="py-3 border-bottom-0 d-none d-lg-table-cell text-nowrap{% if columnas.tipo.dir %} columna-ordenada{% endif %}"{% if columnas.tipo.dir %} aria-sort="{% if columnas.tipo.dir == 'asc' %}ascending{% else %}descending{% endif %}"{% endif %}>Tipo<a href="{{ columnas.tipo.url }}" class="btn-ordenar" title="Ordenar por tipo" aria-label="Ordenar por tipo"><i class="fa-solid {% if columnas.tipo.dir == 'asc' %}fa-arrow-up-a-z{% elif columnas.tipo.dir == 'desc' %}fa-arrow-down-z-a{% else %}fa-sort{% endif %}"></i></a></th>
+                <th class="py-3 border-bottom-0 text-center d-none d-lg-table-cell text-nowrap{% if columnas.telefonos.dir %} columna-ordenada{% endif %}"{% if columnas.telefonos.dir %} aria-sort="{% if columnas.telefonos.dir == 'asc' %}ascending{% else %}descending{% endif %}"{% endif %}>Teléfonos<a href="{{ columnas.telefonos.url }}" class="btn-ordenar" title="Ordenar por teléfonos" aria-label="Ordenar por teléfonos"><i class="fa-solid {% if columnas.telefonos.dir == 'asc' %}fa-arrow-up-a-z{% elif columnas.telefonos.dir == 'desc' %}fa-arrow-down-z-a{% else %}fa-sort{% endif %}"></i></a></th>
+                <th class="py-3 border-bottom-0 text-center d-none d-lg-table-cell text-nowrap{% if columnas.domicilios.dir %} columna-ordenada{% endif %}"{% if columnas.domicilios.dir %} aria-sort="{% if columnas.domicilios.dir == 'asc' %}ascending{% else %}descending{% endif %}"{% endif %}>Domicilios<a href="{{ columnas.domicilios.url }}" class="btn-ordenar" title="Ordenar por domicilios" aria-label="Ordenar por domicilios"><i class="fa-solid {% if columnas.domicilios.dir == 'asc' %}fa-arrow-up-a-z{% elif columnas.domicilios.dir == 'desc' %}fa-arrow-down-z-a{% else %}fa-sort{% endif %}"></i></a></th>
+                <th class="py-3 border-bottom-0 text-center text-nowrap{% if columnas.bidones.dir %} columna-ordenada{% endif %}"{% if columnas.bidones.dir %} aria-sort="{% if columnas.bidones.dir == 'asc' %}ascending{% else %}descending{% endif %}"{% endif %}>Bidones<a href="{{ columnas.bidones.url }}" class="btn-ordenar" title="Ordenar por bidones" aria-label="Ordenar por bidones"><i class="fa-solid {% if columnas.bidones.dir == 'asc' %}fa-arrow-up-a-z{% elif columnas.bidones.dir == 'desc' %}fa-arrow-down-z-a{% else %}fa-sort{% endif %}"></i></a></th>
+                <th class="py-3 border-bottom-0 d-none d-xl-table-cell text-nowrap{% if columnas.alta.dir %} columna-ordenada{% endif %}"{% if columnas.alta.dir %} aria-sort="{% if columnas.alta.dir == 'asc' %}ascending{% else %}descending{% endif %}"{% endif %}>Alta<a href="{{ columnas.alta.url }}" class="btn-ordenar" title="Ordenar por alta" aria-label="Ordenar por alta"><i class="fa-solid {% if columnas.alta.dir == 'asc' %}fa-arrow-up-a-z{% elif columnas.alta.dir == 'desc' %}fa-arrow-down-z-a{% else %}fa-sort{% endif %}"></i></a></th>
                 <th class="pe-4 py-3 border-bottom-0 text-center">Acciones</th>
             </tr>
         </thead>
@@ -135,7 +134,7 @@
         <ul class="pagination pagination-sm justify-content-end mb-0">
             {% if clientes.has_previous %}
             <li class="page-item">
-                <a class="page-link text-muted border-0 hover-lift" href="?page={{ clientes.previous_page_number }}&q={{ q }}&tipo={{ tipo }}">
+                <a class="page-link text-muted border-0 hover-lift" href="?page={{ clientes.previous_page_number }}&{{ filtros_qs }}">
                     Anterior
                 </a>
             </li>
@@ -145,13 +144,13 @@
                 {% if clientes.number == num %}
                     <li class="page-item active"><span class="page-link bg-primary border-0 rounded-3 text-white shadow-sm mx-1">{{ num }}</span></li>
                 {% elif num > clientes.number|add:'-3' and num < clientes.number|add:'3' %}
-                    <li class="page-item"><a class="page-link text-muted border-0 mx-1 hover-lift" href="?page={{ num }}&q={{ q }}&tipo={{ tipo }}">{{ num }}</a></li>
+                    <li class="page-item"><a class="page-link text-muted border-0 mx-1 hover-lift" href="?page={{ num }}&{{ filtros_qs }}">{{ num }}</a></li>
                 {% endif %}
             {% endfor %}
 
             {% if clientes.has_next %}
             <li class="page-item">
-                <a class="page-link text-muted border-0 hover-lift" href="?page={{ clientes.next_page_number }}&q={{ q }}&tipo={{ tipo }}">
+                <a class="page-link text-muted border-0 hover-lift" href="?page={{ clientes.next_page_number }}&{{ filtros_qs }}">
                     Siguiente
                 </a>
             </li>
@@ -173,5 +172,54 @@
 </div>
 {% endif %}
 </div>
+
+{# ── Clientes eliminados (baja lógica: no se borran) ── #}
+{% if eliminados %}
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-surface mt-4">
+    <button class="btn w-100 text-start d-flex justify-content-between align-items-center p-3 px-4 border-0"
+            type="button" data-bs-toggle="collapse" data-bs-target="#clientesEliminados" aria-expanded="false" aria-controls="clientesEliminados">
+        <span class="fw-bold text-main"><i class="fa-solid fa-box-archive me-2 text-muted"></i>Clientes eliminados
+            <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis ms-1">{{ eliminados|length }}</span>
+        </span>
+        <i class="fa-solid fa-chevron-down text-muted"></i>
+    </button>
+    <div class="collapse" id="clientesEliminados">
+        <p class="small text-muted px-4 mb-2">No aparecen en el directorio ni al armar pedidos, abonos o rutas, y no pueden ingresar a la tienda. Sus pedidos, cuenta e historial se conservan.</p>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" data-ordenable>
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4 py-3 border-bottom-0 text-nowrap" data-ordenar="texto">Cliente</th>
+                        <th class="py-3 border-bottom-0 text-nowrap d-none d-md-table-cell" data-ordenar="texto">DNI</th>
+                        <th class="pe-4 py-3 border-bottom-0 text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in eliminados %}
+                    <tr class="opacity-75">
+                        <td class="ps-4 fw-semibold text-main">{{ c.nombre_completo }}</td>
+                        <td class="d-none d-md-table-cell text-muted">{{ c.dni|default:"—" }}</td>
+                        <td class="pe-4 text-end text-nowrap">
+                            <a href="{% url 'apps.clientes:ver_cliente' c.pk %}" class="btn btn-sm btn-light text-primary" title="Ver ficha">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                            {% if 'registrar_clientes' in puede %}
+                            <form method="post" action="{% url 'apps.clientes:restaurar_cliente' c.pk %}" class="d-inline"
+                                  data-confirmar="¿Restaurar a {{ c.nombre_completo }}?">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success ms-1">
+                                    <i class="fa-solid fa-rotate-left me-1"></i>Restaurar
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 

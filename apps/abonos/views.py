@@ -123,6 +123,6 @@ def generar_cargos(request):
     if omitidos:
         messages.warning(
             request,
-            f'{len(omitidos)} abono(s) omitido(s) por falta de fiado (RF-05).'
+            f'{len(omitidos)} abono(s) omitido(s) por falta de fiado.'
         )
     return redirect('apps.abonos:listar_abonos')

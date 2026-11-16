@@ -73,7 +73,7 @@ def clientes_frecuentes_de_zona(zona):
     from apps.clientes.models import Cliente
     return (
         Cliente.objects
-        .filter(es_frecuente=True, direcciones__barrio__zona=zona)
+        .filter(es_frecuente=True, eliminado=False, direcciones__barrio__zona=zona)
         .select_related('usuario')
         .distinct()
         .order_by('apellido', 'nombre')
@@ -323,7 +323,7 @@ def generar_borradores_periodo(desde=None, dias=15, usuario=None):
     creadas = []
     for offset in range(dias):
         fecha = desde + timedelta(days=offset)
-        for zona in Zona.objects.order_by('nombre'):
+        for zona in Zona.objects.vigentes().order_by('nombre'):
             if not fecha_es_de_reparto(zona, fecha):
                 continue
             if HojaRuta.objects.filter(fecha=fecha, zona=zona).exists():

@@ -74,11 +74,30 @@ class AltaProductoTests(TestCase):
         categoria = Categoria.objects.create(nombre='Agua', descripcion='')
         pantalla = self.client.get(reverse('apps.productos:crear_producto'))
         self.assertContains(pantalla, 'name="activo"')
+        envase = Producto.objects.create(nombre='Envase 12 L', precio=1, stock=5, es_envase=True)
         self.client.post(reverse('apps.productos:crear_producto'), {
             'nombre': 'Bidón 12 L', 'descripcion': 'Agua', 'categoria': categoria.pk,
-            'precio': '2300', 'stock': 10, 'activo': 'on', 'es_botellon': 'on'})
+            'precio': '2300', 'stock': 10, 'activo': 'on', 'es_botellon': 'on', 'envase': envase.pk})
         producto = Producto.objects.get(nombre='Bidón 12 L')
         self.assertTrue(producto.activo and producto.es_botellon)
+        # Un solo interruptor: el bidón retornable también se recarga en la planta.
+        self.assertTrue(producto.es_recargable)
+
+    def test_bidon_retornable_exige_envase(self):
+        from apps.productos.forms import ProductoForm
+        categoria = Categoria.objects.create(nombre='Agua', descripcion='')
+        form = ProductoForm(data={'nombre': 'Bidón 20 L', 'categoria': categoria.pk, 'precio': '3000',
+                                  'stock': 0, 'activo': 'on', 'es_botellon': 'on'})
+        self.assertFalse(form.is_valid())
+        self.assertIn('envase', form.errors)
+
+    def test_sin_bidon_retornable_no_se_recarga(self):
+        from apps.productos.forms import ProductoForm
+        categoria = Categoria.objects.create(nombre='Vasos', descripcion='')
+        form = ProductoForm(data={'nombre': 'Vasos x 100', 'categoria': categoria.pk, 'precio': '900',
+                                  'stock': 3, 'activo': 'on'})
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertFalse(form.save().es_recargable)
 
 
 class CategoriasPanelTests(TestCase):
@@ -100,7 +119,14 @@ class CategoriasPanelTests(TestCase):
         soda.refresh_from_db()
         self.assertEqual((soda.nombre, soda.descripcion), ('Sodas', 'Sifones'))
         self.client.post(reverse('apps.productos:eliminar_categoria', args=[soda.pk]))
-        self.assertFalse(Categoria.objects.filter(pk=soda.pk).exists())
+        soda.refresh_from_db()
+        self.assertTrue(soda.eliminada)  # baja lógica: no se borra
+        lista = self.client.get(reverse('apps.productos:listar_categorias'))
+        self.assertNotIn(soda, list(lista.context['categorias']))
+        self.assertIn(soda, list(lista.context['eliminadas']))
+        self.client.post(reverse('apps.productos:restaurar_categoria', args=[soda.pk]))
+        soda.refresh_from_db()
+        self.assertFalse(soda.eliminada)
 
     def test_nombre_repetido_sin_importar_mayusculas(self):
         self.client.force_login(self.vendedor)
@@ -108,12 +134,16 @@ class CategoriasPanelTests(TestCase):
         self.assertEqual(respuesta.status_code, 200)
         self.assertEqual(Categoria.objects.count(), 1)
 
-    def test_no_borra_categoria_con_productos(self):
+    def test_eliminar_categoria_con_productos_no_los_toca(self):
+        from apps.productos.forms import ProductoForm
         producto = Producto.objects.create(nombre='Bidón', descripcion='', precio=Decimal('10'), stock=1)
         producto.categoria.add(self.agua)
         self.client.force_login(self.vendedor)
         self.client.post(reverse('apps.productos:eliminar_categoria', args=[self.agua.pk]))
-        self.assertTrue(Categoria.objects.filter(pk=self.agua.pk).exists())
+        self.agua.refresh_from_db()
+        self.assertTrue(self.agua.eliminada)
+        self.assertIn(self.agua, producto.categoria.all())
+        self.assertNotIn(self.agua, ProductoForm().fields['categoria'].queryset)
 
     def test_cliente_no_accede(self):
         self.client.force_login(self.cliente)
@@ -128,3 +158,15 @@ class ProductoFormValidacionesTests(TestCase):
         self.assertTrue(ProductoForm(base).is_valid())
         self.assertIn('precio', ProductoForm({**base, 'precio': '0'}).errors)
         self.assertIn('stock', ProductoForm({**base, 'stock': '-1'}).errors)
+
+
+class CatalogoAgotadosAlFinalTests(TestCase):
+    """En la tienda, los productos agotados se listan después de los que tienen stock."""
+
+    def test_agotados_al_final(self):
+        Producto.objects.create(nombre='A agotado', descripcion='', precio=Decimal('10'), stock=0)
+        Producto.objects.create(nombre='B con stock', descripcion='', precio=Decimal('10'), stock=5)
+        Producto.objects.create(nombre='C con stock', descripcion='', precio=Decimal('10'), stock=1)
+        respuesta = self.client.get(reverse('apps.productos:listar_productos'))
+        nombres = [p.nombre for p in respuesta.context['productos']]
+        self.assertEqual(nombres, ['B con stock', 'C con stock', 'A agotado'])

@@ -10,6 +10,16 @@ from .forms import CategoriaForm, ProductoForm
 from .models import Categoria, Producto
 
 
+def agotados_al_final(productos):
+    """Anota el stock disponible y ordena con stock primero y los agotados al final
+    (dentro de cada grupo, por nombre)."""
+    from django.db.models import Case, IntegerField, Value, When
+    from apps.pedidos.services import con_stock_disponible
+    return con_stock_disponible(productos).annotate(
+        agotado=Case(When(disponible__gt=0, then=Value(0)), default=Value(1), output_field=IntegerField())
+    ).order_by('agotado', 'nombre')
+
+
 def _filtrar_por_categoria(request, productos):
     categoria = request.GET.get('categoria', '').strip()
     if categoria:
@@ -22,10 +32,11 @@ def _filtrar_por_categoria(request, productos):
 # ─────────────────────────────────────────────────────────────
 def listar_productos(request):
     productos, categoria_actual = _filtrar_por_categoria(
-        request, Producto.objects.filter(activo=True).order_by('nombre'))
+        request, Producto.objects.filter(activo=True))
+    productos = agotados_al_final(productos)
     return render(request, 'productos/listar_productos.html', {
         'productos': Paginator(productos, 6).get_page(request.GET.get('page')),
-        'categorias': Categoria.objects.order_by('nombre'),
+        'categorias': Categoria.objects.vigentes().order_by('nombre'),
         'categoria_actual': categoria_actual,
     })
 
@@ -35,10 +46,12 @@ def listar_productos(request):
 def listar_productos_admin(request):
     productos, categoria_actual = _filtrar_por_categoria(
         request, Producto.objects.filter(activo=True).prefetch_related('categoria').order_by('nombre'))
+    from apps.pedidos.services import con_stock_disponible
+    productos = con_stock_disponible(productos)
     return render(request, 'productos/listar_productos_admin.html', {
         'productos': Paginator(productos, 20).get_page(request.GET.get('page')),
         'eliminados': Producto.objects.filter(activo=False).prefetch_related('categoria').order_by('nombre'),
-        'categorias': Categoria.objects.order_by('nombre'),
+        'categorias': Categoria.objects.vigentes().order_by('nombre'),
         'categoria_actual': categoria_actual,
     })
 
@@ -46,7 +59,8 @@ def listar_productos_admin(request):
 def ver_producto(request, pk):
     """Detalle de un producto; los inactivos sólo los ve el personal."""
     filtros = {} if puede(request.user, 'ver_inventario') else {'activo': True}
-    producto = get_object_or_404(Producto, id_producto=pk, **filtros)
+    from apps.pedidos.services import con_stock_disponible
+    producto = get_object_or_404(con_stock_disponible(Producto.objects.all()), id_producto=pk, **filtros)
     return render(request, 'productos/ver_producto.html', {'producto': producto})
 
 
@@ -112,8 +126,12 @@ def listar_categorias(request):
         categoria = form.save()
         messages.success(request, f'Categoría "{categoria.nombre}" creada.')
         return redirect('apps.productos:listar_categorias')
-    categorias = Categoria.objects.annotate(cantidad_productos=Count('producto')).order_by('nombre')
-    return render(request, 'productos/listar_categorias.html', {'categorias': categorias, 'form': form})
+    con_cantidad = Categoria.objects.annotate(cantidad_productos=Count('producto')).order_by('nombre')
+    return render(request, 'productos/listar_categorias.html', {
+        'categorias': con_cantidad.filter(eliminada=False),
+        'eliminadas': con_cantidad.filter(eliminada=True),
+        'form': form,
+    })
 
 
 @login_required
@@ -142,16 +160,23 @@ def editar_categoria(request, pk):
 @login_required
 @requiere('gestionar_categorias')
 def eliminar_categoria(request, pk):
-    """Sólo se borran categorías vacías, para no dejar productos sin clasificar."""
+    """Baja lógica: deja de verse en la tienda y para elegir; sus productos no cambian.
+    Se restaura desde «Categorías eliminadas»."""
     categoria = get_object_or_404(Categoria, pk=pk)
     if request.method == 'POST':
-        en_uso = categoria.producto_set.count()
-        if en_uso:
-            messages.error(
-                request,
-                f'"{categoria.nombre}" tiene {en_uso} producto(s). Pasalos a otra categoría antes de borrarla.'
-            )
-        else:
-            categoria.delete()
-            messages.success(request, f'Categoría "{categoria.nombre}" eliminada.')
+        categoria.eliminada = True
+        categoria.save(update_fields=['eliminada'])
+        messages.success(request, f'Categoría "{categoria.nombre}" eliminada. '
+                                  'La podés restaurar desde «Categorías eliminadas».')
+    return redirect('apps.productos:listar_categorias')
+
+
+@login_required
+@requiere('gestionar_categorias')
+def restaurar_categoria(request, pk):
+    categoria = get_object_or_404(Categoria, pk=pk)
+    if request.method == 'POST':
+        categoria.eliminada = False
+        categoria.save(update_fields=['eliminada'])
+        messages.success(request, f'Categoría "{categoria.nombre}" restaurada.')
     return redirect('apps.productos:listar_categorias')

@@ -100,7 +100,7 @@
                         <input type="number" min="0" name="envases_vendidos" class="form-control form-control-sm mb-2" value="0" style="max-width: 8rem;">
                     </div>
                 </details>
-                <input type="text" name="nota" class="form-control mb-2" placeholder="Nota (opcional)">
+                <input maxlength="200" type="text" name="nota" class="form-control mb-2" placeholder="Nota (opcional)">
                 <button type="submit" class="btn btn-success w-100 rounded-pill fw-bold py-2">Confirmar entrega</button>
             </div>
 
@@ -113,7 +113,7 @@
                     <label><input type="radio" name="accion" value="reprogramar" checked> Volver otro día</label>
                     <label><input type="radio" name="accion" value="cancelar"> Cancelar el pedido</label>
                 </div>
-                <input type="text" name="nota" class="form-control mb-2" placeholder="Detalle (opcional)" disabled>
+                <input maxlength="200" type="text" name="nota" class="form-control mb-2" placeholder="Detalle (opcional)" disabled>
                 <button type="submit" class="btn btn-danger w-100 rounded-pill fw-bold py-2">Registrar</button>
             </div>
         </form>

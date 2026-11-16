@@ -11,15 +11,23 @@ from django.utils import timezone
 #
 # Ver migración logistica.0006_eliminar_empleados_duplicados.
 from apps.empleados.models import Empleado  # noqa: F401  (re-exportado)
+from distribuidora.bajas import SinEliminadosManager, SinHojaEliminadaManager
+from distribuidora.limites import LARGO_NOMBRE, LARGO_TEXTO, limite_largo
 
 
 # ────────────────────────────────────────────────
 # 1. ZONA
 # ────────────────────────────────────────────────
+class ZonaQuerySet(models.QuerySet):
+    def vigentes(self):
+        """Sin las zonas eliminadas (baja lógica)."""
+        return self.filter(eliminada=False)
+
+
 class Zona(models.Model):
     id_zona     = models.AutoField(primary_key=True)
-    nombre      = models.CharField(max_length=100, unique=True)
-    descripcion = models.TextField(blank=True, verbose_name='Descripción')
+    nombre      = models.CharField(max_length=LARGO_NOMBRE, unique=True)
+    descripcion = models.TextField(max_length=LARGO_TEXTO, blank=True, verbose_name='Descripción')
     dias_reparto = models.CharField(
         max_length=20,
         blank=True,
@@ -27,11 +35,18 @@ class Zona(models.Model):
         verbose_name='Días de reparto',
         help_text='Días de la semana en que se reparte la zona. Ej: 1,4 (lunes y jueves).'
     )
+    eliminada   = models.BooleanField(
+        default=False, verbose_name='Eliminada',
+        help_text='Baja lógica: no se ofrece al planificar ni al armar hojas de ruta. '
+                  'Sus barrios y su historial se conservan.')
+
+    objects = ZonaQuerySet.as_manager()
 
     class Meta:
         ordering = ['nombre']
         verbose_name = 'Zona'
         verbose_name_plural = 'Zonas'
+        constraints = limite_largo(nombre=LARGO_NOMBRE, descripcion=LARGO_TEXTO)
 
     def __str__(self):
         return self.nombre
@@ -92,7 +107,7 @@ class CalendarioExcepcion(models.Model):
 # 1.5. BARRIO
 # ────────────────────────────────────────────────
 class Barrio(models.Model):
-    nombre = models.CharField(max_length=100)
+    nombre = models.CharField(max_length=LARGO_NOMBRE)
     ciudad = models.CharField(max_length=100, default='Resistencia')
     zona   = models.ForeignKey(
         Zona, 
@@ -106,6 +121,7 @@ class Barrio(models.Model):
         ordering = ['nombre']
         verbose_name = 'Barrio'
         verbose_name_plural = 'Barrios'
+        constraints = limite_largo(nombre=LARGO_NOMBRE)
 
     def __str__(self):
         return f"{self.nombre} ({self.ciudad})"
@@ -123,6 +139,12 @@ class Camion(models.Model):
         verbose_name='Capacidad en botellones',
         help_text='Cantidad de botellones que puede cargar. No limita los productos de menor tamaño.'
     )
+
+    eliminado = models.BooleanField(default=False, verbose_name='Eliminado',
+                                    help_text='Baja lógica: se oculta pero no se borra; se puede restaurar.')
+
+    objects = SinEliminadosManager()
+    todos = models.Manager()
 
     class Meta:
         verbose_name = 'Camión'
@@ -147,7 +169,7 @@ DIA_SEMANA_CHOICES = [
 
 class RutaReparto(models.Model):
     id_ruta = models.AutoField(primary_key=True)
-    nombre = models.CharField(max_length=100, help_text='Ej: Ruta Norte - Lunes')
+    nombre = models.CharField(max_length=LARGO_NOMBRE, help_text='Ej: Ruta Norte - Lunes')
     zona = models.ForeignKey(Zona, on_delete=models.PROTECT, related_name='rutas')
     dia_semana = models.IntegerField(choices=DIA_SEMANA_CHOICES)
     empleado_default = models.ForeignKey(
@@ -169,6 +191,7 @@ class RutaReparto(models.Model):
         ordering = ['dia_semana', 'nombre']
         verbose_name = 'Ruta de Reparto'
         verbose_name_plural = 'Rutas de Reparto'
+        constraints = limite_largo(nombre=LARGO_NOMBRE)
 
     def __str__(self):
         return f"{self.nombre} ({self.get_dia_semana_display()})"
@@ -221,7 +244,7 @@ class HojaRuta(models.Model):
         choices=ESTADOS_RUTA,
         default='Borrador'
     )
-    observaciones = models.TextField(blank=True)
+    observaciones = models.TextField(max_length=LARGO_TEXTO, blank=True)
     generada_automaticamente = models.BooleanField(default=False)
     confirmada_por = models.ForeignKey(
         'autenticacion.Usuario',
@@ -246,10 +269,17 @@ class HojaRuta(models.Model):
         related_name='rutas_creadas'
     )
 
+    eliminado = models.BooleanField(default=False, verbose_name='Eliminado',
+                                    help_text='Baja lógica: se oculta pero no se borra; se puede restaurar.')
+
+    objects = SinEliminadosManager()
+    todos = models.Manager()
+
     class Meta:
         ordering = ['-fecha']
         verbose_name = 'Hoja de Ruta'
         verbose_name_plural = 'Hojas de Ruta'
+        constraints = limite_largo(observaciones=LARGO_TEXTO)
 
     def __str__(self):
         zona_str = self.zona.nombre if self.zona_id else (str(self.ruta_reparto) if self.ruta_reparto_id else 'sin zona')
@@ -375,13 +405,17 @@ class DetalleHojaRuta(models.Model):
         choices=ESTADOS_ENTREGA,
         default='Pendiente'
     )
-    nota_entrega  = models.TextField(blank=True)
+    nota_entrega  = models.TextField(max_length=LARGO_TEXTO, blank=True)
     hora_registro = models.DateTimeField(null=True, blank=True)
+
+    objects = SinHojaEliminadaManager()
+    todos = models.Manager()
 
     class Meta:
         ordering = ['orden']
         verbose_name = 'Detalle de Ruta'
         verbose_name_plural = 'Detalles de Ruta'
+        constraints = limite_largo(nota_entrega=LARGO_TEXTO)
 
     def __str__(self):
         return f"Parada {self.orden} — {self.get_estado_display()} ({self.cliente_nombre or self.pedido_ref})"
@@ -421,6 +455,9 @@ class CargaHojaRuta(models.Model):
     cantidad_cargada   = models.PositiveIntegerField(default=0)
     cantidad_entregada = models.PositiveIntegerField(default=0)
     cantidad_retornada = models.PositiveIntegerField(default=0)
+
+    objects = SinHojaEliminadaManager()
+    todos = models.Manager()
 
     class Meta:
         verbose_name = 'Carga de Hoja de Ruta'

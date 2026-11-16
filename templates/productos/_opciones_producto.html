@@ -1,0 +1,41 @@
+{# Opciones del producto (crear/editar): interruptores con explicación en lenguaje llano. #}
+<div class="col-md-12">
+    <h2 class="h6 fw-bold text-muted small text-uppercase mb-3">¿Cómo se usa este producto?</h2>
+    <div class="list-group rounded-3">
+        <label class="list-group-item d-flex gap-3 py-3" for="{{ form.activo.id_for_label }}">
+            <div class="form-check form-switch m-0">{{ form.activo }}</div>
+            <span>
+                <span class="fw-semibold d-block">Visible en la tienda</span>
+                <span class="small text-muted">Los clientes lo ven y lo pueden comprar en la tienda online. Desactivalo para ocultarlo sin borrarlo.</span>
+            </span>
+        </label>
+        <label class="list-group-item d-flex gap-3 py-3" for="{{ form.es_botellon.id_for_label }}">
+            <div class="form-check form-switch m-0">{{ form.es_botellon }}</div>
+            <span>
+                <span class="fw-semibold d-block">Bidón retornable</span>
+                <span class="small text-muted">Se llena en la planta y se entrega en el reparto. Al entregarlo se retira su envase vacío, y cada recarga suma un bidón lleno y descuenta un envase vacío.</span>
+            </span>
+        </label>
+    </div>
+</div>
+
+<div class="col-md-6" id="bloque-envase">
+    <label for="{{ form.envase.id_for_label }}" class="form-label fw-bold text-muted small text-uppercase">Envase vacío asociado</label>
+    {{ form.envase }}
+    {% for error in form.envase.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+    <div class="form-text">El bidón vacío que se retira al entregar este producto y que se usa para recargarlo.</div>
+</div>
+
+<script>
+    // El envase sólo tiene sentido si el producto es un bidón retornable.
+    document.addEventListener('DOMContentLoaded', function () {
+        const botellon = document.getElementById('{{ form.es_botellon.id_for_label }}');
+        const bloque = document.getElementById('bloque-envase');
+        const tieneError = {{ form.envase.errors|yesno:"true,false" }};
+        function actualizar() {
+            bloque.classList.toggle('d-none', !(botellon.checked || tieneError));
+        }
+        botellon.addEventListener('change', actualizar);
+        actualizar();
+    });
+</script>

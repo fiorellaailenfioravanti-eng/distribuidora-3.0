@@ -1,19 +1,34 @@
 from django.db import models
+from distribuidora.limites import LARGO_NOMBRE, LARGO_TEXTO, limite_largo
 
 # Create your models here.
 
+class VigentesQuerySet(models.QuerySet):
+    def vigentes(self):
+        """Sin las eliminadas (baja lógica)."""
+        return self.filter(eliminada=False)
+
+
 class Categoria(models.Model):
     id_categoria = models.AutoField(primary_key=True)
-    nombre = models.CharField(max_length=150)
-    descripcion = models.TextField()
+    nombre = models.CharField(max_length=LARGO_NOMBRE)
+    descripcion = models.TextField(max_length=LARGO_TEXTO)
+    eliminada = models.BooleanField(
+        default=False, verbose_name='Eliminada',
+        help_text='Baja lógica: no aparece en la tienda ni para elegir; sus productos no cambian.')
+
+    objects = VigentesQuerySet.as_manager()
+
+    class Meta:
+        constraints = limite_largo(nombre=LARGO_NOMBRE, descripcion=LARGO_TEXTO)
 
     def __str__(self):
         return self.nombre
 
 class Producto(models.Model):
     id_producto = models.AutoField(primary_key=True)
-    nombre = models.CharField(max_length=150)
-    descripcion = models.TextField()
+    nombre = models.CharField(max_length=LARGO_NOMBRE)
+    descripcion = models.TextField(max_length=LARGO_TEXTO)
     categoria= models.ManyToManyField(Categoria)
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.IntegerField()
@@ -56,6 +71,9 @@ class Producto(models.Model):
         verbose_name='Envase asociado',
         help_text='Envase que debe retirarse al entregar este producto.'
     )
+
+    class Meta:
+        constraints = limite_largo(nombre=LARGO_NOMBRE, descripcion=LARGO_TEXTO)
 
     def __str__(self):
         return self.nombre

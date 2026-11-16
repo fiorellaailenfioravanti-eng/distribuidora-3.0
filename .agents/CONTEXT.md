@@ -1,4 +1,4 @@
-# 🌊 Aquadelluvia — Contexto Maestro del Proyecto
+# 🌊 Aguadelluvia — Contexto Maestro del Proyecto
 > **Distribuidora 3.0** · Sistema de Gestión Operativa, Logística y E-Commerce
 >
 > **⚠️ LEER PRIMERO:** Este archivo provee todo el contexto necesario para trabajar en este proyecto.
@@ -11,7 +11,7 @@
 | Campo | Detalle |
 |---|---|
 | **Proyecto** | Sistema de Gestión Integral y Plataforma E-commerce |
-| **Empresa cliente** | Distribuidora "Aquadelluvia" (Presidencia Roque Sáenz Peña, Chaco, Argentina) |
+| **Empresa cliente** | Distribuidora "Aguadelluvia" (Presidencia Roque Sáenz Peña, Chaco, Argentina) |
 | **Institución** | Universidad Nacional del Chaco Austral (UNCAUS) – Ingeniería en Sistemas de Información |
 | **Contexto** | Trabajo Final de Grado / Tesis (Cátedra de Gestión de Datos) |
 | **Framework** | Django 5.0 (Python) |
@@ -25,7 +25,7 @@
 | **Lucas Masson** | 37492 | Módulo logístico: hojas de ruta, agrupación geográfica, app para repartidores |
 
 ### 🏪 Negocio del cliente
-Aquadelluvia comercializa y distribuye **domiciliariamente**:
+Aguadelluvia comercializa y distribuye **domiciliariamente**:
 - Agua mineral enriquecida (agua de mar con minerales insertados)
 - Alquiler de dispensers frío/calor
 - Accesorios y merchandising (mates, termos, bombillas, soportes)
@@ -563,6 +563,35 @@ class MovimientoCuenta(models.Model):
 - Pantallas: `/planta/recarga/` (función `registrar_recargas`, rol «Recargador») y `/planta/stock/`
   (función `ver_stock_bidones`: llenos por marca, vacíos por tamaño, envases en clientes, últimas recargas).
 - Productos: «Eliminar» ya no borra: desactiva y el inventario muestra «Productos eliminados» con «Restaurar».
+- Recargables: todo bidón de reparto (`es_botellon`) se recarga en planta; en el formulario es un único
+  interruptor «Bidón retornable» que fija `es_botellon` y `es_recargable` y exige envase.
+
+### Mejoras del 14/11/2026 ✅
+- **Límites de largo en la base** (`distribuidora/limites.py`): `max_length` + restricción CHECK por campo
+  (SQLite no respeta varchar). Nombres 64, textos 500, datos del cliente (teléfono 20, relación 40, calle 100,
+  altura 10, piso 30, ciudad 64, coordenadas 40, email 120, DNI 15). Las migraciones recortan antes de crear el CHECK.
+- **Baja lógica genérica** (`distribuidora/bajas.py`): `Camion`, `HojaRuta` (borradores), `RolEmpleado`,
+  `TelefonoContacto` y `DireccionEntrega` tienen `eliminado`; su `objects` oculta los eliminados en todas las
+  consultas y accesos relacionados, y `todos` los incluye. Paradas y cargas de una hoja eliminada también se ocultan.
+- RF-01/RF-04: registro y compra con **un** teléfono como mínimo.
+- **RF-12 stock reservado**: `pedidos.services.con_stock_disponible(qs)` anota `reservado` (pedidos Pendientes/
+  Confirmados) y `disponible` (= stock − reservado). La tienda muestra y ordena por `disponible`; el depósito
+  (`Producto.stock`) sigue bajando al cargar el camión (decisión F-D3).
+- **Todas las eliminaciones son lógicas** con lista de eliminados y Restaurar: productos (`activo`), clientes,
+  empleados, categorías (`Categoria.eliminada`, `Categoria.objects.vigentes()`) y zonas (`Zona.eliminada`,
+  `Zona.objects.vigentes()`). Catálogo y buscador ordenan los agotados al final (`productos.views.agotados_al_final`).
+- **Baja lógica** de `Cliente` y `Empleado` (`eliminado`, `dar_de_baja()` / `restaurar()`): se ocultan, bloquean
+  la cuenta (salvo superusuario / empleado) y aparecen en «… eliminados» con Restaurar. Foto de perfil en `Empleado.foto`.
+- **Registro web** (`RegistroClienteWebForm` + `DireccionRegistroForm`): nombre, apellido, domicilio principal y
+  teléfonos dinámicos (uno obligatorio + los que se agreguen; `clientes.services.leer_telefonos`). También en el alta
+  por el vendedor. RF-01 pasa de «dos celulares» a «al menos uno».
+- **App `configuracion`** (`/configuracion/`, sólo superusuario): `ConfiguracionCorreo` define la cuenta SMTP que envía
+  «Olvidé mi contraseña» (si está activa; si no, el `.env`), con correo de prueba.
+- **Hoja de ruta**: `HojaRutaForm` usa `zona` (obligatoria) en lugar de `ruta_reparto`, que no se mostraba.
+  Las hojas en Borrador se eliminan (`eliminar_ruta`, cancela los pedidos no web de sus paradas).
+- **UI**: tablas ordenables (`static/js/tabla_ordenable.js`; clientes ordena en el servidor), contador de pedidos
+  pendientes (`pedidos.context_processors`), aviso de cambios sin guardar (`static/js/cambios_sin_guardar.js`),
+  botones unificados (`paleta.css`), sin leyendas bajo los títulos. La marca se escribe **Aguadelluvia**.
 
 ### Frontend y Templates ✅
 

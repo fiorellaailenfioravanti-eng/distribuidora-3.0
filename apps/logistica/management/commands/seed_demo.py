@@ -1,5 +1,5 @@
 """
-Puebla la base con datos de demostración realistas de Aquadelluvia (Resistencia, Chaco).
+Puebla la base con datos de demostración realistas de Aguadelluvia (Resistencia, Chaco).
 
     python manage.py seed_demo --settings=distribuidora.settings.local
 
@@ -21,7 +21,7 @@ crearse, y el historial sólo se genera si todavía no existe (marca: el pedido
 con la nota «[demo]»). Las fechas se calculan desde el día en que se corre.
 
 Usuarios de prueba (sólo desarrollo local), todos con la contraseña
-`Demo-Aquadelluvia-2026`:
+`Demo-Aguadelluvia-2026`:
   admin.demo (superusuario) · vendedor.demo · repartidor.norte · repartidor.sur
   · recargador.demo (planta de recarga)
   · cliente: marta.gimenez, jorge.benitez, lucia.romero
@@ -57,7 +57,7 @@ from apps.productos.models import Categoria, Producto
 from apps.promociones.models import CompraPromocion, Promocion
 from apps.promociones.services import consumir_saldo, vencer_promociones, vender_promocion
 
-CLAVE_DEMO = 'Demo-Aquadelluvia-2026'
+CLAVE_DEMO = 'Demo-Aguadelluvia-2026'
 MARCA_HISTORIAL = '[demo]'
 
 CATEGORIAS = {
@@ -213,9 +213,8 @@ class Command(BaseCommand):
             Producto.objects.filter(pk=self.productos[nombre].pk, envase__isnull=True).update(envase=envase)
         for nombre in ('Bidón 10 L primera marca', 'Bidón 10 L segunda marca'):
             Producto.objects.filter(pk=self.productos[nombre].pk, envase__isnull=True).update(envase=envase_10)
-        # Los que se llenan en la planta (pantalla «Recarga de bidones»).
-        Producto.objects.filter(nombre__in=['Bidón 20 L primera marca', 'Bidón 20 L segunda marca',
-                                            'Bidón 10 L primera marca', 'Bidón 10 L segunda marca']).update(es_recargable=True)
+        # Todo bidón de reparto se llena en la planta (pantalla «Recarga de bidones»).
+        Producto.objects.filter(es_botellon=True, envase__isnull=False).update(es_recargable=True)
 
     # ── Zonas, barrios, camiones, rutas y calendario ──────────
     def _zonas_y_flota(self):
@@ -264,7 +263,7 @@ class Command(BaseCommand):
         return usuario
 
     def _personal(self):
-        self.admin = self._usuario_interno('admin.demo', 'Admin', 'Aquadelluvia', is_staff=True, is_superuser=True)
+        self.admin = self._usuario_interno('admin.demo', 'Admin', 'Aguadelluvia', is_staff=True, is_superuser=True)
 
         roles = {
             'Vendedor': RolEmpleado.objects.get_or_create(

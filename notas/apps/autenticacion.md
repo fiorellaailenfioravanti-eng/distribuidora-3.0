@@ -21,3 +21,4 @@ Usuario personalizado (AbstractUser), login y registro.
 
 ## Notas
 - Validaciones y correcciones: [[QA 2026-11-12]], [[Validaciones por campo]]
+- 2026-11-14 ([[2026-11-14]]): registro rediseñado con nombre, apellido, domicilio y teléfonos dinámicos; la recuperación de contraseña envía con la cuenta de [[configuracion]].

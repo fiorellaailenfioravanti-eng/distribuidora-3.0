@@ -44,12 +44,12 @@ class AltaClienteConCuentaForm(_ValidarDatosPersonalesMixin, RegistroUsuarioForm
     Formulario para alta de cliente con cuenta web, integrando datos
     del Usuario (credenciales) y del Cliente (personales).
     """
-    first_name = forms.CharField(label='Nombre', max_length=150, required=True, widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Nombre'}))
-    last_name  = forms.CharField(label='Apellido', max_length=150, required=True, widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Apellido'}))
+    first_name = forms.CharField(label='Nombre', max_length=64, required=True, widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Nombre'}))
+    last_name  = forms.CharField(label='Apellido', max_length=64, required=True, widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Apellido'}))
     dni        = forms.CharField(label='DNI', max_length=15, required=False, widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Ej: 30123456'}))
     fecha_nacimiento = forms.DateField(label='Fecha de nacimiento', required=False, widget=forms.DateInput(attrs={'type': 'date', 'class': _INPUT}))
     tipo_cliente = forms.ChoiceField(label='Tipo de cliente', choices=[('Normal', 'Normal'), ('Premium', 'VIP / Premium')], widget=forms.Select(attrs={'class': _SELECT}))
-    notas_internas = forms.CharField(label='Notas internas', required=False, widget=forms.Textarea(attrs={'class': _INPUT, 'rows': 3, 'placeholder': 'Notas internas...'}))
+    notas_internas = forms.CharField(label='Notas internas', required=False, max_length=500, widget=forms.Textarea(attrs={'class': _INPUT, 'rows': 3, 'placeholder': 'Notas internas...'}))
     # Los teléfonos se cargan con la lista dinámica de la pantalla del vendedor.
     relacion1 = None
     relacion2 = None
@@ -223,10 +223,21 @@ class DireccionEntregaForm(forms.ModelForm):
         return validar_coordenadas(self.cleaned_data.get('coordenadas'))
 
 
+class DireccionRegistroForm(DireccionEntregaForm):
+    """Domicilio de entrega que el cliente carga al crear su cuenta (queda como principal)."""
+    class Meta(DireccionEntregaForm.Meta):
+        fields = ['calle', 'altura', 'piso_depto', 'barrio', 'ciudad']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['barrio'].empty_label = '— Elegí tu barrio —'
+
+
 class BuscarClienteForm(forms.Form):
     """Buscador del panel de clientes."""
     q = forms.CharField(
         required=False,
+        max_length=100,
         widget=forms.TextInput(attrs={
             'class': _INPUT,
             'placeholder': 'Buscar por nombre, usuario, email o DNI...',

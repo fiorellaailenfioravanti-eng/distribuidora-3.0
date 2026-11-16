@@ -1,4 +1,4 @@
-# 🧭 Plan de Procedimiento — Distribuidora 3.0 / Aquadelluvia
+# 🧭 Plan de Procedimiento — Distribuidora 3.0 / Aguadelluvia
 
 > **Propósito:** Documento de trabajo que reconcilia el **código real**, el **contexto del workspace** (`.agents/CONTEXT.md`) y el **Informe de Avances de Tesis (Julio 2026) — MASSON, Lucas (L.U. 37492)**, y fija el procedimiento para cerrar los módulos restantes sin romper lo ya implementado.
 >
@@ -101,7 +101,7 @@ Estas no son errores de código: son inconsistencias que **un jurado va a detect
 | C-2 | pág. 2 vs Conclusión | Cronograma: pág. 2 dice *Mes 8 = transacciones atómicas, Mes 9 = cuentas corrientes, Mes 10 = logística, Mes 11 = alertas, Mes 12 = QA*. La Conclusión dice *Mes 8 = semaforización de deudas, Mes 9 = flujo de caja*. | Adoptar el cronograma de `CONTEXT.md` §10 como **cronograma canónico** (§3 de este documento). |
 | C-3 | pág. 2 | "Mes 6 = Módulo de Entregas", "Mes 7 = Segmentación de Clientes" | El código real muestra: Mes 6 = UX/buscador/carrito, Mes 7 = clientes, Mes 8 = pedidos, Mes 9–10 = logística + empleados. Reetiquetar. |
 | C-4 | RF-05 (pág. 3) vs pág. 2 vs Conclusión | RF-05 dice **2** categorías ("Normales" y "Premium"). La pág. 2 y la Conclusión dicen **3** ("Normal, VIP, Premium"). | El código resolvió esto: `TIPO_CLIENTE_CHOICES = [('Normal',…), ('Premium','VIP / Premium')]` (`apps/clientes/models.py:7-10`). **Documentar que "VIP" se absorbió dentro de "Premium"** como etiqueta, no como tercer tipo. Unificar el informe a 2 tipos. |
-| C-5 | pág. 1, 12 | Empresa = "**Agua de lluvia**" | `CONTEXT.md` = "**Aquadelluvia**". Unificar en **Aquadelluvia** (usar el nombre real en el informe, o aclarar "Agua de Lluvia" como nombre comercial original del logo). |
+| C-5 | pág. 1, 12 | Empresa = "**Agua de lluvia**" | `CONTEXT.md` = "**Aguadelluvia**". Unificar en **Aguadelluvia** (usar el nombre real en el informe, o aclarar "Agua de Lluvia" como nombre comercial original del logo). |
 | C-6 | RF-03 vs RNF-02 | RF-03 = "Multidirección". `CONTEXT.md` etiqueta la nota de seguridad como "RF-03" (`apps/clientes/models.py:170,203`). | El ocultamiento de la nota de seguridad es **RNF-02**, no RF-03. **Corregir `help_text` y comentarios del código** (ver T-2.4). |
 | C-7 | HU-1, criterio 3 (pág. 5) | "inicializa una nueva instancia de **Persona** y **Cliente**" | No existe el modelo `Persona`. El diseño real es `autenticacion.Usuario` + `clientes.Cliente` (OneToOne, nullable). Corregir el HU al esquema real — es **mejor** diseño (evita duplicar identidad). |
 | C-8 | HU-2, criterio 3 (pág. 6) | "`Direccion_entrega` vinculándola mediante el **dni** del cliente" | El código usa **FK `cliente`** (`DireccionEntrega.cliente`). Vincular por DNI (`CharField`) sería una **violación de normalización** (clave natural →FK). Corregir el HU y **defender la FK en la tesis**. |

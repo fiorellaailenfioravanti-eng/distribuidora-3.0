@@ -7,4 +7,5 @@ formularios y confirmaciones. La lógica vive en static/js/popups.js.
 <script id="mensajes-django" type="application/json">[{% for message in messages %}{"nivel": "{{ message.tags|escapejs }}", "texto": "{{ message|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]</script>
 {% endif %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
-<script src="{% static 'js/popups.js' %}?v=7"></script>
+<script src="{% static 'js/popups.js' %}?v=8"></script>
+<script src="{% static 'js/cambios_sin_guardar.js' %}?v=2"></script>

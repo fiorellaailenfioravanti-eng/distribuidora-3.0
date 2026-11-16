@@ -2,4 +2,4 @@
 Avatar del usuario: iniciales en un círculo (sin servicios externos).
 Uso: {% include 'includes/avatar.html' with tamano='md' %}   tamano: sm (32 px) | md (40 px) | lg (64 px)
 {% endcomment %}
-<span class="avatar avatar--{{ tamano|default:'md' }}" aria-hidden="true">{% if user.first_name %}{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}{% else %}{{ user.username|slice:":2"|upper }}{% endif %}</span>
+{% if user.perfil_empleado.foto %}<span class="avatar avatar--{{ tamano|default:'md' }}" aria-hidden="true"><img src="{{ user.perfil_empleado.foto.url }}" alt=""></span>{% else %}<span class="avatar avatar--{{ tamano|default:'md' }}" aria-hidden="true">{% if user.first_name %}{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}{% else %}{{ user.username|slice:":2"|upper }}{% endif %}</span>{% endif %}

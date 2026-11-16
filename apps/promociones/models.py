@@ -13,6 +13,7 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
+from distribuidora.limites import LARGO_NOMBRE, LARGO_TEXTO, limite_largo
 
 DIAS_VALIDEZ_DEFAULT = 30  # RF-10: 30 días corridos
 
@@ -25,7 +26,7 @@ ESTADOS_COMPRA = [
 
 class Promocion(models.Model):
     id_promocion = models.AutoField(primary_key=True)
-    nombre       = models.CharField(max_length=120, verbose_name='Nombre', help_text='Ej: Paga 3, lleva 4 — Bidón 20 L')
+    nombre       = models.CharField(max_length=LARGO_NOMBRE, verbose_name='Nombre', help_text='Ej: Paga 3, lleva 4 — Bidón 20 L')
     producto     = models.ForeignKey(
         'productos.Producto',
         on_delete=models.PROTECT,
@@ -42,15 +43,16 @@ class Promocion(models.Model):
     dias_validez = models.PositiveSmallIntegerField(
         default=DIAS_VALIDEZ_DEFAULT,
         verbose_name='Días de validez',
-        help_text='Días corridos desde la compra para retirar las unidades (RF-10).'
+        help_text='Días corridos desde la compra para retirar las unidades.'
     )
     activa       = models.BooleanField(default=True, verbose_name='Activa')
-    descripcion  = models.TextField(blank=True, verbose_name='Descripción')
+    descripcion  = models.TextField(max_length=LARGO_TEXTO, blank=True, verbose_name='Descripción')
 
     class Meta:
         ordering = ['-activa', 'nombre']
         verbose_name = 'Promoción'
         verbose_name_plural = 'Promociones'
+        constraints = limite_largo(nombre=LARGO_NOMBRE, descripcion=LARGO_TEXTO)
 
     def __str__(self):
         return self.nombre

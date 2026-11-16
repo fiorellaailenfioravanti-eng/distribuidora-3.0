@@ -28,3 +28,6 @@ Pedidos, pagos parciales (RF-13), métodos de pago y reposición automática (RF
 
 ## Notas
 -
+- 2026-11-14 ([[2026-11-14]]): contador de pendientes en el menú y en el filtro; tabla ordenable por columna.
+- 2026-11-14 ([[2026-11-14]]): para comprar alcanza con un teléfono de contacto (`TELEFONOS_MINIMOS = 1`).
+- 2026-11-14 ([[2026-11-14]]): stock reservado por pedidos Pendientes/Confirmados (`services.con_stock_disponible`, `stock_reservado_por_producto`); el catálogo muestra el disponible y el inventario el reservado.

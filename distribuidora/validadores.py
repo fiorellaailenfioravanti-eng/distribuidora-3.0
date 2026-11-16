@@ -115,7 +115,7 @@ ATTRS_PATENTE = {
     'autocomplete': 'off',
 }
 ATTRS_NOMBRE = {
-    'pattern': r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .\-]+", 'maxlength': '100',
+    'pattern': r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .\-]+", 'maxlength': '64',
     'title': 'Sólo letras, espacios, apóstrofo o guión.',
 }
 ATTRS_MONTO = {'inputmode': 'decimal', 'min': '0.01', 'step': '0.01'}

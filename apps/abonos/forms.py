@@ -36,7 +36,7 @@ class AbonoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['cliente'].queryset = Cliente.objects.all()
+        self.fields['cliente'].queryset = Cliente.objects.filter(eliminado=False)
         self.fields['producto'].queryset = Producto.objects.filter(es_envase=False)
         self.fields['cliente'].label_from_instance = lambda c: c.nombre_completo()
         self.fields['producto'].label_from_instance = lambda p: f"{p.nombre} (${p.precio})"

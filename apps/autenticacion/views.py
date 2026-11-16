@@ -8,7 +8,9 @@ from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.permisos.roles import es_personal_interno
 from apps.permisos.views import destino_personal
-from .forms import IngresarUsuarioForm, PerfilUsuarioForm, RegistroUsuarioForm
+from apps.clientes.forms import DireccionRegistroForm
+from apps.clientes.services import guardar_telefonos, leer_telefonos
+from .forms import IngresarUsuarioForm, PerfilUsuarioForm, RegistroClienteWebForm
 
 
 # Páginas de la tienda que sólo usan los clientes.
@@ -29,16 +31,29 @@ def registrar_usuario(request):
     if (ya := _ya_ingresado(request)) is not None:
         return ya
     if request.method == 'POST':
-        form = RegistroUsuarioForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
+        form = RegistroClienteWebForm(request.POST, request.FILES)
+        form_dir = DireccionRegistroForm(request.POST, prefix='dir')
+        telefonos, errores_telefonos = leer_telefonos(request.POST)
+        if form.is_valid() and form_dir.is_valid() and not errores_telefonos:
+            with transaction.atomic():
+                usuario = form.save()
+                guardar_telefonos(usuario.perfil_cliente, telefonos)
+                # La señal de clientes ya creó su perfil: le sumamos el domicilio principal.
+                direccion = form_dir.save(commit=False)
+                direccion.cliente = usuario.perfil_cliente
+                direccion.es_principal = True
+                direccion.save()
             messages.success(request, 'Tu cuenta se creó. Ya podés ingresar.')
             return redirect('apps.autenticacion:ingresar')
-        else:
-            messages.error(request, 'No se pudo crear la cuenta: revisá los campos marcados.')
+        messages.error(request, 'No se pudo crear la cuenta: revisá los campos marcados.')
     else:
-        form = RegistroUsuarioForm()
-    return render(request, 'autenticacion/registrar.html', {'form': form})
+        form = RegistroClienteWebForm()
+        form_dir = DireccionRegistroForm(prefix='dir')
+        telefonos, errores_telefonos = None, []
+    return render(request, 'autenticacion/registrar.html', {
+        'form': form, 'form_dir': form_dir,
+        'telefonos': telefonos, 'errores_telefonos': errores_telefonos,
+    })
 
 def ingresar_usuario(request):
     if (ya := _ya_ingresado(request)) is not None:

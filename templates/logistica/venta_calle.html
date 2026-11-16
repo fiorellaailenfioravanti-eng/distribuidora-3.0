@@ -33,10 +33,10 @@
                 {% endfor %}
             </select>
             <div id="cliente-nuevo" class="row g-2">
-                <div class="col-6"><input type="text" name="nombre" class="form-control" placeholder="Nombre *" aria-label="Nombre"></div>
-                <div class="col-6"><input type="text" name="apellido" class="form-control" placeholder="Apellido" aria-label="Apellido"></div>
-                <div class="col-8"><input type="text" name="calle" class="form-control" placeholder="Calle *" aria-label="Calle"></div>
-                <div class="col-4"><input type="text" name="altura" class="form-control" placeholder="Altura *" aria-label="Altura"></div>
+                <div class="col-6"><input maxlength="64" type="text" name="nombre" class="form-control" placeholder="Nombre *" aria-label="Nombre"></div>
+                <div class="col-6"><input maxlength="64" type="text" name="apellido" class="form-control" placeholder="Apellido" aria-label="Apellido"></div>
+                <div class="col-8"><input maxlength="100" type="text" name="calle" class="form-control" placeholder="Calle *" aria-label="Calle"></div>
+                <div class="col-4"><input maxlength="10" type="text" name="altura" class="form-control" placeholder="Altura *" aria-label="Altura"></div>
                 <div class="col-12">
                     <select name="barrio" id="sel-barrio" class="form-select" aria-label="Barrio">
                         <option value="">Barrio de la zona *</option>
@@ -95,7 +95,7 @@
             <select name="metodo_pago" id="sel-metodo" class="form-select mb-2" aria-label="Medio de pago">
                 {% for mp in metodos_pago %}<option value="{{ mp.pk }}">{{ mp.nombre }}</option>{% endfor %}
             </select>
-            <input type="text" name="nota" class="form-control" placeholder="Nota (opcional)">
+            <input maxlength="200" type="text" name="nota" class="form-control" placeholder="Nota (opcional)">
         </div>
     </div>
 

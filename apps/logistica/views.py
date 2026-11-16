@@ -1,4 +1,5 @@
 from django.db.models import ProtectedError
+from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -85,6 +86,8 @@ def listar_rutas(request):
 
     contexto = {
         'rutas':         rutas,
+        'eliminadas':    (HojaRuta.todos.filter(eliminado=True).select_related('empleado', 'zona')
+                          if puede(request.user, 'planificar_repartos') else HojaRuta.todos.none()),
         'zonas':         Zona.objects.all(),
         'filtro_zona':   filtro_zona,
         'filtro_estado': filtro_estado,
@@ -313,6 +316,52 @@ def pedido_parada(request, pk):
         except ValueError as error:
             messages.error(request, str(error))
     return _volver_a_hoja(parada.hoja_ruta_id, parada.pk)
+
+
+# ─────────────────────────────────────────────────────────────
+# HOJAS DE RUTA — ELIMINAR (sólo borradores)
+# ─────────────────────────────────────────────────────────────
+@login_required
+def eliminar_ruta(request, pk):
+    """Elimina (baja lógica) una hoja de ruta que todavía es Borrador.
+
+    La hoja y sus paradas se ocultan pero no se borran: sus pedidos vuelven a
+    quedar libres para agendarlos en otra hoja. Se restaura desde «Hojas de
+    ruta eliminadas»."""
+    if not puede(request.user, 'planificar_repartos'):
+        messages.error(request, 'No tenés permiso para eliminar hojas de ruta.')
+        return redirect('apps.logistica:listar_rutas')
+    hoja = get_object_or_404(HojaRuta, id_ruta=pk)
+    if request.method != 'POST':
+        return redirect('apps.logistica:ver_ruta', pk=pk)
+    if hoja.estado != 'Borrador':
+        messages.error(request, 'Sólo se pueden eliminar hojas de ruta en Borrador.')
+        return redirect('apps.logistica:ver_ruta', pk=pk)
+    hoja.eliminado = True
+    hoja.save(update_fields=['eliminado'])
+    messages.success(request, f'Hoja de ruta #{hoja.id_ruta} eliminada. '
+                              'La podés restaurar desde «Hojas de ruta eliminadas».')
+    return redirect('apps.logistica:listar_rutas')
+
+
+@login_required
+def restaurar_ruta(request, pk):
+    """Vuelve a mostrar una hoja eliminada, si sus pedidos no se agendaron en otra."""
+    if not puede(request.user, 'planificar_repartos'):
+        messages.error(request, 'No tenés permiso para restaurar hojas de ruta.')
+        return redirect('apps.logistica:listar_rutas')
+    hoja = get_object_or_404(HojaRuta.todos, id_ruta=pk)
+    if request.method == 'POST':
+        pedidos = DetalleHojaRuta.todos.filter(hoja_ruta=hoja, pedido__isnull=False).values('pedido')
+        ocupados = DetalleHojaRuta.objects.filter(pedido__in=pedidos).values_list('pedido_id', flat=True)
+        if ocupados:
+            lista = ', '.join(f'#{p}' for p in sorted(set(ocupados)))
+            messages.error(request, f'No se puede restaurar: los pedidos {lista} ya están en otra hoja de ruta.')
+        else:
+            hoja.eliminado = False
+            hoja.save(update_fields=['eliminado'])
+            messages.success(request, f'Hoja de ruta #{hoja.id_ruta} restaurada.')
+    return redirect('apps.logistica:listar_rutas')
 
 
 # ─────────────────────────────────────────────────────────────
@@ -549,8 +598,11 @@ def listar_zonas(request):
             messages.success(request, f'Zona "{zona.nombre}" creada correctamente.')
             return redirect('apps.logistica:listar_zonas')
 
-    zonas = Zona.objects.all()
-    return render(request, 'logistica/listar_zonas.html', {'zonas': zonas, 'form': form})
+    return render(request, 'logistica/listar_zonas.html', {
+        'zonas': Zona.objects.vigentes(),
+        'eliminadas': Zona.objects.filter(eliminada=True),
+        'form': form,
+    })
 
 
 @login_required
@@ -581,21 +633,34 @@ def eliminar_zona(request, pk):
 
     zona = get_object_or_404(Zona, id_zona=pk)
     if request.method == 'POST':
-        try:
-            zona.delete()
-            messages.success(request, 'Zona eliminada.')
-        except ProtectedError:
-            messages.error(
-                request,
-                f'La zona "{zona.nombre}" tiene rutas de reparto asociadas: reasignalas antes de eliminarla.'
-            )
+        # Baja lógica: deja de ofrecerse; barrios, rutas e historial se conservan.
+        if zona.nombre == 'Sin Asignar':
+            messages.error(request, 'La zona «Sin Asignar» es la de los barrios nuevos: no se puede eliminar.')
+        else:
+            zona.eliminada = True
+            zona.save(update_fields=['eliminada'])
+            messages.success(request, f'Zona "{zona.nombre}" eliminada. La podés restaurar desde «Zonas eliminadas».')
         return redirect('apps.logistica:listar_zonas')
 
     return render(request, 'logistica/confirmar_eliminar.html', {
         'objeto': zona,
         'tipo': 'zona',
         'volver': 'apps.logistica:listar_zonas',
+        'logica': True,
     })
+
+
+@login_required
+def restaurar_zona(request, pk):
+    if not puede(request.user, 'gestionar_zonas_camiones'):
+        messages.error(request, 'No tenés permiso para restaurar zonas.')
+        return redirect('apps.logistica:listar_zonas')
+    zona = get_object_or_404(Zona, id_zona=pk)
+    if request.method == 'POST':
+        zona.eliminada = False
+        zona.save(update_fields=['eliminada'])
+        messages.success(request, f'Zona "{zona.nombre}" restaurada.')
+    return redirect('apps.logistica:listar_zonas')
 
 
 # ─────────────────────────────────────────────────────────────
@@ -633,7 +698,7 @@ def direcciones_sin_zona(request):
     barrios_huerfanos = Barrio.objects.filter(
         Q(zona__isnull=True) | Q(zona__nombre='Sin Asignar') | Q(zona__nombre='Zona 1')
     ).select_related('zona').order_by('nombre')
-    zonas = Zona.objects.all()
+    zonas = Zona.objects.vigentes()
 
     contexto = {
         'barrios': barrios_huerfanos,
@@ -660,8 +725,11 @@ def listar_camiones(request):
             messages.success(request, f'Camión "{camion.patente}" registrado correctamente.')
             return redirect('apps.logistica:listar_camiones')
 
-    camiones = Camion.objects.all()
-    return render(request, 'logistica/listar_camiones.html', {'camiones': camiones, 'form': form})
+    return render(request, 'logistica/listar_camiones.html', {
+        'camiones': Camion.objects.all(),
+        'eliminados': Camion.todos.filter(eliminado=True),
+        'form': form,
+    })
 
 
 @login_required
@@ -692,15 +760,33 @@ def eliminar_camion(request, pk):
 
     camion = get_object_or_404(Camion, patente=pk)
     if request.method == 'POST':
-        camion.delete()
-        messages.success(request, 'Camión eliminado.')
+        # Baja lógica: sale de la flota y de los selectores; su historial queda.
+        camion.eliminado = True
+        camion.activo = False
+        camion.save(update_fields=['eliminado', 'activo'])
+        messages.success(request, f'Camión {camion.patente} eliminado. Lo podés restaurar desde «Camiones eliminados».')
         return redirect('apps.logistica:listar_camiones')
 
     return render(request, 'logistica/confirmar_eliminar.html', {
         'objeto': camion,
         'tipo': 'camión',
         'volver': 'apps.logistica:listar_camiones',
+        'logica': True,
     })
+
+
+@login_required
+def restaurar_camion(request, pk):
+    if not puede(request.user, 'gestionar_zonas_camiones'):
+        messages.error(request, 'No tenés permiso para restaurar camiones.')
+        return redirect('apps.logistica:listar_camiones')
+    camion = get_object_or_404(Camion.todos, patente=pk)
+    if request.method == 'POST':
+        camion.eliminado = False
+        camion.activo = True
+        camion.save(update_fields=['eliminado', 'activo'])
+        messages.success(request, f'Camión {camion.patente} restaurado.')
+    return redirect('apps.logistica:listar_camiones')
 
 
 # ─────────────────────────────────────────────────────────────
@@ -752,7 +838,7 @@ def planificar_reparto(request):
         messages.error(request, 'No tenés permiso para planificar repartos.')
         return redirect('inicio')
 
-    zonas = Zona.objects.all()
+    zonas = Zona.objects.vigentes()
     fecha = _parse_fecha(request.GET.get('fecha') or request.POST.get('fecha'))
     zona_id = request.GET.get('zona') or request.POST.get('zona')
     zona = Zona.objects.filter(pk=zona_id).first() if zona_id else None
@@ -972,10 +1058,10 @@ def venta_calle(request, pk):
         return redirect(volver)
 
     # La zona se elige primero (por defecto la de la hoja) y filtra clientes y barrios.
-    direcciones = (DireccionEntrega.objects.exclude(barrio__zona=None)
+    direcciones = (DireccionEntrega.objects.exclude(barrio__zona=None).filter(cliente__eliminado=False)
                    .select_related('cliente', 'barrio').order_by('cliente__apellido', 'cliente__nombre'))
     barrios = Barrio.objects.exclude(zona=None).order_by('nombre')
-    zonas = Zona.objects.filter(pk__in=barrios.values('zona')).order_by('nombre')
+    zonas = Zona.objects.vigentes().filter(pk__in=barrios.values('zona')).order_by('nombre')
     codigos = ['EFECTIVO', 'TRANSFERENCIA', 'MERCADOPAGO', 'BILLETERA']
     return render(request, 'logistica/venta_calle.html', {
         'hoja': hoja,

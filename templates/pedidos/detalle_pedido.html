@@ -127,7 +127,7 @@
                         <p class="mb-2"><strong class="text-muted small text-uppercase">Dirección:</strong><br> {{ pedido.direccion_entrega.direccion_completa }}</p>
                         {% if pedido.direccion_entrega.desc_seguridad and puede_ver_nota_seguridad %}
                             <div class="alert alert-info border-0 rounded-3 mt-3 mb-0 bg-info bg-opacity-10 text-info">
-                                <i class="fas fa-shield-alt me-1"></i><strong>Nota de Seguridad (RNF-02):</strong> {{ pedido.direccion_entrega.desc_seguridad }}
+                                <i class="fas fa-shield-alt me-1"></i><strong>Nota de seguridad:</strong> {{ pedido.direccion_entrega.desc_seguridad }}
                             </div>
                         {% endif %}
                     {% else %}

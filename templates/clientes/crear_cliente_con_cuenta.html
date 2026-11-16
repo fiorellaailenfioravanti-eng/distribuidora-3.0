@@ -7,7 +7,6 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 fw-bold mb-0 text-main">Nuevo Cliente con cuenta web</h1>
-            <p class="text-muted small mb-0">El cliente podrá acceder al catálogo y carrito online</p>
         </div>
         <a href="{% url 'apps.clientes:crear_cliente' %}" class="btn btn-light border-0 shadow-sm rounded-3 hover-lift">
             <i class="fa-solid fa-arrow-left me-1"></i> Volver
@@ -69,26 +68,7 @@
 
                             <div class="col-12 mt-4">
                                 <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="fa-solid fa-phone-volume me-2"></i>Teléfonos de contacto</h6>
-                                <table class="table table-borderless table-sm align-middle mb-0" id="tabla-telefonos">
-                                    <thead>
-                                        <tr>
-                                            <th class="fw-semibold">Número</th>
-                                            <th class="fw-semibold">Descripción / Relación</th>
-                                            <th style="width: 40px;"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="telefonos-tbody">
-                                        <tr>
-                                            <td><input type="text" name="telefono_numero[]" class="form-control" placeholder="Ej: 387 123 4567"></td>
-                                            <td><input type="text" name="telefono_relacion[]" class="form-control" placeholder="Ej: Celular principal" value="Titular"></td>
-                                            <td>
-                                                <button type="button" class="btn btn-success btn-sm" onclick="agregarTelefono()">
-                                                    <i class="fa-solid fa-plus"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                {% include 'includes/telefonos_dinamicos.html' %}
                             </div>
                         </div>
 
@@ -176,21 +156,6 @@
             }
         }
     });
-
-    function agregarTelefono() {
-        const tbody = document.getElementById('telefonos-tbody');
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><input type="text" name="telefono_numero[]" class="form-control" placeholder="Ej: 387 123 4567"></td>
-            <td><input type="text" name="telefono_relacion[]" class="form-control" placeholder="Ej: Trabajo / Familiar"></td>
-            <td>
-                <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('tr').remove()">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    }
 </script>
 {% endblock %}
 

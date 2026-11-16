@@ -21,4 +21,5 @@ urlpatterns = [
     path('abonos/', include('apps.abonos.urls')),
     path('promociones/', include('apps.promociones.urls')),
     path('planta/', include('apps.planta.urls')),
+    path('configuracion/', include('apps.configuracion.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

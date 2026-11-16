@@ -3,7 +3,7 @@ tipo: indice
 tags:
   - inicio
 ---
-# 🌊 Distribuidora 3.0 / Aquadelluvia
+# 🌊 Distribuidora 3.0 / Aguadelluvia
 
 > [!info] Estado
 > Fases 1–6 completadas (más 4.5/4.6 de auditoría). **Fase 7** (QA, buscador RF-07, producción y tesis) es la siguiente.

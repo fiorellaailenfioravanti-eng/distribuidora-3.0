@@ -1,4 +1,4 @@
-# AGENTS.md — Reglas del Workspace: Distribuidora 3.0 / Aquadelluvia
+# AGENTS.md — Reglas del Workspace: Distribuidora 3.0 / Aguadelluvia
 
 ## 📌 Contexto del Proyecto
 
@@ -7,7 +7,7 @@
 👉 [`.agents/CONTEXT.md`](.agents/CONTEXT.md)
 
 Este archivo contiene:
-- Descripción completa del proyecto (tesis universitaria, empresa Aquadelluvia)
+- Descripción completa del proyecto (tesis universitaria, empresa Aguadelluvia)
 - Stack tecnológico y arquitectura Django MVT
 - Todos los modelos de datos implementados y planificados
 - Separación clara de **lo realizado** vs **lo pendiente**

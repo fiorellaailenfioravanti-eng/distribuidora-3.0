@@ -39,17 +39,16 @@ MERCADOPAGO_WEBHOOK_SECRET = getattr(settings, 'MERCADOPAGO_WEBHOOK_SECRET', '')
 logger = logging.getLogger(__name__)
 
 
-TELEFONOS_MINIMOS = 2
+TELEFONOS_MINIMOS = 1
 
 
 def _cliente_puede_comprar(request, cliente):
-    """RF-04: para comprar, el cliente necesita al menos 2 teléfonos de contacto."""
+    """RF-04: para comprar, el cliente necesita al menos un teléfono de contacto."""
     if cliente.cantidad_telefonos() >= TELEFONOS_MINIMOS:
         return True
     messages.warning(
         request,
-        f"Para finalizar la compra necesitás al menos {TELEFONOS_MINIMOS} teléfonos de contacto "
-        "con su relación (por ejemplo: Titular y Esposa). Agregalos en tu perfil."
+        "Para finalizar la compra necesitás un teléfono de contacto. Agregalo en tu perfil."
     )
     return False
 

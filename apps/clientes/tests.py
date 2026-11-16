@@ -198,3 +198,126 @@ class ValidacionesClienteTests(TestCase):
         self.assertIn('dni', ClienteForm({**base, 'dni': 'abc'}).errors)
         Cliente.objects.create(nombre='Otro', dni='30123456')
         self.assertIn('dni', ClienteForm({**base, 'dni': '30.123.456'}).errors)
+
+
+class OrdenDirectorioClientesTests(TestCase):
+    """Los encabezados ordenan a todos los clientes (no sólo la página visible)."""
+
+    def setUp(self):
+        vendedor = get_user_model().objects.create_user('vend_orden', 'vo@x.com', 'Agua-Lluvia-2026')
+        vendedor.groups.add(Group.objects.get(name='Vendedor'))
+        self.client.force_login(vendedor)
+        for i, nombre in enumerate(['Bruno', 'Ana', 'Carla'] + [f'Zoe{n:02d}' for n in range(10)]):
+            Cliente.objects.create(nombre=nombre, apellido='Test', dni=str(40000000 + i))
+
+    def _nombres(self, **params):
+        respuesta = self.client.get(reverse('apps.clientes:listar_clientes'), params)
+        return [c.nombre for c in respuesta.context['clientes']]
+
+    def test_ordena_por_nombre_en_ambos_sentidos(self):
+        self.assertEqual(self._nombres(orden='cliente', dir='asc')[:3], ['Ana', 'Bruno', 'Carla'])
+        self.assertEqual(self._nombres(orden='cliente', dir='desc')[0], 'Zoe09')
+
+    def test_la_paginacion_conserva_el_orden(self):
+        respuesta = self.client.get(reverse('apps.clientes:listar_clientes'), {'orden': 'cliente', 'dir': 'desc'})
+        self.assertContains(respuesta, 'orden=cliente&amp;dir=desc')
+        self.assertEqual(self._nombres(orden='cliente', dir='desc', page=2)[-1], 'Ana')
+
+
+class BajaLogicaClienteTests(TestCase):
+    """Eliminar un cliente no lo borra: sale del directorio y de los selectores, y se restaura."""
+
+    def setUp(self):
+        Usuario = get_user_model()
+        vendedor = Usuario.objects.create_user('vend_baja', 'vb@x.com', 'Agua-Lluvia-2026')
+        vendedor.groups.add(Group.objects.get(name='Vendedor'))
+        self.client.force_login(vendedor)
+        self.usuario = Usuario.objects.create_user('cli_baja', 'cb@x.com', 'Agua-Lluvia-2026')
+        self.cliente = Cliente.objects.get(usuario=self.usuario)
+
+    def test_eliminar_oculta_y_bloquea_la_cuenta(self):
+        from apps.abonos.forms import AbonoForm
+        self.client.post(reverse('apps.clientes:eliminar_cliente', args=[self.cliente.pk]))
+        self.cliente.refresh_from_db()
+        self.usuario.refresh_from_db()
+        self.assertTrue(self.cliente.eliminado)
+        self.assertFalse(self.usuario.is_active)
+        lista = self.client.get(reverse('apps.clientes:listar_clientes'))
+        self.assertNotIn(self.cliente, list(lista.context['clientes']))
+        self.assertIn(self.cliente, list(lista.context['eliminados']))
+        self.assertNotIn(self.cliente, AbonoForm().fields['cliente'].queryset)
+
+    def test_restaurar(self):
+        self.cliente.dar_de_baja()
+        self.client.post(reverse('apps.clientes:restaurar_cliente', args=[self.cliente.pk]))
+        self.cliente.refresh_from_db()
+        self.usuario.refresh_from_db()
+        self.assertFalse(self.cliente.eliminado)
+        self.assertTrue(self.usuario.is_active)
+
+
+class AltaClienteValidacionesTests(TestCase):
+    """Alta por el vendedor: teléfonos validados (uno obligatorio) y largos limitados en la base."""
+
+    def setUp(self):
+        vendedor = get_user_model().objects.create_user('vend_alta', 'va@x.com', 'Agua-Lluvia-2026')
+        vendedor.groups.add(Group.objects.get(name='Vendedor'))
+        self.client.force_login(vendedor)
+        self.url = reverse('apps.clientes:crear_sin_cuenta')
+
+    def test_sin_telefono_no_se_crea(self):
+        self.client.post(self.url, {'nombre': 'Rita', 'apellido': 'Gil', 'tipo_cliente': 'Normal'})
+        self.assertFalse(Cliente.objects.filter(nombre='Rita').exists())
+
+    def test_telefono_invalido_no_se_crea(self):
+        self.client.post(self.url, {'nombre': 'Rita', 'apellido': 'Gil', 'tipo_cliente': 'Normal',
+                                    'telefono_numero[]': ['llamame'], 'telefono_relacion[]': ['Titular']})
+        self.assertFalse(Cliente.objects.filter(nombre='Rita').exists())
+
+    def test_con_varios_telefonos_se_crea(self):
+        self.client.post(self.url, {'nombre': 'Rita', 'apellido': 'Gil', 'tipo_cliente': 'Normal',
+                                    'telefono_numero[]': ['3624111111', '3624222222'],
+                                    'telefono_relacion[]': ['Titular', 'Hijo']})
+        self.assertEqual(Cliente.objects.get(nombre='Rita').telefonos.count(), 2)
+
+    def test_nombre_largo_se_rechaza(self):
+        self.client.post(self.url, {'nombre': 'R' * 70, 'apellido': 'Gil', 'tipo_cliente': 'Normal',
+                                    'telefono_numero[]': ['3624111111'], 'telefono_relacion[]': ['Titular']})
+        self.assertFalse(Cliente.objects.filter(apellido='Gil').exists())
+
+    def test_la_base_rechaza_un_telefono_largo(self):
+        from django.db import IntegrityError, transaction
+        from .models import TelefonoContacto
+        cliente = Cliente.objects.create(nombre='Rita', apellido='Gil')
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            TelefonoContacto.objects.create(cliente=cliente, numero='1' * 21, desc_relacion='Titular')
+
+
+class BajaLogicaTelefonoDireccionTests(TestCase):
+    def setUp(self):
+        from .models import DireccionEntrega, TelefonoContacto
+        vendedor = get_user_model().objects.create_user('vend_td', 'vtd@x.com', 'Agua-Lluvia-2026')
+        vendedor.groups.add(Group.objects.get(name='Vendedor'))
+        self.client.force_login(vendedor)
+        self.cliente = Cliente.objects.create(nombre='Rita', apellido='Gil')
+        self.t1 = TelefonoContacto.objects.create(cliente=self.cliente, numero='3624111111', desc_relacion='Titular', es_principal=True)
+        self.t2 = TelefonoContacto.objects.create(cliente=self.cliente, numero='3624222222', desc_relacion='Hijo')
+        self.dir = DireccionEntrega.objects.create(cliente=self.cliente, calle='Mitre', altura='1', es_principal=True)
+
+    def test_telefono_principal_pasa_al_otro_y_se_restaura(self):
+        from .models import TelefonoContacto
+        self.client.post(reverse('apps.clientes:eliminar_telefono', args=[self.t1.pk]))
+        self.assertEqual(list(self.cliente.telefonos.all()), [self.t2])
+        self.t2.refresh_from_db()
+        self.assertTrue(self.t2.es_principal)
+        self.assertTrue(TelefonoContacto.todos.get(pk=self.t1.pk).eliminado)
+        self.client.post(reverse('apps.clientes:restaurar_telefono', args=[self.t1.pk]))
+        self.assertEqual(self.cliente.telefonos.count(), 2)
+
+    def test_direccion_eliminada_no_se_ofrece(self):
+        self.client.post(reverse('apps.clientes:eliminar_direccion', args=[self.dir.pk]))
+        self.assertEqual(self.cliente.direcciones.count(), 0)
+        ficha = self.client.get(reverse('apps.clientes:ver_cliente', args=[self.cliente.pk]))
+        self.assertIn(self.dir.pk, [d.pk for d in ficha.context['direcciones_eliminadas']])
+        self.client.post(reverse('apps.clientes:restaurar_direccion', args=[self.dir.pk]))
+        self.assertEqual(self.cliente.direcciones.count(), 1)

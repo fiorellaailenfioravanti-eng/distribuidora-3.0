@@ -10,13 +10,13 @@ from distribuidora.validadores import ATTRS_ALTURA, ATTRS_PATENTE, aplicar_attrs
 class HojaRutaForm(forms.ModelForm):
     class Meta:
         model  = HojaRuta
-        fields = ['fecha', 'ruta_reparto', 'empleado', 'camion', 'estado', 'observaciones']
+        fields = ['fecha', 'zona', 'empleado', 'camion', 'estado', 'observaciones']
         widgets = {
             'fecha': forms.DateInput(attrs={
                 'type': 'date',
                 'class': 'form-control'
             }),
-            'ruta_reparto': forms.Select(attrs={'class': 'form-select'}),
+            'zona': forms.Select(attrs={'class': 'form-select'}),
             'empleado': forms.Select(attrs={'class': 'form-select'}),
             'camion':   forms.Select(attrs={'class': 'form-select'}),
             'estado':   forms.Select(attrs={'class': 'form-select'}),
@@ -33,6 +33,10 @@ class HojaRutaForm(forms.ModelForm):
         self.fields['empleado'].queryset = Empleado.objects.filter(activo=True).select_related('usuario', 'rol')
         # Solo camiones activos
         self.fields['camion'].queryset = Camion.objects.filter(activo=True)
+        # Toda hoja de ruta pertenece a una zona de reparto
+        self.fields['zona'].queryset = Zona.objects.vigentes().order_by('nombre')
+        self.fields['zona'].required = True
+        self.fields['zona'].empty_label = '— Elegí una zona —'
 
 
 def _etiqueta_direccion_cliente(direccion):
@@ -51,13 +55,13 @@ class AgregarParadaForm(forms.Form):
         queryset=None, required=False, label='Cliente existente',
         empty_label='— Cliente nuevo —', widget=forms.Select(attrs={'class': 'form-select'}),
     )
-    nombre = forms.CharField(required=False, max_length=100, label='Nombre',
+    nombre = forms.CharField(required=False, max_length=64, label='Nombre',
                              widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre o razón social'}))
-    apellido = forms.CharField(required=False, max_length=100, label='Apellido',
+    apellido = forms.CharField(required=False, max_length=64, label='Apellido',
                                widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apellido (opcional)'}))
-    calle = forms.CharField(required=False, max_length=150, label='Calle',
+    calle = forms.CharField(required=False, max_length=100, label='Calle',
                             widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: San Martín'}))
-    altura = forms.CharField(required=False, max_length=20, label='Altura',
+    altura = forms.CharField(required=False, max_length=10, label='Altura',
                              widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 450'}))
     barrio = forms.ModelChoiceField(queryset=None, required=False, label='Barrio',
                                     widget=forms.Select(attrs={'class': 'form-select'}))
@@ -71,7 +75,7 @@ class AgregarParadaForm(forms.Form):
         from apps.clientes.models import DireccionEntrega
         from .services import botellon_por_defecto, productos_de_reparto
 
-        direcciones = DireccionEntrega.objects.select_related('cliente', 'barrio').order_by(
+        direcciones = DireccionEntrega.objects.select_related('cliente', 'barrio').filter(cliente__eliminado=False).order_by(
             'cliente__apellido', 'cliente__nombre')
         barrios = Barrio.objects.order_by('nombre')
         if hoja is not None and hoja.zona_id:
@@ -242,6 +246,8 @@ class CamionForm(forms.ModelForm):
         patente = normalizar_patente(self.cleaned_data.get('patente'))
         if Camion.objects.filter(patente=patente).exists():
             raise forms.ValidationError('Ya hay un camión con esa patente.')
+        if Camion.todos.filter(patente=patente, eliminado=True).exists():
+            raise forms.ValidationError('Esa patente es de un camión eliminado: restauralo desde «Camiones eliminados».')
         return patente
 
     def clean_capacidad_botellones(self):

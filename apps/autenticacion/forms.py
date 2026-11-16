@@ -10,8 +10,9 @@ from .models import Usuario
 class RegistroUsuarioForm(UserCreationForm):
     """Registro de cliente web.
 
-    RF-01: exige dos celulares distintos y la relación de cada uno con el
-    cliente ("Titular", "Esposa", "Hijo"...). Se guardan como
+    Base del registro (la usa el alta por el vendedor). El registro web
+    (`RegistroClienteWebForm`) pide un teléfono obligatorio y los demás opcionales; acá
+    los celulares fijos quedan para compatibilidad con el ("Titular", "Esposa", "Hijo"...). Se guardan como
     `TelefonoContacto` mediante la señal de `apps.clientes` (H-40).
     """
     relacion1 = forms.CharField(
@@ -75,6 +76,57 @@ class RegistroUsuarioForm(UserCreationForm):
             self.save_m2m()
         return usuario
 
+class RegistroClienteWebForm(RegistroUsuarioForm):
+    """Registro desde la tienda: suma nombre y apellido, y textos de ayuda cortos.
+    El domicilio se carga con `DireccionRegistroForm` en la misma pantalla."""
+
+    first_name = forms.CharField(label='Nombre', max_length=64)
+    last_name = forms.CharField(label='Apellido', max_length=64)
+
+    class Meta(RegistroUsuarioForm.Meta):
+        fields = ('first_name', 'last_name') + RegistroUsuarioForm.Meta.fields
+
+    field_order = ['first_name', 'last_name', 'username', 'email', 'password1', 'password2',
+                   'celular1', 'relacion1', 'celular2', 'relacion2', 'imagen_perfil']
+
+    AYUDAS = {
+        'username': 'Con el que vas a ingresar. Letras, números y @ . + - _ (sin espacios).',
+        'password1': 'Mínimo 8 caracteres. Que no sea sólo números ni una contraseña común.',
+        'password2': '',
+        'relacion1': '',
+        'relacion2': '',
+    }
+    EJEMPLOS = {
+        'first_name': 'Ej: Ana', 'last_name': 'Ej: Pérez', 'username': 'Ej: anaperez',
+        'email': 'Ej: ana@correo.com', 'relacion1': 'Ej: Titular', 'relacion2': 'Ej: Esposo, Hija, Trabajo',
+    }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        aplicar_attrs(self, 'first_name', ATTRS_NOMBRE)
+        aplicar_attrs(self, 'last_name', ATTRS_NOMBRE)
+        for nombre, campo in self.fields.items():
+            if nombre in self.AYUDAS:
+                campo.help_text = self.AYUDAS[nombre]
+            if nombre in self.EJEMPLOS:
+                campo.widget.attrs.setdefault('placeholder', self.EJEMPLOS[nombre])
+            clase = 'form-control'
+            if nombre == 'imagen_perfil':
+                campo.widget = forms.FileInput(attrs={'accept': 'image/*'})
+            campo.widget.attrs['class'] = (campo.widget.attrs.get('class', '') + ' ' + clase).strip()
+        self.fields['email'].required = True
+        self.fields['imagen_perfil'].label = 'Foto de perfil (opcional)'
+        # Los teléfonos se cargan con la lista dinámica (uno obligatorio + los que quiera).
+        for nombre in ('celular1', 'relacion1', 'celular2', 'relacion2'):
+            self.fields.pop(nombre, None)
+
+    def clean_first_name(self):
+        return validar_nombre(self.cleaned_data.get('first_name'))
+
+    def clean_last_name(self):
+        return validar_nombre(self.cleaned_data.get('last_name'), 'El apellido')
+
+
 class IngresarUsuarioForm(forms.Form):
     username = forms.CharField(
         label='Nombre de usuario', 
@@ -96,6 +148,29 @@ class RecuperarContrasenaForm(PasswordResetForm):
         self.fields['email'].widget.attrs.update({
             'class': 'form-control rounded-3 py-2 px-3', 'placeholder': 'tu@email.com', 'autofocus': True,
         })
+
+    def send_mail(self, subject_template_name, email_template_name, context, from_email,
+                  to_email, html_email_template_name=None):
+        """Envía con la cuenta de correo que el administrador cargó en Configuración
+        (si está activa); si no, con la del servidor."""
+        from django.core.mail import EmailMultiAlternatives
+        from django.template import loader
+        from apps.configuracion.models import conexion_y_remitente
+
+        conexion, remitente = conexion_y_remitente()
+        if conexion is None:
+            return super().send_mail(subject_template_name, email_template_name, context,
+                                     from_email, to_email, html_email_template_name)
+        asunto = ''.join(loader.render_to_string(subject_template_name, context).splitlines())
+        cuerpo = loader.render_to_string(email_template_name, context)
+        mensaje = EmailMultiAlternatives(asunto, cuerpo, remitente, [to_email], connection=conexion)
+        if html_email_template_name:
+            mensaje.attach_alternative(loader.render_to_string(html_email_template_name, context), 'text/html')
+        try:
+            mensaje.send()
+        except Exception:
+            import logging
+            logging.getLogger('django.contrib.auth').exception('No se pudo enviar el correo de recuperación')
 
 
 class NuevaContrasenaForm(SetPasswordForm):

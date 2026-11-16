@@ -842,3 +842,93 @@ class InventarioCamionTests(TestCase):
             crear_venta_calle(self.hoja, {'nombre': 'Kiosco', 'calle': 'Belgrano', 'altura': '1',
                                           'barrio_id': Barrio.objects.first().pk,
                                           'productos': [{'producto_id': self.bidon.pk, 'cantidad': 9}]})
+
+
+class HojaRutaZonaYLimitesTests(TestCase):
+    """La hoja de ruta se arma con una zona y la base rechaza textos demasiado largos."""
+
+    def test_formulario_muestra_y_exige_zona(self):
+        from django.utils import timezone
+        from .forms import HojaRutaForm
+        zona = Zona.objects.create(nombre='Centro')
+        form = HojaRutaForm(data={'fecha': timezone.localdate(), 'estado': 'Borrador'})
+        self.assertIn('zona', form.fields)
+        self.assertFalse(form.is_valid())
+        self.assertIn('zona', form.errors)
+        form = HojaRutaForm(data={'fecha': timezone.localdate(), 'estado': 'Borrador', 'zona': zona.pk})
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_base_rechaza_nombre_de_mas_de_64(self):
+        from django.db import IntegrityError, transaction
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Zona.objects.create(nombre='x' * 65)
+
+
+class EliminarBorradorRutaTests(TestCase):
+    """Las hojas de ruta en Borrador se pueden eliminar; las confirmadas no."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        admin = get_user_model().objects.create_superuser('jefe_r', 'jr@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(admin)
+        self.zona = Zona.objects.create(nombre='Centro')
+
+    def test_borrador_se_elimina_con_sus_paradas(self):
+        hoja = HojaRuta.objects.create(fecha=date(2026, 3, 6), zona=self.zona, estado='Borrador')
+        DetalleHojaRuta.objects.create(hoja_ruta=hoja, orden=1, cantidad_bidones=1)
+        self.client.post(reverse('apps.logistica:eliminar_ruta', args=[hoja.pk]))
+        self.assertFalse(HojaRuta.objects.filter(pk=hoja.pk).exists())
+        self.assertFalse(DetalleHojaRuta.objects.filter(hoja_ruta_id=hoja.pk).exists())
+        # Baja lógica: sigue guardada y se puede restaurar
+        self.assertTrue(HojaRuta.todos.filter(pk=hoja.pk, eliminado=True).exists())
+        self.client.post(reverse('apps.logistica:restaurar_ruta', args=[hoja.pk]))
+        self.assertTrue(HojaRuta.objects.filter(pk=hoja.pk).exists())
+        self.assertEqual(hoja.detalles.count(), 1)
+
+    def test_confirmada_no_se_elimina(self):
+        hoja = HojaRuta.objects.create(fecha=date(2026, 3, 6), zona=self.zona, estado='Confirmada')
+        self.client.post(reverse('apps.logistica:eliminar_ruta', args=[hoja.pk]))
+        self.assertTrue(HojaRuta.objects.filter(pk=hoja.pk).exists())
+
+
+
+class BajaLogicaZonaTests(TestCase):
+    """Eliminar una zona no la borra: queda en «Zonas eliminadas» y se restaura."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        self.client.force_login(get_user_model().objects.create_superuser('jefe_z', 'jz@x.com', 'Agua-Lluvia-2026'))
+        self.zona = Zona.objects.create(nombre='Norte')
+
+    def test_eliminar_y_restaurar(self):
+        from .forms import HojaRutaForm
+        self.client.post(reverse('apps.logistica:eliminar_zona', args=[self.zona.pk]))
+        self.zona.refresh_from_db()
+        self.assertTrue(self.zona.eliminada)
+        self.assertNotIn(self.zona, HojaRutaForm().fields['zona'].queryset)
+        lista = self.client.get(reverse('apps.logistica:listar_zonas'))
+        self.assertIn(self.zona, list(lista.context['eliminadas']))
+        self.client.post(reverse('apps.logistica:restaurar_zona', args=[self.zona.pk]))
+        self.zona.refresh_from_db()
+        self.assertFalse(self.zona.eliminada)
+
+    def test_sin_asignar_no_se_elimina(self):
+        defecto = Zona.objects.create(nombre='Sin Asignar')
+        self.client.post(reverse('apps.logistica:eliminar_zona', args=[defecto.pk]))
+        defecto.refresh_from_db()
+        self.assertFalse(defecto.eliminada)
+
+
+class BajaLogicaCamionTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        self.client.force_login(get_user_model().objects.create_superuser('jefe_c', 'jc@x.com', 'Agua-Lluvia-2026'))
+        self.camion = Camion.objects.create(patente='AB123CD', capacidad_botellones=50)
+
+    def test_eliminar_y_restaurar(self):
+        from .forms import HojaRutaForm
+        self.client.post(reverse('apps.logistica:eliminar_camion', args=[self.camion.pk]))
+        self.assertFalse(Camion.objects.filter(pk='AB123CD').exists())
+        self.assertNotIn('AB123CD', [c.pk for c in HojaRutaForm().fields['camion'].queryset])
+        self.client.post(reverse('apps.logistica:restaurar_camion', args=['AB123CD']))
+        self.assertTrue(Camion.objects.get(pk='AB123CD').activo)

@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 
 from .models import Cliente, TelefonoContacto, DireccionEntrega
 from .forms  import (ClienteForm, ClienteSinCuentaForm, AltaClienteConCuentaForm, TelefonoContactoForm,
@@ -47,6 +47,39 @@ def _texto_buscable(cliente):
     return normalizar_texto(' '.join(p for p in partes if p))
 
 
+def _valor(cliente, atributo):
+    valor = getattr(cliente, atributo)
+    return valor() if callable(valor) else valor
+
+
+# Columnas ordenables del directorio: clave de la URL → valor de cada cliente.
+# Se ordena en Python (la lista ya se filtra así) y antes de paginar, para que
+# el orden abarque a todos los clientes y no sólo a la página visible.
+ORDEN_CLIENTES = {
+    'cliente':    lambda c: normalizar_texto(_valor(c, 'nombre_completo') or ''),
+    'email':      lambda c: normalizar_texto(_valor(c, 'email_display') or '~'),
+    'dni':        lambda c: (c.dni or '').zfill(15) if c.dni else '~',
+    'tipo':       lambda c: c.tipo_cliente or '',
+    'telefonos':  lambda c: _valor(c, 'cantidad_telefonos') or 0,
+    'domicilios': lambda c: _valor(c, 'cantidad_direcciones') or 0,
+    'bidones':    lambda c: c.bidones_prestados or 0,
+    'alta':       lambda c: c.fecha_alta.isoformat() if c.fecha_alta else '',
+}
+
+
+def _columnas_ordenables(q, tipo, orden, direccion):
+    """URL e ícono de cada encabezado: un clic ordena A→Z, otro invierte."""
+    columnas = {}
+    for clave in ORDEN_CLIENTES:
+        activa = clave == orden
+        siguiente = 'desc' if activa and direccion == 'asc' else 'asc'
+        columnas[clave] = {
+            'url': '?' + urlencode({'q': q, 'tipo': tipo, 'orden': clave, 'dir': siguiente}),
+            'dir': direccion if activa else '',
+        }
+    return columnas
+
+
 @login_required
 def listar_clientes(request):
     if not puede(request.user, 'ver_clientes'):
@@ -54,7 +87,8 @@ def listar_clientes(request):
         return redirect('inicio')
 
     form    = BuscarClienteForm(request.GET)
-    clientes = Cliente.objects.select_related('usuario').all()
+    clientes = Cliente.objects.select_related('usuario').filter(eliminado=False)
+    eliminados = Cliente.objects.select_related('usuario').filter(eliminado=True)
 
     q    = request.GET.get('q', '').strip()
     tipo = request.GET.get('tipo', '').strip()
@@ -70,6 +104,13 @@ def listar_clientes(request):
     if tipo:
         clientes = [c for c in clientes if c.tipo_cliente == tipo]
 
+    orden = request.GET.get('orden', '')
+    direccion = 'desc' if request.GET.get('dir') == 'desc' else 'asc'
+    if orden in ORDEN_CLIENTES:
+        clientes.sort(key=ORDEN_CLIENTES[orden], reverse=direccion == 'desc')
+    else:
+        orden = ''
+
     paginator = Paginator(clientes, 10)
     page_obj  = paginator.get_page(request.GET.get('page'))
 
@@ -78,6 +119,10 @@ def listar_clientes(request):
         'form': form,
         'q': q,
         'tipo': tipo,
+        'columnas': _columnas_ordenables(q, tipo, orden, direccion),
+        'eliminados': eliminados,
+        # Para que la paginación conserve filtros y orden
+        'filtros_qs': urlencode({'q': q, 'tipo': tipo, 'orden': orden, 'dir': direccion if orden else ''}),
     })
 
 
@@ -113,6 +158,8 @@ def ver_cliente(request, pk):
         'cliente':             cliente,
         'telefonos':           telefonos,
         'direcciones':         direcciones,
+        'telefonos_eliminados':   TelefonoContacto.todos.filter(cliente=cliente, eliminado=True),
+        'direcciones_eliminadas': DireccionEntrega.todos.filter(cliente=cliente, eliminado=True),
         'pedidos':             pedidos,
         'form_tel':            form_tel,
         'form_dir':            form_dir,
@@ -134,24 +181,6 @@ def ver_cliente(request, pk):
 # ─────────────────────────────────────────────────────────────
 # CREAR CLIENTE MANUAL
 # ─────────────────────────────────────────────────────────────
-def guardar_telefonos_dinamicos(request, cliente):
-    """Procesa los arrays telefono_numero[] y telefono_relacion[] del POST y crea los objetos TelefonoContacto."""
-    numeros = request.POST.getlist('telefono_numero[]')
-    relaciones = request.POST.getlist('telefono_relacion[]')
-    
-    hay_principal = False
-    for i, numero in enumerate(numeros):
-        numero = numero.strip()
-        if numero:
-            relacion = relaciones[i].strip() if i < len(relaciones) else 'Otro'
-            es_principal = not hay_principal
-            hay_principal = True
-            TelefonoContacto.objects.create(
-                cliente=cliente,
-                numero=numero,
-                desc_relacion=relacion or 'Otro',
-                es_principal=es_principal
-            )
 
 @login_required
 def crear_cliente(request):
@@ -177,14 +206,16 @@ def crear_cliente_sin_cuenta(request):
         messages.error(request, 'No tenés permiso para crear clientes.')
         return redirect('apps.clientes:listar_clientes')
 
+    telefonos, errores_telefonos = None, []
     if request.method == 'POST':
         form = ClienteSinCuentaForm(request.POST)
-        if form.is_valid():
+        telefonos, errores_telefonos = servicios_clientes.leer_telefonos(request.POST)
+        if form.is_valid() and not errores_telefonos:
             cliente = form.save(commit=False)
             # Sin usuario vinculado
             cliente.usuario = None
             cliente.save()
-            guardar_telefonos_dinamicos(request, cliente)
+            servicios_clientes.guardar_telefonos(cliente, telefonos)
             messages.success(
                 request,
                 f'Cliente "{cliente.nombre_completo()}" creado correctamente (sin cuenta web).'
@@ -193,7 +224,8 @@ def crear_cliente_sin_cuenta(request):
     else:
         form = ClienteSinCuentaForm()
 
-    return render(request, 'clientes/crear_cliente_sin_cuenta.html', {'form': form})
+    return render(request, 'clientes/crear_cliente_sin_cuenta.html', {
+        'form': form, 'telefonos': telefonos, 'errores_telefonos': errores_telefonos})
 
 
 @login_required
@@ -206,14 +238,16 @@ def crear_cliente_con_cuenta(request):
         messages.error(request, 'No tenés permiso para crear clientes.')
         return redirect('apps.clientes:listar_clientes')
 
+    telefonos, errores_telefonos = None, []
     if request.method == 'POST':
         form_usuario = AltaClienteConCuentaForm(request.POST, request.FILES)
-        if form_usuario.is_valid():
+        telefonos, errores_telefonos = servicios_clientes.leer_telefonos(request.POST)
+        if form_usuario.is_valid() and not errores_telefonos:
             usuario = form_usuario.save()
             # La señal post_save crea el Cliente automáticamente y el form lo actualiza
             try:
                 cliente = usuario.perfil_cliente
-                guardar_telefonos_dinamicos(request, cliente)
+                servicios_clientes.guardar_telefonos(cliente, telefonos)
                 messages.success(
                     request,
                     f'Cliente "{cliente.nombre_completo()}" creado con cuenta web.'
@@ -224,7 +258,39 @@ def crear_cliente_con_cuenta(request):
     else:
         form_usuario = AltaClienteConCuentaForm()
 
-    return render(request, 'clientes/crear_cliente_con_cuenta.html', {'form_usuario': form_usuario})
+    return render(request, 'clientes/crear_cliente_con_cuenta.html', {
+        'form_usuario': form_usuario, 'telefonos': telefonos, 'errores_telefonos': errores_telefonos})
+
+
+# ─────────────────────────────────────────────────────────────
+# ELIMINAR / RESTAURAR CLIENTE (baja lógica, como los productos)
+# ─────────────────────────────────────────────────────────────
+@login_required
+def eliminar_cliente(request, pk):
+    """«Eliminar» no borra: oculta al cliente, lo saca de los listados para
+    elegir clientes y bloquea su acceso web. Pedidos, cuenta e historial quedan."""
+    if not puede(request.user, 'registrar_clientes'):
+        messages.error(request, 'No tenés permiso para eliminar clientes.')
+        return redirect('apps.clientes:listar_clientes')
+    if request.method != 'POST':
+        return redirect('apps.clientes:ver_cliente', pk=pk)
+    cliente = get_object_or_404(Cliente, pk=pk)
+    cliente.dar_de_baja()
+    messages.success(request, f'«{cliente.nombre_completo()}» se eliminó. '
+                              'Lo podés restaurar desde «Clientes eliminados».')
+    return redirect('apps.clientes:listar_clientes')
+
+
+@login_required
+def restaurar_cliente(request, pk):
+    if not puede(request.user, 'registrar_clientes'):
+        messages.error(request, 'No tenés permiso para restaurar clientes.')
+        return redirect('apps.clientes:listar_clientes')
+    if request.method == 'POST':
+        cliente = get_object_or_404(Cliente, pk=pk)
+        cliente.restaurar()
+        messages.success(request, f'«{cliente.nombre_completo()}» volvió al directorio.')
+    return redirect('apps.clientes:listar_clientes')
 
 
 # ─────────────────────────────────────────────────────────────
@@ -352,7 +418,7 @@ def eliminar_telefono(request, pk):
         if cliente.cantidad_telefonos() <= 1:
             messages.error(request, 'Debes tener al menos 1 teléfono registrado.')
         else:
-            tel.delete()
+            tel.dar_de_baja()
             messages.success(request, 'Teléfono eliminado.')
 
     if cliente.usuario == request.user and not puede(request.user, 'registrar_clientes'):
@@ -464,12 +530,38 @@ def eliminar_direccion(request, pk):
         return redirect('inicio')
 
     if request.method == 'POST':
-        direccion.delete()
+        direccion.dar_de_baja()
         messages.success(request, 'Dirección eliminada.')
 
     if cliente.usuario == request.user and not puede(request.user, 'registrar_clientes'):
         return redirect('apps.clientes:mi_perfil')
     return redirect('apps.clientes:ver_cliente', pk=cliente.pk)
+
+
+@login_required
+def restaurar_telefono(request, pk):
+    tel = get_object_or_404(TelefonoContacto.todos, pk=pk)
+    if not puede(request.user, 'registrar_clientes'):
+        messages.error(request, 'Sin permiso.')
+        return redirect('inicio')
+    if request.method == 'POST':
+        tel.eliminado = False
+        tel.save(update_fields=['eliminado'])
+        messages.success(request, 'Teléfono restaurado.')
+    return redirect('apps.clientes:ver_cliente', pk=tel.cliente_id)
+
+
+@login_required
+def restaurar_direccion(request, pk):
+    direccion = get_object_or_404(DireccionEntrega.todos, pk=pk)
+    if not puede(request.user, 'registrar_clientes'):
+        messages.error(request, 'Sin permiso.')
+        return redirect('inicio')
+    if request.method == 'POST':
+        direccion.eliminado = False
+        direccion.save(update_fields=['eliminado'])
+        messages.success(request, 'Dirección restaurada.')
+    return redirect('apps.clientes:ver_cliente', pk=direccion.cliente_id)
 
 
 # ─────────────────────────────────────────────────────────────

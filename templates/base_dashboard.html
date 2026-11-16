@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="es" data-bs-theme="light">
+<html lang="es-AR" data-bs-theme="light">
 <head>
     <script>
         /* Tema antes de dibujar la página (evita el destello): claro por defecto,
@@ -15,12 +15,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <!-- Estilo Global Dashboard -->
-    <link rel="stylesheet" href="{% static 'style/dashboard.css' %}?v=8">
+    <link rel="stylesheet" href="{% static 'style/dashboard.css' %}?v=13">
     <link rel="stylesheet" href="{% static 'style/productos.css' %}?v=6">
-    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=11">
+    <link rel="stylesheet" href="{% static 'style/paleta.css' %}?v=15">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     {% include 'includes/favicon.html' %}
-    <title>{% block title %}{% endblock %} · Aquadelluvia</title>
+    <title>{% block title %}{% endblock %} · Aguadelluvia</title>
     <style>
     /* Estilo para que el dropdown se abra al pasar el mouse */
     .nav-item.dropdown:hover .dropdown-menu {
@@ -37,7 +37,7 @@
         <aside id="sidebar" class="d-none d-lg-flex flex-column p-3 vh-100 sticky-top">
             <a href="{% url 'inicio' %}" class="navbar-brand d-flex align-items-center mb-4 mt-2 px-3 text-decoration-none">
                 <img src="{% static 'img/marca/rana-128.webp' %}" alt="" class="marca-rana me-2" width="42" height="42">
-                <span class="marca-nombre">Aquadelluvia</span>
+                <span class="marca-nombre">Aguadelluvia</span>
             </a>
             
             <ul class="nav flex-column mb-auto gap-1 mt-3">
@@ -50,7 +50,7 @@
             <div class="offcanvas-header border-bottom">
                 <h5 class="offcanvas-title d-flex align-items-center gap-2 mb-0" id="sidebarOffcanvasLabel">
                     <img src="{% static 'img/marca/rana-128.webp' %}" alt="" class="marca-rana" width="36" height="36">
-                    <span class="marca-nombre">Aquadelluvia</span>
+                    <span class="marca-nombre">Aguadelluvia</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
@@ -76,7 +76,7 @@
                 <form class="d-flex me-auto ms-3 d-none d-md-flex w-50" role="search" action="{% url 'apps.buscador:buscar_productos' %}" method="get">
                     <div class="input-group">
                         <span class="input-group-text bg-surface border-0 rounded-start-pill ps-3 text-muted"><i class="fa-solid fa-search"></i></span>
-                        <input class="form-control bg-surface border-0 rounded-end-pill shadow-none" type="search" name="q" placeholder="Buscar productos..." aria-label="Buscar" value="{{ query}}">
+                        <input maxlength="100" class="form-control bg-surface border-0 rounded-end-pill shadow-none" type="search" name="q" placeholder="Buscar productos..." aria-label="Buscar" value="{{ query}}">
                     </div>
                 </form>
 
@@ -143,7 +143,7 @@
             
             <footer class="footer mt-auto py-4 text-center">
                 <div class="container-fluid px-4">
-                    <span class="small">&copy; 2026 Aquadelluvia</span>
+                    <span class="small">&copy; 2026 Aguadelluvia</span>
                 </div>
             </footer>
         </div> <!-- End page-content-wrapper -->
@@ -151,6 +151,7 @@
     
     {% include 'includes/popups.html' %}
     <script src="{% static 'js/main.js' %}?v=2"></script>
+    <script src="{% static 'js/tabla_ordenable.js' %}?v=1"></script>
 
 </body>
 </html>

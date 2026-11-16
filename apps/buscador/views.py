@@ -32,7 +32,8 @@ def buscar_productos(request):
 
 
     # Paginación (Mantenemos tus 6 productos por página)
-    paginator = Paginator(resultados.order_by('nombre'), 6)
+    from apps.productos.views import agotados_al_final
+    paginator = Paginator(agotados_al_final(resultados), 6)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 

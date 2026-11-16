@@ -1,4 +1,5 @@
 {% extends 'base_dashboard.html' %}
+{% load l10n %}
 
 {% block title %}Hojas de Ruta — Logística{% endblock %}
 
@@ -7,7 +8,6 @@
     <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center gap-3 mb-4">
         <div>
             <h1 class="h3 fw-bold mb-0 text-main">Hojas de Ruta</h1>
-            <p class="text-muted small mb-0 mt-1">Gestión de rutas de reparto y entregas diarias</p>
         </div>
         {% if 'planificar_repartos' in puede %}
         <div class="d-flex flex-column flex-md-row gap-2">
@@ -72,32 +72,32 @@
 {% if rutas %}
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-surface mb-4">
 <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
+    <table class="table table-hover align-middle mb-0" data-ordenable>
         <thead class="table-light text-muted small text-uppercase">
             <tr>
-                <th class="ps-4 py-3 border-bottom-0">#</th>
-                <th class="py-3 border-bottom-0">Fecha</th>
-                <th class="py-3 border-bottom-0">Repartidor</th>
-                <th class="py-3 border-bottom-0 text-center">Camión</th>
-                <th class="py-3 border-bottom-0">Zona</th>
-                <th class="py-3 border-bottom-0 text-center">Paradas</th>
-                <th class="py-3 border-bottom-0">Progreso</th>
-                <th class="py-3 border-bottom-0 text-center">Estado</th>
+                <th class="ps-4 py-3 border-bottom-0 text-nowrap" data-ordenar="numero">#</th>
+                <th class="py-3 border-bottom-0 text-nowrap" data-ordenar="texto">Fecha</th>
+                <th class="py-3 border-bottom-0 text-nowrap" data-ordenar="texto">Repartidor</th>
+                <th class="py-3 border-bottom-0 text-center text-nowrap" data-ordenar="texto">Camión</th>
+                <th class="py-3 border-bottom-0 text-nowrap" data-ordenar="texto">Zona</th>
+                <th class="py-3 border-bottom-0 text-center text-nowrap" data-ordenar="numero">Paradas</th>
+                <th class="py-3 border-bottom-0 text-nowrap" data-ordenar="numero">Progreso</th>
+                <th class="py-3 border-bottom-0 text-center text-nowrap" data-ordenar="texto">Estado</th>
                 <th class="pe-4 py-3 border-bottom-0 text-center">Acciones</th>
             </tr>
         </thead>
         <tbody class="border-top-0">
             {% for ruta in rutas %}
             <tr>
-                <td class="ps-4 fw-bold text-main">#{{ ruta.id_ruta }}</td>
-                <td class="small">{{ ruta.fecha|date:"d/m/Y" }}</td>
-                <td class="fw-semibold">{% if ruta.empleado %}{{ ruta.empleado.nombre }} {{ ruta.empleado.apellido }}{% else %}<span class="text-muted">Sin asignar</span>{% endif %}</td>
+                <td class="ps-4 fw-bold text-main" data-valor="{{ ruta.id_ruta|unlocalize }}">#{{ ruta.id_ruta }}</td>
+                <td class="small" data-valor="{{ ruta.fecha|date:'Y-m-d' }}">{{ ruta.fecha|date:"d/m/Y" }}</td>
+                <td class="fw-semibold" data-valor="{% if ruta.empleado %}{{ ruta.empleado.nombre }} {{ ruta.empleado.apellido }}{% else %}~{% endif %}">{% if ruta.empleado %}{{ ruta.empleado.nombre }} {{ ruta.empleado.apellido }}{% else %}<span class="text-muted">Sin asignar</span>{% endif %}</td>
                 <td class="text-center"><span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 py-1">{{ ruta.camion.patente }}</span></td>
                 <td class="small">{{ ruta.zona.nombre }}</td>
-                <td class="text-center">
+                <td class="text-center" data-valor="{{ ruta.total_paradas|unlocalize }}">
                     <span class="badge bg-primary bg-opacity-25 text-primary rounded-pill px-2 py-1"><i class="fa-solid fa-location-dot me-1"></i> {{ ruta.total_paradas }}</span>
                 </td>
-                <td style="min-width:140px;">
+                <td style="min-width:140px;" data-valor="{{ ruta.porcentaje_completado|unlocalize }}">
                     <div class="d-flex align-items-center justify-content-between mb-1">
                         <small class="text-muted fw-bold" style="font-size: 0.7rem;">{{ ruta.paradas_entregadas }}/{{ ruta.total_paradas }} Entregas</small>
                         <small class="text-muted fw-bold" style="font-size: 0.7rem;">{{ ruta.porcentaje_completado|floatformat:0 }}%</small>
@@ -106,7 +106,7 @@
                         <div class="progress-bar rounded-pill bg-success" style="width:{{ ruta.porcentaje_completado }}%"></div>
                     </div>
                 </td>
-                <td class="text-center">
+                <td class="text-center" data-valor="{{ ruta.estado }}">
                     {% if ruta.estado == 'Borrador' %}
                         <span class="badge bg-info bg-opacity-25 text-info rounded-pill px-2 py-1"><i class="fa-solid fa-box-open me-1"></i> {{ ruta.estado }}</span>
                     {% elif ruta.estado == 'Confirmada' %}
@@ -122,6 +122,15 @@
                             <i class="fa-solid fa-eye"></i>
                         </a>
                     </div>
+                        {% if ruta.estado == 'Borrador' and 'planificar_repartos' in puede %}
+                        <form method="post" action="{% url 'apps.logistica:eliminar_ruta' ruta.id_ruta %}" class="d-inline"
+                              data-confirmar="¿Eliminar la hoja de ruta #{{ ruta.id_ruta }}? Sus pedidos quedan libres para otra hoja; la podés restaurar." data-peligro>
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-light text-danger ms-1" title="Eliminar borrador" aria-label="Eliminar borrador">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </form>
+                        {% endif %}
                 </td>
             </tr>
             {% endfor %}
@@ -155,5 +164,50 @@
 </div>
 {% endif %}
 </div>
+
+{# ── Hojas de ruta eliminadas (baja lógica) ── #}
+{% if eliminadas %}
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-surface mt-4">
+    <button class="btn w-100 text-start d-flex justify-content-between align-items-center p-3 px-4 border-0"
+            type="button" data-bs-toggle="collapse" data-bs-target="#rutasEliminadas" aria-expanded="false" aria-controls="rutasEliminadas">
+        <span class="fw-bold text-main"><i class="fa-solid fa-box-archive me-2 text-muted"></i>Hojas de ruta eliminadas
+            <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis ms-1">{{ eliminadas|length }}</span>
+        </span>
+        <i class="fa-solid fa-chevron-down text-muted"></i>
+    </button>
+    <div class="collapse" id="rutasEliminadas">
+        <p class="small text-muted px-4 mb-2">Borradores eliminados. Al restaurar uno, vuelve como Borrador si sus pedidos no se agendaron en otra hoja.</p>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" data-ordenable>
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4 py-3 border-bottom-0 text-nowrap" data-ordenar="texto">#</th>
+                        <th class=" py-3 border-bottom-0 text-nowrap" data-ordenar="texto">Fecha</th>
+                        <th class=" py-3 border-bottom-0 text-nowrap" data-ordenar="texto">Zona</th>
+                        <th class=" py-3 border-bottom-0 text-nowrap" data-ordenar="texto">Repartidor</th>
+                        <th class="pe-4 py-3 border-bottom-0 text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ruta in eliminadas %}
+                    <tr class="opacity-75">
+                        <td class="ps-4 fw-semibold text-main">#{{ ruta.id_ruta }}</td>
+                        <td class="small" data-valor="{{ ruta.fecha|date:'Y-m-d' }}">{{ ruta.fecha|date:"d/m/Y" }}</td>
+                        <td class="small">{{ ruta.zona.nombre|default:"—" }}</td>
+                        <td class="small">{% if ruta.empleado %}{{ ruta.empleado.nombre }} {{ ruta.empleado.apellido }}{% else %}—{% endif %}</td>
+                        <td class="pe-4 text-end">
+                            <form method="post" action="{% url 'apps.logistica:restaurar_ruta' ruta.id_ruta %}" class="d-inline" data-confirmar="¿Restaurar la hoja de ruta #{{ ruta.id_ruta }}?">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success"><i class="fa-solid fa-rotate-left me-1"></i>Restaurar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 

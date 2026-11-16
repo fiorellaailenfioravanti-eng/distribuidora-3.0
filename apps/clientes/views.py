@@ -40,7 +40,7 @@ def es_dueno_o_staff(user, cliente):
 # LISTAR CLIENTES
 # ─────────────────────────────────────────────────────────────
 def _texto_buscable(cliente):
-    partes = [cliente.nombre, cliente.apellido, cliente.dni, cliente.email_contacto]
+    partes = [cliente.numero, cliente.nombre, cliente.apellido, cliente.dni, cliente.email_contacto]
     if cliente.usuario is not None:
         u = cliente.usuario
         partes += [u.get_full_name(), u.username, u.email]

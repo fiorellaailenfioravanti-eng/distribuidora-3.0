@@ -90,9 +90,9 @@
     "semantic_hash": "8e8082f90ec0e519a53aee834df952f4"
   },
   "apps/autenticacion/forms.py": {
-    "mtime": 1794832581.379313,
-    "seen": 1794832874.7889116,
-    "ast_hash": "ec002ac60f636615aabea9ebd8efafb6",
+    "mtime": 1794833594.877405,
+    "seen": 1794833856.9415095,
+    "ast_hash": "c190cd3fe34902b1ece4443045fd4dab",
     "semantic_hash": ""
   },
   "apps/autenticacion/migrations/0001_initial.py": {
@@ -114,27 +114,27 @@
     "semantic_hash": ""
   },
   "apps/autenticacion/models.py": {
-    "mtime": 1794832581.3819342,
-    "seen": 1794832874.7889116,
-    "ast_hash": "b6fb8bb7310403e5da2bb1517baea2e4",
+    "mtime": 1794833558.8302526,
+    "seen": 1794833856.9415095,
+    "ast_hash": "590bdc08033be6f4689aa780ebdacf44",
     "semantic_hash": ""
   },
   "apps/autenticacion/tests.py": {
-    "mtime": 1794832581.3819342,
-    "seen": 1794832874.7889116,
-    "ast_hash": "852df8c74442d1b5d8c36e6662a1ac0d",
+    "mtime": 1794833669.3267446,
+    "seen": 1794833856.9415095,
+    "ast_hash": "8c00d7e73c5cad22ba7221464739eea5",
     "semantic_hash": ""
   },
   "apps/autenticacion/urls.py": {
-    "mtime": 1794832581.3819342,
-    "seen": 1794832874.7889116,
-    "ast_hash": "6c6c6d19b7c76980322ce4689c5ae4af",
+    "mtime": 1794833612.2471259,
+    "seen": 1794833856.9415095,
+    "ast_hash": "a19cfb5d8319f21a9e2ef262648f24b5",
     "semantic_hash": ""
   },
   "apps/autenticacion/views.py": {
-    "mtime": 1794832581.3819342,
-    "seen": 1794832874.7889116,
-    "ast_hash": "397f4b18fa2880e9c7076c37f6d05890",
+    "mtime": 1794833612.2471259,
+    "seen": 1794833856.9415095,
+    "ast_hash": "058a74128bb4648812a65f722254427c",
     "semantic_hash": ""
   },
   "apps/buscador/__init__.py": {
@@ -798,9 +798,9 @@
     "semantic_hash": ""
   },
   ".agents/CONTEXT.md": {
-    "mtime": 1794832581.359657,
-    "seen": 1794832874.7889116,
-    "ast_hash": "2fc4c8af467b8f94e168fe2d733e39f0",
+    "mtime": 1794833844.543177,
+    "seen": 1794833856.9415095,
+    "ast_hash": "58193d59fabe2346fe0900094747819e",
     "semantic_hash": ""
   },
   ".agents/DESIGN.md": {
@@ -858,15 +858,15 @@
     "semantic_hash": ""
   },
   "templates/base_dashboard.html": {
-    "mtime": 1794832683.325487,
-    "seen": 1794832874.7889116,
-    "ast_hash": "d993ab5798f3d94fb7b5796ae22a1e88",
+    "mtime": 1794833625.4597735,
+    "seen": 1794833856.9415095,
+    "ast_hash": "4ae61878dc8bc72a121f5453dbbce168",
     "semantic_hash": ""
   },
   "templates/base_tienda.html": {
-    "mtime": 1794832683.3087137,
-    "seen": 1794832874.7889116,
-    "ast_hash": "a042ed2f8267814d03da544e74ee99b0",
+    "mtime": 1794833625.4397676,
+    "seen": 1794833856.9415095,
+    "ast_hash": "f9062c297e31a0ecef414a60c9b5051e",
     "semantic_hash": ""
   },
   "templates/buscador/resultados_busqueda.html": {
@@ -1698,9 +1698,9 @@
     "semantic_hash": ""
   },
   "distribuidora/tests.py": {
-    "mtime": 1794832752.8066113,
-    "seen": 1794832874.7889116,
-    "ast_hash": "392148a071fb846cea8cca4a1954b528",
+    "mtime": 1794832901.810449,
+    "seen": 1794833856.9415095,
+    "ast_hash": "5e2da4814bbede460c5422acb5be6c70",
     "semantic_hash": ""
   },
   "distribuidora/validadores.py": {
@@ -1728,9 +1728,9 @@
     "semantic_hash": ""
   },
   "notas/apps/autenticacion.md": {
-    "mtime": 1794832581.5614984,
-    "seen": 1794832874.7889116,
-    "ast_hash": "3af3d667e1a30e79b4020583e5e5f09a",
+    "mtime": 1794833844.543177,
+    "seen": 1794833856.9415095,
+    "ast_hash": "db1d5d5860ff1be2c8f55d1375e95ba8",
     "semantic_hash": ""
   },
   "notas/apps/buscador.md": {
@@ -1782,9 +1782,9 @@
     "semantic_hash": ""
   },
   "notas/apps/productos.md": {
-    "mtime": 1794832581.5639567,
-    "seen": 1794832874.7889116,
-    "ast_hash": "69a0540618a92f5bac03d0f22ba79fa6",
+    "mtime": 1794832885.7222757,
+    "seen": 1794833856.9415095,
+    "ast_hash": "75c18bd821e818a17eeb0d662785dc95",
     "semantic_hash": ""
   },
   "notas/apps/promociones.md": {
@@ -1817,28 +1817,10 @@
     "ast_hash": "42d4e12f82187dd85c03757bd88a3fd5",
     "semantic_hash": ""
   },
-  "templates/autenticacion/email_recuperar_asunto.txt": {
-    "mtime": 1794832581.5992222,
-    "seen": 1794832874.7889116,
-    "ast_hash": "dff3913fb85153788a7fa181e794445d",
-    "semantic_hash": ""
-  },
-  "templates/autenticacion/email_recuperar_contrasena.txt": {
-    "mtime": 1794832581.599788,
-    "seen": 1794832874.7889116,
-    "ast_hash": "06b6631d4aa390f2f25c39e0b70d3b1c",
-    "semantic_hash": ""
-  },
   "templates/autenticacion/recuperar_contrasena.html": {
-    "mtime": 1794832581.599788,
-    "seen": 1794832874.7889116,
-    "ast_hash": "2636255ddad5a651e6f38e111ff82315",
-    "semantic_hash": ""
-  },
-  "templates/autenticacion/recuperar_enviado.html": {
-    "mtime": 1794832581.599788,
-    "seen": 1794832874.7889116,
-    "ast_hash": "dd0bc2888c15dfc63a5a22eab03d8a7a",
+    "mtime": 1794833625.37189,
+    "seen": 1794833856.9415095,
+    "ast_hash": "058b23bb0389677b3586f7c354c2c917",
     "semantic_hash": ""
   },
   "templates/autenticacion/recuperar_listo.html": {
@@ -1848,9 +1830,9 @@
     "semantic_hash": ""
   },
   "templates/autenticacion/recuperar_nueva.html": {
-    "mtime": 1794832581.599788,
-    "seen": 1794832874.7889116,
-    "ast_hash": "7d2fc6533e7412cf9a2238f14ae805af",
+    "mtime": 1794833625.37189,
+    "seen": 1794833856.9415095,
+    "ast_hash": "85c5a8ae54d8daa87121d01dbf7b84c0",
     "semantic_hash": ""
   },
   "templates/includes/popups.html": {
@@ -1962,9 +1944,9 @@
     "semantic_hash": ""
   },
   "notas/hallazgos/QA-09 Recuperar contrase\u00f1a usa vistas de clase.md": {
-    "mtime": 1794832581.5713246,
-    "seen": 1794832874.7889116,
-    "ast_hash": "1127c5d034d14a9400f9465fcbd0e1fb",
+    "mtime": 1794833844.543177,
+    "seen": 1794833856.9415095,
+    "ast_hash": "1725b7099a7ebc09695c22d80f8979d5",
     "semantic_hash": ""
   },
   "notas/qa/QA 2026-11-12.md": {
@@ -2316,9 +2298,9 @@
     "semantic_hash": ""
   },
   "notas/apps/configuracion.md": {
-    "mtime": 1794832581.5631342,
-    "seen": 1794832874.7889116,
-    "ast_hash": "180f6286e63ef0673d91833ab395ffbe",
+    "mtime": 1794832885.7222757,
+    "seen": 1794833856.9415095,
+    "ast_hash": "966e18f42df4087e9a2e3a0340707eeb",
     "semantic_hash": ""
   },
   "notas/diario/2026-11-14.md": {
@@ -2391,6 +2373,60 @@
     "mtime": 1794832581.5561676,
     "seen": 1794832874.7889116,
     "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": ""
+  },
+  "apps/autenticacion/migrations/0006_codigo_recuperacion.py": {
+    "mtime": 1794833559.83049,
+    "seen": 1794833856.9415095,
+    "ast_hash": "cb7da1f6d731b996d66a832b5d7eada6",
+    "semantic_hash": ""
+  },
+  "apps/autenticacion/recuperacion.py": {
+    "mtime": 1794833584.0197165,
+    "seen": 1794833856.9415095,
+    "ast_hash": "57c34302bff0a2424297805171976460",
+    "semantic_hash": ""
+  },
+  "notas/diario/2026-11-16.md": {
+    "mtime": 1794833844.543177,
+    "seen": 1794833856.9415095,
+    "ast_hash": "2947fe213c6033679dccd52c6ad43002",
+    "semantic_hash": ""
+  },
+  "templates/autenticacion/correos/_base.html": {
+    "mtime": 1794833646.655103,
+    "seen": 1794833856.9415095,
+    "ast_hash": "5897d7fe119e427dc7b63861846fe0ed",
+    "semantic_hash": ""
+  },
+  "templates/autenticacion/correos/codigo.html": {
+    "mtime": 1794833646.6699288,
+    "seen": 1794833856.9415095,
+    "ast_hash": "f80d3fc33438d37d6e344033f6b75c88",
+    "semantic_hash": ""
+  },
+  "templates/autenticacion/correos/codigo.txt": {
+    "mtime": 1794833646.6896608,
+    "seen": 1794833856.9415095,
+    "ast_hash": "65aaa33bd2e68e2e6105fed0cf505af3",
+    "semantic_hash": ""
+  },
+  "templates/autenticacion/correos/contrasena_cambiada.html": {
+    "mtime": 1794833646.7195451,
+    "seen": 1794833856.9415095,
+    "ast_hash": "63375e977e39a2c6a8faf41344cd7e53",
+    "semantic_hash": ""
+  },
+  "templates/autenticacion/correos/contrasena_cambiada.txt": {
+    "mtime": 1794833646.7396398,
+    "seen": 1794833856.9415095,
+    "ast_hash": "70e2b4b39252c6aa7d9f9c9f9be54eea",
+    "semantic_hash": ""
+  },
+  "templates/autenticacion/recuperar_codigo.html": {
+    "mtime": 1794833625.3994958,
+    "seen": 1794833856.9415095,
+    "ast_hash": "d5fc47b71fd45c64a1b7fa3cec15094a",
     "semantic_hash": ""
   }
 }

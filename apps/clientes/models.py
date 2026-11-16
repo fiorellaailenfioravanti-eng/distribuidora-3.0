@@ -47,6 +47,16 @@ class Cliente(models.Model):
         related_name='perfil_cliente',
         verbose_name='Cuenta de usuario'
     )
+    numero           = models.CharField(
+        max_length=10,
+        unique=True,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name='Nro de cliente',
+        help_text='Los importados conservan su número del sistema anterior (ej. 1003389); '
+                  'los nuevos se numeran 0000001, 0000002…'
+    )
     # ── Datos propios (para clientes sin cuenta) ───────────────
     nombre           = models.CharField(
         max_length=LARGO_NOMBRE,
@@ -199,7 +209,21 @@ class Cliente(models.Model):
             )
             if tipo_anterior == 'Premium':
                 self.permite_fiado = False
+        if not self.numero:
+            self.numero = siguiente_numero_cliente()
         super().save(*args, **kwargs)
+
+
+def siguiente_numero_cliente():
+    """Próximo número para un cliente nuevo: 0000001, 0000002… (los que empiezan
+    con 0 son los dados de alta en este sistema; los importados conservan el suyo)."""
+    ultimo = (Cliente._base_manager.filter(numero__startswith='000')
+              .order_by('-numero').values_list('numero', flat=True).first())
+    siguiente = int(ultimo or 0) + 1
+    # Algunos importados también empiezan con 0 (ej. 0010059): se saltean.
+    while Cliente._base_manager.filter(numero=f'{siguiente:07d}').exists():
+        siguiente += 1
+    return f'{siguiente:07d}'
 
 
 # ────────────────────────────────────────────────

@@ -33,3 +33,4 @@ Clientes, teléfonos, direcciones de entrega e historial de envases (RF-08).
 - 2026-11-14 ([[2026-11-14]]): teléfonos y direcciones con baja lógica (lista plegable en la ficha + Restaurar); al eliminar el principal, pasa a otro.
 - 2026-11-16 ([[2026-11-16]]): **Nro de cliente** (`Cliente.numero`): los importados conservan su número del sistema anterior; los nuevos arrancan en 0000001. Se muestra en el directorio y la ficha y se puede buscar. Importados los clientes de la hoja W3W de «Recorridos 12-11-25».
 - 2026-11-16 ([[2026-11-16]]): botones **Editar** y **Eliminar** en cada fila del directorio (con la función `registrar_clientes`), como en [[productos]]; los eliminados siguen debajo en «Clientes eliminados».
+- 2026-11-16 ([[2026-11-16]]): botón **Ver en Google Maps** en cada domicilio de la ficha (abre en otra pestaña). Usa las coordenadas si están cargadas; si no, busca por calle, altura y ciudad (`DireccionEntrega.url_google_maps()`).

@@ -345,3 +345,31 @@ class NumeroClienteTests(TestCase):
         nuevo = Cliente.objects.create(nombre='Ana', apellido='Pérez')
         siguiente = Cliente.objects.create(nombre='Juan', apellido='Gómez')
         self.assertEqual((nuevo.numero, siguiente.numero), ('0000003', '0000004'))
+
+
+class EnlaceGoogleMapsTests(TestCase):
+    """Cada domicilio de la ficha tiene un botón para verlo en Google Maps."""
+
+    def setUp(self):
+        from .models import DireccionEntrega
+        vendedor = get_user_model().objects.create_user('vend_mapa', 'vm@x.com', 'Agua-Lluvia-2026')
+        vendedor.groups.add(Group.objects.get(name='Vendedor'))
+        self.client.force_login(vendedor)
+        self.cliente = Cliente.objects.create(nombre='Ana', apellido='Sosa')
+        self.direccion = DireccionEntrega.objects.create(
+            cliente=self.cliente, calle='Av. Sarmiento', altura='1234', ciudad='Resistencia')
+
+    def test_sin_coordenadas_busca_por_direccion(self):
+        self.assertEqual(
+            self.direccion.url_google_maps(),
+            'https://www.google.com/maps/search/?api=1&query='
+            'Av.%20Sarmiento%201234%2C%20Resistencia%2C%20Chaco%2C%20Argentina')
+
+    def test_con_coordenadas_usa_las_coordenadas(self):
+        self.direccion.coordenadas = '-27.4512, -58.9867'
+        self.assertTrue(self.direccion.url_google_maps().endswith('query=-27.4512%2C-58.9867'))
+
+    def test_la_ficha_muestra_el_boton(self):
+        respuesta = self.client.get(reverse('apps.clientes:ver_cliente', args=[self.cliente.pk]))
+        self.assertContains(respuesta, 'href="https://www.google.com/maps/search/?api=1&amp;query=')
+        self.assertContains(respuesta, 'target="_blank" rel="noopener noreferrer"')

@@ -354,6 +354,16 @@ class DireccionEntrega(models.Model):
         zona  = f" [{self.barrio.zona}]" if self.barrio and self.barrio.zona else ""
         return f"{self.calle} {self.altura}{extra}{barrio_str}{zona}"
 
+    def url_google_maps(self):
+        """Enlace para ver el domicilio en Google Maps: por coordenadas si están
+        cargadas (más preciso); si no, por calle, altura y ciudad."""
+        from urllib.parse import quote
+        if self.coordenadas.strip():
+            consulta = self.coordenadas.replace(' ', '')
+        else:
+            consulta = f'{self.calle} {self.altura}, {self.ciudad or "Resistencia"}, Chaco, Argentina'
+        return f'https://www.google.com/maps/search/?api=1&query={quote(consulta)}'
+
     def direccion_completa(self):
         partes = [f"{self.calle} {self.altura}"]
         if self.piso_depto:

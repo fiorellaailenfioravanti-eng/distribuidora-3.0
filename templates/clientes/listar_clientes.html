@@ -112,13 +112,28 @@
                     {% endif %}
                 </td>
                 <td class="d-none d-xl-table-cell"><span class="text-muted small">{{ cliente.fecha_alta|date:"d/m/Y" }}</span></td>
-                <td class="pe-4 text-center">
+                <td class="pe-4 text-center text-nowrap">
                     <div class="btn-group shadow-sm">
                         <a href="{% url 'apps.clientes:ver_cliente' cliente.pk %}"
                            class="btn btn-sm btn-light border-0 text-primary hover-lift" title="Ver Perfil">
                             <i class="fa-solid fa-eye"></i>
                         </a>
+                        {% if 'registrar_clientes' in puede %}
+                        <a href="{% url 'apps.clientes:editar_cliente' cliente.pk %}"
+                           class="btn btn-sm btn-light border-0 text-warning hover-lift" title="Editar">
+                            <i class="fa-solid fa-pen"></i>
+                        </a>
+                        {% endif %}
                     </div>
+                    {% if 'registrar_clientes' in puede %}
+                    <form method="post" action="{% url 'apps.clientes:eliminar_cliente' cliente.pk %}" class="d-inline"
+                          data-confirmar="¿Eliminar a {{ cliente.nombre_completo }}? No podrá ingresar a la tienda; lo podés restaurar desde «Clientes eliminados»." data-peligro>
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-light border-0 text-danger hover-lift shadow-sm ms-1" title="Eliminar" aria-label="Eliminar a {{ cliente.nombre_completo }}">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </form>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}

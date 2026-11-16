@@ -312,9 +312,9 @@
     "semantic_hash": ""
   },
   "apps/clientes/tests.py": {
-    "mtime": 1794835075.300342,
-    "seen": 1794835230.1954198,
-    "ast_hash": "8de2d8bea34fed2f7a9bc7a230e2d84d",
+    "mtime": 1794835622.582356,
+    "seen": 1794835663.7177706,
+    "ast_hash": "df426d4b725af51b6b3ba3c3b39bb5b4",
     "semantic_hash": ""
   },
   "apps/clientes/urls.py": {
@@ -438,9 +438,9 @@
     "semantic_hash": ""
   },
   "apps/empleados/views.py": {
-    "mtime": 1794835075.3253605,
-    "seen": 1794835230.1954198,
-    "ast_hash": "1142e7306353ddc3784d54ad5ac20a48",
+    "mtime": 1794835609.8564205,
+    "seen": 1794835663.7177706,
+    "ast_hash": "ce5e00338121e2626312ab3d5fd31488",
     "semantic_hash": ""
   },
   "apps/logistica/__init__.py": {
@@ -924,9 +924,9 @@
     "semantic_hash": ""
   },
   "templates/clientes/listar_clientes.html": {
-    "mtime": 1794835075.5001667,
-    "seen": 1794835230.1954198,
-    "ast_hash": "ebe2e2dddf373b81b27ff41ba4c99a27",
+    "mtime": 1794835613.8207002,
+    "seen": 1794835663.7177706,
+    "ast_hash": "13223936e7a874d3ce058d5490e390dc",
     "semantic_hash": ""
   },
   "templates/clientes/mi_perfil_cliente.html": {
@@ -966,9 +966,9 @@
     "semantic_hash": ""
   },
   "templates/empleados/listar_empleados.html": {
-    "mtime": 1794835075.505185,
-    "seen": 1794835230.1954198,
-    "ast_hash": "880dad376b86d55a0611bf8c17de0622",
+    "mtime": 1794835609.8554075,
+    "seen": 1794835663.7177706,
+    "ast_hash": "fed0a822040daefaeffba24603dc66a3",
     "semantic_hash": ""
   },
   "templates/empleados/roles/form_rol.html": {
@@ -984,9 +984,9 @@
     "semantic_hash": ""
   },
   "templates/empleados/ver_empleado.html": {
-    "mtime": 1794835075.5076914,
-    "seen": 1794835230.1954198,
-    "ast_hash": "448dca59b98f36f61aa96c22ea0ff47b",
+    "mtime": 1794835609.8554075,
+    "seen": 1794835663.7177706,
+    "ast_hash": "c97eb5aa647df479cdd142dd73695b7c",
     "semantic_hash": ""
   },
   "templates/errores/csrf_fallo.html": {
@@ -1242,9 +1242,9 @@
     "semantic_hash": ""
   },
   "apps/empleados/tests.py": {
-    "mtime": 1794835075.3253605,
-    "seen": 1794835230.1954198,
-    "ast_hash": "3f66099ccda675d441198bd9d3d32220",
+    "mtime": 1794835622.582356,
+    "seen": 1794835663.7177706,
+    "ast_hash": "df7c196e16fc5a6a4b3408bd7992cfc5",
     "semantic_hash": ""
   },
   "apps/logistica/management/commands/__init__.py": {
@@ -1740,9 +1740,9 @@
     "semantic_hash": ""
   },
   "notas/apps/clientes.md": {
-    "mtime": 1794835075.4575632,
-    "seen": 1794835230.1954198,
-    "ast_hash": "ae0a234b6044da99d09bf59c10a2b941",
+    "mtime": 1794835655.2723913,
+    "seen": 1794835663.7177706,
+    "ast_hash": "c9250aa125390283e25238ae75ce86cd",
     "semantic_hash": ""
   },
   "notas/apps/cuentas.md": {
@@ -1752,9 +1752,9 @@
     "semantic_hash": ""
   },
   "notas/apps/empleados.md": {
-    "mtime": 1794835075.4581132,
-    "seen": 1794835230.1954198,
-    "ast_hash": "a9770ff08221a996d8f53c3fa97c1b61",
+    "mtime": 1794835655.2673688,
+    "seen": 1794835663.7177706,
+    "ast_hash": "8e45c3dbf41433d208e6bb7dbff7691b",
     "semantic_hash": ""
   },
   "notas/apps/logistica.md": {
@@ -2382,9 +2382,9 @@
     "semantic_hash": ""
   },
   "notas/diario/2026-11-16.md": {
-    "mtime": 1794835219.4139488,
-    "seen": 1794835230.1954198,
-    "ast_hash": "13beb424ea0437a976a4480301dba960",
+    "mtime": 1794835655.2723913,
+    "seen": 1794835663.7177706,
+    "ast_hash": "495583e08dbf821ab251ee641b720397",
     "semantic_hash": ""
   },
   "templates/autenticacion/correos/_base.html": {

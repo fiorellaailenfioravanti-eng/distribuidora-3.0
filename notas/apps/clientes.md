@@ -31,3 +31,4 @@ Clientes, teléfonos, direcciones de entrega e historial de envases (RF-08).
 - Validaciones y correcciones: [[QA 2026-11-12]], [[Validaciones por campo]]
 - 2026-11-14 ([[2026-11-14]]): baja lógica con «Clientes eliminados» y Restaurar (bloquea la cuenta web y lo saca de los selectores); orden por columnas en el directorio; teléfonos dinámicos (uno obligatorio + los que haga falta, validados) en registro y alta; límites de largo con CHECK en la base.
 - 2026-11-14 ([[2026-11-14]]): teléfonos y direcciones con baja lógica (lista plegable en la ficha + Restaurar); al eliminar el principal, pasa a otro.
+- 2026-11-16 ([[2026-11-16]]): botones **Editar** y **Eliminar** en cada fila del directorio (con la función `registrar_clientes`), como en [[productos]]; los eliminados siguen debajo en «Clientes eliminados».

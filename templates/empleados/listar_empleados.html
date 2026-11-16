@@ -110,6 +110,15 @@
                             <a href="{% url 'apps.empleados:editar_empleado' empleado.id_empleado %}" class="btn btn-sm btn-light border-0 text-warning hover-lift rounded-pill px-3 shadow-sm" title="Editar">
                                 <i class="fa-solid fa-pen"></i>
                             </a>
+                            {% if empleado.usuario_id != request.user.pk %}
+                            <form method="post" action="{% url 'apps.empleados:eliminar_empleado' empleado.id_empleado %}" class="d-inline"
+                                  data-confirmar="¿Eliminar a {{ empleado.nombre }} {{ empleado.apellido }}? No podrá ingresar al sistema; lo podés restaurar desde «Empleados eliminados»." data-peligro>
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-light border-0 text-danger hover-lift rounded-pill px-3 shadow-sm" title="Eliminar" aria-label="Eliminar a {{ empleado.nombre }} {{ empleado.apellido }}">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
                         </td>
                     </tr>
                     {% empty %}

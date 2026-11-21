@@ -442,8 +442,11 @@ def actualizar_estado_entrega(request, pk):
 # MI RUTA HOY — Vista para repartidor
 # ─────────────────────────────────────────────────────────────
 def _link_mapa(direccion, texto):
-    """Link a Google Maps: por coordenadas si las hay, si no por la dirección."""
+    """Link del botón "Cómo llegar": what3words si la dirección lo tiene; si no,
+    Google Maps por coordenadas o, en último caso, por el texto de la dirección."""
     from urllib.parse import quote
+    if direccion is not None and direccion.url_w3w():
+        return direccion.url_w3w()
     destino = (direccion.coordenadas if direccion is not None and direccion.coordenadas
                else f'{texto}, Resistencia, Chaco')
     return f'https://www.google.com/maps/dir/?api=1&destination={quote(destino)}'

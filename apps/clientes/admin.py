@@ -11,7 +11,7 @@ class TelefonoContactoInline(admin.TabularInline):
 class DireccionEntregaInline(admin.TabularInline):
     model   = DireccionEntrega
     extra   = 1
-    fields  = ('calle', 'altura', 'piso_depto', 'barrio', 'desc_seguridad', 'coordenadas', 'es_principal')
+    fields  = ('calle', 'altura', 'piso_depto', 'barrio', 'desc_seguridad', 'w3w', 'coordenadas', 'es_principal')
 
 
 @admin.register(Cliente)

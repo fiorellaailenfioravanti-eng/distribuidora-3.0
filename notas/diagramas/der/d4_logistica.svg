@@ -1,0 +1,377 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3132 2304" width="3132" height="2304" font-family="Segoe UI, Arial, sans-serif">
+<style>.l{stroke:#1f2937;stroke-width:1.3;fill:none}.ent{fill:#dbeafe;stroke:#1e3a8a;stroke-width:1.6}.ref{fill:#f1f5f9;stroke:#64748b;stroke-width:1.4;stroke-dasharray:5 3}.rel{fill:#fef3c7;stroke:#92400e;stroke-width:1.5}.ov{fill:#fff;stroke:#334155;stroke-width:1.2}.tn{font-size:14px;font-weight:700;fill:#0f172a}.rn{font-size:12.5px;font-weight:600;fill:#78350f}.an{font-size:11.5px;fill:#0f172a}.at{font-size:9.5px;fill:#64748b;font-style:italic}.cd{font-size:11.5px;font-weight:700;fill:#b91c1c}.cr{font-size:10.5px;fill:#92400e;font-weight:600}.tt{font-size:22px;font-weight:700;fill:#0f172a}.nt{font-size:12px;fill:#475569}</style>
+<rect width="3132" height="2304" fill="#fff"/>
+<text x="1566.0" y="40" text-anchor="middle" class="tt">DER · Logística, reparto y empleados</text>
+<text x="1566.0" y="2290" text-anchor="middle" class="nt">Cardinalidad (mín,máx) junto a cada entidad. Doble óvalo: atributo multivaluado (días de reparto). Se omiten las relaciones de auditoría con USUARIO (creada/confirmada por).</text>
+<line x1="1467.6" y1="910.3" x2="1341.4" y2="729.5" class="l"/>
+<line x1="1478.3" y1="910.3" x2="1415.9" y2="612.9" class="l"/>
+<line x1="1488.5" y1="910.3" x2="1537.0" y2="718.2" class="l"/>
+<line x1="1499.3" y1="910.3" x2="1705.6" y2="633.6" class="l"/>
+<line x1="1512.5" y1="910.3" x2="1717.4" y2="757.6" class="l"/>
+<line x1="1542.9" y1="938.9" x2="2050.2" y2="995.2" class="l"/>
+<line x1="1542.9" y1="946.0" x2="1848.8" y2="1015.7" class="l"/>
+<line x1="1542.7" y1="954.3" x2="1976.8" y2="1114.0" class="l"/>
+<line x1="1522.5" y1="954.3" x2="1759.2" y2="1085.8" class="l"/>
+<line x1="1508.9" y1="954.3" x2="1803.4" y2="1204.1" class="l"/>
+<line x1="1498.3" y1="954.3" x2="1623.9" y2="1134.3" class="l"/>
+<line x1="1396.3" y1="1754.3" x2="1254.5" y2="1790.3" class="l"/>
+<line x1="1350.9" y1="1750.0" x2="1105.3" y2="1783.1" class="l"/>
+<line x1="1350.9" y1="1736.3" x2="1245.3" y2="1739.6" class="l"/>
+<line x1="1350.9" y1="1723.1" x2="1107.1" y2="1706.1" class="l"/>
+<line x1="1359.2" y1="1710.3" x2="1261.8" y2="1693.0" class="l"/>
+<line x1="1411.5" y1="1710.3" x2="1172.1" y2="1636.5" class="l"/>
+<line x1="1554.3" y1="1710.3" x2="1684.1" y2="1670.3" class="l"/>
+<line x1="1614.9" y1="1712.6" x2="1837.3" y2="1679.3" class="l"/>
+<line x1="1614.9" y1="1729.7" x2="1720.8" y2="1727.7" class="l"/>
+<line x1="1614.9" y1="1746.5" x2="1853.2" y2="1772.1" class="l"/>
+<line x1="1569.5" y1="1754.3" x2="1697.6" y2="1786.8" class="l"/>
+<line x1="455.7" y1="564.3" x2="392.0" y2="594.0" class="l"/>
+<line x1="442.9" y1="548.6" x2="381.0" y2="555.0" class="l"/>
+<line x1="442.9" y1="531.0" x2="377.8" y2="518.8" class="l"/>
+<line x1="467.3" y1="520.3" x2="408.3" y2="483.9" class="l"/>
+<line x1="216.9" y1="954.3" x2="203.5" y2="1003.0" class="l"/>
+<line x1="163.7" y1="954.3" x2="132.6" y2="965.8" class="l"/>
+<line x1="162.9" y1="918.2" x2="128.9" y2="910.3" class="l"/>
+<line x1="177.9" y1="148.9" x2="146.3" y2="144.9" class="l"/>
+<line x1="255.8" y1="140.3" x2="222.5" y2="113.2" class="l"/>
+<line x1="310.1" y1="140.3" x2="342.8" y2="113.7" class="l"/>
+<line x1="387.9" y1="148.9" x2="429.7" y2="143.6" class="l"/>
+<line x1="993.7" y1="160.3" x2="948.0" y2="134.7" class="l"/>
+<line x1="1032.9" y1="160.3" x2="1032.9" y2="120.3" class="l"/>
+<line x1="1072.2" y1="160.3" x2="1115.4" y2="136.0" class="l"/>
+<line x1="2457.1" y1="210.3" x2="2515.0" y2="157.5" class="l"/>
+<line x1="2492.9" y1="216.4" x2="2570.1" y2="196.0" class="l"/>
+<line x1="2492.9" y1="236.0" x2="2551.2" y2="239.6" class="l"/>
+<line x1="2482.8" y1="254.3" x2="2558.4" y2="287.7" class="l"/>
+<line x1="2425.9" y1="720.3" x2="2398.9" y2="636.1" class="l"/>
+<line x1="2384.2" y1="610.3" x2="2343.4" y2="560.8" class="l"/>
+<line x1="2399.4" y1="610.1" x2="2423.4" y2="543.9" class="l"/>
+<line x1="2449.1" y1="720.3" x2="2539.6" y2="597.0" class="l"/>
+<line x1="2492.9" y1="733.4" x2="2593.0" y2="718.7" class="l"/>
+<line x1="2492.9" y1="742.9" x2="2711.9" y2="745.0" class="l"/>
+<line x1="2492.9" y1="752.4" x2="2603.4" y2="770.9" class="l"/>
+<line x1="2492.9" y1="763.7" x2="2670.6" y2="827.2" class="l"/>
+<line x1="2467.7" y1="764.3" x2="2555.2" y2="819.6" class="l"/>
+<line x1="2451.6" y1="764.3" x2="2553.4" y2="884.3" class="l"/>
+<line x1="2501.9" y1="1445.5" x2="2569.3" y2="1458.5" class="l"/>
+<line x1="2450.9" y1="1454.3" x2="2490.0" y2="1502.1" class="l"/>
+<line x1="2415.0" y1="1454.3" x2="2375.8" y2="1502.2" class="l"/>
+<line x1="2363.9" y1="1445.5" x2="2315.5" y2="1454.8" class="l"/>
+<line x1="1041.0" y1="1226.7" x2="866.1" y2="1203.2" class="l"/>
+<line x1="1057.8" y1="1217.3" x2="925.9" y2="1138.7" class="l"/>
+<line x1="1078.3" y1="1205.9" x2="1061.0" y2="1106.8" class="l"/>
+<line x1="1482.9" y1="954.3" x2="1482.9" y2="1373.3" class="l"/>
+<text x="1492.9" y="988.3" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="1482.9" y1="1706.3" x2="1482.9" y2="1431.3" stroke="#1f2937" stroke-width="5"/><line x1="1482.9" y1="1706.3" x2="1482.9" y2="1431.3" stroke="#fff" stroke-width="2.4"/>
+<text x="1492.9" y="1680.3" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(1,1)</text>
+<line x1="1425.0" y1="910.3" x2="1020.8" y2="756.7" class="l"/>
+<text x="1400.6" y="894.3" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="555.7" y1="564.3" x2="946.8" y2="727.2" class="l"/>
+<text x="587.3" y="570.6" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="1457.6" y1="910.3" x2="1123.3" y2="619.9" class="l"/>
+<text x="1441.5" y="887.1" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="1036.6" y1="204.3" x2="1098.5" y2="575.7" class="l"/>
+<text x="1051.4" y="236.2" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="1522.9" y1="910.3" x2="2056.8" y2="616.7" class="l"/>
+<text x="1544.4" y="891.1" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="2412.1" y1="254.3" x2="2100.9" y2="583.3" class="l"/>
+<text x="2384.2" y="273.2" text-anchor="end" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="2372.9" y1="754.3" x2="2021.2" y2="824.6" class="l"/>
+<text x="2341.6" y="754.4" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="1542.9" y1="920.3" x2="1944.7" y2="839.9" class="l"/>
+<text x="1570.4" y="908.6" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="1002.4" y1="204.3" x2="805.6" y2="345.9" class="l"/>
+<text x="972.2" y="217.7" text-anchor="end" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(1,1)</text>
+<line x1="537.2" y1="520.3" x2="758.8" y2="377.8" class="l"/>
+<text x="557.0" y="499.6" text-anchor="end" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="1101.9" y1="182.3" x2="1649.4" y2="182.3" class="l"/>
+<text x="1131.9" y="176.3" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="2372.9" y1="228.0" x2="1802.2" y2="187.2" class="l"/>
+<text x="2343.7" y="219.9" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="1101.9" y1="194.2" x2="1727.2" y2="302.6" class="l"/>
+<text x="1133.2" y="193.5" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="2399.7" y1="720.3" x2="1811.7" y2="331.3" class="l"/>
+<text x="2380.2" y="699.4" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="236.8" y1="910.3" x2="328.6" y2="765.1" class="l"/>
+<text x="244.4" y="883.6" text-anchor="end" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="485.3" y1="564.3" x2="360.2" y2="720.7" class="l"/>
+<text x="458.8" y="585.5" text-anchor="end" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="297.2" y1="184.3" x2="398.9" y2="340.7" class="l"/>
+<text x="322.0" y="208.0" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="491.9" y1="520.3" x2="424.4" y2="385.2" class="l"/>
+<text x="487.5" y="493.0" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="1453.6" y1="954.3" x2="1105.1" y2="1215.6" class="l"/>
+<text x="1423.6" y="968.3" text-anchor="end" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="744.7" y1="1410.3" x2="1056.2" y2="1246.4" class="l"/>
+<text x="766.6" y="1391.5" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="1456.9" y1="1758.3" x2="1201.6" y2="2013.7" class="l"/>
+<text x="1428.7" y="1776.4" text-anchor="end" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="1093.9" y1="2210.3" x2="1171.6" y2="2055.0" class="l"/>
+<text x="1098.4" y="2183.0" text-anchor="end" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="1482.9" y1="1758.3" x2="1482.9" y2="2003.3" class="l"/>
+<text x="1492.9" y="1792.3" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="1482.9" y1="2210.3" x2="1482.9" y2="2061.3" class="l"/>
+<text x="1492.9" y="2184.3" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="1508.9" y1="1758.3" x2="1764.3" y2="2013.7" class="l"/>
+<text x="1537.2" y="1776.4" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="1889.7" y1="2210.3" x2="1796.0" y2="2054.0" class="l"/>
+<text x="1882.9" y="2183.4" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="2432.9" y1="764.3" x2="2432.9" y2="1103.3" class="l"/>
+<text x="2442.9" y="798.3" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(1,1)</text>
+<line x1="2432.9" y1="1410.3" x2="2432.9" y2="1161.3" class="l"/>
+<text x="2442.9" y="1384.3" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="2978.9" y1="454.3" x2="2797.5" y2="528.2" class="l"/>
+<text x="2947.4" y="460.3" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="2469.2" y1="720.3" x2="2735.0" y2="559.2" class="l"/>
+<text x="2489.7" y="700.2" text-anchor="end" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<polygon points="1482.9385241571817,1373.2751274816192 1537.7385241571817,1402.2751274816192 1482.9385241571817,1431.2751274816192 1428.1385241571818,1402.2751274816192" class="rel"/>
+<polygon points="1482.9385241571817,1379.2751274816192 1526.7385241571817,1402.2751274816192 1482.9385241571817,1425.2751274816192 1439.1385241571818,1402.2751274816192" class="rel"/>
+<text x="1482.9385241571817" y="1400.3" text-anchor="middle" class="rn">contiene</text>
+<text x="1482.9385241571817" y="1417.3" text-anchor="middle" class="cr">1:N</text>
+<polygon points="982.9385241571816,713.2751274816192 1058.2385241571817,742.2751274816192 982.9385241571816,771.2751274816192 907.6385241571817,742.2751274816192" class="rel"/>
+<text x="982.9385241571816" y="740.3" text-anchor="middle" class="rn">corresponde a</text>
+<text x="982.9385241571816" y="757.3" text-anchor="middle" class="cr">N:1</text>
+<polygon points="1102.9385241571817,573.2751274816192 1154.9385241571817,602.2751274816192 1102.9385241571817,631.2751274816192 1050.9385241571817,602.2751274816192" class="rel"/>
+<text x="1102.9385241571817" y="600.3" text-anchor="middle" class="rn">sigue</text>
+<text x="1102.9385241571817" y="617.3" text-anchor="middle" class="cr">N:1</text>
+<polygon points="2082.9385241571817,573.2751274816192 2134.9385241571817,602.2751274816192 2082.9385241571817,631.2751274816192 2030.9385241571817,602.2751274816192" class="rel"/>
+<text x="2082.9385241571817" y="600.3" text-anchor="middle" class="rn">usa</text>
+<text x="2082.9385241571817" y="617.3" text-anchor="middle" class="cr">N:1</text>
+<polygon points="1982.9385241571817,803.2751274816192 2034.9385241571817,832.2751274816192 1982.9385241571817,861.2751274816192 1930.9385241571817,832.2751274816192" class="rel"/>
+<text x="1982.9385241571817" y="830.3" text-anchor="middle" class="rn">conduce</text>
+<text x="1982.9385241571817" y="847.3" text-anchor="middle" class="cr">1:N</text>
+<polygon points="782.9385241571816,333.27512748161917 834.9385241571816,362.27512748161917 782.9385241571816,391.27512748161917 730.9385241571816,362.27512748161917" class="rel"/>
+<text x="782.9385241571816" y="360.3" text-anchor="middle" class="rn">recorre</text>
+<text x="782.9385241571816" y="377.3" text-anchor="middle" class="cr">N:1</text>
+<polygon points="1732.9385241571817,153.2751274816192 1816.4385241571817,182.2751274816192 1732.9385241571817,211.2751274816192 1649.4385241571817,182.2751274816192" class="rel"/>
+<text x="1732.9385241571817" y="180.3" text-anchor="middle" class="rn">camión habitual</text>
+<text x="1732.9385241571817" y="197.3" text-anchor="middle" class="cr">N:1</text>
+<polygon points="1782.9385241571817,283.27512748161917 1866.4385241571817,312.27512748161917 1782.9385241571817,341.27512748161917 1699.4385241571817,312.27512748161917" class="rel"/>
+<text x="1782.9385241571817" y="310.3" text-anchor="middle" class="rn">chofer habitual</text>
+<text x="1782.9385241571817" y="327.3" text-anchor="middle" class="cr">N:1</text>
+<polygon points="342.93852415718163,713.2751274816192 410.03852415718166,742.2751274816192 342.93852415718163,771.2751274816192 275.8385241571816,742.2751274816192" class="rel"/>
+<text x="342.93852415718163" y="740.3" text-anchor="middle" class="rn">pertenece a</text>
+<text x="342.93852415718163" y="757.3" text-anchor="middle" class="cr">N:1</text>
+<polygon points="412.93852415718163,333.27512748161917 467.73852415718164,362.27512748161917 412.93852415718163,391.27512748161917 358.1385241571816,362.27512748161917" class="rel"/>
+<text x="412.93852415718163" y="360.3" text-anchor="middle" class="rn">afecta a</text>
+<text x="412.93852415718163" y="377.3" text-anchor="middle" class="cr">N:1</text>
+<polygon points="1082.9385241571817,1203.2751274816192 1134.9385241571817,1232.2751274816192 1082.9385241571817,1261.2751274816192 1030.9385241571817,1232.2751274816192" class="rel"/>
+<text x="1082.9385241571817" y="1230.3" text-anchor="middle" class="rn">carga</text>
+<text x="1082.9385241571817" y="1247.3" text-anchor="middle" class="cr">N:M</text>
+<polygon points="1182.9385241571817,2003.2751274816192 1234.9385241571817,2032.2751274816192 1182.9385241571817,2061.275127481619 1130.9385241571817,2032.2751274816192" class="rel"/>
+<text x="1182.9385241571817" y="2030.3" text-anchor="middle" class="rn">entrega</text>
+<text x="1182.9385241571817" y="2047.3" text-anchor="middle" class="cr">N:1</text>
+<polygon points="1482.9385241571817,2003.2751274816192 1537.7385241571817,2032.2751274816192 1482.9385241571817,2061.275127481619 1428.1385241571818,2032.2751274816192" class="rel"/>
+<text x="1482.9385241571817" y="2030.3" text-anchor="middle" class="rn">visita a</text>
+<text x="1482.9385241571817" y="2047.3" text-anchor="middle" class="cr">N:1</text>
+<polygon points="1782.9385241571817,2003.2751274816192 1834.9385241571817,2032.2751274816192 1782.9385241571817,2061.275127481619 1730.9385241571817,2032.2751274816192" class="rel"/>
+<text x="1782.9385241571817" y="2030.3" text-anchor="middle" class="rn">en</text>
+<text x="1782.9385241571817" y="2047.3" text-anchor="middle" class="cr">N:1</text>
+<polygon points="2432.9385241571817,1103.2751274816192 2491.838524157182,1132.2751274816192 2432.9385241571817,1161.2751274816192 2374.0385241571817,1132.2751274816192" class="rel"/>
+<text x="2432.9385241571817" y="1130.3" text-anchor="middle" class="rn">desempeña</text>
+<text x="2432.9385241571817" y="1147.3" text-anchor="middle" class="cr">N:1</text>
+<polygon points="2762.9385241571817,513.2751274816192 2830.0385241571817,542.2751274816192 2762.9385241571817,571.2751274816192 2695.838524157182,542.2751274816192" class="rel"/>
+<text x="2762.9385241571817" y="540.3" text-anchor="middle" class="rn">accede como</text>
+<text x="2762.9385241571817" y="557.3" text-anchor="middle" class="cr">1:1</text>
+<rect x="1422.9385241571817" y="910.2751274816192" width="120" height="44" class="ent"/>
+<text x="1482.9385241571817" y="937.2751274816192" text-anchor="middle" class="tn">HOJA_RUTA</text>
+<rect x="1346.9385241571817" y="1706.2751274816192" width="272" height="52" class="ent"/>
+<rect x="1350.9385241571817" y="1710.2751274816192" width="264" height="44" class="ent"/>
+<text x="1482.9385241571817" y="1737.2751274816192" text-anchor="middle" class="tn">PARADA (DETALLE_HOJA_RUTA)</text>
+<rect x="442.93852415718163" y="520.2751274816192" width="120" height="44" class="ent"/>
+<text x="502.93852415718163" y="547.2751274816192" text-anchor="middle" class="tn">ZONA</text>
+<rect x="162.93852415718166" y="910.2751274816192" width="120" height="44" class="ent"/>
+<text x="222.93852415718166" y="937.2751274816192" text-anchor="middle" class="tn">BARRIO</text>
+<rect x="177.93852415718163" y="140.2751274816192" width="210" height="44" class="ent"/>
+<text x="282.93852415718163" y="167.2751274816192" text-anchor="middle" class="tn">CALENDARIO_EXCEPCION</text>
+<rect x="963.9385241571817" y="160.2751274816192" width="138" height="44" class="ent"/>
+<text x="1032.9385241571817" y="187.2751274816192" text-anchor="middle" class="tn">RUTA_REPARTO</text>
+<rect x="2372.9385241571817" y="210.2751274816192" width="120" height="44" class="ent"/>
+<text x="2432.9385241571817" y="237.2751274816192" text-anchor="middle" class="tn">CAMION</text>
+<rect x="2372.9385241571817" y="720.2751274816192" width="120" height="44" class="ent"/>
+<text x="2432.9385241571817" y="747.2751274816192" text-anchor="middle" class="tn">EMPLEADO</text>
+<rect x="2363.9385241571817" y="1410.2751274816192" width="138" height="44" class="ent"/>
+<text x="2432.9385241571817" y="1437.2751274816192" text-anchor="middle" class="tn">ROL_EMPLEADO</text>
+<rect x="2972.9385241571817" y="410.27512748161917" width="120" height="44" class="ref"/>
+<text x="3032.9385241571817" y="437.27512748161917" text-anchor="middle" class="tn">USUARIO</text>
+<rect x="642.9385241571816" y="1410.2751274816192" width="120" height="44" class="ref"/>
+<text x="702.9385241571816" y="1437.2751274816192" text-anchor="middle" class="tn">PRODUCTO</text>
+<rect x="1022.9385241571817" y="2210.275127481619" width="120" height="44" class="ref"/>
+<text x="1082.9385241571817" y="2237.275127481619" text-anchor="middle" class="tn">PEDIDO</text>
+<rect x="1422.9385241571817" y="2210.275127481619" width="120" height="44" class="ref"/>
+<text x="1482.9385241571817" y="2237.275127481619" text-anchor="middle" class="tn">CLIENTE</text>
+<rect x="1811.4385241571817" y="2210.275127481619" width="183" height="44" class="ref"/>
+<text x="1902.9385241571817" y="2237.275127481619" text-anchor="middle" class="tn">DIRECCION_ENTREGA</text>
+<ellipse cx="1329.5" cy="712.4" rx="37.5" ry="18.0" class="ov"/>
+<text x="1329.5" y="710.4" text-anchor="middle" class="an" text-decoration="underline">id_hoja</text>
+<text x="1329.5" y="723.4" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="1412.1" cy="595.0" rx="35.0" ry="18.0" class="ov"/>
+<text x="1412.1" y="593.0" text-anchor="middle" class="an">fecha</text>
+<text x="1412.1" y="606.0" text-anchor="middle" class="at">Fecha</text>
+<ellipse cx="1541.5" cy="700.3" rx="40.0" ry="18.0" class="ov"/>
+<text x="1541.5" y="698.3" text-anchor="middle" class="an">estado</text>
+<text x="1541.5" y="711.3" text-anchor="middle" class="at">Texto(20)</text>
+<ellipse cx="1718.6" cy="616.0" rx="58.5" ry="18.0" class="ov"/>
+<text x="1718.6" y="614.0" text-anchor="middle" class="an">observaciones</text>
+<text x="1718.6" y="627.0" text-anchor="middle" class="at">Texto(500)</text>
+<ellipse cx="1740.2" cy="740.6" rx="69.0" ry="18.0" class="ov"/>
+<text x="1740.2" y="738.6" text-anchor="middle" class="an">vacios_recibidos</text>
+<text x="1740.2" y="751.6" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="2119.1" cy="1002.8" rx="76.0" ry="18.0" class="ov"/>
+<text x="2119.1" y="1000.8" text-anchor="middle" class="an">fecha_confirmacion</text>
+<text x="2119.1" y="1013.8" text-anchor="middle" class="at">Fecha y hora</text>
+<ellipse cx="1893.9" cy="1026.0" rx="55.0" ry="18.0" class="ov"/>
+<text x="1893.9" y="1024.0" text-anchor="middle" class="an">fecha_salida</text>
+<text x="1893.9" y="1037.0" text-anchor="middle" class="at">Fecha y hora</text>
+<ellipse cx="2014.3" cy="1127.9" rx="58.5" ry="18.0" class="ov"/>
+<text x="2014.3" y="1125.9" text-anchor="middle" class="an">fecha_regreso</text>
+<text x="2014.3" y="1138.9" text-anchor="middle" class="at">Fecha y hora</text>
+<ellipse cx="1790.0" cy="1102.9" rx="97.0" ry="18.0" class="ov"/>
+<text x="1790.0" y="1100.9" text-anchor="middle" class="an">generada_automaticamente</text>
+<text x="1790.0" y="1113.9" text-anchor="middle" class="at">Booleano</text>
+<ellipse cx="1823.7" cy="1221.3" rx="69.0" ry="18.0" class="ov" stroke-dasharray="4 3"/>
+<text x="1823.7" y="1219.3" text-anchor="middle" class="an">total_botellones</text>
+<text x="1823.7" y="1232.3" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="1636.3" cy="1152.2" rx="86.5" ry="18.0" class="ov" stroke-dasharray="4 3"/>
+<text x="1636.3" y="1150.2" text-anchor="middle" class="an">porcentaje_completado</text>
+<text x="1636.3" y="1163.2" text-anchor="middle" class="at">Decimal</text>
+<ellipse cx="1223.1" cy="1798.3" rx="35.0" ry="18.0" class="ov"/>
+<text x="1223.1" y="1796.3" text-anchor="middle" class="an">orden</text>
+<line x1="1207.6" y1="1799.3" x2="1238.6" y2="1799.3" stroke="#0f172a" stroke-dasharray="3 2"/>
+<text x="1223.1" y="1809.3" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="1066.9" cy="1788.2" rx="40.0" ry="18.0" class="ov"/>
+<text x="1066.9" y="1786.2" text-anchor="middle" class="an">estado</text>
+<text x="1066.9" y="1799.2" text-anchor="middle" class="at">Texto(20)</text>
+<ellipse cx="1183.7" cy="1741.5" rx="62.0" ry="18.0" class="ov"/>
+<text x="1183.7" y="1739.5" text-anchor="middle" class="an">es_venta_calle</text>
+<text x="1183.7" y="1752.5" text-anchor="middle" class="at">Booleano</text>
+<ellipse cx="1053.3" cy="1702.3" rx="55.0" ry="18.0" class="ov"/>
+<text x="1053.3" y="1700.3" text-anchor="middle" class="an">es_frecuente</text>
+<text x="1053.3" y="1713.3" text-anchor="middle" class="at">Booleano</text>
+<ellipse cx="1204.8" cy="1682.8" rx="69.0" ry="18.0" class="ov"/>
+<text x="1204.8" y="1680.8" text-anchor="middle" class="an">cantidad_bidones</text>
+<text x="1204.8" y="1693.8" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="1126.6" cy="1622.5" rx="72.5" ry="18.0" class="ov"/>
+<text x="1126.6" y="1620.5" text-anchor="middle" class="an">envases_retirados</text>
+<text x="1126.6" y="1633.5" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="1728.7" cy="1656.6" rx="69.0" ry="18.0" class="ov"/>
+<text x="1728.7" y="1654.6" text-anchor="middle" class="an">envases_vendidos</text>
+<text x="1728.7" y="1667.6" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="1894.9" cy="1670.8" rx="65.5" ry="18.0" class="ov"/>
+<text x="1894.9" y="1668.8" text-anchor="middle" class="an">direccion_texto</text>
+<text x="1894.9" y="1681.8" text-anchor="middle" class="at">Texto(255)</text>
+<ellipse cx="1782.7" cy="1726.5" rx="62.0" ry="18.0" class="ov"/>
+<text x="1782.7" y="1724.5" text-anchor="middle" class="an">cliente_nombre</text>
+<text x="1782.7" y="1737.5" text-anchor="middle" class="at">Texto(200)</text>
+<ellipse cx="1905.5" cy="1777.8" rx="55.0" ry="18.0" class="ov"/>
+<text x="1905.5" y="1775.8" text-anchor="middle" class="an">nota_entrega</text>
+<text x="1905.5" y="1788.8" text-anchor="middle" class="at">Texto(500)</text>
+<ellipse cx="1742.7" cy="1798.3" rx="58.5" ry="18.0" class="ov"/>
+<text x="1742.7" y="1796.3" text-anchor="middle" class="an">hora_registro</text>
+<text x="1742.7" y="1809.3" text-anchor="middle" class="at">Fecha y hora</text>
+<ellipse cx="365.1" cy="606.6" rx="37.5" ry="18.0" class="ov"/>
+<text x="365.1" y="604.6" text-anchor="middle" class="an" text-decoration="underline">id_zona</text>
+<text x="365.1" y="617.6" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="326.0" cy="560.8" rx="58.0" ry="18.0" class="ov"/>
+<text x="326.0" y="558.8" text-anchor="middle" class="an">nombre</text>
+<text x="326.0" y="571.8" text-anchor="middle" class="at">Texto(64) único</text>
+<ellipse cx="332.4" cy="510.3" rx="51.5" ry="18.0" class="ov"/>
+<text x="332.4" y="508.3" text-anchor="middle" class="an">descripcion</text>
+<text x="332.4" y="521.3" text-anchor="middle" class="at">Texto(500)</text>
+<ellipse cx="382.5" cy="468.0" rx="55.0" ry="18.0" class="ov"/>
+<ellipse cx="382.5" cy="468.0" rx="51.0" ry="14.0" class="ov"/>
+<text x="382.5" y="466.0" text-anchor="middle" class="an">dias_reparto</text>
+<text x="382.5" y="479.0" text-anchor="middle" class="at">Texto(20)</text>
+<ellipse cx="198.6" cy="1020.9" rx="44.5" ry="18.0" class="ov"/>
+<text x="198.6" y="1018.9" text-anchor="middle" class="an" text-decoration="underline">id_barrio</text>
+<text x="198.6" y="1031.9" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="101.7" cy="977.3" rx="40.0" ry="18.0" class="ov"/>
+<text x="101.7" y="975.3" text-anchor="middle" class="an">nombre</text>
+<text x="101.7" y="988.3" text-anchor="middle" class="at">Texto(64)</text>
+<ellipse cx="91.4" cy="901.5" rx="43.0" ry="18.0" class="ov"/>
+<text x="91.4" y="899.5" text-anchor="middle" class="an">ciudad</text>
+<text x="91.4" y="912.5" text-anchor="middle" class="at">Texto(100)</text>
+<ellipse cx="95.0" cy="138.3" rx="55.0" ry="18.0" class="ov"/>
+<text x="95.0" y="136.3" text-anchor="middle" class="an" text-decoration="underline">id_excepcion</text>
+<text x="95.0" y="149.3" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="203.7" cy="98.0" rx="35.0" ry="18.0" class="ov"/>
+<text x="203.7" y="96.0" text-anchor="middle" class="an">fecha</text>
+<text x="203.7" y="109.0" text-anchor="middle" class="at">Fecha</text>
+<ellipse cx="362.2" cy="98.0" rx="40.0" ry="18.0" class="ov"/>
+<text x="362.2" y="96.0" text-anchor="middle" class="an">tipo</text>
+<text x="362.2" y="109.0" text-anchor="middle" class="at">Texto(10)</text>
+<ellipse cx="470.9" cy="138.3" rx="43.0" ry="18.0" class="ov"/>
+<text x="470.9" y="136.3" text-anchor="middle" class="an">motivo</text>
+<text x="470.9" y="149.3" text-anchor="middle" class="at">Texto(200)</text>
+<ellipse cx="923.7" cy="121.0" rx="37.5" ry="18.0" class="ov"/>
+<text x="923.7" y="119.0" text-anchor="middle" class="an" text-decoration="underline">id_ruta</text>
+<text x="923.7" y="132.0" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="1032.9" cy="102.3" rx="40.0" ry="18.0" class="ov"/>
+<text x="1032.9" y="100.3" text-anchor="middle" class="an">nombre</text>
+<text x="1032.9" y="113.3" text-anchor="middle" class="at">Texto(64)</text>
+<ellipse cx="1142.2" cy="121.0" rx="49.0" ry="18.0" class="ov"/>
+<text x="1142.2" y="119.0" text-anchor="middle" class="an">dia_semana</text>
+<text x="1142.2" y="132.0" text-anchor="middle" class="at">Entero (0-6)</text>
+<ellipse cx="2532.7" cy="141.3" rx="40.0" ry="18.0" class="ov"/>
+<text x="2532.7" y="139.3" text-anchor="middle" class="an" text-decoration="underline">patente</text>
+<text x="2532.7" y="152.3" text-anchor="middle" class="at">Texto(10)</text>
+<ellipse cx="2611.2" cy="185.2" rx="51.5" ry="18.0" class="ov"/>
+<text x="2611.2" y="183.2" text-anchor="middle" class="an">descripcion</text>
+<text x="2611.2" y="196.2" text-anchor="middle" class="at">Texto(200)</text>
+<ellipse cx="2631.1" cy="244.5" rx="83.0" ry="18.0" class="ov"/>
+<text x="2631.1" y="242.5" text-anchor="middle" class="an">capacidad_botellones</text>
+<text x="2631.1" y="255.5" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="2585.8" cy="299.8" rx="37.0" ry="18.0" class="ov"/>
+<text x="2585.8" y="297.8" text-anchor="middle" class="an">activo</text>
+<text x="2585.8" y="310.8" text-anchor="middle" class="at">Booleano</text>
+<ellipse cx="2394.7" cy="623.1" rx="65.5" ry="13.0" class="ov"/>
+<text x="2394.7" y="627.1" text-anchor="middle" class="an">nombre_completo</text>
+<ellipse cx="2329.5" cy="544.0" rx="40.0" ry="18.0" class="ov"/>
+<text x="2329.5" y="542.0" text-anchor="middle" class="an">nombre</text>
+<text x="2329.5" y="555.0" text-anchor="middle" class="at">Texto(64)</text>
+<ellipse cx="2429.9" cy="526.1" rx="41.0" ry="18.0" class="ov"/>
+<text x="2429.9" y="524.1" text-anchor="middle" class="an">apellido</text>
+<text x="2429.9" y="537.1" text-anchor="middle" class="at">Texto(64)</text>
+<ellipse cx="2552.4" cy="579.6" rx="51.5" ry="18.0" class="ov"/>
+<text x="2552.4" y="577.6" text-anchor="middle" class="an" text-decoration="underline">id_empleado</text>
+<text x="2552.4" y="590.6" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="2645.4" cy="711.0" rx="58.0" ry="18.0" class="ov"/>
+<text x="2645.4" y="709.0" text-anchor="middle" class="an">dni</text>
+<text x="2645.4" y="722.0" text-anchor="middle" class="at">Texto(15) único</text>
+<ellipse cx="2751.9" cy="745.3" rx="40.0" ry="18.0" class="ov"/>
+<text x="2751.9" y="743.3" text-anchor="middle" class="an">celular</text>
+<text x="2751.9" y="756.3" text-anchor="middle" class="at">Texto(30)</text>
+<ellipse cx="2643.3" cy="777.7" rx="43.0" ry="18.0" class="ov"/>
+<text x="2643.3" y="775.7" text-anchor="middle" class="an">email</text>
+<text x="2643.3" y="788.7" text-anchor="middle" class="at">Texto(254)</text>
+<ellipse cx="2700.5" cy="837.8" rx="37.0" ry="18.0" class="ov"/>
+<text x="2700.5" y="835.8" text-anchor="middle" class="an">activo</text>
+<text x="2700.5" y="848.8" text-anchor="middle" class="at">Booleano</text>
+<ellipse cx="2577.3" cy="833.6" rx="35.0" ry="18.0" class="ov"/>
+<text x="2577.3" y="831.6" text-anchor="middle" class="an">foto</text>
+<text x="2577.3" y="844.6" text-anchor="middle" class="at">Imagen</text>
+<ellipse cx="2567.8" cy="901.3" rx="43.0" ry="18.0" class="ov"/>
+<text x="2567.8" y="899.3" text-anchor="middle" class="an">notas</text>
+<text x="2567.8" y="912.3" text-anchor="middle" class="at">Texto(500)</text>
+<ellipse cx="2602.1" cy="1464.8" rx="35.0" ry="18.0" class="ov"/>
+<text x="2602.1" y="1462.8" text-anchor="middle" class="an" text-decoration="underline">id_rol</text>
+<text x="2602.1" y="1475.8" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="2504.2" cy="1519.5" rx="58.0" ry="18.0" class="ov"/>
+<text x="2504.2" y="1517.5" text-anchor="middle" class="an">nombre</text>
+<text x="2504.2" y="1530.5" text-anchor="middle" class="at">Texto(64) único</text>
+<ellipse cx="2361.6" cy="1519.5" rx="51.5" ry="18.0" class="ov"/>
+<text x="2361.6" y="1517.5" text-anchor="middle" class="an">descripcion</text>
+<text x="2361.6" y="1530.5" text-anchor="middle" class="at">Texto(500)</text>
+<ellipse cx="2263.8" cy="1464.8" rx="62.0" ry="18.0" class="ov"/>
+<text x="2263.8" y="1462.8" text-anchor="middle" class="an">grupo_permisos</text>
+<text x="2263.8" y="1475.8" text-anchor="middle" class="at">Texto(20)</text>
+<ellipse cx="804.8" cy="1195.0" rx="69.0" ry="18.0" class="ov"/>
+<text x="804.8" y="1193.0" text-anchor="middle" class="an">cantidad_cargada</text>
+<text x="804.8" y="1206.0" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="897.8" cy="1122.0" rx="76.0" ry="18.0" class="ov"/>
+<text x="897.8" y="1120.0" text-anchor="middle" class="an">cantidad_entregada</text>
+<text x="897.8" y="1133.0" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="1057.8" cy="1088.8" rx="76.0" ry="18.0" class="ov"/>
+<text x="1057.8" y="1086.8" text-anchor="middle" class="an">cantidad_retornada</text>
+<text x="1057.8" y="1099.8" text-anchor="middle" class="at">Entero</text>
+</svg>

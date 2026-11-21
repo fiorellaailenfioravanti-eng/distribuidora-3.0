@@ -1,0 +1,368 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2519 1965" width="2519" height="1965" font-family="Segoe UI, Arial, sans-serif">
+<style>.l{stroke:#1f2937;stroke-width:1.3;fill:none}.ent{fill:#dbeafe;stroke:#1e3a8a;stroke-width:1.6}.ref{fill:#f1f5f9;stroke:#64748b;stroke-width:1.4;stroke-dasharray:5 3}.rel{fill:#fef3c7;stroke:#92400e;stroke-width:1.5}.ov{fill:#fff;stroke:#334155;stroke-width:1.2}.tn{font-size:14px;font-weight:700;fill:#0f172a}.rn{font-size:12.5px;font-weight:600;fill:#78350f}.an{font-size:11.5px;fill:#0f172a}.at{font-size:9.5px;fill:#64748b;font-style:italic}.cd{font-size:11.5px;font-weight:700;fill:#b91c1c}.cr{font-size:10.5px;fill:#92400e;font-weight:600}.tt{font-size:22px;font-weight:700;fill:#0f172a}.nt{font-size:12px;fill:#475569}</style>
+<rect width="2519" height="1965" fill="#fff"/>
+<text x="1259.5" y="40" text-anchor="middle" class="tt">DER · Clientes, envases y cuentas corrientes</text>
+<text x="1259.5" y="1951" text-anchor="middle" class="nt">Cardinalidad (mín,máx) junto a cada entidad. Doble rectángulo y doble rombo: entidad débil y su relación identificadora (clave parcial subrayada con guiones).</text>
+<line x1="1135.4" y1="904.5" x2="827.6" y2="858.5" class="l"/>
+<line x1="712.2" y1="847.2" x2="653.4" y2="844.0" class="l"/>
+<line x1="753.1" y1="838.4" x2="658.3" y2="786.1" class="l"/>
+<line x1="1141.4" y1="891.5" x2="728.6" y2="723.2" class="l"/>
+<line x1="1157.4" y1="891.5" x2="930.4" y2="759.9" class="l"/>
+<line x1="1169.0" y1="891.5" x2="879.8" y2="650.0" class="l"/>
+<line x1="1178.4" y1="891.5" x2="1045.3" y2="719.6" class="l"/>
+<line x1="1186.4" y1="891.5" x2="1070.9" y2="608.0" class="l"/>
+<line x1="1205.1" y1="891.5" x2="1285.8" y2="709.1" class="l"/>
+<line x1="1213.6" y1="891.5" x2="1432.0" y2="627.3" class="l"/>
+<line x1="1223.5" y1="891.5" x2="1416.3" y2="740.5" class="l"/>
+<line x1="1236.1" y1="891.5" x2="1605.3" y2="692.0" class="l"/>
+<line x1="1254.2" y1="891.5" x2="1514.2" y2="794.1" class="l"/>
+<line x1="1255.4" y1="898.7" x2="1722.5" y2="783.3" class="l"/>
+<line x1="1255.4" y1="905.1" x2="1561.6" y2="862.3" class="l"/>
+<line x1="1135.4" y1="217.3" x2="1054.4" y2="236.0" class="l"/>
+<line x1="1135.4" y1="203.5" x2="951.9" y2="203.5" class="l"/>
+<line x1="1135.4" y1="189.6" x2="1061.6" y2="172.6" class="l"/>
+<line x1="1163.6" y1="181.5" x2="1067.4" y2="114.8" class="l"/>
+<line x1="1227.2" y1="181.5" x2="1276.7" y2="147.2" class="l"/>
+<line x1="1255.4" y1="197.1" x2="1446.5" y2="176.6" class="l"/>
+<line x1="1255.4" y1="217.3" x2="1334.3" y2="235.6" class="l"/>
+<line x1="233.9" y1="934.6" x2="187.8" y2="945.3" class="l"/>
+<line x1="233.9" y1="911.9" x2="184.0" y2="911.0" class="l"/>
+<line x1="246.8" y1="891.5" x2="203.4" y2="879.3" class="l"/>
+<line x1="444.7" y1="1395.5" x2="412.3" y2="1462.0" class="l"/>
+<line x1="425.3" y1="1395.5" x2="297.4" y2="1488.8" class="l"/>
+<line x1="284.3" y1="1513.8" x2="329.0" y2="1683.9" class="l"/>
+<line x1="277.5" y1="1513.8" x2="250.7" y2="1615.6" class="l"/>
+<line x1="260.2" y1="1512.4" x2="181.9" y2="1556.0" class="l"/>
+<line x1="236.7" y1="1502.5" x2="119.9" y2="1506.8" class="l"/>
+<line x1="388.8" y1="1395.5" x2="316.2" y2="1419.5" class="l"/>
+<line x1="363.9" y1="1381.5" x2="218.9" y2="1394.1" class="l"/>
+<line x1="363.9" y1="1361.9" x2="317.3" y2="1356.0" class="l"/>
+<line x1="398.3" y1="1351.5" x2="253.5" y2="1295.7" class="l"/>
+<line x1="1069.2" y1="1535.5" x2="998.8" y2="1555.8" class="l"/>
+<line x1="1058.4" y1="1524.1" x2="876.3" y2="1546.4" class="l"/>
+<line x1="1058.4" y1="1511.6" x2="968.1" y2="1509.6" class="l"/>
+<line x1="1058.4" y1="1498.7" x2="889.9" y2="1470.1" class="l"/>
+<line x1="1082.6" y1="1491.5" x2="999.4" y2="1462.4" class="l"/>
+<line x1="2108.4" y1="820.7" x2="2044.0" y2="811.2" class="l"/>
+<line x1="2147.7" y1="811.5" x2="2004.4" y2="745.4" class="l"/>
+<line x1="2176.7" y1="811.5" x2="2125.7" y2="751.3" class="l"/>
+<line x1="2195.4" y1="811.5" x2="2195.4" y2="692.0" class="l"/>
+<line x1="2214.0" y1="811.5" x2="2265.1" y2="751.3" class="l"/>
+<line x1="2243.1" y1="811.5" x2="2384.5" y2="746.2" class="l"/>
+<line x1="2282.4" y1="820.7" x2="2330.9" y2="813.5" class="l"/>
+<line x1="2177.3" y1="1491.5" x2="2243.7" y2="1445.7" class="l"/>
+<line x1="2214.0" y1="1491.5" x2="2353.8" y2="1446.6" class="l"/>
+<line x1="2236.9" y1="1506.0" x2="2282.9" y2="1502.3" class="l"/>
+<line x1="2236.9" y1="1525.7" x2="2365.7" y2="1542.9" class="l"/>
+<line x1="2201.7" y1="1535.5" x2="2269.3" y2="1561.9" class="l"/>
+<line x1="2172.0" y1="1535.5" x2="2282.6" y2="1626.9" class="l"/>
+<line x1="1586.1" y1="1451.5" x2="1505.3" y2="1390.7" class="l"/>
+<line x1="1603.4" y1="1451.5" x2="1533.9" y2="1323.9" class="l"/>
+<line x1="1617.6" y1="1451.5" x2="1625.5" y2="1371.6" class="l"/>
+<line x1="1632.3" y1="1451.5" x2="1725.8" y2="1329.7" class="l"/>
+<line x1="1651.7" y1="1451.5" x2="1737.9" y2="1399.3" class="l"/>
+<line x1="1675.4" y1="1455.2" x2="1868.6" y2="1396.6" class="l"/>
+<line x1="1675.4" y1="1467.3" x2="1769.4" y2="1457.7" class="l"/>
+<line x1="1675.4" y1="1477.9" x2="1885.9" y2="1493.5" class="l"/>
+<line x1="1195.4" y1="225.5" x2="1195.4" y2="374.5" class="l"/>
+<text x="1205.4" y="259.5" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="1195.4" y1="891.5" x2="1195.4" y2="432.5" class="l"/>
+<text x="1205.4" y="865.5" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="1135.4" y1="921.5" x2="787.4" y2="967.9" class="l"/>
+<text x="1104.3" y="919.5" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="420.9" y1="927.1" x2="704.0" y2="967.6" stroke="#1f2937" stroke-width="5"/><line x1="420.9" y1="927.1" x2="704.0" y2="967.6" stroke="#fff" stroke-width="2.4"/>
+<text x="452.0" y="925.5" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(1,1)</text>
+<line x1="1157.1" y1="935.5" x2="821.0" y2="1128.8" class="l"/>
+<text x="1126.1" y="945.8" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="487.9" y1="1351.5" x2="771.9" y2="1159.4" class="l"/>
+<text x="507.2" y="1330.4" text-anchor="end" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(1,1)</text>
+<line x1="459.9" y1="1395.5" x2="509.9" y2="1637.0" class="l"/>
+<text x="475.8" y="1426.8" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="587.7" y1="1871.5" x2="524.1" y2="1688.5" class="l"/>
+<text x="587.3" y="1843.9" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="1185.9" y1="935.5" x2="1075.6" y2="1189.9" class="l"/>
+<text x="1164.8" y="963.0" text-anchor="end" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="1139.5" y1="1491.5" x2="1072.2" y2="1238.9" class="l"/>
+<text x="1141.5" y="1463.9" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(1,1)</text>
+<line x1="1128.4" y1="1535.5" x2="991.9" y2="1712.1" class="l"/>
+<text x="1102.1" y="1557.1" text-anchor="end" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="906.4" y1="1871.5" x2="963.6" y2="1757.1" class="l"/>
+<text x="910.9" y="1844.2" text-anchor="end" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="1158.4" y1="1535.5" x2="1262.1" y2="1711.0" class="l"/>
+<text x="1182.3" y="1560.2" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="1335.8" y1="1871.5" x2="1285.8" y2="1757.3" class="l"/>
+<text x="1332.9" y="1844.0" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="1255.4" y1="917.2" x2="1628.6" y2="940.6" class="l"/>
+<text x="1286.0" y="913.1" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="2108.4" y1="851.9" x2="1713.1" y2="935.5" class="l"/>
+<text x="2077.0" y="852.3" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(1,1)</text>
+<line x1="2197.3" y1="855.5" x2="2223.0" y2="1155.7" class="l"/>
+<text x="2209.8" y="888.5" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="2150.7" y1="1491.5" x2="2219.2" y2="1209.2" class="l"/>
+<text x="2148.1" y="1464.0" text-anchor="end" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(1,1)</text>
+<line x1="1202.1" y1="935.5" x2="1327.8" y2="1348.5" class="l"/>
+<text x="1220.4" y="965.3" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="1555.4" y1="1452.1" x2="1368.1" y2="1385.2" class="l"/>
+<text x="1530.5" y="1436.5" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(1,1)</text>
+<line x1="1609.0" y1="1495.5" x2="1552.7" y2="1688.5" class="l"/>
+<text x="1591.0" y="1525.5" text-anchor="end" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(1,1)</text>
+<line x1="1589.3" y1="1871.5" x2="1552.4" y2="1738.6" class="l"/>
+<text x="1590.9" y="1843.9" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="2057.4" y1="1535.5" x2="1941.3" y2="1564.5" class="l"/>
+<text x="2025.9" y="1537.1" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="1675.4" y1="1494.2" x2="1873.3" y2="1562.4" class="l"/>
+<text x="1707.0" y="1498.5" text-anchor="middle" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<line x1="2152.2" y1="1535.5" x2="2217.5" y2="1747.7" class="l"/>
+<text x="2170.5" y="1565.2" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,1)</text>
+<line x1="2266.2" y1="1871.5" x2="2235.7" y2="1798.3" class="l"/>
+<text x="2266.3" y="1849.7" text-anchor="start" class="cd" paint-order="stroke" stroke="#fff" stroke-width="3">(0,N)</text>
+<polygon points="1195.396791071359,374.4818941809446 1266.5967910713591,403.4818941809446 1195.396791071359,432.4818941809446 1124.196791071359,403.4818941809446" class="rel"/>
+<text x="1195.396791071359" y="401.5" text-anchor="middle" class="rn">posee cuenta</text>
+<text x="1195.396791071359" y="418.5" text-anchor="middle" class="cr">1:1</text>
+<polygon points="745.3967910713591,944.4818941809447 797.3967910713591,973.4818941809447 745.3967910713591,1002.4818941809447 693.3967910713591,973.4818941809447" class="rel"/>
+<polygon points="745.3967910713591,950.4818941809447 786.3967910713591,973.4818941809447 745.3967910713591,996.4818941809447 704.3967910713591,973.4818941809447" class="rel"/>
+<text x="745.3967910713591" y="971.5" text-anchor="middle" class="rn">tiene</text>
+<text x="745.3967910713591" y="988.5" text-anchor="middle" class="cr">1:N</text>
+<polygon points="795.3967910713591,1114.4818941809447 847.3967910713591,1143.4818941809447 795.3967910713591,1172.4818941809447 743.3967910713591,1143.4818941809447" class="rel"/>
+<text x="795.3967910713591" y="1141.5" text-anchor="middle" class="rn">tiene</text>
+<text x="795.3967910713591" y="1158.5" text-anchor="middle" class="cr">1:N</text>
+<polygon points="515.3967910713591,1634.4818941809447 578.3967910713591,1663.4818941809447 515.3967910713591,1692.4818941809447 452.3967910713591,1663.4818941809447" class="rel"/>
+<text x="515.3967910713591" y="1661.5" text-anchor="middle" class="rn">ubicada en</text>
+<text x="515.3967910713591" y="1678.5" text-anchor="middle" class="cr">N:1</text>
+<polygon points="1065.396791071359,1184.4818941809447 1120.196791071359,1213.4818941809447 1065.396791071359,1242.4818941809447 1010.5967910713591,1213.4818941809447" class="rel"/>
+<text x="1065.396791071359" y="1211.5" text-anchor="middle" class="rn">registra</text>
+<text x="1065.396791071359" y="1228.5" text-anchor="middle" class="cr">1:N</text>
+<polygon points="975.3967910713591,1704.4818941809447 1038.396791071359,1733.4818941809447 975.3967910713591,1762.4818941809447 912.3967910713591,1733.4818941809447" class="rel"/>
+<text x="975.3967910713591" y="1731.5" text-anchor="middle" class="rn">asociado a</text>
+<text x="975.3967910713591" y="1748.5" text-anchor="middle" class="cr">N:1</text>
+<polygon points="1275.396791071359,1704.4818941809447 1334.2967910713592,1733.4818941809447 1275.396791071359,1762.4818941809447 1216.496791071359,1733.4818941809447" class="rel"/>
+<text x="1275.396791071359" y="1731.5" text-anchor="middle" class="rn">en parada</text>
+<text x="1275.396791071359" y="1748.5" text-anchor="middle" class="cr">N:1</text>
+<polygon points="1675.396791071359,914.4818941809447 1727.396791071359,943.4818941809447 1675.396791071359,972.4818941809447 1623.396791071359,943.4818941809447" class="rel"/>
+<text x="1675.396791071359" y="941.5" text-anchor="middle" class="rn">posee</text>
+<text x="1675.396791071359" y="958.5" text-anchor="middle" class="cr">1:1</text>
+<polygon points="2225.396791071359,1154.4818941809447 2280.1967910713593,1183.4818941809447 2225.396791071359,1212.4818941809447 2170.596791071359,1183.4818941809447" class="rel"/>
+<text x="2225.396791071359" y="1181.5" text-anchor="middle" class="rn">registra</text>
+<text x="2225.396791071359" y="1198.5" text-anchor="middle" class="cr">1:N</text>
+<polygon points="1335.396791071359,1344.4818941809447 1390.196791071359,1373.4818941809447 1335.396791071359,1402.4818941809447 1280.5967910713591,1373.4818941809447" class="rel"/>
+<text x="1335.396791071359" y="1371.5" text-anchor="middle" class="rn">contrata</text>
+<text x="1335.396791071359" y="1388.5" text-anchor="middle" class="cr">1:N</text>
+<polygon points="1545.396791071359,1684.4818941809447 1597.396791071359,1713.4818941809447 1545.396791071359,1742.4818941809447 1493.396791071359,1713.4818941809447" class="rel"/>
+<text x="1545.396791071359" y="1711.5" text-anchor="middle" class="rn">alquila</text>
+<text x="1545.396791071359" y="1728.5" text-anchor="middle" class="cr">N:1</text>
+<polygon points="1905.396791071359,1544.4818941809447 1957.396791071359,1573.4818941809447 1905.396791071359,1602.4818941809447 1853.396791071359,1573.4818941809447" class="rel"/>
+<text x="1905.396791071359" y="1571.5" text-anchor="middle" class="rn">factura</text>
+<text x="1905.396791071359" y="1588.5" text-anchor="middle" class="cr">N:1</text>
+<polygon points="2225.396791071359,1744.4818941809447 2296.596791071359,1773.4818941809447 2225.396791071359,1802.4818941809447 2154.1967910713593,1773.4818941809447" class="rel"/>
+<text x="2225.396791071359" y="1771.5" text-anchor="middle" class="rn">originado en</text>
+<text x="2225.396791071359" y="1788.5" text-anchor="middle" class="cr">N:1</text>
+<rect x="1135.396791071359" y="891.4818941809447" width="120" height="44" class="ent"/>
+<text x="1195.396791071359" y="918.4818941809447" text-anchor="middle" class="tn">CLIENTE</text>
+<rect x="1135.396791071359" y="181.4818941809446" width="120" height="44" class="ent"/>
+<text x="1195.396791071359" y="208.4818941809446" text-anchor="middle" class="tn">USUARIO</text>
+<rect x="229.89679107135913" y="887.4818941809447" width="191" height="52" class="ent"/>
+<rect x="233.89679107135913" y="891.4818941809447" width="183" height="44" class="ent"/>
+<text x="325.39679107135913" y="918.4818941809447" text-anchor="middle" class="tn">TELEFONO_CONTACTO</text>
+<rect x="363.89679107135913" y="1351.4818941809447" width="183" height="44" class="ent"/>
+<text x="455.39679107135913" y="1378.4818941809447" text-anchor="middle" class="tn">DIRECCION_ENTREGA</text>
+<rect x="535.3967910713591" y="1871.4818941809447" width="120" height="44" class="ref"/>
+<text x="595.3967910713591" y="1898.4818941809447" text-anchor="middle" class="tn">BARRIO</text>
+<rect x="1058.396791071359" y="1491.4818941809447" width="174" height="44" class="ent"/>
+<text x="1145.396791071359" y="1518.4818941809447" text-anchor="middle" class="tn">MOVIMIENTO_BIDON</text>
+<rect x="2108.396791071359" y="811.4818941809447" width="174" height="44" class="ent"/>
+<text x="2195.396791071359" y="838.4818941809447" text-anchor="middle" class="tn">CUENTA_CORRIENTE</text>
+<rect x="2053.896791071359" y="1491.4818941809447" width="183" height="44" class="ent"/>
+<text x="2145.396791071359" y="1518.4818941809447" text-anchor="middle" class="tn">MOVIMIENTO_CUENTA</text>
+<rect x="1555.396791071359" y="1451.4818941809447" width="120" height="44" class="ent"/>
+<text x="1615.396791071359" y="1478.4818941809447" text-anchor="middle" class="tn">ABONO</text>
+<rect x="1535.396791071359" y="1871.4818941809447" width="120" height="44" class="ref"/>
+<text x="1595.396791071359" y="1898.4818941809447" text-anchor="middle" class="tn">PRODUCTO</text>
+<rect x="2215.396791071359" y="1871.4818941809447" width="120" height="44" class="ref"/>
+<text x="2275.396791071359" y="1898.4818941809447" text-anchor="middle" class="tn">PEDIDO</text>
+<rect x="1213.396791071359" y="1871.4818941809447" width="264" height="44" class="ref"/>
+<text x="1345.396791071359" y="1898.4818941809447" text-anchor="middle" class="tn">PARADA (DETALLE_HOJA_RUTA)</text>
+<rect x="835.3967910713591" y="1871.4818941809447" width="120" height="44" class="ref"/>
+<text x="895.3967910713591" y="1898.4818941809447" text-anchor="middle" class="tn">PEDIDO</text>
+<ellipse cx="775.3" cy="850.6" rx="65.5" ry="13.0" class="ov"/>
+<text x="775.3" y="854.6" text-anchor="middle" class="an">nombre_completo</text>
+<ellipse cx="613.7" cy="841.8" rx="40.0" ry="18.0" class="ov"/>
+<text x="613.7" y="839.8" text-anchor="middle" class="an">nombre</text>
+<text x="613.7" y="852.8" text-anchor="middle" class="at">Texto(64)</text>
+<ellipse cx="632.7" cy="772.0" rx="41.0" ry="18.0" class="ov"/>
+<text x="632.7" y="770.0" text-anchor="middle" class="an">apellido</text>
+<text x="632.7" y="783.0" text-anchor="middle" class="at">Texto(64)</text>
+<ellipse cx="696.1" cy="709.9" rx="48.0" ry="18.0" class="ov"/>
+<text x="696.1" y="707.9" text-anchor="middle" class="an" text-decoration="underline">id_cliente</text>
+<text x="696.1" y="720.9" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="903.0" cy="744.0" rx="58.0" ry="18.0" class="ov"/>
+<text x="903.0" y="742.0" text-anchor="middle" class="an">numero</text>
+<text x="903.0" y="755.0" text-anchor="middle" class="at">Texto(10) único</text>
+<ellipse cx="859.6" cy="633.1" rx="58.0" ry="18.0" class="ov"/>
+<text x="859.6" y="631.1" text-anchor="middle" class="an">dni</text>
+<text x="859.6" y="644.1" text-anchor="middle" class="at">Texto(15) único</text>
+<ellipse cx="1031.7" cy="702.1" rx="62.0" ry="18.0" class="ov"/>
+<text x="1031.7" y="700.1" text-anchor="middle" class="an">email_contacto</text>
+<text x="1031.7" y="713.1" text-anchor="middle" class="at">Texto(120)</text>
+<ellipse cx="1063.7" cy="590.1" rx="69.0" ry="18.0" class="ov"/>
+<text x="1063.7" y="588.1" text-anchor="middle" class="an">fecha_nacimiento</text>
+<text x="1063.7" y="601.1" text-anchor="middle" class="at">Fecha</text>
+<ellipse cx="1293.7" cy="691.3" rx="48.0" ry="18.0" class="ov"/>
+<text x="1293.7" y="689.3" text-anchor="middle" class="an">fecha_alta</text>
+<text x="1293.7" y="702.3" text-anchor="middle" class="at">Fecha</text>
+<ellipse cx="1446.4" cy="609.9" rx="55.0" ry="18.0" class="ov"/>
+<text x="1446.4" y="607.9" text-anchor="middle" class="an">tipo_cliente</text>
+<text x="1446.4" y="620.9" text-anchor="middle" class="at">Texto(10)</text>
+<ellipse cx="1437.7" cy="723.7" rx="58.5" ry="18.0" class="ov"/>
+<text x="1437.7" y="721.7" text-anchor="middle" class="an">permite_fiado</text>
+<text x="1437.7" y="734.7" text-anchor="middle" class="at">Booleano</text>
+<ellipse cx="1635.6" cy="675.7" rx="72.5" ry="18.0" class="ov"/>
+<text x="1635.6" y="673.7" text-anchor="middle" class="an">bidones_prestados</text>
+<text x="1635.6" y="686.7" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="1550.4" cy="780.5" rx="55.0" ry="18.0" class="ov"/>
+<text x="1550.4" y="778.5" text-anchor="middle" class="an">es_frecuente</text>
+<text x="1550.4" y="791.5" text-anchor="middle" class="at">Booleano</text>
+<ellipse cx="1768.1" cy="772.0" rx="58.5" ry="18.0" class="ov"/>
+<text x="1768.1" y="770.0" text-anchor="middle" class="an">tipo_registro</text>
+<text x="1768.1" y="783.0" text-anchor="middle" class="at">Texto(12)</text>
+<ellipse cx="1617.5" cy="854.5" rx="62.0" ry="18.0" class="ov"/>
+<text x="1617.5" y="852.5" text-anchor="middle" class="an">notas_internas</text>
+<text x="1617.5" y="865.5" text-anchor="middle" class="at">Texto(500)</text>
+<ellipse cx="1013.5" cy="245.5" rx="48.0" ry="18.0" class="ov"/>
+<text x="1013.5" y="243.5" text-anchor="middle" class="an" text-decoration="underline">id_usuario</text>
+<text x="1013.5" y="256.5" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="890.9" cy="203.5" rx="61.0" ry="18.0" class="ov"/>
+<text x="890.9" y="201.5" text-anchor="middle" class="an">username</text>
+<text x="890.9" y="214.5" text-anchor="middle" class="at">Texto(150) único</text>
+<ellipse cx="1013.5" cy="161.5" rx="61.0" ry="18.0" class="ov"/>
+<text x="1013.5" y="159.5" text-anchor="middle" class="an">email</text>
+<text x="1013.5" y="172.5" text-anchor="middle" class="at">Texto(254) único</text>
+<ellipse cx="1043.1" cy="98.0" rx="67.0" ry="18.0" class="ov"/>
+<text x="1043.1" y="96.0" text-anchor="middle" class="an">password</text>
+<text x="1043.1" y="109.0" text-anchor="middle" class="at">Texto(128) cifrada</text>
+<ellipse cx="1300.4" cy="130.7" rx="58.5" ry="18.0" class="ov"/>
+<text x="1300.4" y="128.7" text-anchor="middle" class="an">imagen_perfil</text>
+<text x="1300.4" y="141.7" text-anchor="middle" class="at">Imagen</text>
+<ellipse cx="1489.5" cy="172.0" rx="44.5" ry="18.0" class="ov"/>
+<text x="1489.5" y="170.0" text-anchor="middle" class="an">is_active</text>
+<text x="1489.5" y="183.0" text-anchor="middle" class="at">Booleano</text>
+<ellipse cx="1377.3" cy="245.5" rx="51.5" ry="18.0" class="ov"/>
+<text x="1377.3" y="243.5" text-anchor="middle" class="an">date_joined</text>
+<text x="1377.3" y="256.5" text-anchor="middle" class="at">Fecha y hora</text>
+<ellipse cx="152.2" cy="953.5" rx="40.0" ry="18.0" class="ov"/>
+<text x="152.2" y="951.5" text-anchor="middle" class="an">numero</text>
+<line x1="133.6" y1="954.5" x2="170.8" y2="954.5" stroke="#0f172a" stroke-dasharray="3 2"/>
+<text x="152.2" y="964.5" text-anchor="middle" class="at">Texto(20)</text>
+<ellipse cx="125.6" cy="910.0" rx="58.5" ry="18.0" class="ov"/>
+<text x="125.6" y="908.0" text-anchor="middle" class="an">desc_relacion</text>
+<text x="125.6" y="921.0" text-anchor="middle" class="at">Texto(40)</text>
+<ellipse cx="161.6" cy="867.6" rx="55.0" ry="18.0" class="ov"/>
+<text x="161.6" y="865.6" text-anchor="middle" class="an">es_principal</text>
+<text x="161.6" y="878.6" text-anchor="middle" class="at">Booleano</text>
+<ellipse cx="403.6" cy="1479.7" rx="55.0" ry="18.0" class="ov"/>
+<text x="403.6" y="1477.7" text-anchor="middle" class="an" text-decoration="underline">id_direccion</text>
+<text x="403.6" y="1490.7" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="280.9" cy="1500.9" rx="44.5" ry="13.0" class="ov"/>
+<text x="280.9" y="1504.9" text-anchor="middle" class="an">domicilio</text>
+<ellipse cx="333.7" cy="1701.8" rx="43.0" ry="18.0" class="ov"/>
+<text x="333.7" y="1699.8" text-anchor="middle" class="an">calle</text>
+<text x="333.7" y="1712.8" text-anchor="middle" class="at">Texto(100)</text>
+<ellipse cx="246.1" cy="1633.4" rx="40.0" ry="18.0" class="ov"/>
+<text x="246.1" y="1631.4" text-anchor="middle" class="an">altura</text>
+<text x="246.1" y="1644.4" text-anchor="middle" class="at">Texto(10)</text>
+<ellipse cx="155.0" cy="1570.9" rx="48.0" ry="18.0" class="ov"/>
+<text x="155.0" y="1568.9" text-anchor="middle" class="an">piso_depto</text>
+<text x="155.0" y="1581.9" text-anchor="middle" class="at">Texto(30)</text>
+<ellipse cx="80.0" cy="1508.3" rx="40.0" ry="18.0" class="ov"/>
+<text x="80.0" y="1506.3" text-anchor="middle" class="an">ciudad</text>
+<text x="80.0" y="1519.3" text-anchor="middle" class="at">Texto(64)</text>
+<ellipse cx="284.0" cy="1430.1" rx="40.0" ry="18.0" class="ov"/>
+<text x="284.0" y="1428.1" text-anchor="middle" class="an">w3w</text>
+<text x="284.0" y="1441.1" text-anchor="middle" class="at">Texto(80)</text>
+<ellipse cx="169.0" cy="1398.4" rx="51.5" ry="18.0" class="ov"/>
+<text x="169.0" y="1396.4" text-anchor="middle" class="an">coordenadas</text>
+<text x="169.0" y="1409.4" text-anchor="middle" class="at">Texto(40)</text>
+<ellipse cx="260.5" cy="1348.7" rx="62.0" ry="18.0" class="ov"/>
+<text x="260.5" y="1346.7" text-anchor="middle" class="an">desc_seguridad</text>
+<text x="260.5" y="1359.7" text-anchor="middle" class="at">Texto(500)</text>
+<ellipse cx="217.8" cy="1282.0" rx="55.0" ry="18.0" class="ov"/>
+<text x="217.8" y="1280.0" text-anchor="middle" class="an">es_principal</text>
+<text x="217.8" y="1293.0" text-anchor="middle" class="at">Booleano</text>
+<ellipse cx="956.2" cy="1568.1" rx="58.5" ry="18.0" class="ov"/>
+<text x="956.2" y="1566.1" text-anchor="middle" class="an" text-decoration="underline">id_movimiento</text>
+<text x="956.2" y="1579.1" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="837.7" cy="1551.1" rx="40.0" ry="18.0" class="ov"/>
+<text x="837.7" y="1549.1" text-anchor="middle" class="an">tipo</text>
+<text x="837.7" y="1562.1" text-anchor="middle" class="at">Texto(12)</text>
+<ellipse cx="927.1" cy="1508.7" rx="41.0" ry="18.0" class="ov"/>
+<text x="927.1" y="1506.7" text-anchor="middle" class="an">cantidad</text>
+<text x="927.1" y="1519.7" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="845.4" cy="1462.6" rx="49.0" ry="18.0" class="ov"/>
+<text x="845.4" y="1460.6" text-anchor="middle" class="an">fecha</text>
+<text x="845.4" y="1473.6" text-anchor="middle" class="at">Fecha y hora</text>
+<ellipse cx="966.4" cy="1450.8" rx="43.0" ry="18.0" class="ov"/>
+<text x="966.4" y="1448.8" text-anchor="middle" class="an">nota</text>
+<text x="966.4" y="1461.8" text-anchor="middle" class="at">Texto(200)</text>
+<ellipse cx="2002.2" cy="805.0" rx="44.5" ry="18.0" class="ov"/>
+<text x="2002.2" y="803.0" text-anchor="middle" class="an" text-decoration="underline">id_cuenta</text>
+<text x="2002.2" y="816.0" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="1973.2" cy="731.0" rx="52.0" ry="18.0" class="ov"/>
+<text x="1973.2" y="729.0" text-anchor="middle" class="an">saldo</text>
+<text x="1973.2" y="742.0" text-anchor="middle" class="at">Decimal(12,2)</text>
+<ellipse cx="2110.9" cy="733.8" rx="62.0" ry="18.0" class="ov"/>
+<text x="2110.9" y="731.8" text-anchor="middle" class="an">limite_credito</text>
+<text x="2110.9" y="744.8" text-anchor="middle" class="at">Decimal(12,2)</text>
+<ellipse cx="2195.4" cy="674.0" rx="37.0" ry="18.0" class="ov"/>
+<text x="2195.4" y="672.0" text-anchor="middle" class="an">activa</text>
+<text x="2195.4" y="685.0" text-anchor="middle" class="at">Booleano</text>
+<ellipse cx="2279.9" cy="733.8" rx="62.0" ry="18.0" class="ov"/>
+<text x="2279.9" y="731.8" text-anchor="middle" class="an">fecha_apertura</text>
+<text x="2279.9" y="744.8" text-anchor="middle" class="at">Fecha</text>
+<ellipse cx="2417.5" cy="731.0" rx="62.0" ry="18.0" class="ov" stroke-dasharray="4 3"/>
+<text x="2417.5" y="729.0" text-anchor="middle" class="an">dias_de_atraso</text>
+<text x="2417.5" y="742.0" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="2388.6" cy="805.0" rx="65.5" ry="18.0" class="ov" stroke-dasharray="4 3"/>
+<text x="2388.6" y="803.0" text-anchor="middle" class="an">nivel_morosidad</text>
+<text x="2388.6" y="816.0" text-anchor="middle" class="at">Texto</text>
+<ellipse cx="2267.5" cy="1429.2" rx="58.5" ry="18.0" class="ov"/>
+<text x="2267.5" y="1427.2" text-anchor="middle" class="an" text-decoration="underline">id_movimiento</text>
+<text x="2267.5" y="1440.2" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="2386.4" cy="1436.2" rx="40.0" ry="18.0" class="ov"/>
+<text x="2386.4" y="1434.2" text-anchor="middle" class="an">tipo</text>
+<text x="2386.4" y="1447.2" text-anchor="middle" class="at">Texto(10)</text>
+<ellipse cx="2333.5" cy="1498.2" rx="52.0" ry="18.0" class="ov"/>
+<text x="2333.5" y="1496.2" text-anchor="middle" class="an">monto</text>
+<text x="2333.5" y="1509.2" text-anchor="middle" class="at">Decimal(12,2)</text>
+<ellipse cx="2413.8" cy="1549.4" rx="51.5" ry="18.0" class="ov"/>
+<text x="2413.8" y="1547.4" text-anchor="middle" class="an">descripcion</text>
+<text x="2413.8" y="1560.4" text-anchor="middle" class="at">Texto(200)</text>
+<ellipse cx="2302.9" cy="1575.0" rx="49.0" ry="18.0" class="ov"/>
+<text x="2302.9" y="1573.0" text-anchor="middle" class="an">fecha</text>
+<text x="2302.9" y="1586.0" text-anchor="middle" class="at">Fecha y hora</text>
+<ellipse cx="2303.4" cy="1644.1" rx="72.5" ry="18.0" class="ov"/>
+<text x="2303.4" y="1642.1" text-anchor="middle" class="an">fecha_vencimiento</text>
+<text x="2303.4" y="1655.1" text-anchor="middle" class="at">Fecha</text>
+<ellipse cx="1484.6" cy="1375.2" rx="41.0" ry="18.0" class="ov"/>
+<text x="1484.6" y="1373.2" text-anchor="middle" class="an" text-decoration="underline">id_abono</text>
+<text x="1484.6" y="1386.2" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="1524.3" cy="1306.2" rx="55.0" ry="18.0" class="ov"/>
+<text x="1524.3" y="1304.2" text-anchor="middle" class="an">fecha_inicio</text>
+<text x="1524.3" y="1317.2" text-anchor="middle" class="at">Fecha</text>
+<ellipse cx="1627.3" cy="1353.6" rx="44.5" ry="18.0" class="ov"/>
+<text x="1627.3" y="1351.6" text-anchor="middle" class="an">fecha_fin</text>
+<text x="1627.3" y="1364.6" text-anchor="middle" class="at">Fecha</text>
+<ellipse cx="1739.2" cy="1312.2" rx="58.5" ry="18.0" class="ov"/>
+<text x="1739.2" y="1310.2" text-anchor="middle" class="an">costo_mensual</text>
+<text x="1739.2" y="1323.2" text-anchor="middle" class="at">Decimal(12,2)</text>
+<ellipse cx="1765.0" cy="1382.9" rx="65.5" ry="18.0" class="ov"/>
+<text x="1765.0" y="1380.9" text-anchor="middle" class="an">dia_facturacion</text>
+<text x="1765.0" y="1393.9" text-anchor="middle" class="at">Entero</text>
+<ellipse cx="1901.7" cy="1386.5" rx="40.0" ry="18.0" class="ov"/>
+<text x="1901.7" y="1384.5" text-anchor="middle" class="an">estado</text>
+<text x="1901.7" y="1397.5" text-anchor="middle" class="at">Texto(12)</text>
+<ellipse cx="1839.2" cy="1450.6" rx="76.0" ry="18.0" class="ov"/>
+<text x="1839.2" y="1448.6" text-anchor="middle" class="an">ultima_facturacion</text>
+<text x="1839.2" y="1461.6" text-anchor="middle" class="at">Fecha</text>
+<ellipse cx="1942.8" cy="1497.7" rx="58.5" ry="18.0" class="ov"/>
+<text x="1942.8" y="1495.7" text-anchor="middle" class="an">observaciones</text>
+<text x="1942.8" y="1508.7" text-anchor="middle" class="at">Texto(500)</text>
+</svg>

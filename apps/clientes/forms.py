@@ -4,8 +4,8 @@ from apps.autenticacion.forms import RegistroUsuarioForm
 from django.utils import timezone
 
 from distribuidora.validadores import (
-    ATTRS_ALTURA, ATTRS_DNI, ATTRS_TELEFONO, aplicar_attrs,
-    validar_altura, validar_dni, validar_fecha_no_futura, validar_telefono,
+    ATTRS_ALTURA, ATTRS_DNI, ATTRS_TELEFONO, ATTRS_W3W, aplicar_attrs,
+    validar_altura, validar_dni, validar_fecha_no_futura, validar_telefono, validar_w3w,
 )
 from .models import Cliente, TelefonoContacto, DireccionEntrega
 
@@ -163,9 +163,10 @@ class DireccionEntregaForm(forms.ModelForm):
     """Agregar o editar una dirección de entrega."""
     class Meta:
         model  = DireccionEntrega
-        fields = ['calle', 'altura', 'piso_depto', 'barrio', 'ciudad',
+        fields = ['w3w', 'calle', 'altura', 'piso_depto', 'barrio', 'ciudad',
                   'desc_seguridad', 'es_principal']
         widgets = {
+            'w3w': forms.TextInput(attrs={'class': _INPUT}),
             'calle': forms.TextInput(attrs={
                 'class': _INPUT,
                 'placeholder': 'Nombre de la calle'
@@ -206,6 +207,7 @@ class DireccionEntregaForm(forms.ModelForm):
             self.fields['barrio'].required = True
 
         aplicar_attrs(self, 'altura', ATTRS_ALTURA)
+        aplicar_attrs(self, 'w3w', ATTRS_W3W)
 
         # Sólo el personal carga la nota de seguridad del domicilio (RNF-02).
         if not is_staff_or_admin:
@@ -213,6 +215,9 @@ class DireccionEntregaForm(forms.ModelForm):
 
     def clean_altura(self):
         return validar_altura(self.cleaned_data.get('altura'))
+
+    def clean_w3w(self):
+        return validar_w3w(self.cleaned_data.get('w3w'))
 
 
 class DireccionRegistroForm(DireccionEntregaForm):

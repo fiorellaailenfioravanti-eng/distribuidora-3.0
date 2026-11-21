@@ -68,6 +68,33 @@ def validar_coordenadas(valor):
     return f'{lat},{lng}'
 
 
+_PREFIJOS_W3W = ('https://', 'http://', 'w3w.co/', 'www.', 'what3words.com/', '///')
+_PALABRA_W3W = r'[^\W\d_]+'
+_PATRON_W3W = re.compile(rf'{_PALABRA_W3W}\.{_PALABRA_W3W}\.{_PALABRA_W3W}')
+
+
+def validar_w3w(valor):
+    """Dirección what3words: tres palabras separadas por puntos.
+
+    Acepta lo que se copia de la app o la web (`///uno.dos.tres` o
+    `https://w3w.co/uno.dos.tres`) y lo guarda como `uno.dos.tres`.
+    """
+    valor = (valor or '').strip().lower()
+    cambio = True
+    while cambio:
+        cambio = False
+        for prefijo in _PREFIJOS_W3W:
+            if valor.startswith(prefijo):
+                valor = valor[len(prefijo):]
+                cambio = True
+    valor = valor.strip().strip('/')
+    if not valor:
+        return valor
+    if not _PATRON_W3W.fullmatch(valor):
+        raise ValidationError('Usá las tres palabras de what3words separadas por puntos (ej: ///filtros.secarse.sanas).')
+    return valor
+
+
 def validar_altura(valor):
     """Altura de la calle: número positivo (con letra opcional) o 'S/N'."""
     valor = (valor or '').strip()
@@ -108,6 +135,11 @@ ATTRS_ALTURA = {
 ATTRS_COORDENADAS = {
     'pattern': r'\s*-?\d{1,2}(\.\d+)?\s*,\s*-?\d{1,3}(\.\d+)?\s*', 'inputmode': 'decimal',
     'title': 'Latitud,longitud (ej: -27.4511,-58.9867).', 'placeholder': '-27.4511,-58.9867 (opcional)',
+}
+ATTRS_W3W = {
+    'maxlength': '120', 'autocomplete': 'off', 'autocapitalize': 'off', 'spellcheck': 'false',
+    'title': 'Las tres palabras de what3words (ej: ///filtros.secarse.sanas). Se puede pegar el link.',
+    'placeholder': '///palabra.palabra.palabra',
 }
 ATTRS_PATENTE = {
     'pattern': r'([A-Za-z]{2}\s?\d{3}\s?[A-Za-z]{2}|[A-Za-z]{3}\s?\d{3})', 'maxlength': '9',

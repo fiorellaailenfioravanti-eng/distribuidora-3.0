@@ -324,6 +324,13 @@ class DireccionEntrega(models.Model):
             'Repartidor asignado a esa dirección.'
         )
     )
+    w3w            = models.CharField(
+        max_length=80,
+        blank=True,
+        verbose_name='what3words',
+        help_text=('Ubicación exacta de la puerta en what3words (ej: filtros.secarse.sanas). '
+                   'Si está cargada, el botón del mapa abre esta ubicación.')
+    )
     coordenadas    = models.CharField(
         max_length=40,
         blank=True,
@@ -346,13 +353,23 @@ class DireccionEntrega(models.Model):
         verbose_name = 'Dirección de entrega'
         verbose_name_plural = 'Direcciones de entrega'
         constraints = limite_largo(desc_seguridad=LARGO_TEXTO, calle=100, altura=10, piso_depto=30,
-                                   ciudad=LARGO_NOMBRE, coordenadas=40)
+                                   ciudad=LARGO_NOMBRE, coordenadas=40, w3w=80)
 
     def __str__(self):
         extra = f" — {self.piso_depto}" if self.piso_depto else ""
         barrio_str = f" (B° {self.barrio.nombre})" if self.barrio else ""
         zona  = f" [{self.barrio.zona}]" if self.barrio and self.barrio.zona else ""
         return f"{self.calle} {self.altura}{extra}{barrio_str}{zona}"
+
+    def url_w3w(self):
+        """Enlace a la ubicación what3words (abre la web o la app, sin costo)."""
+        from urllib.parse import quote
+        return f'https://w3w.co/{quote(self.w3w.strip())}' if self.w3w.strip() else ''
+
+    def url_mapa(self):
+        """Enlace del botón de mapa: what3words si está cargado (ubicación
+        exacta de la puerta); si no, Google Maps."""
+        return self.url_w3w() or self.url_google_maps()
 
     def url_google_maps(self):
         """Enlace para ver el domicilio en Google Maps: por coordenadas si están

@@ -342,8 +342,16 @@ class DireccionEntrega(models.Model):
     localidad      = CharField(max_length=100)
     referencia     = TextField(blank=True)
     desc_seguridad = TextField(blank=True)  # RNF-02: visible Admin/Vendedor/repartidor ASIGNADO
+    w3w            = CharField(max_length=80, blank=True)  # what3words 'palabra.palabra.palabra'
+    coordenadas    = CharField(max_length=40, blank=True)  # 'lat,lng' (respaldo si no hay w3w)
     es_principal   = BooleanField(default=False)
 ```
+
+> **what3words (21/11/2026):** la ubicación de cada domicilio se guarda como W3W (`validar_w3w` acepta
+> `///a.b.c` o el link `w3w.co`). `url_mapa()` y el «Cómo llegar» del repartidor abren `https://w3w.co/a.b.c`
+> si hay W3W; si no, Google Maps por coordenadas o texto. Sin API (la conversión a lat/lng es paga).
+> Carga masiva desde la planilla de recorridos: `manage.py importar_w3w <planilla.xlsx> [--aplicar]`
+> (cruza `NRO CLI` con `Cliente.numero`; sin `--aplicar` solo simula).
 
 > **C-6 corregido:** la nota de seguridad se etiqueta como **RNF-02**, no RF-03.
 
@@ -445,7 +453,7 @@ propios; los importa de `apps.empleados`. Se eliminaron las tablas
 - `marcar_estado` anota la hora en cada novedad (también «Reprogramado»).
 
 **Recorrido del repartidor (`/logistica/mi-ruta/`, mobile-first):** muestra las hojas de hoy y cualquier hoja en
-reparto. Siguiente parada destacada con «Cómo llegar» (Google Maps por coordenadas o dirección), «Llamar», nota de
+reparto. Siguiente parada destacada con «Cómo llegar» (what3words si la dirección lo tiene; si no, Google Maps por coordenadas o dirección), «Llamar», nota de
 seguridad (RNF-02), lo que se entrega, el saldo a cobrar y los envases en préstamo del cliente. Cada parada se
 confirma en la tarjeta (`parada/<pk>/confirmar/`, `confirmar_entrega_en_calle`): **Entregado** (vacíos retirados +
 cobro total / parcial / a cuenta con fiado / no pagó) o **No se pudo** (motivo; reprogramar o cancelar). Totales del

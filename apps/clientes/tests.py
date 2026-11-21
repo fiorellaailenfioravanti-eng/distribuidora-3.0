@@ -441,3 +441,83 @@ class BotonPremiumTests(TestCase):
         respuesta = self.client.get(self.url)
         self.assertEqual(respuesta.status_code, 200)
         self.assertNotContains(respuesta, 'Promover a Premium')
+
+
+class What3WordsTests(TestCase):
+    """Direcciones con what3words: validación, botón del mapa e importación de la planilla."""
+
+    def setUp(self):
+        from .models import DireccionEntrega
+        self.cliente = Cliente.objects.create(nombre='Ana', apellido='Pérez')
+        self.cliente.numero = '1003389'
+        self.cliente.save()
+        self.direccion = DireccionEntrega.objects.create(
+            cliente=self.cliente, calle='Ameghino', altura='168', es_principal=True,
+            coordenadas='-27.455587,-58.988599')
+
+    def test_validar_w3w_acepta_lo_que_se_copia(self):
+        from django.core.exceptions import ValidationError
+        from distribuidora.validadores import validar_w3w
+        for entrada in ('///filtros.secarse.sanas', 'https://w3w.co/filtros.secarse.sanas',
+                        'https://what3words.com/Filtros.Secarse.Sanas', ' filtros.secarse.sanas '):
+            self.assertEqual(validar_w3w(entrada), 'filtros.secarse.sanas')
+        self.assertEqual(validar_w3w('///jabalí.mirar.vuela'), 'jabalí.mirar.vuela')
+        self.assertEqual(validar_w3w(''), '')
+        for malo in ('filtros.secarse', 'Ameghino 168', 'uno.dos.tres4', 'uno..tres'):
+            with self.assertRaises(ValidationError):
+                validar_w3w(malo)
+
+    def test_mapa_usa_w3w_antes_que_coordenadas(self):
+        self.assertIn('google.com/maps', self.direccion.url_mapa())
+        self.direccion.w3w = 'jabalí.mirar.vuela'
+        self.assertEqual(self.direccion.url_mapa(), 'https://w3w.co/jabal%C3%AD.mirar.vuela')
+
+    def test_link_de_la_hoja_de_ruta_usa_w3w(self):
+        from apps.logistica.views import _link_mapa
+        self.direccion.w3w = 'filtros.secarse.sanas'
+        self.assertEqual(_link_mapa(self.direccion, 'Ameghino 168'), 'https://w3w.co/filtros.secarse.sanas')
+        self.assertIn('google.com/maps', _link_mapa(None, 'Ameghino 168'))
+
+    def test_formulario_normaliza_w3w(self):
+        from .forms import DireccionEntregaForm
+        form = DireccionEntregaForm({'w3w': '///Filtros.Secarse.Sanas', 'calle': 'Ameghino', 'altura': '168',
+                                     'ciudad': 'Resistencia'}, instance=self.direccion)
+        form.fields['barrio'].required = False
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['w3w'], 'filtros.secarse.sanas')
+        form = DireccionEntregaForm({'w3w': 'plaza central', 'calle': 'Ameghino', 'altura': '168',
+                                     'ciudad': 'Resistencia'}, instance=self.direccion)
+        form.fields['barrio'].required = False
+        self.assertFalse(form.is_valid())
+        self.assertIn('w3w', form.errors)
+
+    def _planilla(self, filas):
+        import csv
+        import os
+        import tempfile
+        archivo = tempfile.NamedTemporaryFile('w', suffix='.csv', delete=False, encoding='utf-8', newline='')
+        with archivo:
+            csv.writer(archivo).writerows([['REPARTO', 'UBICACIÓN', 'CLIENTE', 'NRO CLI']] + filas)
+        self.addCleanup(os.remove, archivo.name)
+        return archivo.name
+
+    def test_importar_simula_y_luego_aplica(self):
+        from io import StringIO
+        from django.core.management import call_command
+        ruta = self._planilla([
+            ['Lunes', '///filtros.secarse.sanas', 'Ana Pérez', '1003389'],
+            ['Martes', '///afecte.tuve.alfiler', 'Ana Pérez', '1003389'],
+            ['Martes', '///origins.foods.examine', '', ''],
+            ['Martes', '///retener.alegres.aceptando', 'Otro', '9999999'],
+        ])
+        salida = StringIO()
+        call_command('importar_w3w', ruta, stdout=salida)
+        self.direccion.refresh_from_db()
+        self.assertEqual(self.direccion.w3w, '')
+        self.assertIn('sin usar: ///afecte.tuve.alfiler', salida.getvalue())
+        self.assertIn('fila 4: ///origins.foods.examine', salida.getvalue())
+        self.assertIn('9999999', salida.getvalue())
+
+        call_command('importar_w3w', ruta, '--aplicar', stdout=StringIO())
+        self.direccion.refresh_from_db()
+        self.assertEqual(self.direccion.w3w, 'filtros.secarse.sanas')

@@ -1,17 +1,17 @@
-# Graph Report - obsidian-vault-reinicio-2295d7  (2026-11-16)
+# Graph Report - inicio-proyecto-087608  (2026-11-21)
 
 ## Corpus Check
-- 301 files · ~345,282 words
+- 305 files · ~346,515 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 28 file(s) not represented in the graph (top: (none) 7, .canvas 5, .base 5)
 
 ## Summary
-- 2441 nodes · 5654 edges · 178 communities (108 shown, 70 thin omitted)
-- Extraction: 86% EXTRACTED · 14% INFERRED · 0% AMBIGUOUS · INFERRED: 801 edges (avg confidence: 0.95)
+- 2472 nodes · 5717 edges · 177 communities (108 shown, 69 thin omitted)
+- Extraction: 86% EXTRACTED · 14% INFERRED · 0% AMBIGUOUS · INFERRED: 806 edges (avg confidence: 0.95)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `cdd29eb8`
+- Built from commit: `9fc0e36e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -19,9 +19,9 @@
 - autenticacion/views.py
 - pedidos/urls.py
 - empleados/views.py
-- promociones/tests.py
+- Command
 - django_db
-- roles.py
+- distribuidora/views.py
 - cuentas/views.py
 - ProductoForm
 - PedidoAutomaticoTests
@@ -33,29 +33,29 @@
 - requiere
 - VigentesQuerySet
 - PROCEDURE.md
-- Producto
+- Carrito
 - base_tienda.html
 - recortar_textos
 - What You Must Do When Invoked
 - base_dashboard.html
 - clientes/services.py
 - Pedido
-- registrar_cargo
-- pedidos/forms.py
-- pedidos/tests.py
+- SemaforizacionTests
+- Producto
+- pedidos/services.py
 - CuentaCorriente
 - 🏁 Plan de Cierre — Fases 4.5 a 7
-- Command
+- importar_w3w.py
 - MovimientoCuenta
 - puede
-- crear_cliente_con_cuenta
+- registrar_cargo
 - django_apps
 - GeneracionBorradorTests
 - AccesoAVistasLogisticasTests
 - logistica/views.py
-- CuentaDeRepartidorTests
-- DetallePedido
-- EliminarEnvaseTests
+- Empleado
+- BajaLogicaYFotoEmpleadoTests
+- GenerarEnvaseTests
 - Qué hice
 - HojaDeRutaUXTests
 - es_personal_interno
@@ -71,17 +71,17 @@
 - graphify reference: extra exports and benchmark
 - RolSincronizaGrupoTests
 - FuncionesPorRolTests
-- SuscripcionReposicion
-- clientes/admin.py
+- ✅ Control de cumplimiento de requisitos — 20/10/2026
+- DireccionEntrega
 - clientes/forms.py
 - permisos/signals.py
 - base.py
-- VistasAbonosTests
+- ingresar_usuario
 - DireccionEntregaForm
-- Empleado
+- RolEmpleadoForm
 - graphify reference: query, path, explain
 - 0007_funciones_por_defecto.py
-- RecargaTests
+- AltaClienteValidacionesTests
 - Qué hice
 - HojaRuta
 - popups.js
@@ -95,9 +95,9 @@
 - README.md
 - extraction-spec.md
 - logistica/tests.py
-- BuscarClientesTests
-- QA-04 Abono con costo 0
 - StockReservadoTests
+- QA-04 Abono con costo 0
+- pedidos/tests.py
 - RegistroUsuarioForm
 - RolBackend
 - GuardsUnificadosTests
@@ -106,50 +106,47 @@
 - QA-05 Zona sin días de reparto
 - CobroManualTests
 - puede_ver_nota_seguridad
-- promociones/admin.py
+- promociones/tests.py
 - 0013_detallehojaruta_es_venta_calle.py
-- PromocionForm
+- permisos/views.py
 - QA-06 Email de producción sin configurar
-- EditarMiPerfilTests
-- Fase 4 · Cuentas corrientes y abonos
+- VistasCuentasTests
+- RF-05 · Clientes Normal/Premium; fiado solo Premium
 - CarritoSoloPorPostTests
-- CheckoutRequiereTelefonosTests
+- 0003_sembrar_metodos_pago.py
 - InicioTests
 - 0002_bidones_recargables_y_rol_recargador.py
-- NuevaContrasenaForm
+- 0003_grupos_base.py
 - QA campo a campo — 12/11/2026
-- BasePromociones
-- AltaClienteConCuentaForm
-- Promocion
-- Fase 5 · Bidones y promociones prepago
-- 0005_quitar_perfil_cliente_del_personal.py
+- 0004_asignar_grupo_permisos.py
+- clientes/forms.py
+- ActualizarEstadoForm
+- ZonaQuerySet
+- autenticacion
 - QA-01 Validaciones solo en formularios
-- Command
+- empleados
 - QA-03 El envase vacío se vende en la tienda
 - QA-07 Labels sin for en varios templates
 - 🌊 Distribuidora 3.0 / Aguadelluvia
 - QA-08 DNI de empleado y cliente no se cruzan
 - EliminarProductoTests
 - {{title}}
-- Barrio
+- Zona
 - cambios_sin_guardar.js
 - abonos
 - Cliente
-- autenticacion.md
+- Roles y permisos.md
 - {{title}}
 - {{date}}
-- Command
+- generar_borradores_periodo
 - CLAUDE.md
-- Roles y permisos
+- envuelta
 - carrito
 - buscador
-- DireccionEntrega
 - cuentas
 - QA-09 Recuperar contraseña usa vistas de clase
 - C-9 — Gastos por proveedor (RF-20)
-- clientes
 - logistica
-- planta
 - productos
 - promociones
 - Validaciones por campo
@@ -160,17 +157,17 @@
 - VariasDireccionesTests
 - clientes/tests.py
 - DireccionEntrega
-- Usuario
+- RolEmpleado
 - OrdenDirectorioClientesTests
 - 0015_numero_cliente.py
 
 ## God Nodes (most connected - your core abstractions)
-1. `Cliente` - 114 edges
+1. `Cliente` - 117 edges
 2. `puede()` - 102 edges
 3. `Producto` - 92 edges
 4. `Pedido` - 79 edges
-5. `Zona` - 62 edges
-6. `DireccionEntrega` - 59 edges
+5. `DireccionEntrega` - 64 edges
+6. `Zona` - 62 edges
 7. `HojaRuta` - 55 edges
 8. `MetodoPago` - 48 edges
 9. `Empleado` - 45 edges
@@ -183,10 +180,10 @@
   .agents/PLAN_CIERRE.md → apps/empleados/models.py
 - `Días de reparto por zona → fecha estimada` --references--> `Zona`  [INFERRED]
   .agents/FASE3_LOGISTICA.md → apps/logistica/models.py
+- `5D — Tests · ~2 h` --references--> `registrar_entrega()`  [INFERRED]
+  .agents/PLAN_CIERRE.md → apps/logistica/services.py
 - `Ventas y paradas agregadas en la calle` --references--> `venta_calle()`  [INFERRED]
   .agents/FASE3_LOGISTICA.md → apps/logistica/views.py
-- `Dónde está en el código` --references--> `puede()`  [INFERRED]
-  notas/Roles y permisos.md → apps/permisos/roles.py
 
 ## Import Cycles
 - None detected.
@@ -194,119 +191,119 @@
 ## Hyperedges (group relationships)
 - **Flujo de reparto (Fase 3)** — apps_logistica_views_planificar_reparto, apps_logistica_views_confirmar_ruta, apps_logistica_views_actualizar_estado_entrega, apps_logistica_views_registrar_regreso_ruta, apps_logistica_views_venta_calle [INFERRED 0.85]
 
-## Communities (178 total, 70 thin omitted)
+## Communities (177 total, 69 thin omitted)
 
 ### Community 0 - "autenticacion/views.py"
-Cohesion: 0.11
-Nodes (14): CodigoRecuperacionForm, IngresarUsuarioForm, RecuperarContrasenaForm, buscar_usuario(), cerrar_sesion(), ingresar_usuario(), recuperar_codigo(), recuperar_contrasena() (+6 more)
+Cohesion: 0.09
+Nodes (13): CodigoRecuperacionForm, NuevaContrasenaForm, RecuperarContrasenaForm, buscar_usuario(), codigo_verificado(), enmascarar_email(), normalizar_codigo(), cerrar_sesion() (+5 more)
 
 ### Community 1 - "pedidos/urls.py"
-Cohesion: 0.13
-Nodes (8): cambiar_estado_pago(), detalle_pedido(), listar_pedidos(), mis_pedidos(), pago_fallido(), pago_pendiente(), pago_qr(), suscripcion_cliente()
+Cohesion: 0.08
+Nodes (17): fecha_estimada_para_direccion(), CheckoutForm, RegistrarPagoForm, SuscripcionForm, Meta, MetodoPago, Meta, cambiar_estado_pago() (+9 more)
 
 ### Community 2 - "empleados/views.py"
-Cohesion: 0.21
-Nodes (17): cambiar_estado_empleado(), crear_empleado(), crear_rol(), editar_empleado(), editar_rol(), eliminar_empleado(), eliminar_rol(), _funciones_por_rol() (+9 more)
+Cohesion: 0.24
+Nodes (15): cambiar_estado_empleado(), crear_empleado(), crear_rol(), editar_empleado(), editar_rol(), eliminar_empleado(), eliminar_rol(), _funciones_por_rol() (+7 more)
 
-### Community 3 - "promociones/tests.py"
-Cohesion: 0.19
-Nodes (5): consumir_saldo(), revertir_consumos(), vender_promocion(), EscenarioAceptacionTests, ReglasDeSaldoTests
+### Community 3 - "Command"
+Cohesion: 0.06
+Nodes (13): 5C — Caducidad a 30 días corridos (RF-10) · ~2 h, 5D — Tests · ~2 h, FASE 5 — Bidones y promociones prepago 📦 (RF-08, RF-09, RF-10) ✅ **COMPLETADA (20/10/2026)**, Punto de partida real, _a_dt(), Command, consumir_saldo(), vender_promocion() (+5 more)
 
 ### Community 4 - "django_db"
-Cohesion: 0.02
-Nodes (38): Migration, Migration, Migration, Migration, Migration, Migration, Migration, Migration (+30 more)
+Cohesion: 0.03
+Nodes (34): Migration, Migration, Migration, Migration, Migration, Migration, Migration, Migration (+26 more)
 
-### Community 5 - "roles.py"
-Cohesion: 0.08
-Nodes (10): conexion_y_remitente(), configuracion(), probar_correo(), clientes_morosos(), resumen_morosidad(), es_admin(), CategoriaAdmin, ProductoAdmin (+2 more)
+### Community 5 - "distribuidora/views.py"
+Cohesion: 0.18
+Nodes (5): clientes_morosos(), resumen_morosidad(), resumen_caja(), promociones_por_vencer(), resumen_dashboard()
 
 ### Community 6 - "cuentas/views.py"
-Cohesion: 0.24
-Nodes (8): CargoCuentaForm, PagoCuentaForm, cuenta_de_cliente(), _cuentas_con_morosidad(), listar_cuentas(), registrar_cargo(), registrar_pago(), ver_cuenta()
+Cohesion: 0.20
+Nodes (9): CargoCuentaForm, PagoCuentaForm, cuenta_de_cliente(), _cuentas_con_morosidad(), listar_cuentas(), registrar_cargo(), registrar_pago(), ver_cuenta() (+1 more)
 
 ### Community 7 - "ProductoForm"
-Cohesion: 0.08
-Nodes (6): ProductoForm, Meta, AltaProductoTests, CategoriasPanelTests, GenerarEnvaseTests, ProductoFormValidacionesTests
+Cohesion: 0.10
+Nodes (8): ProductoForm, Meta, Categoria, Meta, AltaProductoTests, CatalogoAgotadosAlFinalTests, CategoriasPanelTests, ProductoFormValidacionesTests
 
 ### Community 8 - "PedidoAutomaticoTests"
-Cohesion: 0.20
+Cohesion: 0.23
 Nodes (3): Command, generar_pedidos_automaticos(), PedidoAutomaticoTests
 
 ### Community 9 - "planta/views.py"
-Cohesion: 0.09
-Nodes (13): DetalleRecargaInline, RecargaBidonesAdmin, DetalleRecarga, Meta, RecargaBidones, Meta, bidones_recargables(), guardar_recarga() (+5 more)
+Cohesion: 0.06
+Nodes (15): AbonoAdmin, DetalleRecargaInline, RecargaBidonesAdmin, DetalleRecarga, Meta, RecargaBidones, Meta, bidones_recargables() (+7 more)
 
 ### Community 10 - "clientes/views.py"
-Cohesion: 0.10
-Nodes (24): BuscarClienteForm, MovimientoBidonForm, agregar_direccion(), agregar_telefono(), cambiar_tipo_cliente(), _columnas_ordenables(), _contexto_suscripcion(), editar_cliente() (+16 more)
+Cohesion: 0.08
+Nodes (28): 4. ♻️ Redundancias, MovimientoBidonForm, agregar_direccion(), agregar_telefono(), cambiar_tipo_cliente(), _columnas_ordenables(), _contexto_suscripcion(), crear_cliente() (+20 more)
 
 ### Community 11 - "recuperacion.py"
-Cohesion: 0.10
-Nodes (13): CodigoRecuperacion, Meta, cerrar_recuperacion(), codigo_verificado(), crear_codigo(), enmascarar_email(), enviar_correo(), _hash() (+5 more)
+Cohesion: 0.14
+Nodes (9): CodigoRecuperacion, Meta, cerrar_recuperacion(), crear_codigo(), enviar_correo(), _hash(), puede_pedir_codigo(), solicitar_codigo() (+1 more)
 
 ### Community 12 - "logistica/services.py"
 Cohesion: 0.06
-Nodes (27): 5A — Historial de envases (RF-08) · ~4 h, 5C — Caducidad a 30 días corridos (RF-10) · ~2 h, 5D — Tests · ~2 h, FASE 5 — Bidones y promociones prepago 📦 (RF-08, RF-09, RF-10) ✅ **COMPLETADA (20/10/2026)**, Punto de partida real, DetalleHojaRuta, Meta, agregar_parada() (+19 more)
+Nodes (26): 5A — Historial de envases (RF-08) · ~4 h, DetalleHojaRuta, Meta, agregar_parada(), agregar_pedido_a_hoja(), bidones_de_pedido(), botellon_por_defecto(), confirmar_entrega_en_calle() (+18 more)
 
 ### Community 13 - "seed_demo.py"
-Cohesion: 0.08
-Nodes (9): generar_cargos_mensuales(), FacturacionTests, obtener_o_crear_cuenta(), registrar_cargo(), Command, CompraPromocion, Meta, vencer_promociones() (+1 more)
+Cohesion: 0.10
+Nodes (5): obtener_o_crear_cuenta(), SinEliminadosManager, SinHojaEliminadaManager, limite_largo(), H-10 · Suite de tests parcial (faltan carrito y buscador)
 
 ### Community 14 - "requiere"
-Cohesion: 0.09
-Nodes (21): requiere(), bidones_retornables(), CategoriaForm, Meta, EnvaseForm, Categoria, Meta, crear_categoria() (+13 more)
+Cohesion: 0.15
+Nodes (13): requiere(), crear_categoria(), crear_producto(), editar_categoria(), editar_producto(), eliminar_categoria(), eliminar_envase(), eliminar_producto() (+5 more)
 
 ### Community 16 - "PROCEDURE.md"
-Cohesion: 0.11
-Nodes (21): Fase 1 · Desbloquear el sistema, Fase 2 · Modelo de datos y seguridad, Fase 3 · Logística ↔ Pedido, Fase 6 · Pagos parciales y pedido automático, Fase 7 · QA, producción y tesis, H-10 · Suite de tests parcial (faltan carrito y buscador), H-13 · Logística sin datos de prueba, H-14 · README vacío; scripts de raíz sin documentar (+13 more)
+Cohesion: 0.10
+Nodes (26): Fase 1 · Desbloquear el sistema, Fase 2 · Modelo de datos y seguridad, Fase 3 · Logística ↔ Pedido, Fase 4 · Cuentas corrientes y abonos, Fase 5 · Bidones y promociones prepago, Fase 6 · Pagos parciales y pedido automático, Fase 7 · QA, producción y tesis, H-13 · Logística sin datos de prueba (+18 more)
 
-### Community 17 - "Producto"
-Cohesion: 0.13
-Nodes (12): carrito_total(), Carrito, ItemCarrito, Meta, agregar_al_carrito(), eliminar_del_carrito(), vaciar_carrito(), ver_carrito() (+4 more)
+### Community 17 - "Carrito"
+Cohesion: 0.14
+Nodes (13): carrito_total(), Carrito, agregar_al_carrito(), eliminar_del_carrito(), vaciar_carrito(), ver_carrito(), stock_disponible(), checkout() (+5 more)
 
 ### Community 18 - "base_tienda.html"
-Cohesion: 0.10
-Nodes (12): buscar_productos(), con_stock_disponible(), stock_reservado_por_producto(), marcar(), Migration, _normalizar(), agotados_al_final(), listar_productos() (+4 more)
+Cohesion: 0.11
+Nodes (11): buscar_productos(), con_stock_disponible(), stock_reservado_por_producto(), agotados_al_final(), _filtrar_por_categoria(), listar_productos(), ver_producto(), inicio() (+3 more)
 
 ### Community 19 - "recortar_textos"
 Cohesion: 0.12
-Nodes (12): Migration, Migration, Migration, Migration, Migration, Migration, Migration, Migration (+4 more)
+Nodes (13): Migration, Migration, Migration, Migration, Migration, Migration, Migration, Migration (+5 more)
 
 ### Community 20 - "What You Must Do When Invoked"
 Cohesion: 0.07
 Nodes (26): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+18 more)
 
 ### Community 21 - "base_dashboard.html"
-Cohesion: 0.11
-Nodes (20): Hallazgos nuevos, actualizar_estado_entrega(), agregar_parada(), crear_ruta(), direcciones_sin_zona(), editar_camion(), editar_ruta(), editar_zona() (+12 more)
+Cohesion: 0.12
+Nodes (18): Hallazgos nuevos, actualizar_estado_entrega(), agregar_parada(), crear_ruta(), direcciones_sin_zona(), editar_camion(), editar_ruta(), editar_zona() (+10 more)
 
 ### Community 22 - "clientes/services.py"
-Cohesion: 0.22
+Cohesion: 0.23
 Nodes (6): MovimientoBidon, Meta, _cliente_de_parada(), recalcular_saldo_bidones(), registrar_movimiento_bidon(), sincronizar_bidones_de_parada()
 
 ### Community 23 - "Pedido"
-Cohesion: 0.10
-Nodes (10): 2. 🟠 Altos — errores funcionales, A-D6 — ¿El fiado es sólo Premium o admite excepciones? → **Decidido: (b)**, ▶️ Actualización (20/10/2026, después del control), 5B — Promociones prepago (RF-09) · ~6 h, 6A — Pagos parciales (RF-13) · ~4 h, pedidos_pendientes(), Pedido, Meta (+2 more)
+Cohesion: 0.08
+Nodes (18): 6A — Pagos parciales (RF-13) · ~4 h, 6B — Checkout seguro (RF-04, RF-12) · ~3 h, 6C — Pedido automático quincenal (RF-18) · ~4 h, 6D — Tests · ~1 h, FASE 6 — Pagos parciales, checkout y pedido automático 💳 (RF-04, RF-12, RF-13, RF-18) ✅ **COMPLETADA (20/10/2026)**, Punto de partida real, perfil_cliente_esta_vacio(), DetallePedidoInline (+10 more)
 
-### Community 24 - "registrar_cargo"
-Cohesion: 0.10
-Nodes (4): registrar_pago(), CuentaCorrienteModelTests, SemaforizacionTests, VistasCuentasTests
+### Community 25 - "Producto"
+Cohesion: 0.12
+Nodes (9): CategoriaAdmin, ProductoAdmin, bidones_retornables(), CategoriaForm, Meta, EnvaseForm, Producto, Meta (+1 more)
 
-### Community 25 - "pedidos/forms.py"
-Cohesion: 0.11
-Nodes (12): fecha_estimada_para_direccion(), CheckoutForm, metodos_pago_checkout_web(), RegistrarPagoForm, SuscripcionForm, Meta, MetodoPago, Meta (+4 more)
-
-### Community 26 - "pedidos/tests.py"
-Cohesion: 0.10
-Nodes (10): PagoPedido, Meta, firma_webhook_valida(), pago_en_curso(), resumen_caja(), stock_comprometido(), stock_disponible(), _firmar() (+2 more)
+### Community 26 - "pedidos/services.py"
+Cohesion: 0.12
+Nodes (10): 5. 🔗 Dependencias y archivos compartidos, PagoPedido, Meta, _a_decimal(), aplicar_pago_mercadopago(), metodo_pago_efectivo(), pago_en_curso(), registrar_cobro() (+2 more)
 
 ### Community 28 - "CuentaCorriente"
 Cohesion: 0.17
 Nodes (3): CuentaCorriente, Meta, RF-14 · Semaforización de deuda
 
 ### Community 29 - "🏁 Plan de Cierre — Fases 4.5 a 7"
-Cohesion: 0.09
-Nodes (20): 1. 🔴 Críticos — seguridad y dinero, 3. 🟡 Medios, 4. ♻️ Redundancias, 5. 📄 Incoherencias de documentación, 6. ✅ Lo que está bien (mantener), 7. 🗺️ Cómo entra en el plan, 🔎 Auditoría de coherencia — Distribuidora 3.0, Decisiones nuevas (+12 more)
+Cohesion: 0.12
+Nodes (17): 1. 🔴 Críticos — seguridad y dinero, 3. 🟡 Medios, 5. 📄 Incoherencias de documentación, 6. ✅ Lo que está bien (mantener), 7. 🗺️ Cómo entra en el plan, 🔎 Auditoría de coherencia — Distribuidora 3.0, Decisiones nuevas, ▶️ Estado al 20/10/2026 (rama `cierre/fase-4.5-4.6`) (+9 more)
+
+### Community 30 - "importar_w3w.py"
+Cohesion: 0.15
+Nodes (8): Command, _indice(), _leer_filas(), _normalizar(), marcar(), Migration, _normalizar(), validar_w3w()
 
 ### Community 31 - "MovimientoCuenta"
 Cohesion: 0.16
@@ -314,11 +311,11 @@ Nodes (6): CuentaCorrienteAdmin, MovimientoCuentaAdmin, MovimientoCuentaInline, 
 
 ### Community 32 - "puede"
 Cohesion: 0.10
-Nodes (9): puede(), usa_panel(), EvaluacionDeRolesTests, csrf_failure(), crear_promocion(), editar_promocion(), _form_promocion(), listar_promociones() (+1 more)
+Nodes (11): restaurar_camion(), restaurar_zona(), venta_calle(), es_repartidor_asignado(), obtener_empleado(), puede(), puede_alguna(), puede_operar_hoja() (+3 more)
 
-### Community 33 - "crear_cliente_con_cuenta"
-Cohesion: 0.22
-Nodes (4): ClienteSinCuentaForm, crear_cliente(), crear_cliente_con_cuenta(), crear_cliente_sin_cuenta()
+### Community 33 - "registrar_cargo"
+Cohesion: 0.23
+Nodes (3): registrar_cargo(), registrar_pago(), CuentaCorrienteModelTests
 
 ### Community 34 - "django_apps"
 Cohesion: 0.04
@@ -329,16 +326,16 @@ Cohesion: 0.21
 Nodes (3): clientes_frecuentes_de_zona(), construir_borrador(), GeneracionBorradorTests
 
 ### Community 37 - "logistica/views.py"
-Cohesion: 0.06
-Nodes (34): ActualizarEstadoForm, Meta, AgregarParadaForm, CamionForm, Meta, _etiqueta_direccion_cliente(), Camion, Meta (+26 more)
+Cohesion: 0.09
+Nodes (23): AgregarParadaForm, _etiqueta_direccion_cliente(), botellones_por_producto(), carga_sugerida(), entregados_por_producto(), envase_de_reparto(), envases_retirados_en_hoja(), productos_de_reparto() (+15 more)
 
-### Community 39 - "DetallePedido"
-Cohesion: 0.25
-Nodes (8): DetallePedidoInline, MetodoPagoAdmin, PagoPedidoAdmin, PagoPedidoInline, PedidoAdmin, SuscripcionReposicionAdmin, DetallePedido, Meta
+### Community 38 - "Empleado"
+Cohesion: 0.12
+Nodes (5): EmpleadoAdmin, RolEmpleadoAdmin, Empleado, Meta, CuentaDeRepartidorTests
 
 ### Community 41 - "Qué hice"
-Cohesion: 0.17
-Nodes (12): 2026-11-16, Baja lógica desde los listados de empleados y clientes, Bloqueos / dudas, Configuración, Envases asociados (nuevo), Ficha del cliente más simple, Inicio de la tienda (rehecho), Más tarde (+4 more)
+Cohesion: 0.18
+Nodes (11): 2026-11-16, Baja lógica desde los listados de empleados y clientes, Bloqueos / dudas, Configuración, Envases asociados (nuevo), Ficha del cliente más simple, Más tarde, Pendiente (+3 more)
 
 ### Community 43 - "es_personal_interno"
 Cohesion: 0.11
@@ -357,56 +354,56 @@ Cohesion: 0.14
 Nodes (5): PerfilUsuarioForm, Meta, RegistroClienteWebForm, Meta, validar_nombre()
 
 ### Community 48 - "logistica/admin.py"
-Cohesion: 0.16
-Nodes (6): CalendarioExcepcion, Meta, fecha_es_de_reparto(), _hay_excepcion(), proxima_fecha_de_reparto(), CalendarioTests
+Cohesion: 0.09
+Nodes (18): BarrioAdmin, CalendarioExcepcionAdmin, CamionAdmin, CargaHojaRutaAdmin, DetalleHojaRutaAdmin, DetalleHojaRutaInline, HojaRutaAdmin, RutaRepartoAdmin (+10 more)
 
 ### Community 49 - "aplicar_attrs"
-Cohesion: 0.14
-Nodes (4): DireccionRegistroForm, Meta, EditarMiPerfilForm, aplicar_attrs()
+Cohesion: 0.18
+Nodes (3): DireccionRegistroForm, Meta, aplicar_attrs()
 
 ### Community 50 - "ConfiguracionCorreo"
-Cohesion: 0.09
-Nodes (9): ConfiguracionCorreoForm, Meta, ConfiguracionCorreo, Meta, ConfiguracionCorreoTests, configuracion, Correo de recuperación de contraseña, Notas (+1 more)
+Cohesion: 0.07
+Nodes (13): ConfiguracionCorreoForm, Meta, conexion_y_remitente(), ConfiguracionCorreo, Meta, ConfiguracionCorreoTests, configuracion(), probar_correo() (+5 more)
 
 ### Community 51 - "PagosSegurosTests"
-Cohesion: 0.18
-Nodes (4): _a_decimal(), aplicar_pago_mercadopago(), registrar_pago_manual(), PagosSegurosTests
+Cohesion: 0.19
+Nodes (3): firma_webhook_valida(), _firmar(), PagosSegurosTests
 
 ### Community 52 - "Abono"
-Cohesion: 0.13
-Nodes (11): AbonoAdmin, AbonoForm, Meta, Abono, Meta, cambiar_estado_abono(), crear_abono(), editar_abono() (+3 more)
+Cohesion: 0.06
+Nodes (16): AbonoForm, Meta, Command, Abono, Meta, generar_cargos_mensuales(), CostoPreferencialTests, FacturacionTests (+8 more)
 
 ### Community 53 - "graphify reference: extra exports and benchmark"
 Cohesion: 0.22
 Nodes (8): graphify reference: extra exports and benchmark, Step 6b - Wiki (only if --wiki flag), Step 7 - Neo4j export (only if --neo4j or --neo4j-push flag), Step 7a - FalkorDB export (only if --falkordb or --falkordb-push flag), Step 7b - SVG export (only if --svg flag), Step 7c - GraphML export (only if --graphml flag), Step 7d - MCP server (only if --mcp flag), Step 8 - Token reduction benchmark (only if total_words > 5000)
 
-### Community 54 - "RolSincronizaGrupoTests"
-Cohesion: 0.23
-Nodes (3): EmpleadoForm, Meta, RolSincronizaGrupoTests
+### Community 56 - "✅ Control de cumplimiento de requisitos — 20/10/2026"
+Cohesion: 0.18
+Nodes (8): A-D6 — ¿El fiado es sólo Premium o admite excepciones? → **Decidido: (b)**, ▶️ Actualización (20/10/2026, después del control), Cobertura de tests por requisito (checklist §9 de PROCEDURE), ✅ Control de cumplimiento de requisitos — 20/10/2026, Cómo se reparte en el plan, Detalle, Hallazgos y decisiones nuevas, Resumen (control original)
 
-### Community 56 - "SuscripcionReposicion"
-Cohesion: 0.15
-Nodes (10): 4. ❓ Decisiones a tomar antes de empezar, 6B — Checkout seguro (RF-04, RF-12) · ~3 h, 6C — Pedido automático quincenal (RF-18) · ~4 h, 6D — Tests · ~1 h, FASE 6 — Pagos parciales, checkout y pedido automático 💳 (RF-04, RF-12, RF-13, RF-18) ✅ **COMPLETADA (20/10/2026)**, Punto de partida real, perfil_cliente_esta_vacio(), SuscripcionReposicion (+2 more)
-
-### Community 57 - "clientes/admin.py"
-Cohesion: 0.21
-Nodes (6): ClienteAdmin, DireccionEntregaAdmin, DireccionEntregaInline, MovimientoBidonAdmin, TelefonoContactoAdmin, TelefonoContactoInline
+### Community 57 - "DireccionEntrega"
+Cohesion: 0.09
+Nodes (11): ClienteAdmin, DireccionEntregaAdmin, DireccionEntregaInline, MovimientoBidonAdmin, TelefonoContactoAdmin, TelefonoContactoInline, DireccionEntrega, Meta (+3 more)
 
 ### Community 62 - "clientes/forms.py"
 Cohesion: 0.10
-Nodes (10): leer_telefonos(), ValidadoresTests, normalizar_patente(), solo_digitos(), validar_altura(), validar_coordenadas(), validar_dni(), validar_fecha_no_futura() (+2 more)
+Nodes (8): leer_telefonos(), ValidadoresTests, normalizar_patente(), solo_digitos(), validar_altura(), validar_coordenadas(), validar_dni(), validar_telefono()
 
 ### Community 63 - "permisos/signals.py"
-Cohesion: 0.14
-Nodes (6): retirar_perfil_cliente_vacio(), _sincronizar(), sincronizar_grupo_al_cambiar_rol(), sincronizar_grupo_al_guardar_empleado(), sincronizar_permisos_grupos(), RF-01 · Registro con ≥2 celulares
+Cohesion: 0.12
+Nodes (7): retirar_perfil_cliente_vacio(), crear_perfil_cliente(), _sincronizar(), sincronizar_grupo_al_cambiar_rol(), sincronizar_grupo_al_guardar_empleado(), sincronizar_permisos_grupos(), RF-01 · Registro con ≥2 celulares
+
+### Community 66 - "ingresar_usuario"
+Cohesion: 0.24
+Nodes (6): IngresarUsuarioForm, ingresar_usuario(), registrar_usuario(), _ya_ingresado(), guardar_telefonos(), destino_personal()
 
 ### Community 67 - "DireccionEntregaForm"
-Cohesion: 0.25
-Nodes (3): DireccionEntregaForm, Meta, FichaDomiciliosTests
+Cohesion: 0.12
+Nodes (5): DireccionEntregaForm, Meta, FichaDomiciliosTests, What3WordsTests, _link_mapa()
 
-### Community 68 - "Empleado"
-Cohesion: 0.06
-Nodes (12): EmpleadoAdmin, RolEmpleadoAdmin, RolEmpleadoForm, Meta, Empleado, Meta, RolEmpleado, Meta (+4 more)
+### Community 68 - "RolEmpleadoForm"
+Cohesion: 0.15
+Nodes (4): RolEmpleadoForm, Meta, BajaLogicaRolTests, sincronizar_grupo_empleado()
 
 ### Community 69 - "graphify reference: query, path, explain"
 Cohesion: 0.33
@@ -421,15 +418,15 @@ Cohesion: 0.17
 Nodes (12): 2026-11-14, Bloqueos / dudas, Clientes y empleados, Configuración, Logística, Límites de caracteres en la base de datos, Más tarde, Panel y navegación (+4 more)
 
 ### Community 73 - "HojaRuta"
-Cohesion: 0.11
-Nodes (7): HojaRuta, Meta, generar_borradores_periodo(), pedidos_candidatos(), GeneracionQuincenalTests, eliminar_ruta(), restaurar_ruta()
+Cohesion: 0.21
+Nodes (4): HojaRuta, Meta, eliminar_ruta(), restaurar_ruta()
 
 ### Community 74 - "popups.js"
 Cohesion: 0.26
 Nodes (15): actualizarTope(), avisar(), cerrarAviso(), confirmar(), contenedorAvisos(), erroresDelServidor(), escapar(), etiquetaDe() (+7 more)
 
 ### Community 75 - "QA-02 Pago mayor a la deuda"
-Cohesion: 0.50
+Cohesion: 0.40
 Nodes (4): Arreglo propuesto, Cómo reproducir, QA-02 Pago mayor a la deuda, Qué pasa
 
 ### Community 76 - "RecuperarContrasenaTests"
@@ -449,48 +446,48 @@ Cohesion: 0.50
 Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
 
 ### Community 98 - "logistica/tests.py"
-Cohesion: 0.05
-Nodes (18): HojaRutaForm, Meta, ZonaForm, Meta, Zona, Meta, BajaLogicaCamionTests, BajaLogicaZonaTests (+10 more)
+Cohesion: 0.06
+Nodes (20): CamionForm, Meta, HojaRutaForm, Meta, RutaRepartoForm, Meta, ZonaForm, Meta (+12 more)
 
 ### Community 100 - "QA-04 Abono con costo 0"
-Cohesion: 0.50
+Cohesion: 0.40
 Nodes (4): Arreglo propuesto, Cómo reproducir, QA-04 Abono con costo 0, Qué pasa
 
-### Community 101 - "StockReservadoTests"
-Cohesion: 0.11
-Nodes (4): _etiqueta_direccion_con_fecha(), CheckoutFechaEstimadaTests, StockReservadoTests, TransicionesManualesTests
+### Community 101 - "pedidos/tests.py"
+Cohesion: 0.08
+Nodes (6): _etiqueta_direccion_con_fecha(), CheckoutFechaEstimadaTests, CheckoutRequiereTelefonosTests, PagosParcialesTests, StockComprometidoTests, TransicionesManualesTests
 
 ### Community 102 - "RegistroUsuarioForm"
-Cohesion: 0.16
+Cohesion: 0.21
 Nodes (3): RegistroUsuarioForm, Meta, RegistroValidacionesTests
 
 ### Community 105 - "FASE3_LOGISTICA.md"
-Cohesion: 0.25
-Nodes (4): Arquitectura visual dual: Tienda vs Dashboard, Confirmar hoja al cargar el camión → Pedido «En Camino», Días de reparto por zona → fecha estimada, Ventas y paradas agregadas en la calle
+Cohesion: 0.20
+Nodes (6): Arquitectura visual dual: Tienda vs Dashboard, Bidón retornable (entrega lleno, retira vacío), Confirmar hoja al cargar el camión → Pedido «En Camino», Días de reparto por zona → fecha estimada, Ventas y paradas agregadas en la calle, RF-08 · Control de envases prestados
 
 ### Community 106 - "webhook_mercadopago"
 Cohesion: 0.29
 Nodes (3): consultar_pago_mercadopago(), pago_exitoso(), webhook_mercadopago()
 
 ### Community 107 - "QA-05 Zona sin días de reparto"
-Cohesion: 0.50
+Cohesion: 0.40
 Nodes (4): Arreglo propuesto, Cómo reproducir, QA-05 Zona sin días de reparto, Qué pasa
 
 ### Community 109 - "puede_ver_nota_seguridad"
-Cohesion: 0.16
-Nodes (4): _ficha_de_parada(), _link_mapa(), puede_ver_nota_seguridad(), NotaDeSeguridadTests
+Cohesion: 0.19
+Nodes (3): _ficha_de_parada(), puede_ver_nota_seguridad(), NotaDeSeguridadTests
 
-### Community 110 - "promociones/admin.py"
-Cohesion: 0.32
-Nodes (5): CompraPromocionAdmin, ConsumoPromocionInline, PromocionAdmin, ConsumoPromocion, Meta
+### Community 110 - "promociones/tests.py"
+Cohesion: 0.06
+Nodes (21): 5B — Promociones prepago (RF-09) · ~6 h, CompraPromocionAdmin, ConsumoPromocionInline, PromocionAdmin, PromocionForm, Meta, VenderPromocionForm, Command (+13 more)
 
 ### Community 116 - "QA-06 Email de producción sin configurar"
 Cohesion: 0.40
 Nodes (5): Arreglo propuesto, Cómo reproducir, QA-06 Email de producción sin configurar, Qué pasa, Resolución
 
-### Community 118 - "Fase 4 · Cuentas corrientes y abonos"
-Cohesion: 0.33
-Nodes (4): Fase 4 · Cuentas corrientes y abonos, RF-05 · Clientes Normal/Premium; fiado solo Premium, RF-15 · Alquiler de dispensers (abonos), RF-20 · Gastos por proveedor (alcance sin decidir, C-9/D-3)
+### Community 119 - "CarritoSoloPorPostTests"
+Cohesion: 0.18
+Nodes (3): ItemCarrito, Meta, CarritoSoloPorPostTests
 
 ### Community 122 - "0002_bidones_recargables_y_rol_recargador.py"
 Cohesion: 0.47
@@ -500,21 +497,25 @@ Nodes (4): _catalogo(), Migration, _permisos_y_roles(), preparar()
 Cohesion: 0.40
 Nodes (5): Cómo se probó, Errores encontrados y corregidos, Mejoras agregadas, Pendientes grandes, QA campo a campo — 12/11/2026
 
-### Community 125 - "BasePromociones"
-Cohesion: 0.21
-Nodes (3): BasePromociones, CheckoutConSaldoTests, VistasPromocionesTests
+### Community 125 - "0004_asignar_grupo_permisos.py"
+Cohesion: 0.67
+Nodes (3): asignar(), _grupo_por_nombre(), Migration
 
-### Community 126 - "AltaClienteConCuentaForm"
-Cohesion: 0.20
-Nodes (3): AltaClienteConCuentaForm, Meta, _ValidarDatosPersonalesMixin
+### Community 126 - "clientes/forms.py"
+Cohesion: 0.12
+Nodes (7): AltaClienteConCuentaForm, Meta, BuscarClienteForm, ClienteSinCuentaForm, EditarMiPerfilForm, _ValidarDatosPersonalesMixin, validar_fecha_no_futura()
 
-### Community 128 - "Fase 5 · Bidones y promociones prepago"
-Cohesion: 0.40
-Nodes (5): Bidón retornable (entrega lleno, retira vacío), Fase 5 · Bidones y promociones prepago, RF-08 · Control de envases prestados, RF-09 · Promociones prepago "paga 3 lleva 4", RF-10 · Caducidad 30 días corridos
+### Community 129 - "autenticacion"
+Cohesion: 0.67
+Nodes (3): autenticacion, Notas, Relaciones
 
 ### Community 132 - "QA-01 Validaciones solo en formularios"
 Cohesion: 0.50
 Nodes (4): Arreglo propuesto, Cómo reproducir, QA-01 Validaciones solo en formularios, Qué pasa
+
+### Community 133 - "empleados"
+Cohesion: 0.67
+Nodes (3): empleados, Notas, Relaciones
 
 ### Community 134 - "QA-03 El envase vacío se vende en la tienda"
 Cohesion: 0.50
@@ -529,16 +530,16 @@ Cohesion: 0.29
 Nodes (7): 🧩 Apps Django, ⚙️ Comandos frecuentes, 🗂️ Cómo está organizado el vault, 🧭 Decisiones, 🌊 Distribuidora 3.0 / Aguadelluvia, 📚 Documentación del proyecto, 🧪 QA
 
 ### Community 138 - "QA-08 DNI de empleado y cliente no se cruzan"
-Cohesion: 0.40
+Cohesion: 0.50
 Nodes (4): Arreglo propuesto, Cómo reproducir, QA-08 DNI de empleado y cliente no se cruzan, Qué pasa
 
 ### Community 140 - "{{title}}"
 Cohesion: 0.33
 Nodes (5): Consecuencias, Contexto, Decisión, Opciones, {{title}}
 
-### Community 141 - "Barrio"
-Cohesion: 0.05
-Nodes (25): BarrioAdmin, CalendarioExcepcionAdmin, CamionAdmin, CargaHojaRutaAdmin, DetalleHojaRutaAdmin, DetalleHojaRutaInline, HojaRutaAdmin, RutaRepartoAdmin (+17 more)
+### Community 141 - "Zona"
+Cohesion: 0.08
+Nodes (10): BarrioForm, Meta, Command, Barrio, Meta, Zona, Meta, ConfirmacionRegresoTests (+2 more)
 
 ### Community 142 - "cambios_sin_guardar.js"
 Cohesion: 0.60
@@ -549,12 +550,12 @@ Cohesion: 0.67
 Nodes (3): abonos, Notas, Relaciones
 
 ### Community 144 - "Cliente"
-Cohesion: 0.08
-Nodes (11): Cobertura de tests por requisito (checklist §9 de PROCEDURE), ✅ Control de cumplimiento de requisitos — 20/10/2026, Cómo se reparte en el plan, Detalle, Hallazgos y decisiones nuevas, Resumen (control original), _bloquear_cuenta(), Cliente (+3 more)
+Cohesion: 0.09
+Nodes (5): _bloquear_cuenta(), Cliente, Meta, siguiente_numero_cliente(), BuscarClientesTests
 
-### Community 145 - "autenticacion.md"
-Cohesion: 0.16
-Nodes (9): autenticacion, Notas, Relaciones, empleados, Notas, Relaciones, Notas, permisos (+1 more)
+### Community 145 - "Roles y permisos.md"
+Cohesion: 0.12
+Nodes (11): Notas, permisos, Relaciones, Notas, planta, Reglas, Relaciones, Dónde está en el código (+3 more)
 
 ### Community 146 - "{{title}}"
 Cohesion: 0.40
@@ -564,13 +565,13 @@ Nodes (4): Arreglo propuesto, Cómo reproducir, Qué pasa, {{title}}
 Cohesion: 0.40
 Nodes (4): Bloqueos / dudas, {{date}}, Pendiente, Qué hice
 
+### Community 148 - "generar_borradores_periodo"
+Cohesion: 0.14
+Nodes (4): Command, generar_borradores_periodo(), pedidos_candidatos(), GeneracionQuincenalTests
+
 ### Community 149 - "CLAUDE.md"
 Cohesion: 0.50
 Nodes (3): Distribuidora 3.0 / Aguadelluvia, graphify, graphify
-
-### Community 150 - "Roles y permisos"
-Cohesion: 0.50
-Nodes (4): Dónde está en el código, Funciones y roles por defecto, Reglas que no dependen de las casillas, Roles y permisos
 
 ### Community 151 - "carrito"
 Cohesion: 0.67
@@ -579,10 +580,6 @@ Nodes (3): carrito, Notas, Relaciones
 ### Community 152 - "buscador"
 Cohesion: 0.50
 Nodes (3): buscador, Notas, Relaciones
-
-### Community 153 - "DireccionEntrega"
-Cohesion: 0.13
-Nodes (5): DireccionEntrega, Meta, EnlaceGoogleMapsTests, Notas, RF-03 · Multidirección de entrega
 
 ### Community 154 - "cuentas"
 Cohesion: 0.67
@@ -595,10 +592,6 @@ Nodes (5): Arreglo propuesto, Cómo reproducir, QA-09 Recuperar contraseña usa 
 ### Community 158 - "logistica"
 Cohesion: 0.67
 Nodes (3): logistica, Notas, Relaciones
-
-### Community 159 - "planta"
-Cohesion: 0.50
-Nodes (4): Notas, planta, Reglas, Relaciones
 
 ### Community 160 - "productos"
 Cohesion: 0.67
@@ -617,36 +610,40 @@ Cohesion: 0.83
 Nodes (3): iconoPara(), prepararTabla(), valorCelda()
 
 ### Community 167 - "TelefonoContacto"
-Cohesion: 0.11
-Nodes (6): TelefonoContactoForm, Meta, TelefonoContacto, Meta, crear_perfil_cliente(), AltaClienteValidacionesTests
+Cohesion: 0.15
+Nodes (5): TelefonoContactoForm, Meta, TelefonoContacto, Meta, BajaLogicaTelefonoDireccionTests
 
 ### Community 177 - "clientes/tests.py"
 Cohesion: 0.05
-Nodes (11): ClienteForm, Meta, AgregarDireccionTests, BajaLogicaClienteTests, BajaLogicaTelefonoDireccionTests, BotonPremiumTests, FiadoPremiumYExcepcionTests, HistorialBidonesTests (+3 more)
+Nodes (11): ClienteForm, Meta, AgregarDireccionTests, BotonPremiumTests, EditarMiPerfilTests, EnlaceGoogleMapsTests, FiadoPremiumYExcepcionTests, HistorialBidonesTests (+3 more)
 
 ### Community 182 - "DireccionEntrega"
 Cohesion: 0.13
 Nodes (3): resumen_recorrido(), PedidoEspontaneoTests, RecorridoRepartidorTests
 
+### Community 189 - "RolEmpleado"
+Cohesion: 0.17
+Nodes (7): 2. 🟠 Altos — errores funcionales, Usuario, Meta, EmpleadoForm, Meta, RolEmpleado, Meta
+
 ## Knowledge Gaps
 - **2 isolated node(s):** `H-13 · Logística sin datos de prueba`, `H-14 · README vacío; scripts de raíz sin documentar`
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1060 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **70 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1071 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **69 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Cliente` connect `Cliente` to `Fase 5 · Bidones y promociones prepago`, `pedidos/urls.py`, `promociones/tests.py`, `roles.py`, `cuentas/views.py`, `planta/views.py`, `clientes/views.py`, `logistica/services.py`, `seed_demo.py`, `Barrio`, `PROCEDURE.md`, `base_dashboard.html`, `clientes/services.py`, `Pedido`, `registrar_cargo`, `DireccionEntrega`, `pedidos/forms.py`, `pedidos/tests.py`, `CuentaCorriente`, `Command`, `MovimientoCuenta`, `puede`, `crear_cliente_con_cuenta`, `GeneracionBorradorTests`, `AccesoAVistasLogisticasTests`, `logistica/views.py`, `CuentaDeRepartidorTests`, `TelefonoContacto`, `HojaDeRutaUXTests`, `clientes/tests.py`, `Abono`, `DireccionEntrega`, `SuscripcionReposicion`, `clientes/admin.py`, `OrdenDirectorioClientesTests`, `clientes/forms.py`, `permisos/signals.py`, `VistasAbonosTests`, `DireccionEntregaForm`, `HojaRuta`, `logistica/tests.py`, `BuscarClientesTests`, `StockReservadoTests`, `CobroManualTests`, `puede_ver_nota_seguridad`, `Fase 4 · Cuentas corrientes y abonos`, `BasePromociones`, `AltaClienteConCuentaForm`?**
-  _High betweenness centrality (0.128) - this node is a cross-community bridge._
-- **Are the 73 inferred relationships involving `Cliente` (e.g. with `AbonoForm` and `Abono`) actually correct?**
-  _`Cliente` has 73 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `Cliente` connect `Cliente` to `pedidos/urls.py`, `Command`, `distribuidora/views.py`, `cuentas/views.py`, `planta/views.py`, `clientes/views.py`, `logistica/services.py`, `seed_demo.py`, `Zona`, `PROCEDURE.md`, `Carrito`, `generar_borradores_periodo`, `base_dashboard.html`, `clientes/services.py`, `Pedido`, `SemaforizacionTests`, `CuentaCorriente`, `importar_w3w.py`, `MovimientoCuenta`, `puede`, `registrar_cargo`, `GeneracionBorradorTests`, `AccesoAVistasLogisticasTests`, `logistica/views.py`, `Empleado`, `TelefonoContacto`, `HojaDeRutaUXTests`, `clientes/tests.py`, `Abono`, `DireccionEntrega`, `DireccionEntrega`, `OrdenDirectorioClientesTests`, `permisos/signals.py`, `DireccionEntregaForm`, `AltaClienteValidacionesTests`, `logistica/tests.py`, `pedidos/tests.py`, `FASE3_LOGISTICA.md`, `CobroManualTests`, `puede_ver_nota_seguridad`, `promociones/tests.py`, `VistasCuentasTests`, `RF-05 · Clientes Normal/Premium; fiado solo Premium`, `clientes/forms.py`?**
+  _High betweenness centrality (0.125) - this node is a cross-community bridge._
+- **Are the 75 inferred relationships involving `Cliente` (e.g. with `AbonoForm` and `Abono`) actually correct?**
+  _`Cliente` has 75 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `H-13 · Logística sin datos de prueba`, `H-14 · README vacío; scripts de raíz sin documentar` to the rest of the system?**
   _2 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `autenticacion/views.py` be split into smaller, more focused modules?**
-  _Cohesion score 0.1053763440860215 - nodes in this community are weakly interconnected._
-- **Why does `Producto` connect `Producto` to `promociones/tests.py`, `QA-01 Validaciones solo en formularios`, `roles.py`, `ProductoForm`, `PedidoAutomaticoTests`, `planta/views.py`, `clientes/views.py`, `EliminarProductoTests`, `logistica/services.py`, `seed_demo.py`, `requiere`, `base_tienda.html`, `pedidos/forms.py`, `pedidos/tests.py`, `Command`, `GeneracionBorradorTests`, `logistica/views.py`, `DetallePedido`, `EliminarEnvaseTests`, `HojaDeRutaUXTests`, `Abono`, `DireccionEntrega`, `SuscripcionReposicion`, `VistasAbonosTests`, `RecargaTests`, `logistica/tests.py`, `StockReservadoTests`, `PromocionForm`, `CarritoSoloPorPostTests`, `CheckoutRequiereTelefonosTests`, `InicioTests`, `BasePromociones`?**
-  _High betweenness centrality (0.089) - this node is a cross-community bridge._
+  _Cohesion score 0.09090909090909091 - nodes in this community are weakly interconnected._
+- **Why does `Producto` connect `Producto` to `pedidos/urls.py`, `Command`, `QA-01 Validaciones solo en formularios`, `distribuidora/views.py`, `ProductoForm`, `PedidoAutomaticoTests`, `planta/views.py`, `EliminarProductoTests`, `logistica/services.py`, `seed_demo.py`, `Zona`, `requiere`, `Carrito`, `base_tienda.html`, `Pedido`, `pedidos/services.py`, `GeneracionBorradorTests`, `logistica/views.py`, `GenerarEnvaseTests`, `HojaDeRutaUXTests`, `Abono`, `DireccionEntrega`, `logistica/tests.py`, `StockReservadoTests`, `pedidos/tests.py`, `promociones/tests.py`, `CarritoSoloPorPostTests`, `InicioTests`?**
+  _High betweenness centrality (0.088) - this node is a cross-community bridge._
 - **Are the 65 inferred relationships involving `Producto` (e.g. with `Punto de partida real` and `AbonoForm`) actually correct?**
   _`Producto` has 65 INFERRED edges - model-reasoned connections that need verification._
 - **Should `pedidos/urls.py` be split into smaller, more focused modules?**
-  _Cohesion score 0.13438735177865613 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08484848484848485 - nodes in this community are weakly interconnected._

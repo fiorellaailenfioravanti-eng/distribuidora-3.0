@@ -57,6 +57,18 @@ y la restricción por asignación.
 - **Planta de recarga:** rol Recargador, recarga diaria que suma llenos y descuenta envases vacíos,
   stock de bidones llenos/vacíos; «Eliminar producto» desactiva y se restaura (`apps.planta`).
 
+**Recorrido de QA (25/11/2026):** rastreo de 362 páginas con 6 roles sin errores 500 ni enlaces rotos.
+Corregidos: «Cambiar estado del pago» de la gestión modificaba el último pago aunque ya estuviera aprobado
+(«Rechazado» anulaba un cobro en efectivo; «Aprobado» confirmaba pedidos cobrados a medias); el pago
+provisorio del checkout quedaba «Pendiente» por el total después de saldar; la gestión de pedidos daba 500
+con un pedido sin cliente; el aviso de validación listaba cada opción de un radio como campo aparte; el
+checkout no preseleccionaba el pago si el último método no se ofrece en la web; «Editar Dirección» del
+checkout editaba siempre la primera. Tests: `apps/pedidos/tests.py::PagoPorVerificarTests`.
+Siguen abiertos: H-34 (buscador), formato de montos sin separador de miles, `seed_demo` deja 3 pedidos
+«Entregado» sin `fecha_entrega`.
+
+**Comandos verificados (25/11/2026, Linux, Python 3.13):** check 0 issues · makemigrations sin cambios · **319 tests OK**.
+
 **Comandos verificados (12/11/2026):** check 0 issues · makemigrations sin cambios · **216 tests OK** · check --deploy 0 issues.
 
 **Comandos verificados (20/10/2026):**

@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 from .models import Pedido, DetallePedido, PagoPedido, MetodoPago
 from .forms import CheckoutForm, RegistrarPagoForm, SuscripcionForm
@@ -18,6 +19,7 @@ from .services import (
     firma_webhook_valida,
     pago_en_curso,
     registrar_pago_manual,
+    resolver_pago_pendiente,
     stock_disponible,
 )
 from apps.carrito.models import Carrito
@@ -424,7 +426,6 @@ def registrar_pago(request, pk):
     if request.method == 'POST':
         form = RegistrarPagoForm(request.POST, pedido=pedido)
         if form.is_valid():
-            from django.core.exceptions import ValidationError
             try:
                 pago = registrar_pago_manual(pedido, form.cleaned_data['monto'],
                                              form.cleaned_data['metodo_pago'], form.cleaned_data['referencia'])
@@ -535,20 +536,24 @@ def cambiar_estado_pedido(request, pk):
 @login_required
 @requiere('cobrar_pedidos')
 def cambiar_estado_pago(request, pk):
-    """Permite al staff actualizar el estado del pago de un pedido (ej. de Pendiente a Aprobado)."""
+    """Aprueba o rechaza el pago pendiente de verificación de un pedido.
+
+    Nunca modifica cobros ya aprobados: los cobros nuevos se cargan con
+    `registrar_pago` desde el detalle del pedido.
+    """
     if request.method == 'POST':
         pedido = get_object_or_404(Pedido, pk=pk)
         nuevo_pago_estado = request.POST.get('estado_pago')
-        if nuevo_pago_estado in ['Pendiente', 'Aprobado', 'Rechazado']:
-            pago = pago_en_curso(pedido)
-            pago.estado_pago = nuevo_pago_estado
-            pago.save()
-
-            if nuevo_pago_estado == 'Aprobado' and pedido.estado == 'Pendiente':
-                pedido.estado = 'Confirmado'
-                pedido.save()
-
-            messages.success(request, f"Estado del pago del Pedido #{pedido.id_pedido} actualizado a '{nuevo_pago_estado}'.")
+        if nuevo_pago_estado in ('Aprobado', 'Rechazado'):
+            try:
+                pago = resolver_pago_pendiente(pedido, aprobar=nuevo_pago_estado == 'Aprobado')
+            except ValidationError as error:
+                messages.error(request, ' '.join(error.messages))
+            else:
+                messages.success(
+                    request,
+                    f"Pago de ${pago.monto} del Pedido #{pedido.id_pedido} marcado como '{nuevo_pago_estado}'."
+                )
         else:
             messages.error(request, "Estado de pago no válido.")
 

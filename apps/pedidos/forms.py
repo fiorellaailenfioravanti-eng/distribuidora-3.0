@@ -70,13 +70,17 @@ class CheckoutForm(forms.Form):
                 self.fields['direccion_entrega'].initial = cliente.direcciones.first().pk
 
             # Preseleccionar método de pago activo
+            # (el del último pedido si se ofrece en la web; si no, efectivo o el primero).
             metodos_activos = self.fields['metodo_pago'].queryset
-            if metodos_activos.count() == 1 and not self.is_bound:
-                self.fields['metodo_pago'].initial = metodos_activos.first().pk
-            else:
+            if not self.is_bound and metodos_activos.exists():
                 ultimo_pedido = cliente.pedidos.first()
-                if ultimo_pedido and ultimo_pedido.metodo_pago and not self.is_bound:
-                    self.fields['metodo_pago'].initial = ultimo_pedido.metodo_pago.pk
+                ofrecidos = set(metodos_activos.values_list('pk', flat=True))
+                if ultimo_pedido and ultimo_pedido.metodo_pago_id in ofrecidos:
+                    inicial = ultimo_pedido.metodo_pago_id
+                else:
+                    efectivo = metodos_activos.filter(codigo='EFECTIVO').first()
+                    inicial = (efectivo or metodos_activos.first()).pk
+                self.fields['metodo_pago'].initial = inicial
 
 
 

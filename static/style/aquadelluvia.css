@@ -141,3 +141,13 @@ h3 {
     background-color: var(--bg-surface) !important;
     border-top: 1px solid var(--bs-border-color) !important;
 }
+
+/* Columna de los formularios de acceso (ingresar / recuperar contraseña):
+   ancho fijo entre un mínimo y un máximo para que la tarjeta no se angoste
+   cuando la ventana queda en el rango intermedio de los breakpoints. */
+.columna-auth {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: min(100%, 400px);
+    max-width: 460px;
+}

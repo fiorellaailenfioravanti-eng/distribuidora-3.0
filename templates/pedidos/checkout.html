@@ -45,10 +45,23 @@
                         {% endif %}
                         
                         {% if direcciones %}
-                            <a href="{% url 'apps.clientes:editar_direccion' direcciones.0.pk %}?next={% url 'apps.pedidos:checkout' %}"
+                            {# Edita la dirección elegida arriba, no siempre la primera. #}
+                            {% with inicial=form.direccion_entrega.value|default:direcciones.0.pk %}
+                            <a id="editar-direccion-elegida"
+                               href="{% url 'apps.clientes:editar_direccion' inicial %}?next={% url 'apps.pedidos:checkout' %}"
+                               data-plantilla="{% url 'apps.clientes:editar_direccion' 0 %}?next={% url 'apps.pedidos:checkout' %}"
                                class="btn btn-sm btn-outline-primary rounded-pill mt-2">
                                 <i class="fas fa-pen me-1"></i> Editar Dirección
                             </a>
+                            {% endwith %}
+                            <script>
+                                document.querySelectorAll('input[name="direccion_entrega"]').forEach(function (radio) {
+                                    radio.addEventListener('change', function () {
+                                        var enlace = document.getElementById('editar-direccion-elegida');
+                                        enlace.href = enlace.dataset.plantilla.replace('/0/', '/' + radio.value + '/');
+                                    });
+                                });
+                            </script>
                         {% else %}
                             <a href="{% url 'apps.clientes:agregar_direccion' cliente.pk %}?next={% url 'apps.pedidos:checkout' %}"
                                class="btn btn-sm btn-outline-primary rounded-pill mt-2">

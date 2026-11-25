@@ -69,11 +69,15 @@
                     {% for pedido in pedidos %}
                     <tr>
                         <td class="ps-4 fw-bold text-muted" data-valor="{{ pedido.id_pedido|unlocalize }}">#{{ pedido.id_pedido }}</td>
-                        <td data-valor="{{ pedido.cliente.nombre_completo }}">
+                        <td data-valor="{{ pedido.cliente.nombre_completo|default:'' }}">
+                            {% if pedido.cliente %}
                             <a href="{% url 'apps.clientes:ver_cliente' pedido.cliente.pk %}" class="text-decoration-none text-main fw-bold d-block hover-lift">
                                 {{ pedido.cliente.nombre_completo }}
                             </a>
                             <small class="text-muted">{{ pedido.cliente.email_display }}</small>
+                            {% else %}
+                            <span class="text-muted fst-italic">Sin cliente</span>
+                            {% endif %}
                         </td>
                         <td data-valor="{{ pedido.fecha_pedido|date:'c' }}"><small class="text-muted">{{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</small></td>
                         <td>
@@ -85,16 +89,27 @@
                             <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill">{{ pedido.metodo_pago.nombre }}</span>
                         </td>
                         <td class="text-center fw-bold text-success" data-valor="{{ pedido.total|unlocalize }}">${{ pedido.total }}</td>
-                        {% with ultimo_pago=pedido.pagos.last %}
-                        <td class="text-center" data-valor="{{ ultimo_pago.estado_pago|default:'Pendiente' }}">
+                        {% with cobro=pedido.estado_cobro por_verificar=pedido.pago_por_verificar %}
+                        <td class="text-center" data-valor="{{ cobro }}">
+                            {% if por_verificar %}
+                            {# Sólo se aprueba o rechaza el pago pendiente; los cobros se cargan en el detalle. #}
                             <form action="{% url 'apps.pedidos:cambiar_estado_pago' pedido.id_pedido %}" method="post" class="d-inline">
                                 {% csrf_token %}
-                                <select name="estado_pago" class="form-select form-select-sm border shadow-sm rounded-pill {% if ultimo_pago and ultimo_pago.estado_pago == 'Aprobado' %}border-success text-success{% elif ultimo_pago and ultimo_pago.estado_pago == 'Rechazado' %}border-danger text-danger{% else %}border-warning text-warning{% endif %}" onchange="this.form.submit()">
-                                    <option value="Pendiente" {% if not ultimo_pago or ultimo_pago.estado_pago == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-                                    <option value="Aprobado" {% if ultimo_pago and ultimo_pago.estado_pago == 'Aprobado' %}selected{% endif %}>Aprobado</option>
-                                    <option value="Rechazado" {% if ultimo_pago and ultimo_pago.estado_pago == 'Rechazado' %}selected{% endif %}>Rechazado</option>
+                                <select name="estado_pago" class="form-select form-select-sm border shadow-sm rounded-pill border-warning text-warning" onchange="this.form.submit()" title="Pago pendiente de ${{ por_verificar.monto }}">
+                                    <option value="" selected>{% if cobro == 'Parcial' %}Parcial{% else %}Pendiente{% endif %}</option>
+                                    <option value="Aprobado">Aprobar ${{ por_verificar.monto }}</option>
+                                    <option value="Rechazado">Rechazar</option>
                                 </select>
                             </form>
+                            {% elif cobro == 'Pagado' %}
+                            <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-3 py-2">Pagado</span>
+                            {% elif cobro == 'Parcial' %}
+                            <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-3 py-2">Parcial</span>
+                            {% elif cobro == 'Rechazado' %}
+                            <span class="badge bg-danger bg-opacity-25 text-danger rounded-pill px-3 py-2">Rechazado</span>
+                            {% else %}
+                            <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-3 py-2">Pendiente</span>
+                            {% endif %}
                         </td>
                         {% endwith %}
                         <td class="text-center" data-valor="{{ pedido.estado }}">

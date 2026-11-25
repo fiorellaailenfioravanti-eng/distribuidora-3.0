@@ -15,7 +15,7 @@ from .services import (
     carga_sugerida, confirmar_hoja, registrar_regreso,
     registrar_entrega, registrar_cobro, crear_venta_calle,
     agregar_parada as agregar_parada_servicio, agregar_pedido_a_hoja, botellon_por_defecto,
-    botellones_por_producto, clientes_frecuentes_de_zona, direccion_en_zona, entregados_por_producto,
+    botellones_por_producto, clientes_para_hoja, entregados_por_producto,
     envase_de_reparto, envases_retirados_en_hoja, fijar_pedido_de_parada, pedidos_candidatos,
     productos_de_reparto, renumerar_paradas,
     confirmar_entrega_en_calle, resumen_recorrido, MOTIVOS_NO_ENTREGA, inventario_camion,
@@ -154,15 +154,12 @@ def ver_ruta(request, pk):
         })
 
     zona = ruta.zona or (ruta.ruta_reparto.zona if ruta.ruta_reparto_id else None)
-    pedidos_pendientes, frecuentes_sugeridos = [], []
-    if zona is not None and es_admin and ruta.estado != 'Cerrada':
-        pedidos_pendientes = list(pedidos_candidatos(zona, ruta.fecha))
+    pedidos_pendientes, clientes_disponibles = [], []
+    if es_admin and ruta.estado != 'Cerrada':
+        if zona is not None:
+            pedidos_pendientes = list(pedidos_candidatos(zona, ruta.fecha))
         en_hoja = {d.cliente_id for d in detalles if d.cliente_id}
-        for cliente in clientes_frecuentes_de_zona(zona):
-            direccion = direccion_en_zona(cliente, zona)
-            if direccion is not None and cliente.pk not in en_hoja:
-                frecuentes_sugeridos.append({'cliente': cliente, 'direccion': direccion,
-                                             'cantidad': cliente.cantidad_recurrente_default or 1})
+        clientes_disponibles = clientes_para_hoja(zona, excluir_ids=en_hoja)
 
     contexto = {
         'ruta':        ruta,
@@ -172,7 +169,7 @@ def ver_ruta(request, pk):
         'form_parada': AgregarParadaForm(hoja=ruta),
         'form_estado': ActualizarEstadoForm(),
         'pedidos_pendientes': pedidos_pendientes,
-        'frecuentes_sugeridos': frecuentes_sugeridos,
+        'clientes_disponibles': clientes_disponibles,
         'botellon_defecto': botellon_por_defecto(),
         'es_admin':    es_admin,
         'paradas_con_nota_visible': _ids_de_paradas_con_nota(request.user, detalles),

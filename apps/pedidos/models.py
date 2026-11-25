@@ -172,6 +172,26 @@ class Pedido(models.Model):
         """Pagado sólo si los pagos aprobados cubren el total (H-30, RF-13)."""
         return self.total_pagado() >= self.total
 
+    def pago_por_verificar(self):
+        """Último pago `Pendiente` (aviso de transferencia, QR o el del checkout), o None.
+
+        Recorre `pagos.all()` para aprovechar el `prefetch_related` de los listados.
+        """
+        pendientes = [p for p in self.pagos.all() if p.estado_pago == 'Pendiente']
+        return max(pendientes, key=lambda p: p.id_pago) if pendientes else None
+
+    def estado_cobro(self):
+        """Resumen del cobro para los listados: Pagado, Parcial, Rechazado o Pendiente."""
+        pagos = list(self.pagos.all())
+        aprobado = sum((p.monto for p in pagos if p.estado_pago == 'Aprobado'), 0)
+        if aprobado >= self.total:
+            return 'Pagado'
+        if aprobado > 0:
+            return 'Parcial'
+        if pagos and not any(p.estado_pago == 'Pendiente' for p in pagos):
+            return 'Rechazado'
+        return 'Pendiente'
+
 
 class DetallePedido(models.Model):
     id_detalle      = models.AutoField(primary_key=True)

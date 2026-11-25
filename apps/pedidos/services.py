@@ -6,6 +6,7 @@ MercadoPago, webhook, cambio manual del estado del pago y cobro en calle):
 
 - `pago_en_curso(pedido)`: el `PagoPedido` sobre el que se trabaja.
 - `registrar_cobro(...)`: cobro presencial aprobado (usado por logística).
+- `resolver_pago_pendiente(...)`: el Vendedor aprueba o rechaza el pago por verificar.
 - `aplicar_pago_mercadopago(...)`: aplica el estado informado por MercadoPago
   **consultado a su API**, nunca el que llega en la URL del navegador.
 - `firma_webhook_valida(...)`: valida la cabecera `x-signature` del webhook.
@@ -59,13 +60,66 @@ def registrar_cobro(pedido, monto, metodo_pago=None, referencia=''):
     if not pedido.total:
         pedido.total = monto
         pedido.save(update_fields=['total'])
-    return PagoPedido.objects.create(
+    pago = PagoPedido.objects.create(
         pedido=pedido,
         monto=monto,
         metodo_pago=metodo_pago,
         estado_pago='Aprobado',
         referencia_comprobante=referencia,
     )
+    ajustar_pagos_provisorios(pedido)
+    return pago
+
+
+def ajustar_pagos_provisorios(pedido):
+    """Achica los pagos `Pendiente` al saldo que queda; si ya no se debe nada, los quita.
+
+    El checkout crea un pago `Pendiente` por el total. Cuando después se cobra
+    en partes, ese pago provisorio quedaba por el total y el pedido saldado
+    seguía mostrando «Pendiente $total». No toca los que ya tienen un pago de
+    MercadoPago asociado: esos los resuelve el webhook.
+    """
+    saldo = pedido.saldo_pendiente()
+    for pago in pedido.pagos.filter(estado_pago='Pendiente', mercadopago_payment_id=''):
+        if saldo <= 0:
+            pago.delete()
+        elif pago.monto > saldo:
+            pago.monto = saldo
+            pago.save(update_fields=['monto'])
+
+
+@transaction.atomic
+def resolver_pago_pendiente(pedido, aprobar):
+    """Aprueba o rechaza el pago por verificar del pedido (transferencia, QR, efectivo a cobrar).
+
+    Sólo actúa sobre el pago `Pendiente`: nunca modifica un cobro ya aprobado
+    (un «Rechazado» anulaba el último cobro en efectivo y un «Aprobado»
+    confirmaba pedidos cobrados a medias). Se aprueba como máximo el saldo.
+    """
+    from .models import Pedido
+
+    pedido = Pedido.objects.select_for_update().get(pk=pedido.pk)
+    pago = pedido.pago_por_verificar()
+    if pago is None:
+        raise ValidationError(
+            'El pedido no tiene pagos pendientes de verificación. '
+            'Para cobrar, usá «Registrar cobro» en el detalle del pedido.'
+        )
+    if not aprobar:
+        pago.estado_pago = 'Rechazado'
+        pago.save(update_fields=['estado_pago'])
+        return pago
+
+    saldo = pedido.saldo_pendiente()
+    if saldo <= 0:
+        raise ValidationError('El pedido ya está saldado: no hay nada para aprobar.')
+    pago.monto = min(pago.monto, saldo)
+    pago.estado_pago = 'Aprobado'
+    pago.save(update_fields=['monto', 'estado_pago'])
+    if pedido.esta_pagado() and pedido.estado == 'Pendiente':
+        pedido.estado = 'Confirmado'
+        pedido.save(update_fields=['estado'])
+    return pago
 
 
 def _a_decimal(valor):
@@ -183,6 +237,7 @@ def registrar_pago_manual(pedido, monto, metodo_pago, referencia=''):
         pedido=pedido, monto=monto, metodo_pago=metodo_pago,
         referencia_comprobante=referencia or '', estado_pago='Aprobado',
     )
+    ajustar_pagos_provisorios(pedido)
     if pedido.esta_pagado() and pedido.estado == 'Pendiente':
         pedido.estado = 'Confirmado'
         pedido.save(update_fields=['estado'])

@@ -300,6 +300,63 @@ class CobroManualTests(TestCase):
         self.assertContains(respuesta, 'Caja de los últimos 30 días')
 
 
+class PagoPorVerificarTests(TestCase):
+    """«Cambiar estado del pago» sólo resuelve el pago pendiente, nunca un cobro ya hecho."""
+
+    def setUp(self):
+        from django.contrib.auth.models import Group
+        self.vendedor = get_user_model().objects.create_user('vend', 'v@x.com', 'Agua-Lluvia-2026')
+        self.vendedor.groups.add(Group.objects.get(name='Vendedor'))
+        self.client.force_login(self.vendedor)
+        self.efectivo = MetodoPago.objects.get(codigo='EFECTIVO')
+        self.pedido = Pedido.objects.create(metodo_pago=self.efectivo, total=Decimal('2000'), estado='Pendiente')
+        # Pago provisorio que crea el checkout por el total.
+        self.provisorio = PagoPedido.objects.create(pedido=self.pedido, monto=Decimal('2000'),
+                                                    metodo_pago=self.efectivo, estado_pago='Pendiente')
+        self.url_estado = reverse('apps.pedidos:cambiar_estado_pago', args=[self.pedido.pk])
+
+    def _cobrar(self, monto):
+        from .services import registrar_pago_manual
+        registrar_pago_manual(self.pedido, monto, self.efectivo)
+        self.pedido.refresh_from_db()
+
+    def test_cobro_parcial_achica_el_provisorio_y_el_total_lo_quita(self):
+        self._cobrar('500')
+        self.provisorio.refresh_from_db()
+        self.assertEqual(self.provisorio.monto, Decimal('1500'))
+        self._cobrar('1500')
+        self.assertFalse(PagoPedido.objects.filter(pk=self.provisorio.pk).exists())
+        self.assertEqual(self.pedido.estado_cobro(), 'Pagado')
+
+    def test_rechazar_no_anula_un_cobro_aprobado(self):
+        self._cobrar('500')
+        self.client.post(self.url_estado, {'estado_pago': 'Rechazado'})
+        self.assertEqual(self.pedido.total_pagado(), Decimal('500'))
+        self.provisorio.refresh_from_db()
+        self.assertEqual(self.provisorio.estado_pago, 'Rechazado')
+
+    def test_aprobar_sólo_cubre_el_saldo_y_confirma_si_salda(self):
+        self._cobrar('500')
+        self.client.post(self.url_estado, {'estado_pago': 'Aprobado'})
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.total_pagado(), Decimal('2000'))
+        self.assertEqual(self.pedido.estado, 'Confirmado')
+
+    def test_sin_pago_pendiente_no_confirma_un_pedido_a_medias(self):
+        self._cobrar('500')
+        self.provisorio.delete()
+        respuesta = self.client.post(self.url_estado, {'estado_pago': 'Aprobado'}, follow=True)
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.estado, 'Pendiente')
+        self.assertEqual(self.pedido.total_pagado(), Decimal('500'))
+        self.assertContains(respuesta, 'no tiene pagos pendientes')
+
+    def test_listado_muestra_el_estado_del_cobro(self):
+        self._cobrar('500')
+        respuesta = self.client.get(reverse('apps.pedidos:listar_pedidos'))
+        self.assertContains(respuesta, 'Aprobar $1500')
+
+
 class StockComprometidoTests(TestCase):
     """RF-12: lo pedido y no despachado no se vende dos veces."""
 

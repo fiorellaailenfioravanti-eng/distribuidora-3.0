@@ -176,6 +176,17 @@
         return campo.getAttribute('aria-label') || campo.name || 'Campo';
     }
 
+    // Nombre de un grupo de opciones: data-etiqueta, <legend> o el título de la tarjeta.
+    function etiquetaDeGrupo(campo) {
+        const marcado = campo.closest('[data-etiqueta]');
+        if (marcado) return marcado.dataset.etiqueta;
+        const leyenda = campo.closest('fieldset') && campo.closest('fieldset').querySelector('legend');
+        if (leyenda && leyenda.textContent.trim()) return leyenda.textContent.trim().replace(/\s*\*$/, '');
+        const titulo = campo.closest('.card') && campo.closest('.card').querySelector('.card-header');
+        if (titulo && titulo.textContent.trim()) return titulo.textContent.replace(/\s+/g, ' ').trim().replace(/^\d+\s*/, '');
+        return campo.name.replace(/_/g, ' ');
+    }
+
     function mensajeDe(campo) {
         const v = campo.validity;
         if (v.valueMissing) return 'Es obligatorio.';
@@ -221,9 +232,18 @@
         evento.preventDefault();
         evento.stopImmediatePropagation();
         const items = [];
+        const gruposVistos = new Set();
         form.querySelectorAll(SELECTOR_CAMPO).forEach((campo) => {
             if (campo.willValidate && !campo.validity.valid) {
                 campo.classList.add('is-invalid');
+                // Las opciones (radio) de un mismo campo son un solo error, no uno por opción.
+                if (campo.type === 'radio') {
+                    if (gruposVistos.has(campo.name)) return;
+                    gruposVistos.add(campo.name);
+                    const msj = campo.validity.valueMissing ? 'Elegí una opción.' : mensajeDe(campo);
+                    items.push('<strong>' + escapar(etiquetaDeGrupo(campo)) + ':</strong> ' + escapar(msj));
+                    return;
+                }
                 items.push('<strong>' + escapar(etiquetaDe(campo)) + ':</strong> ' + escapar(mensajeDe(campo)));
             }
         });

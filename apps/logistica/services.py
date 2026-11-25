@@ -68,6 +68,38 @@ def direccion_en_zona(cliente, zona):
     return cliente.direcciones.filter(barrio__zona=zona).order_by('-es_principal').first()
 
 
+def clientes_para_hoja(zona, excluir_ids=()):
+    """Todos los clientes con domicilio en la zona (o en cualquiera si `zona` es None).
+
+    Devuelve una fila por cliente con su dirección principal en la zona, para
+    la lista filtrable de la hoja de ruta. Los frecuentes van primero.
+    """
+    from apps.clientes.models import DireccionEntrega
+    direcciones = (
+        DireccionEntrega.objects
+        .filter(eliminado=False, cliente__eliminado=False)
+        .exclude(cliente_id__in=excluir_ids)
+        .select_related('cliente', 'barrio')
+        .order_by('cliente__apellido', 'cliente__nombre', 'cliente_id', '-es_principal', 'pk')
+    )
+    if zona is not None:
+        direcciones = direcciones.filter(barrio__zona=zona)
+
+    filas, vistos = [], set()
+    for direccion in direcciones:
+        cliente = direccion.cliente
+        if cliente.pk in vistos:
+            continue
+        vistos.add(cliente.pk)
+        filas.append({
+            'cliente': cliente,
+            'direccion': direccion,
+            'cantidad': cliente.cantidad_recurrente_default or 1,
+        })
+    filas.sort(key=lambda f: not f['cliente'].es_frecuente)
+    return filas
+
+
 def clientes_frecuentes_de_zona(zona):
     """Clientes marcados como frecuentes con al menos una dirección en la zona."""
     from apps.clientes.models import Cliente

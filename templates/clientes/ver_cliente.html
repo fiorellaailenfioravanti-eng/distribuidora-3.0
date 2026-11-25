@@ -564,10 +564,12 @@
                                 <td><span class="small">{{ ped.fecha_pedido|date:"d/m/Y H:i" }}</span></td>
                                 <td><span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 py-1">{{ ped.metodo_pago.nombre }}</span></td>
                                 <td class="text-center">
-                                    {% with p=ped.pagos.last %}
-                                        {% if p and p.estado_pago == 'Aprobado' %}
-                                            <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1">Aprobado</span>
-                                        {% elif p and p.estado_pago == 'Rechazado' %}
+                                    {% with cobro=ped.estado_cobro %}
+                                        {% if cobro == 'Pagado' %}
+                                            <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1">Pagado</span>
+                                        {% elif cobro == 'Parcial' %}
+                                            <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-1">Parcial</span>
+                                        {% elif cobro == 'Rechazado' %}
                                             <span class="badge bg-danger bg-opacity-25 text-danger rounded-pill px-2 py-1">Rechazado</span>
                                         {% else %}
                                             <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-1">Pendiente</span>

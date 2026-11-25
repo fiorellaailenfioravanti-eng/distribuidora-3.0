@@ -396,6 +396,12 @@ de logística (`mi_ruta_hoy`, `ver_ruta`, `imprimir_ruta`) reciben la lista
 - Regla de seguridad: un pago pasa a `Aprobado` sólo por el webhook firmado, por consulta a
   la API de MercadoPago o por un Vendedor. El callback `pago_exitoso` y el aviso del cliente
   `confirmar_pago_qr` **no** aprueban (auditoría H-18/H-19).
+- **Pago por verificar (25/11/2026):** `Pedido.pago_por_verificar()` (último pago `Pendiente`) y
+  `Pedido.estado_cobro()` (Pagado / Parcial / Rechazado / Pendiente, para listados).
+  `services.resolver_pago_pendiente(pedido, aprobar)` es lo único que usa «Cambiar estado del pago» de la
+  gestión: aprueba (hasta el saldo) o rechaza **sólo** el pago pendiente, nunca un cobro ya aprobado.
+  `services.ajustar_pagos_provisorios(pedido)`: tras cada cobro manual o en calle, el pago `Pendiente` del
+  checkout se achica al saldo y se quita cuando el pedido queda saldado (salvo los que tienen pago de MP).
 - `Pedido.cambiar_estado_manual()` / `estados_manuales_posibles()`: transiciones permitidas
   desde la gestión; `En Camino`/`Entregado` de pedidos en hoja de ruta los fija logística.
 - Panel de gestión para Vendedores (`/pedidos/gestion/`) e historial (`/pedidos/mis-pedidos/`).

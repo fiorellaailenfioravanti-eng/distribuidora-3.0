@@ -34,14 +34,33 @@ env/
 # graphify (cache local; graph.json y GRAPH_REPORT.md si se versionan)
 graphify-out/cache/
 graphify-out/cost.json
+# Historial por fecha y visualización: se regeneran, no se versionan
+graphify-out/20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
+graphify-out/graph.html
+graphify-out/.graphify_build_state.json
+graphify-out/.graphify_partition_cache.json
 
-# Obsidian (el vault es la raíz del repo)
-.obsidian/workspace*.json
-.obsidian/cache/
+# Obsidian: el vault es personal de cada integrante y no se versiona
+.obsidian/
+notas/
+Inicio.md
 .trash/
+# Notas y lienzos sin nombre que crea Obsidian
+Sin título*.canvas
+Sin título*.base
+Sin título*.md
+# Notas diarias sueltas en la raíz (AAAA-MM-DD.md)
+/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].md
 # Enlace (junction) a .agents/ para verlo en Obsidian: no versionar dos veces
 Documentacion/
 
 # Respaldos locales de la base
 db.sqlite3.*
 *.sqlite3.respaldo
+
+# Herramientas de IA: las skills viven en .claude/skills (R-7)
+skills-claude/
+instalar-skills.ps1
+# Configuración local de Claude Code (rutas propias de cada máquina)
+.claude/launch.json
+.claude/settings.local.json

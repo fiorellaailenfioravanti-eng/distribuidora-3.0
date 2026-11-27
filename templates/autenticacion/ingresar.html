@@ -27,7 +27,17 @@
                     {% for field in form %}
                         <div class="mb-4 text-start">
                             <label for="{{ field.id_for_label }}" class="form-label fw-semibold text-muted mb-1">{{ field.label }}</label>
+                            {% if field.field.widget.input_type == 'password' %}
+                            <div class="position-relative campo-contrasena">
+                                {{ field }}
+                                <button type="button" class="btn btn-link position-absolute top-50 end-0 translate-middle-y text-muted px-3 js-ver-contrasena"
+                                        aria-label="Mostrar contraseña" title="Mostrar contraseña" data-objetivo="{{ field.id_for_label }}">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
+                            {% else %}
                             {{ field }}
+                            {% endif %}
                             {% if field.errors %}
                                 <div class="text-danger small mt-1">
                                     {% for error in field.errors %}
@@ -54,4 +64,22 @@
     </div>
 </div>
 
-{%endblock%}
+<style>
+    .campo-contrasena input { padding-right: 3rem; }
+    .js-ver-contrasena { text-decoration: none; box-shadow: none !important; }
+</style>
+<script>
+    // Ojito: alterna entre ver y ocultar la contraseña.
+    document.querySelectorAll('.js-ver-contrasena').forEach(function (boton) {
+        boton.addEventListener('click', function () {
+            var campo = document.getElementById(boton.dataset.objetivo);
+            var mostrar = campo.type === 'password';
+            campo.type = mostrar ? 'text' : 'password';
+            var texto = mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña';
+            boton.setAttribute('aria-label', texto);
+            boton.title = texto;
+            boton.querySelector('i').className = mostrar ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+        });
+    });
+</script>
+{% endblock %}

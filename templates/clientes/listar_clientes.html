@@ -66,7 +66,7 @@
             {% for cliente in clientes %}
             <tr>
                 <td class="ps-4">
-                    <div class="fw-bold text-main">{{ cliente.nombre_completo }}</div>
+                    <div class="fw-bold text-main">{{ cliente.apellido_nombre }}</div>
                     {% if cliente.numero %}<small class="text-muted me-1">N° {{ cliente.numero }}</small>{% endif %}
                     {% if cliente.tiene_cuenta %}
                         <small class="text-muted">@{{ cliente.usuario.username }}</small>
@@ -128,10 +128,10 @@
                     </div>
                     {% if 'registrar_clientes' in puede %}
                     <form method="post" action="{% url 'apps.clientes:eliminar_cliente' cliente.pk %}" class="d-inline"
-                          data-confirmar="¿Eliminar a {{ cliente.nombre_completo }}? No podrá ingresar a la tienda; lo podés restaurar desde «Clientes eliminados»." data-peligro>
+                          data-confirmar="¿Eliminar a {{ cliente.apellido_nombre }}? No podrá ingresar a la tienda; lo podés restaurar desde «Clientes eliminados»." data-peligro>
                         {% csrf_token %}
                         <input type="hidden" name="volver" value="{{ request.get_full_path }}">
-                        <button type="submit" class="btn btn-sm btn-light border-0 text-danger hover-lift shadow-sm ms-1" title="Eliminar" aria-label="Eliminar a {{ cliente.nombre_completo }}">
+                        <button type="submit" class="btn btn-sm btn-light border-0 text-danger hover-lift shadow-sm ms-1" title="Eliminar" aria-label="Eliminar a {{ cliente.apellido_nombre }}">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </form>
@@ -214,7 +214,7 @@
                 <tbody>
                     {% for c in eliminados %}
                     <tr class="opacity-75">
-                        <td class="ps-4 fw-semibold text-main">{{ c.nombre_completo }}</td>
+                        <td class="ps-4 fw-semibold text-main">{{ c.apellido_nombre }}</td>
                         <td class="d-none d-md-table-cell text-muted">{{ c.dni|default:"—" }}</td>
                         <td class="pe-4 text-end text-nowrap">
                             <a href="{% url 'apps.clientes:ver_cliente' c.pk %}" class="btn btn-sm btn-light text-primary" title="Ver ficha">
@@ -222,7 +222,7 @@
                             </a>
                             {% if 'registrar_clientes' in puede %}
                             <form method="post" action="{% url 'apps.clientes:restaurar_cliente' c.pk %}" class="d-inline"
-                                  data-confirmar="¿Restaurar a {{ c.nombre_completo }}?">
+                                  data-confirmar="¿Restaurar a {{ c.apellido_nombre }}?">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-success ms-1">
                                     <i class="fa-solid fa-rotate-left me-1"></i>Restaurar

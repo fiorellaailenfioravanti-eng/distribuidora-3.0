@@ -43,6 +43,7 @@
                         <div class="col-6">
                             <label class="form-label fw-bold text-muted small text-uppercase">Envases vendidos</label>
                             {{ form.envases_vendidos }}
+                            {% for error in form.envases_vendidos.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
                         </div>
                         <div class="col-6">
                             <label class="form-label fw-bold text-muted small text-uppercase">Monto cobrado</label>

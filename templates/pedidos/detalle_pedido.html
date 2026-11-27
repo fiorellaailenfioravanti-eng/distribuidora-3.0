@@ -1,13 +1,13 @@
 {% extends 'base_tienda.html' %}
 {% load static %}
 
-{% block title %}Pedido #{{ pedido.id_pedido }}{% endblock %}
+{% block title %}{% if pedido.origen == 'REPARTIDOR' and not es_personal %}Compra esporádica{% else %}Pedido{% endif %} #{{ pedido.id_pedido }}{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="h3 fw-bold text-main mb-1">Pedido #{{ pedido.id_pedido }}
+            <h1 class="h3 fw-bold text-main mb-1">{% if pedido.origen == 'REPARTIDOR' and not es_personal %}Compra esporádica{% else %}Pedido{% endif %} #{{ pedido.id_pedido }}
             </h1>
             <p class="text-muted small mb-0">Realizado el {{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</p>
         </div>
@@ -103,6 +103,25 @@
                                 <td class="text-end pe-4 fw-bold text-success">${{ detalle.subtotal }}</td>
                             </tr>
                             {% endfor %}
+                            {# Packs de promoción prepaga comprados con este pedido (RF-09) #}
+                            {% for pack in packs %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center gap-3 py-2">
+                                        <div class="bg-success bg-opacity-10 rounded-3 border d-flex align-items-center justify-content-center text-success" style="width:48px; height:48px;">
+                                            <i class="fa-solid fa-tags"></i>
+                                        </div>
+                                        <div>
+                                            <span class="fw-bold text-main d-block">{{ pack.promocion.nombre }}</span>
+                                            <small class="text-muted">Saldo: {{ pack.restantes }} de {{ pack.unidades }} unidades · vence el {{ pack.vence|date:"d/m/Y" }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center text-muted fw-semibold">${{ pack.promocion.precio }}</td>
+                                <td class="text-center"><span class="badge bg-success bg-opacity-25 text-success rounded-pill px-3 py-1 fs-6">{{ pack.cantidad }}</span></td>
+                                <td class="text-end pe-4 fw-bold text-success">${{ pack.subtotal }}</td>
+                            </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -122,6 +141,11 @@
                 <div class="card-body p-4 text-main">
                     <p class="mb-2"><strong class="text-muted small text-uppercase">Cliente:</strong><br> <span class="fw-semibold">{{ pedido.cliente.nombre_completo }}</span></p>
                     <p class="mb-2"><strong class="text-muted small text-uppercase">Email:</strong><br> {{ pedido.cliente.email_display }}</p>
+                    {% with telefonos=pedido.telefonos_contacto.all %}{% if telefonos %}
+                    <p class="mb-2"><strong class="text-muted small text-uppercase">Llamar a:</strong><br>
+                        {% for t in telefonos %}<a href="tel:{{ t.numero }}" class="text-decoration-none">{{ t.numero }}</a>{% if t.desc_relacion %} <span class="text-muted small">({{ t.desc_relacion }})</span>{% endif %}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+                    </p>
+                    {% endif %}{% endwith %}
 
                     {% if pedido.direccion_entrega %}
                         <p class="mb-2"><strong class="text-muted small text-uppercase">Dirección:</strong><br> {{ pedido.direccion_entrega.direccion_completa }}</p>
@@ -134,7 +158,7 @@
                         <p class="text-warning fw-bold mb-0"><i class="fa-solid fa-triangle-exclamation me-1"></i> Sin dirección especificada.</p>
                     {% endif %}
 
-                    {% if pedido.notas_cliente %}
+                    {% if pedido.notas_cliente and pedido.origen != 'REPARTIDOR' or pedido.notas_cliente and es_personal %}
                         <hr class="border-secondary border-opacity-10">
                         <p class="mb-0"><strong class="text-muted small text-uppercase">Indicaciones cliente:</strong><br> <em>"{{ pedido.notas_cliente }}"</em></p>
                     {% endif %}
@@ -166,6 +190,11 @@
                             </div>
                             <small class="d-block text-muted">{{ pago.metodo_pago.nombre }} · {{ pago.fecha|date:"d/m/Y H:i" }}</small>
                             {% if pago.referencia_comprobante %}<small class="d-block text-muted">{{ pago.referencia_comprobante }}</small>{% endif %}
+                            {% if pago.comprobante %}
+                                <a href="{% url 'apps.pedidos:ver_comprobante' pago.pk %}" target="_blank" rel="noopener" class="small fw-semibold d-inline-block mt-1">
+                                    <i class="fa-solid fa-file-invoice me-1"></i>Ver comprobante
+                                </a>
+                            {% endif %}
                             {% if pago.mercadopago_payment_id %}
                                 <small class="d-block text-muted">ID Pago MP: #{{ pago.mercadopago_payment_id }}</small>
                             {% endif %}

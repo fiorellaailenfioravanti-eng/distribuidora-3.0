@@ -82,6 +82,50 @@ def vender_promocion(cliente, promocion, metodo_pago=None, a_cuenta=False, fecha
 
 
 @transaction.atomic
+def cobertura_del_carrito(cliente, carrito):
+    """Qué unidades del carrito cubre el saldo prepago (RF-09) y cuánto se descuenta.
+
+    Cuenta el saldo vigente del cliente y el de los packs que se compran en el
+    mismo carrito. Devuelve ([{'producto', 'cantidad'}], descuento).
+    """
+    saldo_carrito = {}
+    for p in carrito.promociones.select_related('promocion'):
+        saldo_carrito[p.promocion.producto_id] = saldo_carrito.get(p.promocion.producto_id, 0) + p.unidades()
+    cobertura, descuento = [], 0
+    for item in carrito.items.select_related('producto'):
+        saldo = (saldo_vigente(cliente, item.producto) if cliente else 0) + saldo_carrito.get(item.producto_id, 0)
+        cubiertas = min(item.cantidad, saldo)
+        if cubiertas:
+            cobertura.append({'producto': item.producto, 'cantidad': cubiertas})
+            descuento += item.producto.precio * cubiertas
+    return cobertura, descuento
+
+
+def abrir_packs_de_pedido(cliente, promocion, cantidad, pedido, fecha=None):
+    """Compra web de `cantidad` packs de `promocion` dentro de `pedido` (RF-09).
+
+    A diferencia de `vender_promocion` no crea un pedido aparte: el precio de los
+    packs se suma al pedido del checkout y se cobra con él. Abre el saldo en el
+    momento, así las unidades del mismo carrito ya salen cubiertas.
+    """
+    if not promocion.activa:
+        raise ValidationError(f'La promoción «{promocion.nombre}» ya no está activa.')
+    fecha = fecha or timezone.localdate()
+    return [
+        CompraPromocion.objects.create(
+            cliente=cliente, promocion=promocion, pedido=pedido, fecha_compra=fecha,
+            fecha_caducidad=fecha + timedelta(days=promocion.dias_validez),
+            unid_totales=promocion.cant_lleva, unid_restantes=promocion.cant_lleva,
+        )
+        for _ in range(int(cantidad))
+    ]
+
+
+def anular_packs_de_pedido(pedido):
+    """Si se cancela un pedido web que compraba packs, el saldo de esos packs se anula."""
+    return pedido.compras_promocion.exclude(estado='Vencida').update(unid_restantes=0, estado='Vencida')
+
+
 def consumir_saldo(cliente, producto, cantidad, pedido, fecha=None):
     """Usa hasta `cantidad` unidades del saldo prepago en `pedido`.
 

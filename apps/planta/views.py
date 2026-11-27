@@ -47,7 +47,12 @@ def recarga_diaria(request):
                 return redirect('apps.planta:recarga_diaria')
         cargado = {pk: request.POST.get(f'cantidad_{pk}', '') for pk in (b.pk for b in bidones)}
 
-    filas = [{'bidon': b, 'cantidad': cargado.get(b.pk, ''), 'vacios': b.envase.stock} for b in bidones]
+    ya_recargado = {d.producto_id: d.cantidad for d in recarga.detalles.all()} if recarga else {}
+    filas = [{'bidon': b, 'cantidad': cargado.get(b.pk, ''), 'vacios': b.envase.stock,
+              # Tope en pantalla: los vacíos de su envase + lo que ya se recargó hoy (corregir no consume
+              # envases de nuevo). Si varios bidones comparten envase, el total lo controla el servidor.
+              'maximo': max(0, min(MAXIMO_POR_TIPO, b.envase.stock + ya_recargado.get(b.pk, 0)))}
+             for b in bidones]
     historial = (RecargaBidones.objects.filter(fecha__gte=hoy - timedelta(days=14))
                  .select_related('registrada_por').prefetch_related('detalles__producto'))
     return render(request, 'planta/recarga_diaria.html', {

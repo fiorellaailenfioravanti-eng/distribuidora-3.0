@@ -139,7 +139,8 @@ class CheckoutConSaldoTests(BasePromociones):
         self.carrito.items.all().delete()
         self.carrito.items.create(producto=self.bidon, cantidad=cantidad)
         self.client.post(reverse('apps.pedidos:confirmar_pedido'), {
-            'direccion_entrega': self.direccion.pk, 'metodo_pago': self.efectivo.pk})
+            'direccion_entrega': self.direccion.pk, 'metodo_pago': self.efectivo.pk,
+            'telefonos_contacto': list(self.direccion.cliente.telefonos.values_list('pk', flat=True))})
         return Pedido.objects.filter(cliente=self.cliente, origen='WEB').latest('id_pedido')
 
     def test_parte_cubierta_y_parte_cobrada(self):
@@ -182,3 +183,100 @@ class VistasPromocionesTests(BasePromociones):
                          {'promocion': self.promo.pk})
         self.assertFalse(CompraPromocion.objects.exists())
         self.assertEqual(self.client.get(reverse('apps.promociones:listar_promociones')).status_code, 302)
+
+
+class PromocionDesdeElCatalogoTests(TestCase):
+    """RF-09: las promociones se compran desde el catálogo, como un producto más."""
+
+    def setUp(self):
+        from decimal import Decimal
+        from django.contrib.auth import get_user_model
+        from apps.carrito.models import Carrito
+        from apps.clientes.models import DireccionEntrega, TelefonoContacto
+        from apps.productos.models import Producto
+        self.usuario = get_user_model().objects.create_user('promo', 'p@x.com', 'Agua-Lluvia-2026')
+        self.cliente = self.usuario.perfil_cliente
+        self.direccion = DireccionEntrega.objects.create(cliente=self.cliente, calle='Mitre', altura='1')
+        self.telefono = TelefonoContacto.objects.create(cliente=self.cliente, numero='3624111111',
+                                                        desc_relacion='Titular')
+        self.bidon = Producto.objects.create(nombre='Bidón 20 L', descripcion='', precio=Decimal('1000'), stock=20,
+                                             es_botellon=True)
+        self.promo = Promocion.objects.create(nombre='Paga 3, lleva 4', producto=self.bidon, cant_paga=3,
+                                              cant_lleva=4, precio=Decimal('3000'))
+        self.carrito = Carrito.objects.create(usuario=self.usuario)
+        self.client.force_login(self.usuario)
+        self.efectivo = MetodoPago.objects.get(codigo='EFECTIVO')
+
+    def _confirmar(self):
+        return self.client.post(reverse('apps.pedidos:confirmar_pedido'), {
+            'direccion_entrega': self.direccion.pk, 'metodo_pago': self.efectivo.pk,
+            'telefonos_contacto': [self.telefono.pk],
+        })
+
+    def _catalogo(self, **params):
+        return self.client.get(reverse('apps.productos:listar_productos'), params)
+
+    def test_las_promociones_tienen_su_propia_categoria(self):
+        todo = self._catalogo()
+        self.assertContains(todo, '?categoria=Promociones')          # aparece en la lista de categorías
+        self.assertNotContains(todo, 'Añadir promoción')             # no se mezclan con los productos
+        respuesta = self._catalogo(categoria='Promociones')
+        self.assertContains(respuesta, 'Paga 3, lleva 4')
+        self.assertContains(respuesta, reverse('apps.carrito:agregar_promocion', args=[self.promo.pk]))
+        self.assertEqual(len(respuesta.context['productos']), 0)    # sólo promociones
+
+    def test_promocion_inactiva_no_se_muestra_ni_se_agrega(self):
+        self.promo.activa = False
+        self.promo.save()
+        self.assertNotContains(self._catalogo(categoria='Promociones'), 'Paga 3, lleva 4')
+        self.assertNotContains(self._catalogo(), '?categoria=Promociones')  # sin promociones, sin categoría
+        self.client.post(reverse('apps.carrito:agregar_promocion', args=[self.promo.pk]))
+        self.assertFalse(self.carrito.promociones.exists())
+
+    def test_agregar_y_quitar_del_carrito(self):
+        url = reverse('apps.carrito:agregar_promocion', args=[self.promo.pk])
+        self.client.post(url)
+        self.client.post(url)
+        item = self.carrito.promociones.get()
+        self.assertEqual(item.cantidad, 2)
+        self.assertEqual(self.carrito.total_precio(), 6000)
+        self.assertEqual(self.carrito.total_items(), 2)
+        self.client.post(reverse('apps.carrito:quitar_promocion', args=[item.pk]))
+        self.assertEqual(self.carrito.promociones.get().cantidad, 1)
+
+    def test_comprar_solo_la_promocion_abre_el_saldo_y_cobra_el_pack(self):
+        self.client.post(reverse('apps.carrito:agregar_promocion', args=[self.promo.pk]))
+        self._confirmar()
+        pedido = Pedido.objects.get(cliente=self.cliente)
+        self.assertEqual(pedido.total, 3000)                     # suma el precio del pack
+        self.assertEqual(saldo_vigente(self.cliente, self.bidon), 4)   # saldo de 4 bidones
+        self.assertEqual(pedido.compras_promocion.count(), 1)
+        self.assertFalse(self.carrito.promociones.exists())    # el carrito queda vacío
+        self.assertContains(self.client.get(reverse('apps.pedidos:detalle_pedido', args=[pedido.pk])),
+                            'Saldo: 4 de 4 unidades')
+
+    def test_promocion_con_bidones_en_el_mismo_carrito(self):
+        self.client.post(reverse('apps.carrito:agregar_promocion', args=[self.promo.pk]))
+        self.carrito.items.create(producto=self.bidon, cantidad=4)
+        respuesta = self.client.get(reverse('apps.pedidos:checkout'))
+        self.assertEqual(respuesta.context['total_precio'], 3000)  # los 4 bidones los cubre el pack
+        self._confirmar()
+        pedido = Pedido.objects.get(cliente=self.cliente)
+        self.assertEqual(pedido.total, 3000)
+        self.assertEqual(sum(d.cantidad for d in pedido.detalles.all()), 4)   # salen 4 bidones
+        self.assertEqual(sum(d.subtotal for d in pedido.detalles.all()), 0)
+        self.assertEqual(saldo_vigente(self.cliente, self.bidon), 0)
+
+    def test_cancelar_el_pedido_anula_el_saldo_del_pack(self):
+        self.client.post(reverse('apps.carrito:agregar_promocion', args=[self.promo.pk]))
+        self._confirmar()
+        pedido = Pedido.objects.get(cliente=self.cliente)
+        pedido.cambiar_estado_manual('Cancelado')
+        self.assertEqual(saldo_vigente(self.cliente, self.bidon), 0)
+
+    def test_el_carrito_muestra_el_total_con_lo_que_cubre_el_pack(self):
+        self.client.post(reverse('apps.carrito:agregar_promocion', args=[self.promo.pk]))
+        self.carrito.items.create(producto=self.bidon, cantidad=5)
+        respuesta = self.client.get(reverse('apps.carrito:ver_carrito'))
+        self.assertEqual(respuesta.context['total_precio'], 3000 + 1000)   # pack + 1 bidón no cubierto
+        self.assertContains(respuesta, 'Tu promoción prepaga cubre')

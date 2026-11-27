@@ -171,13 +171,13 @@ class EditarMiPerfilTests(TestCase):
         self.assertContains(respuesta, 'name="old_password"')
 
     def test_actualiza_el_telefono_principal(self):
-        respuesta = self.client.post(self.url, {'form_perfil': '1', 'celular': '3624 555666'})
+        respuesta = self.client.post(self.url, {'form_perfil': '1', 'email': 'ana@x.com', 'celular': '3624 555666'})
         self.assertRedirects(respuesta, reverse('apps.clientes:mi_perfil'))
         cliente = self.usuario.perfil_cliente
         self.assertTrue(cliente.telefonos.filter(numero='3624 555666').exists())
 
     def test_rechaza_telefono_con_letras(self):
-        respuesta = self.client.post(self.url, {'form_perfil': '1', 'celular': 'llamame'})
+        respuesta = self.client.post(self.url, {'form_perfil': '1', 'email': 'ana@x.com', 'celular': 'llamame'})
         self.assertEqual(respuesta.status_code, 200)
 
     def test_cambia_la_contrasena(self):
@@ -188,6 +188,29 @@ class EditarMiPerfilTests(TestCase):
         self.assertRedirects(respuesta, reverse('apps.clientes:mi_perfil'))
         self.usuario.refresh_from_db()
         self.assertTrue(self.usuario.check_password('Otra-Clave-2026x'))
+
+    def test_muestra_el_correo_actual(self):
+        self.assertContains(self.client.get(self.url), 'value="ana@x.com"')
+
+    def test_cambia_el_correo(self):
+        respuesta = self.client.post(self.url, {'form_perfil': '1', 'email': 'ana.nueva@x.com'})
+        self.assertRedirects(respuesta, reverse('apps.clientes:mi_perfil'))
+        self.usuario.refresh_from_db()
+        self.assertEqual(self.usuario.email, 'ana.nueva@x.com')
+        self.assertEqual(self.usuario.perfil_cliente.email_display(), 'ana.nueva@x.com')
+
+    def test_no_permite_un_correo_de_otra_cuenta(self):
+        from django.contrib.auth import get_user_model
+        get_user_model().objects.create_user('bea', 'bea@x.com', 'Agua-Lluvia-2026')
+        respuesta = self.client.post(self.url, {'form_perfil': '1', 'email': 'BEA@x.com'})
+        self.assertEqual(respuesta.status_code, 200)
+        self.usuario.refresh_from_db()
+        self.assertEqual(self.usuario.email, 'ana@x.com')
+
+    def test_rechaza_correo_invalido(self):
+        self.client.post(self.url, {'form_perfil': '1', 'email': 'no-es-un-correo'})
+        self.usuario.refresh_from_db()
+        self.assertEqual(self.usuario.email, 'ana@x.com')
 
 
 class ValidacionesClienteTests(TestCase):
@@ -201,18 +224,19 @@ class ValidacionesClienteTests(TestCase):
 
 
 class OrdenDirectorioClientesTests(TestCase):
-    """Los encabezados ordenan a todos los clientes (no sólo la página visible)."""
+    """Los encabezados ordenan a todos los clientes (no sólo la página visible).
+    La columna «Cliente» ordena por apellido."""
 
     def setUp(self):
         vendedor = get_user_model().objects.create_user('vend_orden', 'vo@x.com', 'Agua-Lluvia-2026')
         vendedor.groups.add(Group.objects.get(name='Vendedor'))
         self.client.force_login(vendedor)
         for i, nombre in enumerate(['Bruno', 'Ana', 'Carla'] + [f'Zoe{n:02d}' for n in range(10)]):
-            Cliente.objects.create(nombre=nombre, apellido='Test', dni=str(40000000 + i))
+            Cliente.objects.create(nombre='Test', apellido=nombre, dni=str(40000000 + i))
 
     def _nombres(self, **params):
         respuesta = self.client.get(reverse('apps.clientes:listar_clientes'), params)
-        return [c.nombre for c in respuesta.context['clientes']]
+        return [c.apellido for c in respuesta.context['clientes']]
 
     def test_ordena_por_nombre_en_ambos_sentidos(self):
         self.assertEqual(self._nombres(orden='cliente', dir='asc')[:3], ['Ana', 'Bruno', 'Carla'])
@@ -521,3 +545,92 @@ class What3WordsTests(TestCase):
         call_command('importar_w3w', ruta, '--aplicar', stdout=StringIO())
         self.direccion.refresh_from_db()
         self.assertEqual(self.direccion.w3w, 'filtros.secarse.sanas')
+
+
+class ClienteInstitucionTests(TestCase):
+    """Casilla «Institución o empresa»: el cliente se carga con un solo nombre (el apellido)."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        self.client.force_login(get_user_model().objects.create_superuser('jefa', 'j@x.com', 'Agua-Lluvia-2026'))
+        self.telefono = {'telefono_numero[]': ['3624111111'], 'telefono_relacion[]': ['Secretaría']}
+
+    def test_formularios_muestran_la_casilla(self):
+        for nombre in ('crear_sin_cuenta', 'crear_con_cuenta'):
+            respuesta = self.client.get(reverse(f'apps.clientes:{nombre}'))
+            self.assertContains(respuesta, 'Institución o empresa')
+            self.assertContains(respuesta, 'data-institucion')
+
+    def test_alta_sin_cuenta_de_una_institucion(self):
+        self.client.post(reverse('apps.clientes:crear_sin_cuenta'), {
+            'es_institucion': 'on', 'nombre': 'esto se ignora', 'apellido': 'Escuela N° 99',
+            'tipo_cliente': 'Normal', **self.telefono})
+        cliente = Cliente.objects.get(apellido='Escuela N° 99')
+        self.assertTrue(cliente.es_institucion)
+        self.assertEqual(cliente.nombre, '')
+        self.assertEqual(cliente.nombre_completo(), 'Escuela N° 99')
+
+    def test_institucion_sin_nombre_no_se_crea(self):
+        respuesta = self.client.post(reverse('apps.clientes:crear_sin_cuenta'), {
+            'es_institucion': 'on', 'apellido': '', 'tipo_cliente': 'Normal', **self.telefono})
+        self.assertContains(respuesta, 'Ingresá el nombre de la institución o empresa.')
+        self.assertFalse(Cliente.objects.filter(es_institucion=True).exists())
+
+    def test_alta_con_cuenta_de_una_empresa_sin_nombre(self):
+        self.client.post(reverse('apps.clientes:crear_con_cuenta'), {
+            'es_institucion': 'on', 'last_name': 'Gimnasio Fuerza', 'username': 'gimnasio',
+            'email': 'gim@x.com', 'password1': 'Agua-Lluvia-2026', 'password2': 'Agua-Lluvia-2026',
+            'tipo_cliente': 'Normal', **self.telefono})
+        cliente = Cliente.objects.get(usuario__username='gimnasio')
+        self.assertTrue(cliente.es_institucion)
+        self.assertEqual(cliente.nombre_completo(), 'Gimnasio Fuerza')
+
+    def test_persona_con_cuenta_sigue_pidiendo_nombre(self):
+        respuesta = self.client.post(reverse('apps.clientes:crear_con_cuenta'), {
+            'last_name': 'Paz', 'username': 'anapaz', 'email': 'ana@x.com',
+            'password1': 'Agua-Lluvia-2026', 'password2': 'Agua-Lluvia-2026', 'tipo_cliente': 'Normal',
+            **self.telefono})
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertFalse(Cliente.objects.filter(usuario__username='anapaz').exists())
+
+    def test_editar_marca_la_casilla(self):
+        cliente = Cliente.objects.create(nombre='Oficina', apellido='Estudio Ríos')
+        self.client.post(reverse('apps.clientes:editar_cliente', args=[cliente.pk]), {
+            'es_institucion': 'on', 'apellido': 'Estudio Contable Ríos', 'tipo_cliente': 'Normal'})
+        cliente.refresh_from_db()
+        self.assertTrue(cliente.es_institucion)
+        self.assertEqual(cliente.nombre_completo(), 'Estudio Contable Ríos')
+
+
+class ApellidoNombreEnBusquedasTests(TestCase):
+    """Al buscar clientes se muestran como «Apellido Nombre»."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        self.admin = get_user_model().objects.create_superuser('jefa', 'j@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(self.admin)
+        self.sin_cuenta = Cliente.objects.create(nombre='Juan', apellido='Pérez')
+        web = get_user_model().objects.create_user('ana', 'ana@x.com', 'Agua-Lluvia-2026',
+                                                    first_name='Ana', last_name='Zapata')
+        self.con_cuenta = web.perfil_cliente
+        self.institucion = Cliente.objects.create(apellido='Escuela N° 5', es_institucion=True)
+
+    def test_apellido_nombre(self):
+        self.assertEqual(self.sin_cuenta.apellido_nombre(), 'Pérez Juan')
+        self.assertEqual(self.con_cuenta.apellido_nombre(), 'Zapata Ana')
+        self.assertEqual(self.institucion.apellido_nombre(), 'Escuela N° 5')
+
+    def test_el_directorio_muestra_apellido_nombre(self):
+        respuesta = self.client.get(reverse('apps.clientes:listar_clientes'), {'q': 'perez'})
+        self.assertContains(respuesta, 'Pérez Juan')
+        self.assertNotContains(respuesta, 'Juan Pérez')
+
+    def test_se_encuentra_escribiendo_en_cualquier_orden(self):
+        url = reverse('apps.clientes:listar_clientes')
+        self.assertContains(self.client.get(url, {'q': 'perez juan'}), 'Pérez Juan')
+        self.assertContains(self.client.get(url, {'q': 'juan perez'}), 'Pérez Juan')
+
+    def test_ordenar_por_cliente_es_por_apellido(self):
+        respuesta = self.client.get(reverse('apps.clientes:listar_clientes'), {'orden': 'cliente'})
+        nombres = [c.apellido_nombre() for c in respuesta.context['clientes']]
+        self.assertLess(nombres.index('Pérez Juan'), nombres.index('Zapata Ana'))

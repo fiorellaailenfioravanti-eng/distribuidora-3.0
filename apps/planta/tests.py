@@ -54,6 +54,14 @@ class RecargaTests(TestCase):
         with self.assertRaises(ValidationError):
             guardar_recarga(self.recargador, {self.b20a.pk: 30, self.b20b.pk: 30})
 
+    def test_pantalla_topea_cada_bidon_por_los_vacios_disponibles(self):
+        """El campo no deja tipear más que los vacíos de su envase (+ lo ya recargado hoy)."""
+        self.client.force_login(self.recargador)
+        url = reverse('apps.planta:recarga_diaria')
+        self.assertContains(self.client.get(url), 'data-stock="5"')  # Env 10 tiene 5 vacíos
+        guardar_recarga(self.recargador, {self.b10.pk: 3})           # quedan 2 vacíos + 3 ya recargados
+        self.assertContains(self.client.get(url), 'data-stock="5"')
+
     def test_pantalla_del_recargador(self):
         self.client.force_login(self.recargador)
         url = reverse('apps.planta:recarga_diaria')

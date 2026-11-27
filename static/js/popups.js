@@ -189,6 +189,7 @@
 
     function mensajeDe(campo) {
         const v = campo.validity;
+        if (v.customError) return campo.validationMessage;  // p. ej. tope de stock (main.js)
         if (v.valueMissing) return 'Es obligatorio.';
         if ((v.patternMismatch || v.typeMismatch) && campo.title) return campo.title;
         if (v.tooShort) return 'Debe tener al menos ' + campo.minLength + ' caracteres.';
@@ -318,7 +319,11 @@
         if (!mensaje || form.dataset.confirmado === '1') return;
         evento.preventDefault();
         confirmar(mensaje, form.dataset.peligro !== undefined).then((ok) => {
-            if (!ok) return;
+            if (!ok) {
+                // Un desplegable que envía al cambiar vuelve a su opción inicial si se cancela.
+                form.querySelectorAll('select[data-restablecer-al-cancelar]').forEach((s) => { s.selectedIndex = 0; });
+                return;
+            }
             form.dataset.confirmado = '1';
             const boton = evento.submitter;
             if (form.requestSubmit) form.requestSubmit(boton || undefined); else form.submit();

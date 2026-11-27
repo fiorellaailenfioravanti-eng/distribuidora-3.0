@@ -1,0 +1,15 @@
+{# Pestañas de la sección «Zonas y camiones». Uso: include con activa='zonas'|'camiones' #}
+<ul class="nav nav-pills gap-2 mb-4">
+    <li class="nav-item">
+        <a href="{% url 'apps.logistica:listar_zonas' %}" class="nav-link rounded-3 fw-bold px-4 {% if activa == 'zonas' %}active{% else %}bg-surface shadow-sm text-main{% endif %}"
+           {% if activa == 'zonas' %}aria-current="page"{% endif %}>
+            <i class="fa-solid fa-map-pin me-2"></i>Zonas
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="{% url 'apps.logistica:listar_camiones' %}" class="nav-link rounded-3 fw-bold px-4 {% if activa == 'camiones' %}active{% else %}bg-surface shadow-sm text-main{% endif %}"
+           {% if activa == 'camiones' %}aria-current="page"{% endif %}>
+            <i class="fa-solid fa-truck me-2"></i>Camiones
+        </a>
+    </li>
+</ul>

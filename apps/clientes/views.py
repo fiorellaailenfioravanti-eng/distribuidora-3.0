@@ -40,10 +40,12 @@ def es_dueno_o_staff(user, cliente):
 # LISTAR CLIENTES
 # ─────────────────────────────────────────────────────────────
 def _texto_buscable(cliente):
-    partes = [cliente.numero, cliente.nombre, cliente.apellido, cliente.dni, cliente.email_contacto]
+    # Nombre en los dos órdenes: se encuentra escribiendo «Pérez Juan» o «Juan Pérez».
+    partes = [cliente.numero, cliente.nombre_completo(), cliente.apellido_nombre(),
+              cliente.dni, cliente.email_contacto]
     if cliente.usuario is not None:
         u = cliente.usuario
-        partes += [u.get_full_name(), u.username, u.email]
+        partes += [u.username, u.email]
     return normalizar_texto(' '.join(p for p in partes if p))
 
 
@@ -56,7 +58,7 @@ def _valor(cliente, atributo):
 # Se ordena en Python (la lista ya se filtra así) y antes de paginar, para que
 # el orden abarque a todos los clientes y no sólo a la página visible.
 ORDEN_CLIENTES = {
-    'cliente':    lambda c: normalizar_texto(_valor(c, 'nombre_completo') or ''),
+    'cliente':    lambda c: normalizar_texto(_valor(c, 'apellido_nombre') or ''),
     'email':      lambda c: normalizar_texto(_valor(c, 'email_display') or '~'),
     'dni':        lambda c: (c.dni or '').zfill(15) if c.dni else '~',
     'tipo':       lambda c: c.tipo_cliente or '',
@@ -138,7 +140,7 @@ def ver_cliente(request, pk):
     cliente  = get_object_or_404(Cliente, pk=pk)
     telefonos = cliente.telefonos.all()
     direcciones = cliente.direcciones.select_related('barrio__zona').all()
-    pedidos = cliente.pedidos.select_related('metodo_pago').prefetch_related('detalles__producto', 'pagos').all()
+    pedidos = cliente.pedidos.select_related('metodo_pago').prefetch_related('detalles__producto', 'pagos__metodo_pago').all()
 
     form_tel = TelefonoContactoForm()
     movimientos_bidon = cliente.movimientos_bidon.select_related('registrado_por', 'pedido')[:15]
@@ -622,7 +624,8 @@ def editar_mi_perfil(request):
 
     user = request.user
     principal = cliente.telefonos.order_by('-es_principal', 'pk').first()
-    form_perfil = EditarMiPerfilForm(initial={'celular': principal.numero if principal else user.celular1})
+    form_perfil = EditarMiPerfilForm(usuario=user, initial={
+        'email': user.email, 'celular': principal.numero if principal else user.celular1})
     form_password = PasswordChangeForm(user)
     for campo in form_password.fields.values():
         campo.widget.attrs['class'] = 'form-control'
@@ -639,13 +642,19 @@ def editar_mi_perfil(request):
         messages.error(request, 'No se pudo cambiar la contraseña: revisá los campos marcados.')
 
     elif request.method == 'POST':
-        form_perfil = EditarMiPerfilForm(request.POST, request.FILES)
+        form_perfil = EditarMiPerfilForm(request.POST, request.FILES, usuario=user)
         if form_perfil.is_valid():
             datos = form_perfil.cleaned_data
             if datos.get('eliminar_foto'):
                 user.imagen_perfil = Usuario._meta.get_field('imagen_perfil').get_default()
             elif datos.get('imagen_perfil'):
                 user.imagen_perfil = datos['imagen_perfil']
+            # El correo de la cuenta es el que se usa para ingresar y recuperar la
+            # contraseña; el de contacto del cliente se mantiene igual.
+            user.email = datos['email']
+            if cliente.email_contacto != datos['email']:
+                cliente.email_contacto = datos['email']
+                cliente.save(update_fields=['email_contacto'])
             celular = datos.get('celular')
             if celular:
                 user.celular1 = celular

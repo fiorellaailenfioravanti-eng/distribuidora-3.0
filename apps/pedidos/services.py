@@ -71,6 +71,60 @@ def registrar_cobro(pedido, monto, metodo_pago=None, referencia=''):
     return pago
 
 
+def sincronizar_pago_pendiente(pedido):
+    """Deja al pedido con un pago `Pendiente` por lo que se debe, como el del checkout.
+
+    Lo usan los pedidos que no pasan por el checkout (los que arma la empresa al
+    planificar el reparto, los automáticos y las ventas en la calle), para que
+    en la gestión todos se puedan aprobar o rechazar igual. Si no hay pago
+    pendiente y se debe algo, lo crea con el método del pedido; si cambió el
+    total, lo ajusta; si ya no se debe nada, lo quita. Sólo maneja ese pago
+    provisorio: si ya hay un cobro declarado esperando aprobación (lo cobrado por
+    el repartidor, una transferencia, MercadoPago), no agrega otro.
+    """
+    from .models import PagoPedido
+
+    pendientes = list(pedido.pagos.filter(estado_pago='Pendiente').order_by('-id_pago'))
+    provisorios = [p for p in pendientes if p.es_provisorio()]
+    saldo = pedido.saldo_pendiente()
+    if saldo <= 0 or len(provisorios) < len(pendientes):
+        for pago in provisorios:
+            pago.delete()
+        return
+    if provisorios:
+        pago = provisorios[0]
+        if pago.monto != saldo:
+            pago.monto = saldo
+            pago.save(update_fields=['monto'])
+        return
+    PagoPedido.objects.create(pedido=pedido, monto=saldo, metodo_pago=pedido.metodo_pago,
+                              estado_pago='Pendiente')
+
+
+@transaction.atomic
+def registrar_cobro_por_verificar(pedido, monto, metodo_pago, referencia=''):
+    """Cobro que hizo el repartidor (efectivo, transferencia, QR): queda `Pendiente`
+    hasta que el administrador cuente el efectivo o vea la transferencia y lo apruebe.
+
+    Reemplaza al pago provisorio del pedido. No deja cobrar más de lo que falta,
+    contando lo ya declarado que espera aprobación.
+    """
+    from .models import PagoPedido, Pedido
+
+    pedido = Pedido.objects.select_for_update().get(pk=pedido.pk)
+    monto = _a_decimal(monto)
+    if monto is None or monto <= 0:
+        raise ValidationError('El monto debe ser mayor a cero.')
+    por_cobrar = pedido.saldo_por_cobrar()
+    if monto > por_cobrar:
+        raise ValidationError(f'El monto supera lo que falta cobrar del pedido (${por_cobrar}).')
+    for pago in pedido.pagos.filter(estado_pago='Pendiente'):
+        if pago.es_provisorio():
+            pago.delete()
+    return PagoPedido.objects.create(pedido=pedido, monto=monto, metodo_pago=metodo_pago,
+                                     estado_pago='Pendiente', referencia_comprobante=referencia or 'Cobro declarado')
+
+
 def ajustar_pagos_provisorios(pedido):
     """Achica los pagos `Pendiente` al saldo que queda; si ya no se debe nada, los quita.
 
@@ -119,6 +173,29 @@ def resolver_pago_pendiente(pedido, aprobar):
     if pedido.esta_pagado() and pedido.estado == 'Pendiente':
         pedido.estado = 'Confirmado'
         pedido.save(update_fields=['estado'])
+    return pago
+
+
+@transaction.atomic
+def corregir_pago_resuelto(pedido, nuevo_estado):
+    """Corrige el último pago aprobado o rechazado del pedido (error del administrador).
+
+    `nuevo_estado`: 'Pendiente' (vuelve a quedar por verificar) o 'Rechazado'
+    (no se recibió el dinero). Un rechazado sólo puede volver a 'Pendiente'.
+    Devuelve el pago corregido.
+    """
+    from .models import Pedido
+
+    if nuevo_estado not in ('Pendiente', 'Rechazado'):
+        raise ValidationError('Corrección de pago no válida.')
+    pedido = Pedido.objects.select_for_update().get(pk=pedido.pk)
+    pago = pedido.pago_corregible()
+    if pago is None:
+        raise ValidationError('El pedido no tiene un pago aprobado o rechazado para corregir.')
+    if pago.estado_pago == nuevo_estado:
+        raise ValidationError(f'El pago ya está {nuevo_estado.lower()}.')
+    pago.estado_pago = nuevo_estado
+    pago.save(update_fields=['estado_pago'])
     return pago
 
 
@@ -362,6 +439,7 @@ def generar_pedidos_automaticos(fecha=None):
                                          cantidad=restantes, subtotal=sus.producto.precio * restantes)
         pedido.total = sum(d.subtotal for d in pedido.detalles.all())
         pedido.save(update_fields=['total'])
+        sincronizar_pago_pendiente(pedido)
 
         while sus.proxima_fecha <= fecha:
             sus.proxima_fecha += timedelta(days=sus.periodicidad_dias)

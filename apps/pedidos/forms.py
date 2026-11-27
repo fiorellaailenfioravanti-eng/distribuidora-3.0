@@ -1,6 +1,7 @@
 from django import forms
+from django.core.validators import FileExtensionValidator
 from .models import CODIGO_CUENTA_CORRIENTE, MetodoPago, Pedido, SuscripcionReposicion
-from apps.clientes.models import DireccionEntrega
+from apps.clientes.models import DireccionEntrega, TelefonoContacto
 
 
 def _etiqueta_direccion_con_fecha(direccion):
@@ -13,20 +14,24 @@ def _etiqueta_direccion_con_fecha(direccion):
     return etiqueta
 
 
-# Métodos que no se ofrecen en el checkout web. La tarjeta se cobra por
-# MercadoPago o con posnet al entregar (decisión A-D1): el sistema no procesa
-# datos de tarjetas.
-CODIGOS_FUERA_DEL_CHECKOUT_WEB = ('TARJETA', 'CUENTA')
+# Métodos que se ofrecen en el checkout web: efectivo al recibir o
+# transferencia con comprobante. La tarjeta se cobra con posnet al entregar
+# (decisión A-D1: el sistema no procesa datos de tarjetas) y la cuenta
+# corriente, MercadoPago y billetera quedan para el personal.
+CODIGOS_CHECKOUT_WEB = ('EFECTIVO', 'TRANSFERENCIA')
+CODIGO_TRANSFERENCIA = 'TRANSFERENCIA'
+
+# Comprobante de transferencia: imagen o PDF, hasta 5 MB.
+EXTENSIONES_COMPROBANTE = ['jpg', 'jpeg', 'png', 'webp', 'pdf']
+TAMANO_MAXIMO_COMPROBANTE = 5 * 1024 * 1024
+
+# Nombre corto con el que se muestra cada método en el checkout.
+NOMBRES_CHECKOUT = {'TRANSFERENCIA': 'Transferencia'}
 
 
 def metodos_pago_checkout_web():
     """Métodos activos ofrecidos al cliente en la web."""
-    from django.conf import settings
-    excluidos = list(CODIGOS_FUERA_DEL_CHECKOUT_WEB)
-    if not getattr(settings, 'MERCADOPAGO_ACCESS_TOKEN', ''):
-        # Sin token el checkout online fallaría; no se ofrece (sin desactivarlo).
-        excluidos.append('MERCADOPAGO')
-    return MetodoPago.objects.filter(activo=True).exclude(codigo__in=excluidos)
+    return MetodoPago.objects.filter(activo=True, codigo__in=CODIGOS_CHECKOUT_WEB).order_by('id_metodo')
 
 
 class CheckoutForm(forms.Form):
@@ -36,6 +41,13 @@ class CheckoutForm(forms.Form):
         empty_label=None,
         required=True,
         label="Dirección de entrega"
+    )
+    telefonos_contacto = forms.ModelMultipleChoiceField(
+        queryset=TelefonoContacto.objects.none(),
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        required=True,
+        label='Teléfonos de contacto',
+        error_messages={'required': 'Marcá al menos un teléfono al que podamos llamarte.'},
     )
     metodo_pago = forms.ModelChoiceField(
         queryset=MetodoPago.objects.filter(activo=True),
@@ -54,14 +66,32 @@ class CheckoutForm(forms.Form):
         required=False,
         label="Indicaciones de entrega (opcional)"
     )
+    comprobante = forms.FileField(
+        required=False,
+        label='Comprobante de la transferencia',
+        validators=[FileExtensionValidator(EXTENSIONES_COMPROBANTE,
+                                           message='Subí una imagen (JPG, PNG o WEBP) o un PDF.')],
+        widget=forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*,.pdf'}),
+        help_text='Imagen o PDF, hasta 5 MB.',
+    )
 
     def __init__(self, *args, **kwargs):
         cliente = kwargs.pop('cliente', None)
         super().__init__(*args, **kwargs)
         self.fields['direccion_entrega'].label_from_instance = _etiqueta_direccion_con_fecha
         self.fields['metodo_pago'].queryset = metodos_pago_checkout_web()
+        self.fields['metodo_pago'].label_from_instance = lambda m: NOMBRES_CHECKOUT.get(m.codigo, m.nombre)
+        self.fields['telefonos_contacto'].label_from_instance = (
+            lambda t: f'{t.numero} — {t.desc_relacion}' if t.desc_relacion else t.numero)
         if cliente:
             self.fields['direccion_entrega'].queryset = cliente.direcciones.all()
+            # Teléfonos: por defecto los del último pedido que sigan vigentes; si no, el principal.
+            telefonos = cliente.telefonos.all()
+            self.fields['telefonos_contacto'].queryset = telefonos
+            if not self.is_bound and telefonos.exists():
+                ultimo = cliente.pedidos.first()
+                anteriores = list(ultimo.telefonos_contacto.filter(pk__in=telefonos)) if ultimo else []
+                self.fields['telefonos_contacto'].initial = [t.pk for t in anteriores] or [telefonos.first().pk]
             # Si tiene direcciones, seleccionar la principal por defecto
             direccion_principal = cliente.direcciones.filter(es_principal=True).first()
             if direccion_principal and not self.is_bound:
@@ -82,6 +112,22 @@ class CheckoutForm(forms.Form):
                     inicial = (efectivo or metodos_activos.first()).pk
                 self.fields['metodo_pago'].initial = inicial
 
+
+    def clean_comprobante(self):
+        archivo = self.cleaned_data.get('comprobante')
+        if archivo and archivo.size > TAMANO_MAXIMO_COMPROBANTE:
+            raise forms.ValidationError('El comprobante supera los 5 MB.')
+        return archivo
+
+    def clean(self):
+        datos = super().clean()
+        metodo = datos.get('metodo_pago')
+        if metodo and metodo.codigo == CODIGO_TRANSFERENCIA and not datos.get('comprobante'):
+            if 'comprobante' not in self.errors:
+                self.add_error('comprobante', 'Para pagar por transferencia tenés que subir el comprobante.')
+        elif metodo and metodo.codigo != CODIGO_TRANSFERENCIA:
+            datos['comprobante'] = None  # sólo se guarda con transferencia
+        return datos
 
 
 class RegistrarPagoForm(forms.Form):

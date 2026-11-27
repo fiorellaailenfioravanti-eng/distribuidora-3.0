@@ -1,0 +1,21 @@
+{% extends 'autenticacion/correos/_base.html' %}
+{% block resumen %}Recibimos tu pago en efectivo de {{ monto }} por el pedido #{{ pedido.pk }}.{% endblock %}
+{% block contenido %}
+<h1 style="margin:0 0 12px;font-size:22px;color:#13223F;">Comprobante de pago</h1>
+<p style="margin:0 0 20px;font-size:15px;line-height:22px;color:#55657F;">
+  Hola {{ cliente.nombre }}, registramos el pago en efectivo que le hiciste a nuestro repartidor.
+  Te adjuntamos el comprobante en PDF para que lo guardes.
+</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;line-height:22px;margin:0 0 20px;">
+  <tr><td style="color:#55657F;">Comprobante</td><td align="right" style="color:#13223F;font-weight:bold;">N° {{ numero }}</td></tr>
+  <tr><td style="color:#55657F;">Pedido</td><td align="right" style="color:#13223F;">#{{ pedido.pk }}</td></tr>
+  <tr><td style="color:#55657F;">Fecha</td><td align="right" style="color:#13223F;">{{ pago.fecha|date:"d/m/Y H:i" }}</td></tr>
+  <tr><td style="color:#55657F;">Monto pagado</td><td align="right" style="color:#5E8C17;font-weight:bold;font-size:18px;">{{ monto }}</td></tr>
+</table>
+<div style="padding:14px 16px;background:{% if debe %}#FFF4E0{% else %}#EEF5E3{% endif %};border-radius:10px;font-size:13px;line-height:19px;color:{% if debe %}#7A4B00{% else %}#3F5F10{% endif %};">
+  {% if debe %}Queda un saldo pendiente de <strong>{{ saldo }}</strong> en este pedido.{% else %}El pedido quedó totalmente pagado. ¡Gracias!{% endif %}
+</div>
+<p style="margin:20px 0 0;font-size:13px;line-height:19px;color:#55657F;">
+  El comprobante también queda guardado en «Mis pedidos». No es válido como factura.
+</p>
+{% endblock %}

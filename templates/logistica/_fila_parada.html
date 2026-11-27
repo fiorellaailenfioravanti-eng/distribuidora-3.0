@@ -2,7 +2,7 @@
 {% with d=f.parada %}
 <details class="parada-item card border-0 shadow-sm rounded-4 bg-surface mb-2 {% if abierta %}border-start border-4 border-primary{% endif %}"
          id="parada-{{ d.id_detalle }}" {% if abierta %}open{% endif %}
-         data-buscar="{{ d.cliente_nombre }} {{ d.direccion_texto }} {{ d.resumen_pedido }} {{ f.telefono.numero|default:'' }} {{ d.nota_entrega }}">
+         data-buscar="{{ d.cliente_nombre }} {{ d.direccion_texto }} {{ d.resumen_pedido }} {% for t in f.telefonos %}{{ t.telefono.numero }} {% endfor %}{{ d.nota_entrega }}">
     <summary class="parada-resumen p-3 d-flex align-items-center gap-2">
         {% if tipo == 'extra' %}<span class="badge bg-info bg-opacity-25 text-info rounded-pill">Extra</span>
         {% else %}<span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill">#{{ d.orden }}</span>{% endif %}
@@ -13,7 +13,7 @@
         <div class="text-end small text-nowrap">
             <div class="fw-semibold">{{ d.cantidad_bidones }} <i class="fa-solid fa-bottle-water text-primary"></i></div>
             {% if tipo == 'pendiente' %}
-                {% if f.pagado %}<span class="text-success">pagado</span>{% else %}<span class="fw-bold">${{ f.saldo|floatformat:0 }}</span>{% endif %}
+                {% if f.pagado %}<span class="text-success">pagado</span>{% elif not f.saldo and f.transferido %}<span class="text-success">transferido</span>{% elif not f.saldo %}<span class="text-success">cobrado</span>{% else %}<span class="fw-bold">${{ f.saldo|floatformat:0 }}</span>{% endif %}
             {% elif d.estado == 'Entregado' %}
                 <span class="text-success">{{ d.hora_registro|date:"H:i" }}</span>{% if f.saldo %} · <span class="text-warning">debe</span>{% endif %}
             {% else %}
@@ -27,12 +27,24 @@
         {% if abierta %}<div class="small fw-bold text-primary text-uppercase mb-2"><i class="fa-solid fa-location-arrow me-1"></i>Siguiente parada</div>{% endif %}
 
         {% if tipo == 'pendiente' %}
-        <div class="d-flex gap-2 mb-3">
-            <a href="{{ f.mapa }}" target="_blank" rel="noopener" class="btn btn-light border flex-fill rounded-pill fw-semibold"><i class="fa-solid fa-map-location-dot me-1 text-primary"></i> Cómo llegar</a>
-            {% if f.telefono %}
-            <a href="tel:{{ f.telefono.numero }}" class="btn btn-light border flex-fill rounded-pill fw-semibold"><i class="fa-solid fa-phone me-1 text-success"></i> Llamar</a>
-            {% endif %}
-        </div>
+        <a href="{{ f.mapa }}" target="_blank" rel="noopener" class="btn btn-light border w-100 rounded-pill fw-semibold mb-2"><i class="fa-solid fa-map-location-dot me-1 text-primary"></i> Cómo llegar</a>
+        {% if f.telefonos %}
+        {# Cada teléfono del cliente con su botón; primero los que eligió para este pedido. #}
+        <ul class="list-unstyled border rounded-3 mb-3">
+            {% for t in f.telefonos %}
+            <li class="d-flex align-items-center gap-2 px-3 py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                <div class="flex-grow-1 lh-sm">
+                    <div class="fw-semibold">{{ t.telefono.numero }}</div>
+                    <small class="text-muted">{{ t.telefono.desc_relacion|default:"Sin relación" }}{% if t.elegido %} · <span class="text-success">elegido para este pedido</span>{% endif %}</small>
+                </div>
+                <a href="tel:{{ t.telefono.numero }}" class="btn btn-sm btn-outline-success rounded-pill fw-semibold px-3 text-nowrap"
+                   aria-label="Llamar al {{ t.telefono.numero }}"><i class="fa-solid fa-phone me-1"></i> Llamar</a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="small text-muted mb-3"><i class="fa-solid fa-phone-slash me-1"></i>El cliente no tiene teléfonos cargados.</p>
+        {% endif %}
         {% endif %}
 
         {% if f.nota_seguridad and tipo == 'pendiente' %}
@@ -47,6 +59,10 @@
             </div>
             <div class="text-end">
                 {% if f.pagado %}<span class="badge bg-success rounded-pill">Pagado</span>
+                {% elif not f.saldo and f.transferido %}
+                <span class="badge bg-success rounded-pill">Transferencia enviada</span>
+                <div class="small text-muted mt-1">No hay que cobrar</div>
+                {% elif not f.saldo %}<span class="badge bg-success bg-opacity-75 rounded-pill">Cobrado</span><div class="small text-muted mt-1">Por aprobar</div>
                 {% else %}<div class="small text-muted">{% if tipo == 'pendiente' %}a cobrar{% else %}debe{% endif %}</div><div class="fs-5 fw-bold text-main">${{ f.saldo }}</div>{% endif %}
             </div>
         </div>
@@ -87,9 +103,19 @@
                         <input type="number" min="0" step="0.01" name="monto" class="form-control" placeholder="Monto" aria-label="Monto cobrado">
                     </div>
                     <div class="col-6 campo-metodo">
+                        {% with metodo_pedido=f.parada.pedido.metodo_pago %}
+                        {% if metodo_pedido.codigo == 'EFECTIVO' %}
+                        {# El cliente eligió pagar en efectivo: no se ofrece otro medio. #}
+                        <input type="hidden" name="metodo_pago" value="{{ metodo_pedido.pk }}">
+                        <div class="form-control bg-body-tertiary text-muted d-flex align-items-center" title="El cliente eligió pagar en efectivo">
+                            <i class="fa-solid fa-lock me-2 small"></i>{{ metodo_pedido.nombre }}
+                        </div>
+                        {% else %}
                         <select name="metodo_pago" class="form-select" aria-label="Medio de pago">
-                            {% for mp in metodos_cobro %}<option value="{{ mp.pk }}">{{ mp.nombre }}</option>{% endfor %}
+                            {% for mp in metodos_cobro %}<option value="{{ mp.pk }}" {% if mp.pk == metodo_pedido.pk %}selected{% endif %}>{{ mp.nombre }}</option>{% endfor %}
                         </select>
+                        {% endif %}
+                        {% endwith %}
                     </div>
                 </div>
                 {% endif %}
@@ -97,7 +123,8 @@
                     <summary class="text-muted">Más opciones</summary>
                     <div class="mt-2">
                         <label class="form-label small mb-1">Envases vendidos (el cliente se queda con el envase)</label>
-                        <input type="number" min="0" name="envases_vendidos" class="form-control form-control-sm mb-2" value="0" style="max-width: 8rem;">
+                        <input type="number" min="0" max="{{ d.cantidad_bidones }}" data-stock="{{ d.cantidad_bidones }}" data-stock-texto="botellones en esta parada"
+                               name="envases_vendidos" class="form-control form-control-sm mb-2" value="0" style="max-width: 8rem;">
                     </div>
                 </details>
                 <input maxlength="200" type="text" name="nota" class="form-control mb-2" placeholder="Nota (opcional)">

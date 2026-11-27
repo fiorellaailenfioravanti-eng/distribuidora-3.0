@@ -29,7 +29,7 @@
             <select name="direccion" id="sel-direccion" class="form-select mb-2" aria-label="Cliente">
                 <option value="">— Cliente nuevo —</option>
                 {% for d in direcciones %}
-                <option value="{{ d.pk }}" data-zona="{{ d.barrio.zona_id }}" data-fiado="{% if d.cliente.permite_fiado %}1{% endif %}">{{ d.cliente.nombre_completo }} — {{ d.calle }} {{ d.altura }} (B° {{ d.barrio.nombre }})</option>
+                <option value="{{ d.pk }}" data-zona="{{ d.barrio.zona_id }}" data-fiado="{% if d.cliente.permite_fiado %}1{% endif %}">{{ d.cliente.apellido_nombre }} — {{ d.calle }} {{ d.altura }} (B° {{ d.barrio.nombre }})</option>
                 {% endfor %}
             </select>
             <div id="cliente-nuevo" class="row g-2">
@@ -62,10 +62,11 @@
             {% endif %}
             {% for p in productos %}
             <div class="d-flex justify-content-between align-items-center gap-2 py-2 border-bottom">
-                <div><div class="fw-semibold">{{ p.nombre }}</div><small class="text-muted">${{ p.precio }}</small></div>
+                <div><div class="fw-semibold">{{ p.nombre }}</div><small class="text-muted">${{ p.precio }} · disponibles {{ p.maximo_venta }}</small></div>
                 <div class="input-group" style="width: 9.5rem;">
                     <button class="btn btn-outline-secondary" type="button" onclick="pasoCantidad(this,-1)">−</button>
-                    <input type="number" min="0" name="cantidad_producto_{{ p.pk }}" class="form-control text-center cantidad"
+                    <input type="number" min="0" max="{{ p.maximo_venta }}" data-stock="{{ p.maximo_venta }}" data-stock-texto="disponibles para vender"
+                           name="cantidad_producto_{{ p.pk }}" class="form-control text-center cantidad"
                            data-precio="{{ p.precio|stringformat:'s' }}" value="{% if p.pk == botellon_defecto.pk %}1{% else %}0{% endif %}" aria-label="Cantidad de {{ p.nombre }}">
                     <button class="btn btn-outline-secondary" type="button" onclick="pasoCantidad(this,1)">+</button>
                 </div>
@@ -108,7 +109,9 @@
 <script>
 function pasoCantidad(boton, paso) {
     const input = boton.parentElement.querySelector('input');
-    input.value = Math.max(0, (parseInt(input.value, 10) || 0) + paso);
+    const maximo = input.dataset.stock !== undefined ? parseInt(input.dataset.stock, 10) : Infinity;
+    input.value = Math.min(maximo, Math.max(0, (parseInt(input.value, 10) || 0) + paso));
+    if (window.validarStock && input.dataset.stock !== undefined) validarStock(input);
     actualizarTotal();
 }
 function actualizarTotal() {

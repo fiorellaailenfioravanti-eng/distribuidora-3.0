@@ -1,6 +1,7 @@
-﻿{% extends 'base_dashboard.html' %}
+{% extends 'base_dashboard.html' %}
+{% load static %}
 
-{% block title %}Editar â€” {{ cliente.nombre_completo }}{% endblock %}
+{% block title %}Editar — {{ cliente.nombre_completo }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid px-0">
@@ -21,8 +22,15 @@
                 <form method="post">
                     {% csrf_token %}
                     {% for field in form %}
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">{{ field.label }}</label>
+                    {% if field.name == 'es_institucion' %}
+                    <div class="form-check form-switch mb-3">
+                        {{ field }}
+                        <label class="form-check-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        <div class="form-text mt-0">Escuela, oficina, comercio: se carga con un solo nombre.</div>
+                    </div>
+                    {% else %}
+                    <div class="mb-3" {% if field.name == 'nombre' %}data-contenedor-campo{% endif %}>
+                        <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
                         {{ field }}
                         {% if field.help_text %}
                             <div class="form-text text-muted">{{ field.help_text }}</div>
@@ -31,7 +39,9 @@
                             <div class="text-danger small">{{ error }}</div>
                         {% endfor %}
                     </div>
+                    {% endif %}
                     {% endfor %}
+                    {% for error in form.non_field_errors %}<div class="alert alert-danger small py-2">{{ error }}</div>{% endfor %}
                     <div class="d-grid mt-4">
                         <button type="submit" class="btn btn-primary btn-glow rounded-pill fw-bold btn-lg">
                             <i class="fa-solid fa-floppy-disk me-2"></i>Guardar cambios
@@ -43,5 +53,6 @@
     </div>
 </div>
 </div>
+<script src="{% static 'js/institucion.js' %}?v=2"></script>
 {% endblock %}
 

@@ -1,0 +1,14 @@
+{% autoescape off %}Hola {{ cliente.nombre }}:
+
+Registramos el pago en efectivo que le hiciste a nuestro repartidor.
+
+Comprobante: N° {{ numero }}
+Pedido: #{{ pedido.pk }}
+Fecha: {{ pago.fecha|date:"d/m/Y H:i" }}
+Monto pagado: {{ monto }}
+{% if debe %}Saldo pendiente del pedido: {{ saldo }}{% else %}El pedido quedó totalmente pagado. ¡Gracias!{% endif %}
+
+Te adjuntamos el comprobante en PDF. También queda guardado en «Mis pedidos». No es válido como factura.
+
+Aguadelluvia · Distribuidora de agua
+{% endautoescape %}

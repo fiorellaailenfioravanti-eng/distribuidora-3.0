@@ -54,42 +54,41 @@
             <table class="table table-hover align-middle mb-0" data-ordenable>
                 <thead class="table-light text-muted small text-uppercase">
                     <tr>
-                        <th scope="col" class="ps-4 border-bottom-0 py-3 text-nowrap" data-ordenar="numero">#</th>
+                        <th scope="col" class="ps-3 border-bottom-0 py-3 text-nowrap" data-ordenar="numero">#</th>
                         <th scope="col" class="border-bottom-0 py-3 text-nowrap" data-ordenar="texto">Cliente</th>
                         <th scope="col" class="border-bottom-0 py-3 text-nowrap" data-ordenar="texto">Fecha</th>
-                        <th scope="col" class="border-bottom-0 py-3 text-nowrap" data-ordenar="texto">Dirección</th>
-                        <th scope="col" class="text-center border-bottom-0 py-3 text-nowrap" data-ordenar="texto">Método Pago</th>
                         <th scope="col" class="text-center border-bottom-0 py-3 text-nowrap" data-ordenar="numero">Total</th>
                         <th scope="col" class="text-center border-bottom-0 py-3 text-nowrap" data-ordenar="texto">Estado Pago</th>
                         <th scope="col" class="text-center border-bottom-0 py-3 text-nowrap" data-ordenar="texto">Estado Pedido</th>
-                        <th scope="col" class="text-end pe-4 border-bottom-0 py-3">Acciones</th>
+                        <th scope="col" class="text-end pe-3 border-bottom-0 py-3"><span class="visually-hidden">Acciones</span></th>
                     </tr>
                 </thead>
                 <tbody class="border-top-0">
                     {% for pedido in pedidos %}
                     <tr>
-                        <td class="ps-4 fw-bold text-muted" data-valor="{{ pedido.id_pedido|unlocalize }}">#{{ pedido.id_pedido }}</td>
+                        <td class="ps-3 fw-bold text-muted" data-valor="{{ pedido.id_pedido|unlocalize }}">#{{ pedido.id_pedido }}</td>
                         <td data-valor="{{ pedido.cliente.nombre_completo|default:'' }}">
                             {% if pedido.cliente %}
                             <a href="{% url 'apps.clientes:ver_cliente' pedido.cliente.pk %}" class="text-decoration-none text-main fw-bold d-block hover-lift">
                                 {{ pedido.cliente.nombre_completo }}
                             </a>
-                            <small class="text-muted">{{ pedido.cliente.email_display }}</small>
+                            <small class="text-muted d-block text-truncate" style="max-width: 210px;" title="{{ pedido.cliente.email_display }}">{{ pedido.cliente.email_display }}</small>
                             {% else %}
                             <span class="text-muted fst-italic">Sin cliente</span>
                             {% endif %}
-                        </td>
-                        <td data-valor="{{ pedido.fecha_pedido|date:'c' }}"><small class="text-muted">{{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</small></td>
-                        <td>
-                            <small class="text-muted d-block text-truncate" style="max-width: 180px;">
-                                {{ pedido.direccion_entrega.direccion_completa|default:"Sin dirección" }}
+                            {# La dirección va debajo del cliente para que entren las columnas de estado. #}
+                            {% with direccion=pedido.direccion_entrega.direccion_completa|default:"Sin dirección" %}
+                            <small class="text-muted d-block text-truncate" style="max-width: 210px;" title="{{ direccion }}">
+                                <i class="fa-solid fa-location-dot me-1 opacity-50"></i>{{ direccion }}
                             </small>
+                            {% endwith %}
                         </td>
-                        <td class="text-center">
-                            <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill">{{ pedido.metodo_pago.nombre }}</span>
+                        <td data-valor="{{ pedido.fecha_pedido|date:'c' }}"><small class="text-muted text-nowrap">{{ pedido.fecha_pedido|date:"d/m/Y" }}<br>{{ pedido.fecha_pedido|date:"H:i" }}</small></td>
+                        <td class="text-center" data-valor="{{ pedido.total|unlocalize }}">
+                            <span class="fw-bold text-success text-nowrap">${{ pedido.total }}</span>
+                            <small class="d-block text-muted lh-sm" style="max-width: 130px; margin: 0 auto;">{{ pedido.metodo_pago.nombre }}</small>
                         </td>
-                        <td class="text-center fw-bold text-success" data-valor="{{ pedido.total|unlocalize }}">${{ pedido.total }}</td>
-                        {% with cobro=pedido.estado_cobro por_verificar=pedido.pago_por_verificar %}
+                        {% with cobro=pedido.estado_cobro por_verificar=pedido.pago_por_verificar corregible=pedido.pago_corregible %}
                         <td class="text-center" data-valor="{{ cobro }}">
                             {% if por_verificar %}
                             {# Sólo se aprueba o rechaza el pago pendiente; los cobros se cargan en el detalle. #}
@@ -99,6 +98,19 @@
                                     <option value="" selected>{% if cobro == 'Parcial' %}Parcial{% else %}Pendiente{% endif %}</option>
                                     <option value="Aprobado">Aprobar ${{ por_verificar.monto }}</option>
                                     <option value="Rechazado">Rechazar</option>
+                                </select>
+                            </form>
+                            {% elif corregible %}
+                            {# Corrige el último pago aprobado o rechazado si el administrador se equivocó. #}
+                            <form action="{% url 'apps.pedidos:cambiar_estado_pago' pedido.id_pedido %}" method="post" class="d-inline"
+                                  data-confirmar="¿Corregir el pago de ${{ corregible.monto }} del pedido #{{ pedido.id_pedido }}?">
+                                {% csrf_token %}
+                                <select name="corregir" onchange="if (this.value) this.form.requestSubmit()" data-restablecer-al-cancelar
+                                        class="form-select form-select-sm border shadow-sm rounded-pill {% if cobro == 'Pagado' %}border-success text-success{% elif cobro == 'Rechazado' %}border-danger text-danger{% else %}border-warning text-warning{% endif %}"
+                                        title="Último pago: ${{ corregible.monto }} ({{ corregible.metodo_pago.nombre }}, {{ corregible.estado_pago|lower }})">
+                                    <option value="" selected>{{ cobro }}</option>
+                                    <option value="Pendiente">Volver a pendiente</option>
+                                    {% if corregible.estado_pago == 'Aprobado' %}<option value="Rechazado">Marcar rechazado</option>{% endif %}
                                 </select>
                             </form>
                             {% elif cobro == 'Pagado' %}
@@ -125,8 +137,8 @@
                                 {% endwith %}
                             </form>
                         </td>
-                        <td class="text-end pe-4">
-                            <a href="{% url 'apps.pedidos:detalle_pedido' pedido.id_pedido %}" class="btn btn-sm btn-light border-0 text-primary hover-lift rounded-pill px-3 shadow-sm">
+                        <td class="text-end pe-3">
+                            <a href="{% url 'apps.pedidos:detalle_pedido' pedido.id_pedido %}" class="btn btn-sm btn-light border-0 text-primary hover-lift rounded-pill px-2 shadow-sm text-nowrap">
                                 <i class="fas fa-eye me-1"></i> Ver
                             </a>
                         </td>

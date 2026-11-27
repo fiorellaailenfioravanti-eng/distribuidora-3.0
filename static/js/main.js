@@ -42,3 +42,23 @@ window.addEventListener('scroll', function() {
 //         }, 5000);
 //     });
 // });
+
+// Validación de stock en pantalla: los <input type="number" data-stock="N">
+// quedan inválidos si superan N, así el formulario no se envía (popups.js
+// muestra el mensaje). El servidor vuelve a validar igual.
+// `data-stock-texto` cambia la explicación del máximo (por defecto «en stock»).
+function validarStock(input) {
+    const maximo = parseInt(input.dataset.stock, 10);
+    const valor = parseInt(input.value, 10) || 0;
+    const texto = input.dataset.stockTexto || 'en stock';
+    const excede = !isNaN(maximo) && valor > maximo;
+    input.setCustomValidity(excede ? `No podés superar el máximo: hay ${Math.max(maximo, 0)} ${texto}.` : '');
+    input.classList.toggle('is-invalid', excede);
+    return !excede;
+}
+document.addEventListener('input', function (e) {
+    if (e.target.matches && e.target.matches('input[data-stock]')) validarStock(e.target);
+});
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('input[data-stock]').forEach(c => { if (c.value !== '') validarStock(c); });
+});

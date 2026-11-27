@@ -362,9 +362,17 @@ class DireccionEntrega(models.Model):
 
 **Tipos de alta:** sin cuenta web (presencial/telefónica) y con cuenta web (wizard de 2 pasos).
 
+**Institución o empresa** (`Cliente.es_institucion`): casilla en el alta sin cuenta, con cuenta y en la edición.
+Al marcarla (`static/js/institucion.js`) se oculta el nombre y queda sólo el apellido, rotulado «Nombre de la
+institución o empresa» y obligatorio; el nombre se guarda vacío.
+Al buscar/listar clientes (directorio, venta en la calle, agregar parada a una hoja) se muestran como
+«Apellido Nombre» (`Cliente.apellido_nombre()`); la búsqueda acepta los dos órdenes y ordenar por «Cliente»
+es por apellido.
+
 **Vistas:** `listar_clientes`, `crear_cliente[_sin_cuenta|_con_cuenta]`, `ver_cliente`,
 `editar_cliente`, `cambiar_tipo_cliente`, `agregar/eliminar_telefono`,
-`agregar/editar/eliminar_direccion`, `mi_perfil_cliente`.
+`agregar/editar/eliminar_direccion`, `mi_perfil_cliente`, `editar_mi_perfil` (el cliente cambia foto,
+correo —el de su cuenta, único entre usuarios— y teléfono principal, y su contraseña).
 
 **RNF-02 cerrado:** `desc_seguridad` solo se expone a superusuarios, vendedores y
 al **repartidor asignado** a la parada que incluye esa dirección. Los templates
@@ -388,8 +396,45 @@ de logística (`mi_ruta_hoy`, `ver_ruta`, `imprimir_ruta`) reciben la lista
 **Checkout & transaccionalidad:**
 - `confirmar_pedido` en `@transaction.atomic` valida stock; el stock se **descuenta al cargar
   el camión** (logística) y vuelve con el regreso.
-- El checkout web ofrece los métodos activos salvo `TARJETA` (decisión A-D1: el sistema no
-  procesa tarjetas) y `MERCADOPAGO` si no hay token. No modifica el catálogo de métodos.
+- El checkout pide confirmar, igual que la dirección, a qué **teléfonos de contacto** llamar
+  (uno o varios, por defecto los del último pedido o el principal). Se guardan en
+  `Pedido.telefonos_contacto` (M2M), se ven en el detalle del pedido y el botón «Llamar» del
+  repartidor usa el primero de ellos (si el pedido no tiene, el principal del cliente).
+- El checkout web ofrece sólo **Efectivo en entrega** y **Transferencia** (`CODIGOS_CHECKOUT_WEB`
+  en `pedidos/forms.py`; tarjeta, MercadoPago, billetera y cuenta corriente quedan para el
+  personal). No modifica el catálogo de métodos. Al elegir Transferencia se despliegan el CBU/CVU
+  y el alias (`settings.DATOS_TRANSFERENCIA`, ficticios por defecto; se reemplazan con las variables
+  `TRANSFERENCIA_*`) y es **obligatorio subir el comprobante** (imagen o PDF, hasta 5 MB). Se guarda
+  en `PagoPedido.comprobante` (nombre aleatorio en `media/comprobantes/`) con el pago `Pendiente` para
+  que el personal lo verifique; se ve desde el detalle del pedido vía `/pedidos/pago/<pk>/comprobante/`
+  (sólo el cliente dueño o quien tenga `ver_pedidos`). En la ficha del cliente (historial de pedidos) el
+  botón «Comprobante» abre el de cada pedido pagado por transferencia (`Pedido.pago_con_comprobante`).
+- **Cobros del repartidor por aprobar:** lo que cobra en la calle (efectivo, transferencia, QR) queda
+  `Pendiente` (`registrar_cobro_por_verificar`) aunque el pedido esté Entregado, hasta que el administrador
+  cuente el efectivo / vea la transferencia y lo apruebe desde la gestión de pedidos. Lo cargado a cuenta
+  corriente se asienta aprobado. `Pedido.saldo_por_cobrar()` descuenta lo declarado para no cobrar dos veces;
+  `PagoPedido.es_provisorio()` distingue el pago que sólo representa la deuda del cobro declarado, y
+  `pago_por_verificar()` prioriza el declarado. La rendición del día (`resumen_recorrido`) suma lo cobrado
+  aunque esté por aprobar.
+  En el recorrido, el monto «a cobrar» de cada parada es `saldo_por_cobrar()`: si el cliente ya transfirió y
+  subió el comprobante, la parada muestra «Transferencia enviada» y no ofrece opciones de cobro.
+  Cada parada pendiente lista todos los teléfonos del cliente con su botón «Llamar» (primero los que eligió
+  para el pedido, marcados «elegido para este pedido»).
+- **Corregir un pago ya resuelto:** en la gestión de pedidos, un pedido Pagado/Parcial/Rechazado ofrece
+  «Volver a pendiente» o «Marcar rechazado» sobre su último pago aprobado o rechazado
+  (`corregir_pago_resuelto`, `Pedido.pago_corregible`; permiso `cobrar_pedidos`, con confirmación). Lo
+  cargado a cuenta corriente no se corrige así (se ajusta en la cuenta del cliente).
+- **Recibo de cobro en efectivo** (`pedidos/recibos.py`): cuando el repartidor registra «Pagó todo» o
+  «Pagó una parte» en efectivo (o una venta en la calle cobrada en efectivo), `emitir_recibo_efectivo`
+  genera un PDF (armado a mano, sin dependencias) con el monto cobrado, el saldo y quién cobró; lo guarda
+  en `PagoPedido.comprobante` (queda en el detalle del pedido y en el historial de la ficha del cliente)
+  y, al confirmar la transacción, lo envía adjunto al correo del cliente (`enviar_correo(..., adjuntos=)`).
+- Los tests usan `distribuidora.test_runner.RunnerConMediaTemporal`: los archivos van a una carpeta
+  temporal, no a `media/`.
+- Todo pedido sin cobrar tiene un pago `Pendiente` por el saldo, venga del checkout o no:
+  `sincronizar_pago_pendiente` lo crea/ajusta para los que arma la empresa al planificar el reparto
+  o editar una parada (`_fijar_botellones`), los automáticos y las ventas en la calle sin cobrar.
+  Así en la gestión de pedidos todos se aprueban o rechazan igual. Al cobrar se reemplaza.
 - **`pedidos/services.py`** concentra los pagos: `pago_en_curso`, `registrar_cobro` (cobro
   presencial, usado por logística), `aplicar_pago_mercadopago` (aprueba sólo si el monto
   acreditado cubre lo esperado) y `firma_webhook_valida` (`x-signature`).
@@ -404,7 +449,7 @@ de logística (`mi_ruta_hoy`, `ver_ruta`, `imprimir_ruta`) reciben la lista
   checkout se achica al saldo y se quita cuando el pedido queda saldado (salvo los que tienen pago de MP).
 - `Pedido.cambiar_estado_manual()` / `estados_manuales_posibles()`: transiciones permitidas
   desde la gestión; `En Camino`/`Entregado` de pedidos en hoja de ruta los fija logística.
-- Panel de gestión para Vendedores (`/pedidos/gestion/`) e historial (`/pedidos/mis-pedidos/`).
+- Panel de gestión para Vendedores (`/pedidos/gestion/`) e historial (`/pedidos/mis-pedidos/`). En el historial, las ventas en la calle (origen `REPARTIDOR`) se le muestran al cliente aparte como «Compras esporádicas» (también en el título del detalle).
 - **Fase 6:** cobro manual con pagos parciales desde el detalle del pedido (`/pedidos/<pk>/registrar-pago/`,
   `registrar_pago_manual`); método `CUENTA` para dejar el importe en la cuenta corriente (sólo con fiado);
   caja de 30 días en el dashboard (`resumen_caja`). `stock_disponible` = stock − comprometido (RF-12).
@@ -567,6 +612,15 @@ class MovimientoCuenta(models.Model):
 - `registrar_movimiento_bidon(...)`: alta manual desde la ficha (`/clientes/<pk>/envases/movimiento/`);
   no deja el saldo negativo salvo en el registro de campo.
 
+**Bidones de promoción al planificar el reparto (RF-09):** «Planificar reparto» (`construir_borrador`) lista en
+«Bidones de promoción de la zona» a los clientes con saldo prepago de botellones vigente el día del reparto
+(`saldos_promocion_por_cliente`), cada uno con su casilla para tildar o destildar. Los que no van en la hoja se
+cargan con una parada cuyo pedido arma `_fijar_botellones(..., usar_saldo=True)` (consume el saldo, renglón a $0);
+su cantidad tiene tope en el saldo pendiente (`max` en pantalla y `solo_saldo` en `crear_hoja_borrador`). En los
+frecuentes, la casilla decide si su parada usa el saldo (`saldo_frecuente_<id>`); el botellón de la promoción viene
+elegido. Los que ya tienen su pedido web lo usaron en el checkout.
+Editar la cantidad de la parada recalcula con el saldo; quitarla cancela el pedido y devuelve el saldo (si no venció).
+
 ### Módulo `apps.promociones` ✅ — Fase 5B/5C (RF-09, RF-10)
 
 - **`Promocion`:** `nombre`, `producto`, `cant_paga`, `cant_lleva`, `precio` (del pack), `dias_validez` (30), `activa`.
@@ -580,6 +634,13 @@ class MovimientoCuenta(models.Model):
   `Confirmado` sin cobro. El checkout y «Mi perfil» muestran el saldo vigente.
 - Comando diario `python manage.py vencer_promociones`. Dashboard: alerta de packs que vencen en ≤ 5 días.
 - **Vistas:** `listar_promociones`, `crear/editar_promocion`, `vender_promocion` (desde la ficha del cliente).
+- **Compra desde el catálogo web:** las promociones activas tienen su propia categoría «Promociones» en el
+  catálogo (`?categoria=Promociones`, `CATEGORIA_PROMOCIONES`; no es una `Categoria` de productos) y se
+  muestran ahí como tarjetas (`listar_productos`). «Añadir promoción» suma un pack al carrito (`carrito.PromocionCarrito`,
+  `/carrito/promocion/<pk>/agregar|quitar/`). Al confirmar el pedido, `abrir_packs_de_pedido` abre el saldo
+  (una `CompraPromocion` por pack, ligada al pedido) y el precio de los packs se suma al total del pedido;
+  los bidones del mismo carrito que cubre el saldo van a $0 (`cobertura_del_carrito`, la usan el carrito y
+  el checkout). Si se cancela el pedido, `anular_packs_de_pedido` deja sin saldo esos packs.
 
 ---
 
@@ -607,6 +668,12 @@ class MovimientoCuenta(models.Model):
 - **RF-12 stock reservado**: `pedidos.services.con_stock_disponible(qs)` anota `reservado` (pedidos Pendientes/
   Confirmados) y `disponible` (= stock − reservado). La tienda muestra y ordena por `disponible`; el depósito
   (`Producto.stock`) sigue bajando al cargar el camión (decisión F-D3).
+- **Topes de stock en todo campo que lo mueve** (servidor + pantalla): `confirmar_hoja` no carga más que
+  `Producto.stock`; `registrar_regreso` exige entregado + vuelto ≤ cargado; `crear_venta_calle` no vende más
+  de lo que queda en el camión ni, si el producto no se cargó, más que el depósito; `registrar_entrega` no
+  vende más envases que `envases_vendibles(parada)`; la recarga de planta ya topeaba por vacíos. En pantalla,
+  los `<input data-stock="N">` quedan inválidos al pasar N (`static/js/main.js → validarStock`) y `popups.js`
+  muestra el aviso antes de enviar.
 - **Todas las eliminaciones son lógicas** con lista de eliminados y Restaurar: productos (`activo`), clientes,
   empleados, categorías (`Categoria.eliminada`, `Categoria.objects.vigentes()`) y zonas (`Zona.eliminada`,
   `Zona.objects.vigentes()`). Catálogo y buscador ordenan los agotados al final (`productos.views.agotados_al_final`).
@@ -782,6 +849,7 @@ Camion ← RutaReparto → Zona
 /pedidos/webhook/mercadopago/  → webhook_mercadopago
 /pedidos/<pk>/pago-qr/         → pago_qr               [🔒 Login]
 /pedidos/<pk>/confirmar-qr/    → confirmar_pago_qr     [🔒 Login]
+/pedidos/pago/<pk>/comprobante/ → ver_comprobante     [🔒 Dueño o ver_pedidos]
 /pedidos/mis-pedidos/          → mis_pedidos           [🔒 Login]
 /pedidos/gestion/              → listar_pedidos        [🔒 Admin/Vendedor]
 /pedidos/<pk>/                 → detalle_pedido        [🔒 Login]

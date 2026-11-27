@@ -143,9 +143,11 @@ def enmascarar_email(email):
 
 # ── Envío ───────────────────────────────────────────────────────────────
 
-def enviar_correo(destino, asunto, plantilla, contexto):
+def enviar_correo(destino, asunto, plantilla, contexto, adjuntos=()):
     """Envía `plantilla`.txt + `plantilla`.html con la cuenta de Configuración
-    (o la del servidor). Se renderiza acá y se envía en segundo plano."""
+    (o la del servidor). Se renderiza acá y se envía en segundo plano.
+
+    `adjuntos`: tuplas (nombre, contenido, tipo MIME), p. ej. el PDF de un recibo."""
     from apps.configuracion.models import conexion_y_remitente
 
     contexto = {'asunto': asunto, **contexto}
@@ -156,6 +158,8 @@ def enviar_correo(destino, asunto, plantilla, contexto):
         f'{asunto} · Aguadelluvia', texto, remitente or settings.DEFAULT_FROM_EMAIL, [destino],
         connection=conexion or get_connection())
     mensaje.attach_alternative(html, 'text/html')
+    for nombre, contenido, tipo in adjuntos:
+        mensaje.attach(nombre, contenido, tipo)
 
     def _enviar():
         try:

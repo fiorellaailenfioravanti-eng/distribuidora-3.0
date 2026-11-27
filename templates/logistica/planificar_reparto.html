@@ -5,7 +5,7 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="mb-0">🗓️ Planificar Reparto</h1>
+        <h1 class="mb-0">Planificar Reparto</h1>
         <small class="text-muted">Elegí un día y una zona para armar la hoja de ruta en borrador</small>
     </div>
     <a href="{% url 'apps.logistica:listar_rutas' %}" class="btn btn-outline-secondary btn-sm">
@@ -100,7 +100,8 @@
                         <div class="d-flex flex-wrap align-items-center gap-2 mt-2 ms-4">
                             <select name="producto_frecuente_{{ f.cliente.pk }}" class="form-select form-select-sm" style="max-width:15rem;" aria-label="Botellón">
                                 {% for p in productos_reparto %}
-                                <option value="{{ p.pk }}" {% if p.pk == botellon_defecto.pk %}selected{% endif %}>{{ p.nombre }}</option>
+                                {# Con saldo de promoción, por defecto el botellón de la promoción #}
+                                <option value="{{ p.pk }}" {% if f.saldos %}{% if p.pk == f.saldos.0.producto.pk %}selected{% endif %}{% elif p.pk == botellon_defecto.pk %}selected{% endif %}>{{ p.nombre }}</option>
                                 {% endfor %}
                             </select>
                             <div class="input-group input-group-sm" style="width:9rem;">
@@ -111,6 +112,13 @@
                             </div>
                             <small class="text-muted">botellones (habitual: {{ f.cantidad_sugerida }})</small>
                         </div>
+                        {% if f.saldos %}
+                        <div class="small text-success ms-4 mt-2">
+                            <i class="fa-solid fa-tags me-1"></i>Tiene bidones de promoción
+                            ({% for s in f.saldos %}{{ s.unidades }} × {{ s.producto.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}):
+                            se eligen en «Bidones de promoción de la zona».
+                        </div>
+                        {% endif %}
                     </div>
                     {% empty %}
                     <p class="text-muted mb-0">No hay clientes frecuentes en esta zona.</p>
@@ -147,6 +155,69 @@
         </div>
     </div>
 
+    {% if borrador.promociones %}
+    {# RF-09: clientes de la zona con bidones de promoción para retirar #}
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-body fw-semibold d-flex flex-wrap justify-content-between gap-1">
+            <span><i class="fa-solid fa-tags me-1 text-success"></i> Bidones de promoción de la zona <span class="badge bg-secondary ms-1">{{ borrador.promociones|length }}</span></span>
+            <small class="text-muted fw-normal">Tildá los que querés llevar: salen de su saldo prepago, sin cobrar</small>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+            {% for f in borrador.promociones %}
+            <div class="col-lg-6">
+                <div class="border rounded-3 p-2 h-100">
+                    <div class="d-flex align-items-start gap-2">
+                        {% if f.ya_en == 'pedido' %}
+                        {# Su pedido web ya usó el saldo al confirmarse. #}
+                        <i class="fa-solid fa-circle-check text-success mt-1" title="Su pedido ya usa el saldo"></i>
+                        {% elif f.ya_en == 'frecuente' %}
+                        {# Frecuente: la casilla decide si su parada usa el saldo de promoción. #}
+                        <input class="form-check-input mt-1" type="checkbox" checked
+                               name="saldo_frecuente_{{ f.cliente.pk }}" id="promo_{{ f.cliente.pk }}">
+                        {% else %}
+                        <input class="form-check-input mt-1" type="checkbox"
+                               name="frecuente_{{ f.cliente.pk }}" id="promo_{{ f.cliente.pk }}">
+                        {% endif %}
+                        <div class="flex-grow-1">
+                            <label class="form-label mb-0 fw-semibold" {% if f.ya_en != 'pedido' %}for="promo_{{ f.cliente.pk }}"{% endif %}>{{ f.cliente.nombre_completo }}</label>
+                            {% if f.ya_en == 'frecuente' %}<span class="badge bg-primary bg-opacity-25 text-primary ms-1">Cliente frecuente: usa el saldo en su parada</span>
+                            {% elif f.ya_en == 'pedido' %}<span class="badge bg-success bg-opacity-25 text-success ms-1">Ya va con su pedido</span>{% endif %}
+                            <div><small class="text-muted">{{ f.direccion.direccion_completa }}</small></div>
+                            <div class="small text-success">
+                                {% for s in f.saldos %}<i class="fa-solid fa-tags me-1"></i>Saldo: {{ s.unidades }} × {{ s.producto.nombre }} · vence el {{ s.vence|date:"d/m/Y" }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+                            </div>
+                            {% if not f.ya_en %}
+                            <input type="hidden" name="direccion_frecuente_{{ f.cliente.pk }}" value="{{ f.direccion.pk }}">
+                            <input type="hidden" name="saldo_frecuente_{{ f.cliente.pk }}" value="on">
+                            <input type="hidden" name="solo_saldo_frecuente_{{ f.cliente.pk }}" value="on">
+                            <input type="hidden" name="nota_frecuente_{{ f.cliente.pk }}" value="Retira bidones de su promoción prepaga: cargado al planificar el reparto.">
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if not f.ya_en %}
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-2 ms-4">
+                        <select name="producto_frecuente_{{ f.cliente.pk }}" class="form-select form-select-sm js-producto-promo" style="max-width:15rem;" aria-label="Botellón">
+                            {% for s in f.saldos %}<option value="{{ s.producto.pk }}" data-saldo="{{ s.unidades }}">{{ s.producto.nombre }}</option>{% endfor %}
+                        </select>
+                        <div class="input-group input-group-sm" style="width:9rem;">
+                            <button class="btn btn-outline-secondary" type="button" onclick="pasoCantidad(this,-1)">−</button>
+                            {# No puede superar el saldo pendiente del cliente. #}
+                            <input type="number" min="1" max="{{ f.cantidad_sugerida }}" class="form-control text-center" aria-label="Cantidad de botellones"
+                                   name="cantidad_frecuente_{{ f.cliente.pk }}" value="{{ f.cantidad_sugerida }}">
+                            <button class="btn btn-outline-secondary" type="button" onclick="pasoCantidad(this,1)">+</button>
+                        </div>
+                        <small class="text-muted">de {{ f.cantidad_sugerida }} pendientes</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="d-flex justify-content-end mt-4">
         <button type="submit" class="btn btn-success">
             <i class="fa-solid fa-file-circle-plus me-1"></i> Crear hoja de ruta (borrador)
@@ -156,8 +227,19 @@
 <script>
 function pasoCantidad(boton, paso) {
     const input = boton.parentElement.querySelector('input');
-    input.value = Math.max(1, (parseInt(input.value, 10) || 0) + paso);
+    const tope = parseInt(input.max, 10) || Infinity;  // bidones de promoción: hasta el saldo pendiente
+    input.value = Math.min(tope, Math.max(1, (parseInt(input.value, 10) || 0) + paso));
 }
+// Al cambiar el botellón de una promoción, el tope pasa a ser su saldo.
+document.querySelectorAll('.js-producto-promo').forEach(function (select) {
+    select.addEventListener('change', function () {
+        const saldo = parseInt(select.selectedOptions[0].dataset.saldo, 10);
+        const input = select.parentElement.querySelector('input[type=number]');
+        input.max = saldo;
+        if ((parseInt(input.value, 10) || 0) > saldo) input.value = saldo;
+        select.parentElement.querySelector('small').textContent = 'de ' + saldo + ' pendientes';
+    });
+});
 </script>
 {% elif fecha or zona %}
 <div class="alert alert-warning">Elegí una fecha y una zona válidas para ver la previsualización.</div>

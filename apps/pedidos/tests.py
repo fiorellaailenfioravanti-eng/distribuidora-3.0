@@ -212,6 +212,7 @@ class CheckoutRequiereTelefonosTests(TestCase):
         return self.client.post(reverse('apps.pedidos:confirmar_pedido'), {
             'direccion_entrega': self.direccion.pk,
             'metodo_pago': MetodoPago.objects.get(codigo='EFECTIVO').pk,
+            'telefonos_contacto': list(self.direccion.cliente.telefonos.values_list('pk', flat=True)),
         })
 
     def test_sin_telefono_no_compra(self):
@@ -389,7 +390,8 @@ class StockComprometidoTests(TestCase):
         for usuario, direccion in compradores:
             self.client.force_login(usuario)
             self.client.post(reverse('apps.pedidos:confirmar_pedido'),
-                             {'direccion_entrega': direccion.pk, 'metodo_pago': self.efectivo.pk})
+                             {'direccion_entrega': direccion.pk, 'metodo_pago': self.efectivo.pk,
+                              'telefonos_contacto': list(direccion.cliente.telefonos.values_list('pk', flat=True))})
         self.assertEqual(Pedido.objects.filter(origen='WEB').count(), 1)
 
 
@@ -491,6 +493,7 @@ class StockReservadoTests(TestCase):
         self.client.post(reverse('apps.pedidos:confirmar_pedido'), {
             'direccion_entrega': self.direccion.pk,
             'metodo_pago': MetodoPago.objects.get(codigo='EFECTIVO').pk,
+            'telefonos_contacto': list(self.direccion.cliente.telefonos.values_list('pk', flat=True)),
         })
         return Pedido.objects.get(cliente__usuario=self.usuario)
 
@@ -520,5 +523,264 @@ class StockReservadoTests(TestCase):
         self.client.force_login(otro)
         self.client.post(reverse('apps.pedidos:confirmar_pedido'), {
             'direccion_entrega': direccion.pk, 'metodo_pago': MetodoPago.objects.get(codigo='EFECTIVO').pk,
+            'telefonos_contacto': list(direccion.cliente.telefonos.values_list('pk', flat=True)),
         })
         self.assertFalse(Pedido.objects.filter(cliente__usuario=otro).exists())
+
+
+class MisPedidosComprasEsporadicasTests(TestCase):
+    """Las ventas en la calle se le muestran al cliente como «compras esporádicas»."""
+
+    def setUp(self):
+        self.usuario = get_user_model().objects.create_user('esporadico', 'e@x.com', 'Agua-Lluvia-2026')
+        self.cliente = self.usuario.perfil_cliente
+        efectivo = MetodoPago.objects.get(codigo='EFECTIVO')
+        self.web = Pedido.objects.create(cliente=self.cliente, metodo_pago=efectivo, origen='WEB', total=10)
+        self.calle = Pedido.objects.create(cliente=self.cliente, metodo_pago=efectivo, origen='REPARTIDOR',
+                                           estado='Entregado', total=20,
+                                           notas_cliente='Venta en la calle durante el reparto.')
+        self.client.force_login(self.usuario)
+
+    def test_listado_separa_compras_esporadicas(self):
+        respuesta = self.client.get(reverse('apps.pedidos:mis_pedidos'))
+        self.assertEqual(list(respuesta.context['pedidos']), [self.web])
+        self.assertEqual(list(respuesta.context['compras_esporadicas']), [self.calle])
+        self.assertContains(respuesta, 'Compras esporádicas')
+        self.assertNotContains(respuesta, 'en calle')
+
+    def test_detalle_se_titula_compra_esporadica(self):
+        respuesta = self.client.get(reverse('apps.pedidos:detalle_pedido', args=[self.calle.pk]))
+        self.assertContains(respuesta, 'Compra esporádica #')
+        self.assertNotContains(respuesta, 'Venta en la calle')
+
+
+import shutil
+import tempfile
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
+
+_MEDIA_PRUEBAS = tempfile.mkdtemp()
+
+
+@override_settings(MEDIA_ROOT=_MEDIA_PRUEBAS)
+class CheckoutTransferenciaTests(TestCase):
+    """Checkout web: sólo efectivo o transferencia, y la transferencia exige comprobante."""
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(_MEDIA_PRUEBAS, ignore_errors=True)
+
+    def setUp(self):
+        from apps.carrito.models import Carrito
+        from apps.clientes.models import DireccionEntrega, TelefonoContacto
+        from apps.productos.models import Producto
+        self.usuario = get_user_model().objects.create_user('transfiere', 't@x.com', 'Agua-Lluvia-2026')
+        self.cliente = self.usuario.perfil_cliente
+        self.direccion = DireccionEntrega.objects.create(cliente=self.cliente, calle='Mitre', altura='1')
+        TelefonoContacto.objects.create(cliente=self.cliente, numero='3624111111', desc_relacion='Titular')
+        producto = Producto.objects.create(nombre='Bidón', descripcion='', precio=Decimal('10'), stock=5)
+        Carrito.objects.create(usuario=self.usuario).items.create(producto=producto, cantidad=1)
+        self.client.force_login(self.usuario)
+        self.transferencia = MetodoPago.objects.get(codigo='TRANSFERENCIA')
+
+    def _confirmar(self, metodo, **extra):
+        return self.client.post(reverse('apps.pedidos:confirmar_pedido'), {
+            'direccion_entrega': self.direccion.pk, 'metodo_pago': metodo.pk,
+            'telefonos_contacto': list(self.direccion.cliente.telefonos.values_list('pk', flat=True)), **extra,
+        })
+
+    def test_checkout_ofrece_solo_efectivo_y_transferencia(self):
+        codigos = list(metodos_pago_checkout_web().values_list('codigo', flat=True))
+        self.assertEqual(sorted(codigos), ['EFECTIVO', 'TRANSFERENCIA'])
+        respuesta = self.client.get(reverse('apps.pedidos:checkout'))
+        self.assertContains(respuesta, 'Datos para transferir')
+        self.assertNotContains(respuesta, 'Billetera Digital')
+
+    def test_transferencia_sin_comprobante_no_crea_pedido(self):
+        self._confirmar(self.transferencia)
+        self.assertFalse(Pedido.objects.filter(cliente=self.cliente).exists())
+
+    def test_transferencia_rechaza_archivo_que_no_es_imagen_ni_pdf(self):
+        self._confirmar(self.transferencia, comprobante=SimpleUploadedFile('x.exe', b'MZ'))
+        self.assertFalse(Pedido.objects.filter(cliente=self.cliente).exists())
+
+    def test_transferencia_con_comprobante_queda_por_verificar(self):
+        pdf = SimpleUploadedFile('comprobante.pdf', b'%PDF-1.4 prueba', content_type='application/pdf')
+        self._confirmar(self.transferencia, comprobante=pdf)
+        pedido = Pedido.objects.get(cliente=self.cliente)
+        pago = pedido.pago_por_verificar()
+        self.assertTrue(pago.comprobante.name.startswith('comprobantes/'))
+        self.assertEqual(pago.metodo_pago, self.transferencia)
+        # El dueño lo puede ver; otro cliente no.
+        url = reverse('apps.pedidos:ver_comprobante', args=[pago.pk])
+        self.assertEqual(self.client.get(url).status_code, 200)
+        otro = get_user_model().objects.create_user('otro', 'o@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(otro)
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_efectivo_no_pide_comprobante(self):
+        self._confirmar(MetodoPago.objects.get(codigo='EFECTIVO'))
+        pago = Pedido.objects.get(cliente=self.cliente).pago_por_verificar()
+        self.assertFalse(pago.comprobante)
+
+    def test_ficha_del_cliente_muestra_el_comprobante_al_admin(self):
+        pdf = SimpleUploadedFile('comprobante.pdf', b'%PDF-1.4 prueba', content_type='application/pdf')
+        self._confirmar(self.transferencia, comprobante=pdf)
+        pago = Pedido.objects.get(cliente=self.cliente).pago_con_comprobante()
+        admin = get_user_model().objects.create_superuser('jefa', 'j@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(admin)
+        respuesta = self.client.get(reverse('apps.clientes:ver_cliente', args=[self.cliente.pk]))
+        url = reverse('apps.pedidos:ver_comprobante', args=[pago.pk])
+        self.assertContains(respuesta, url)
+        self.assertEqual(self.client.get(url).status_code, 200)
+
+
+class CheckoutTelefonosDeContactoTests(TestCase):
+    """El cliente confirma a qué teléfonos lo llaman, igual que la dirección."""
+
+    def setUp(self):
+        from apps.carrito.models import Carrito
+        from apps.clientes.models import DireccionEntrega, TelefonoContacto
+        from apps.productos.models import Producto
+        self.usuario = get_user_model().objects.create_user('llamame', 'l@x.com', 'Agua-Lluvia-2026')
+        self.cliente = self.usuario.perfil_cliente
+        self.direccion = DireccionEntrega.objects.create(cliente=self.cliente, calle='Mitre', altura='1')
+        self.titular = TelefonoContacto.objects.create(cliente=self.cliente, numero='3624111111',
+                                                       desc_relacion='Titular', es_principal=True)
+        self.vecino = TelefonoContacto.objects.create(cliente=self.cliente, numero='3624222222',
+                                                      desc_relacion='Vecino')
+        producto = Producto.objects.create(nombre='Bidón', descripcion='', precio=Decimal('10'), stock=5)
+        Carrito.objects.create(usuario=self.usuario).items.create(producto=producto, cantidad=1)
+        self.client.force_login(self.usuario)
+
+    def _confirmar(self, telefonos):
+        return self.client.post(reverse('apps.pedidos:confirmar_pedido'), {
+            'direccion_entrega': self.direccion.pk,
+            'metodo_pago': MetodoPago.objects.get(codigo='EFECTIVO').pk,
+            'telefonos_contacto': [t.pk for t in telefonos],
+        })
+
+    def test_checkout_lista_los_telefonos_con_el_principal_marcado(self):
+        respuesta = self.client.get(reverse('apps.pedidos:checkout'))
+        self.assertContains(respuesta, 'Teléfono de Contacto')
+        self.assertContains(respuesta, '3624222222 — Vecino')
+        self.assertEqual(respuesta.context['form']['telefonos_contacto'].value(), [self.titular.pk])
+
+    def test_sin_telefono_marcado_no_crea_pedido(self):
+        self._confirmar([])
+        self.assertFalse(Pedido.objects.filter(cliente=self.cliente).exists())
+
+    def test_guarda_los_telefonos_elegidos_y_los_muestra(self):
+        self._confirmar([self.titular, self.vecino])
+        pedido = Pedido.objects.get(cliente=self.cliente)
+        self.assertEqual(set(pedido.telefonos_contacto.all()), {self.titular, self.vecino})
+        respuesta = self.client.get(reverse('apps.pedidos:detalle_pedido', args=[pedido.pk]))
+        self.assertContains(respuesta, 'tel:3624222222')
+
+    def test_no_acepta_telefonos_de_otro_cliente(self):
+        from apps.clientes.models import TelefonoContacto
+        ajeno = TelefonoContacto.objects.create(cliente=get_user_model().objects.create_user(
+            'ajeno', 'a@x.com', 'Agua-Lluvia-2026').perfil_cliente, numero='3624999999', desc_relacion='Titular')
+        self._confirmar([ajeno])
+        self.assertFalse(Pedido.objects.filter(cliente=self.cliente).exists())
+
+    def test_el_repartidor_llama_al_telefono_elegido(self):
+        from apps.logistica.views import _ficha_de_parada
+        from apps.logistica.models import DetalleHojaRuta
+        self._confirmar([self.vecino])
+        pedido = Pedido.objects.get(cliente=self.cliente)
+        parada = DetalleHojaRuta(pedido=pedido, cliente=self.cliente, direccion_entrega=self.direccion,
+                                 direccion_texto='Mitre 1')
+        self.assertEqual(_ficha_de_parada(parada, self.usuario)['telefono'], self.vecino)
+
+
+class PagoPendienteEnPedidosDeLaEmpresaTests(TestCase):
+    """Los pedidos que no pasan por el checkout también quedan con su pago por verificar."""
+
+    def setUp(self):
+        from apps.productos.models import Producto
+        self.cliente = Cliente.objects.create(nombre='Ana', apellido='Paz')
+        self.efectivo = MetodoPago.objects.get(codigo='EFECTIVO')
+        self.producto = Producto.objects.create(nombre='Bidón 20 L', descripcion='', precio=Decimal('1000'),
+                                                stock=50, es_botellon=True)
+        self.pedido = Pedido.objects.create(cliente=self.cliente, metodo_pago=self.efectivo, origen='ADMIN',
+                                            estado='Confirmado', total=0)
+
+    def test_al_fijar_botellones_queda_con_pago_pendiente_por_el_total(self):
+        from apps.logistica.services import _fijar_botellones
+        _fijar_botellones(self.pedido, {self.producto.pk: 2})
+        pago = self.pedido.pago_por_verificar()
+        self.assertEqual(pago.monto, Decimal('2000'))
+        # Si cambian los botellones, el pago pendiente acompaña el total (no se duplica).
+        _fijar_botellones(self.pedido, {self.producto.pk: 3})
+        self.assertEqual(self.pedido.pagos.count(), 1)
+        self.assertEqual(self.pedido.pago_por_verificar().monto, Decimal('3000'))
+
+    def test_al_cobrarlo_desaparece_el_pendiente(self):
+        from apps.logistica.services import _fijar_botellones
+        from .services import registrar_cobro
+        _fijar_botellones(self.pedido, {self.producto.pk: 2})
+        registrar_cobro(self.pedido, Decimal('2000'), self.efectivo)
+        self.assertIsNone(self.pedido.pago_por_verificar())
+        self.assertTrue(self.pedido.esta_pagado())
+
+    def test_no_toca_un_pago_de_mercadopago_en_curso(self):
+        from .services import sincronizar_pago_pendiente
+        self.pedido.total = Decimal('500')
+        self.pedido.save()
+        PagoPedido.objects.create(pedido=self.pedido, monto=Decimal('500'), metodo_pago=self.efectivo,
+                                  estado_pago='Pendiente', mercadopago_payment_id='123')
+        sincronizar_pago_pendiente(self.pedido)
+        self.assertEqual(self.pedido.pagos.count(), 1)
+
+
+class CorregirPagoResueltoTests(TestCase):
+    """El administrador puede corregir un pago que aprobó o rechazó por error."""
+
+    def setUp(self):
+        self.efectivo = MetodoPago.objects.get(codigo='EFECTIVO')
+        self.cliente = Cliente.objects.create(nombre='Ana', apellido='Paz')
+        self.pedido = Pedido.objects.create(cliente=self.cliente, metodo_pago=self.efectivo, total=Decimal('2000'),
+                                            estado='Entregado')
+        self.pago = PagoPedido.objects.create(pedido=self.pedido, monto=Decimal('2000'), metodo_pago=self.efectivo,
+                                              estado_pago='Aprobado', referencia_comprobante='Cobro en calle — hoja #1')
+        self.admin = get_user_model().objects.create_superuser('jefa', 'j@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(self.admin)
+        self.url = reverse('apps.pedidos:cambiar_estado_pago', args=[self.pedido.pk])
+
+    def test_la_gestion_ofrece_corregir_un_pedido_pagado(self):
+        respuesta = self.client.get(reverse('apps.pedidos:listar_pedidos'))
+        self.assertContains(respuesta, 'Volver a pendiente')
+        self.assertContains(respuesta, 'Marcar rechazado')
+
+    def test_volver_a_pendiente(self):
+        self.client.post(self.url, {'corregir': 'Pendiente'})
+        self.pago.refresh_from_db()
+        self.assertEqual(self.pago.estado_pago, 'Pendiente')
+        self.assertFalse(self.pedido.esta_pagado())
+        self.assertEqual(self.pedido.pago_por_verificar(), self.pago)  # se puede volver a aprobar
+
+    def test_marcar_rechazado_y_volver_a_pendiente(self):
+        self.client.post(self.url, {'corregir': 'Rechazado'})
+        self.pago.refresh_from_db()
+        self.assertEqual(self.pago.estado_pago, 'Rechazado')
+        self.assertEqual(self.pedido.estado_cobro(), 'Rechazado')
+        self.client.post(self.url, {'corregir': 'Pendiente'})
+        self.pago.refresh_from_db()
+        self.assertEqual(self.pago.estado_pago, 'Pendiente')
+
+    def test_no_corrige_lo_cargado_a_cuenta_corriente(self):
+        self.pago.metodo_pago = MetodoPago.objects.get(codigo='CUENTA')
+        self.pago.save()
+        self.client.post(self.url, {'corregir': 'Pendiente'})
+        self.pago.refresh_from_db()
+        self.assertEqual(self.pago.estado_pago, 'Aprobado')
+
+    def test_requiere_permiso_de_cobro(self):
+        cliente_web = get_user_model().objects.create_user('cli', 'c@x.com', 'Agua-Lluvia-2026')
+        self.client.force_login(cliente_web)
+        self.client.post(self.url, {'corregir': 'Pendiente'})
+        self.pago.refresh_from_db()
+        self.assertEqual(self.pago.estado_pago, 'Aprobado')

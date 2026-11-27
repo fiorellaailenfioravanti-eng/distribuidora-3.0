@@ -1,5 +1,8 @@
+import os
+import uuid
+
 from django.db import models
-from apps.clientes.models import Cliente, DireccionEntrega
+from apps.clientes.models import Cliente, DireccionEntrega, TelefonoContacto
 from apps.productos.models import Producto
 from distribuidora.limites import LARGO_NOMBRE, LARGO_TEXTO, limite_largo
 
@@ -81,6 +84,13 @@ class Pedido(models.Model):
         related_name='pedidos',
         verbose_name='Dirección de entrega'
     )
+    telefonos_contacto = models.ManyToManyField(
+        TelefonoContacto,
+        blank=True,
+        related_name='pedidos',
+        verbose_name='Teléfonos de contacto',
+        help_text='Teléfonos a los que el cliente pidió que lo llamen por este pedido.'
+    )
     fecha_pedido       = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de pedido')
     fecha_actualizacion = models.DateTimeField(auto_now=True)
     estado             = models.CharField(
@@ -156,8 +166,9 @@ class Pedido(models.Model):
         self.save(update_fields=campos)
         if nuevo_estado == 'Cancelado':
             # RF-09: las unidades prepagas usadas vuelven al saldo (si no venció).
-            from apps.promociones.services import revertir_consumos
+            from apps.promociones.services import anular_packs_de_pedido, revertir_consumos
             revertir_consumos(self)
+            anular_packs_de_pedido(self)  # los packs comprados con este pedido no quedan con saldo
         return True
 
     def total_pagado(self):
@@ -173,12 +184,44 @@ class Pedido(models.Model):
         return self.total_pagado() >= self.total
 
     def pago_por_verificar(self):
-        """Último pago `Pendiente` (aviso de transferencia, QR o el del checkout), o None.
+        """Pago `Pendiente` que el administrador tiene que aprobar o rechazar, o None.
 
+        Primero los cobros declarados (lo que cobró el repartidor, una transferencia
+        con comprobante, un QR); si no hay, el provisorio que nace con el pedido.
         Recorre `pagos.all()` para aprovechar el `prefetch_related` de los listados.
         """
         pendientes = [p for p in self.pagos.all() if p.estado_pago == 'Pendiente']
-        return max(pendientes, key=lambda p: p.id_pago) if pendientes else None
+        declarados = [p for p in pendientes if not p.es_provisorio()]
+        candidatos = declarados or pendientes
+        return max(candidatos, key=lambda p: p.id_pago) if candidatos else None
+
+    def pago_corregible(self):
+        """Último pago ya resuelto (aprobado o rechazado) que el administrador puede
+        corregir si se equivocó. No incluye lo cargado a cuenta corriente: eso se
+        corrige con un movimiento en la cuenta del cliente."""
+        resueltos = [p for p in self.pagos.all() if p.estado_pago in ('Aprobado', 'Rechazado')
+                     and p.metodo_pago.codigo != CODIGO_CUENTA_CORRIENTE]
+        return max(resueltos, key=lambda p: p.id_pago) if resueltos else None
+
+    def saldo_por_cobrar(self):
+        """Lo que falta cobrar: el total menos lo aprobado y lo ya cobrado que espera
+        la aprobación del administrador (para no cobrarlo dos veces)."""
+        declarado = sum((p.monto for p in self.pagos.all()
+                         if p.estado_pago == 'Pendiente' and not p.es_provisorio()), 0)
+        return max(self.total - self.total_pagado() - declarado, 0)
+
+    def pagos_con_comprobante(self):
+        """Pagos con comprobante (transferencias subidas por el cliente y recibos de
+        efectivo emitidos por el repartidor), del más viejo al más nuevo."""
+        return sorted((p for p in self.pagos.all() if p.comprobante), key=lambda p: p.id_pago)
+
+    def pago_con_comprobante(self):
+        """Último pago con comprobante subido (transferencia), o None.
+
+        Usa `pagos.all()` para aprovechar el `prefetch_related` de los listados.
+        """
+        con_archivo = [p for p in self.pagos.all() if p.comprobante]
+        return max(con_archivo, key=lambda p: p.id_pago) if con_archivo else None
 
     def estado_cobro(self):
         """Resumen del cobro para los listados: Pagado, Parcial, Rechazado o Pendiente."""
@@ -217,6 +260,11 @@ class DetallePedido(models.Model):
         return f"{self.cantidad} x {self.producto.nombre} (${self.subtotal})"
 
 
+def ruta_comprobante(instancia, nombre):
+    """Nombre aleatorio para el comprobante: no se puede adivinar la URL de otro."""
+    return f'comprobantes/{uuid.uuid4().hex}{os.path.splitext(nombre)[1].lower()}'
+
+
 class PagoPedido(models.Model):
     id_pago                    = models.AutoField(primary_key=True)
     pedido                     = models.ForeignKey(
@@ -236,11 +284,21 @@ class PagoPedido(models.Model):
     mercadopago_status         = models.CharField(max_length=50, blank=True)
     tarjeta_ultimos_4          = models.CharField(max_length=4, blank=True, verbose_name='Últimos 4 dígitos tarjeta')
     tarjeta_titular            = models.CharField(max_length=100, blank=True, verbose_name='Titular de la tarjeta')
+    comprobante                = models.FileField(
+        upload_to=ruta_comprobante, blank=True, verbose_name='Comprobante de pago',
+        help_text='Imagen o PDF de la transferencia que sube el cliente.'
+    )
     estado_pago                = models.CharField(
         max_length=30,
         choices=ESTADOS_PAGO,
         default='Pendiente'
     )
+
+    def es_provisorio(self):
+        """Pago `Pendiente` que sólo representa lo que se debe (el que nace con el
+        pedido): no tiene referencia, comprobante ni datos de MercadoPago."""
+        return (self.estado_pago == 'Pendiente' and not self.referencia_comprobante and not self.comprobante
+                and not self.mercadopago_payment_id and not self.mercadopago_preference_id)
 
     class Meta:
         ordering = ['-fecha']

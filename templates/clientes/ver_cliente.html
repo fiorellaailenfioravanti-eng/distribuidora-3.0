@@ -580,7 +580,14 @@
                                     <span class="badge bg-info bg-opacity-25 text-info rounded-pill px-2 py-1">{{ ped.get_estado_display }}</span>
                                 </td>
                                 <td class="text-end fw-bold text-success">${{ ped.total }}</td>
-                                <td class="text-end pe-4">
+                                <td class="text-end pe-4 text-nowrap">
+                                    {% if 'ver_pedidos' in puede %}{% with comprobantes=ped.pagos_con_comprobante %}{% for pago in comprobantes %}
+                                    <a href="{% url 'apps.pedidos:ver_comprobante' pago.pk %}" target="_blank" rel="noopener"
+                                       class="btn btn-sm btn-light border-0 text-success hover-lift rounded-pill px-3 me-1"
+                                       title="{% if pago.metodo_pago.codigo == 'EFECTIVO' %}Recibo del cobro en efectivo{% else %}Comprobante de la transferencia{% endif %}: ${{ pago.monto }} ({{ pago.get_estado_pago_display }})">
+                                        <i class="fa-solid fa-file-invoice me-1"></i> Comprobante{% if comprobantes|length > 1 %} ${{ pago.monto|floatformat:0 }}{% endif %}
+                                    </a>
+                                    {% endfor %}{% endwith %}{% endif %}
                                     <a href="{% url 'apps.pedidos:detalle_pedido' ped.id_pedido %}" class="btn btn-sm btn-light border-0 text-primary hover-lift rounded-pill px-3">
                                         <i class="fa-solid fa-eye me-1"></i> Ver
                                     </a>

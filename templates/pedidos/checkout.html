@@ -13,7 +13,7 @@
         </a>
     </div>
 
-    <form action="{% url 'apps.pedidos:confirmar_pedido' %}" method="post">
+    <form action="{% url 'apps.pedidos:confirmar_pedido' %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="row g-4">
             <!-- Columna Izquierda: Dirección y Medio de Pago -->
@@ -71,11 +71,36 @@
                     </div>
                 </div>
 
-                <!-- 2. Método de Pago -->
+                <!-- 2. Teléfonos de contacto -->
                 <div class="card border-0 shadow-sm rounded-4 surface-card mb-4">
                     <div class="card-header bg-transparent border-bottom p-4">
                         <h4 class="fw-bold mb-0 text-body-emphasis">
-                            <span class="badge bg-primary rounded-circle me-2">2</span> Método de Pago
+                            <span class="badge bg-primary rounded-circle me-2">2</span> Teléfono de Contacto
+                        </h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <p class="small text-muted mb-3">Marcá a qué número o números te llamamos por este pedido.</p>
+                        <div class="d-flex flex-column gap-3 mb-3">
+                            {% for check in form.telefonos_contacto %}
+                            <div class="form-check p-3 border rounded-3 bg-dark-subtle hover-lift">
+                                {{ check.tag }}
+                                <label class="form-check-label w-100 ms-2" for="{{ check.id_for_label }}">
+                                    <i class="fa-solid fa-phone text-success me-2"></i>{{ check.choice_label }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <a href="{% url 'apps.clientes:mi_perfil' %}" class="btn btn-sm btn-outline-primary rounded-pill mt-2">
+                            <i class="fas fa-pen me-1"></i> Editar Teléfonos
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 3. Método de Pago -->
+                <div class="card border-0 shadow-sm rounded-4 surface-card mb-4">
+                    <div class="card-header bg-transparent border-bottom p-4">
+                        <h4 class="fw-bold mb-0 text-body-emphasis">
+                            <span class="badge bg-primary rounded-circle me-2">3</span> Método de Pago
                         </h4>
                     </div>
                     <div class="card-body p-4">
@@ -84,9 +109,9 @@
                             <div class="form-check p-3 border rounded-3 bg-dark-subtle hover-lift d-flex align-items-center">
                                 {{ radio.tag }}
                                 <label class="form-check-label w-100 ms-2 fw-semibold" for="{{ radio.id_for_label }}">
-                                    {% if 'MercadoPago' in radio.choice_label or 'QR' in radio.choice_label %}
-                                        <i class="fa-solid fa-bolt text-info me-2 fs-5"></i>{{ radio.choice_label }}
-                                        <span class="badge bg-info bg-opacity-25 text-info ms-2 fs-6">Pago Online Directo</span>
+                                    {% if radio.choice_label == 'Transferencia' %}
+                                        <i class="fa-solid fa-building-columns text-primary me-2 fs-5"></i>{{ radio.choice_label }}
+                                        <span class="badge bg-primary bg-opacity-25 text-primary ms-2 fs-6">Pago anticipado</span>
                                     {% else %}
                                         <i class="fa-solid fa-money-bill-wave text-success me-2 fs-5"></i>{{ radio.choice_label }}
                                         <span class="badge bg-success bg-opacity-25 text-success ms-2 fs-6">Pago al Recibir</span>
@@ -95,14 +120,41 @@
                             </div>
                             {% endfor %}
                         </div>
+
+                        {# Se despliega al elegir Transferencia: datos de la cuenta y comprobante obligatorio. #}
+                        <div id="panel-transferencia" class="mt-3 p-4 border rounded-3 bg-primary bg-opacity-10" hidden>
+                            <h5 class="fw-bold text-body-emphasis mb-2">Datos para transferir</h5>
+                            <p class="small text-muted mb-3">Transferí el total del pedido a esta cuenta y subí el comprobante para confirmarlo.</p>
+                            <dl class="row small mb-3">
+                                <dt class="col-sm-4 text-muted">Titular</dt><dd class="col-sm-8 mb-1">{{ datos_transferencia.titular }}</dd>
+                                <dt class="col-sm-4 text-muted">CUIT</dt><dd class="col-sm-8 mb-1">{{ datos_transferencia.cuit }}</dd>
+                                <dt class="col-sm-4 text-muted">Entidad</dt><dd class="col-sm-8 mb-1">{{ datos_transferencia.entidad }}</dd>
+                                <dt class="col-sm-4 text-muted">CBU / CVU</dt>
+                                <dd class="col-sm-8 mb-1">
+                                    <span class="fw-bold font-monospace">{{ datos_transferencia.cbu }}</span>
+                                    <button type="button" class="btn btn-sm btn-link p-0 ms-2 js-copiar" data-texto="{{ datos_transferencia.cbu }}">Copiar</button>
+                                </dd>
+                                <dt class="col-sm-4 text-muted">Alias</dt>
+                                <dd class="col-sm-8 mb-1">
+                                    <span class="fw-bold font-monospace">{{ datos_transferencia.alias }}</span>
+                                    <button type="button" class="btn btn-sm btn-link p-0 ms-2 js-copiar" data-texto="{{ datos_transferencia.alias }}">Copiar</button>
+                                </dd>
+                                <dt class="col-sm-4 text-muted">Monto</dt><dd class="col-sm-8 mb-1 fw-bold text-success">${{ total_precio }}</dd>
+                            </dl>
+                            <label for="{{ form.comprobante.id_for_label }}" class="form-label fw-semibold small mb-1">
+                                {{ form.comprobante.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.comprobante }}
+                            <div class="form-text">{{ form.comprobante.help_text }}</div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 3. Indicaciones para la Entrega -->
+                <!-- 4. Indicaciones para la Entrega -->
                 <div class="card border-0 shadow-sm rounded-4 surface-card mb-4">
                     <div class="card-header bg-transparent border-bottom p-4">
                         <h4 class="fw-bold mb-0 text-body-emphasis">
-                            <span class="badge bg-primary rounded-circle me-2">3</span> Indicaciones Adicionales
+                            <span class="badge bg-primary rounded-circle me-2">4</span> Indicaciones Adicionales
                         </h4>
                     </div>
                     <div class="card-body p-4">
@@ -131,6 +183,15 @@
                                 <span class="fw-bold text-success">${{ item.subtotal }}</span>
                             </li>
                             {% endfor %}
+                            {% for p in promociones_carrito %}
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0 border-secondary border-opacity-25">
+                                <div>
+                                    <span class="fw-bold text-body-emphasis d-block"><i class="fa-solid fa-tags text-success me-1"></i>{{ p.promocion.nombre }}</span>
+                                    <small class="text-muted">{{ p.cantidad }} pack{{ p.cantidad|pluralize }} · {{ p.unidades }} unidades de saldo</small>
+                                </div>
+                                <span class="fw-bold text-success">${{ p.subtotal }}</span>
+                            </li>
+                            {% endfor %}
                         </ul>
 
                         {% if cobertura_promocion %}
@@ -157,5 +218,42 @@
     </form>
 </div>
 
+<script>
+    // Transferencia: muestra los datos de la cuenta y vuelve obligatorio el comprobante.
+    (function () {
+        var panel = document.getElementById('panel-transferencia');
+        var archivo = document.getElementById('{{ form.comprobante.id_for_label }}');
+        var radios = document.querySelectorAll('input[name="metodo_pago"]');
+        var transferencia = {{ id_transferencia|default:"null" }};
+        function actualizar() {
+            var elegido = document.querySelector('input[name="metodo_pago"]:checked');
+            var esTransferencia = elegido && Number(elegido.value) === transferencia;
+            panel.hidden = !esTransferencia;
+            archivo.required = esTransferencia;
+        }
+        radios.forEach(function (r) { r.addEventListener('change', actualizar); });
+        actualizar();
+        document.querySelectorAll('.js-copiar').forEach(function (boton) {
+            boton.addEventListener('click', function () {
+                navigator.clipboard.writeText(boton.dataset.texto).then(function () {
+                    boton.textContent = 'Copiado';
+                    setTimeout(function () { boton.textContent = 'Copiar'; }, 1500);
+                });
+            });
+        });
+    })();
+
+    // Teléfonos: hay que marcar al menos uno antes de confirmar.
+    (function () {
+        var checks = document.querySelectorAll('input[name="telefonos_contacto"]');
+        if (!checks.length) return;
+        function validar() {
+            var alguno = Array.prototype.some.call(checks, function (c) { return c.checked; });
+            checks[0].setCustomValidity(alguno ? '' : 'Marcá al menos un teléfono al que podamos llamarte.');
+        }
+        checks.forEach(function (c) { c.addEventListener('change', validar); });
+        validar();
+    })();
+</script>
 {% endblock %}
 

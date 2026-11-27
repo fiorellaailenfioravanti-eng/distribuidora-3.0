@@ -35,6 +35,7 @@ from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
+from django.utils.text import slugify
 
 from apps.clientes.models import Cliente, DireccionEntrega, MovimientoBidon, TelefonoContacto
 from apps.clientes.services import registrar_movimiento_bidon
@@ -52,12 +53,17 @@ from apps.logistica.services import (
     registrar_entrega, registrar_regreso,
 )
 from apps.pedidos.models import DetallePedido, MetodoPago, PagoPedido, Pedido
-from apps.pedidos.services import registrar_cobro
+from apps.pedidos.services import registrar_cobro, sincronizar_pago_pendiente
 from apps.productos.models import Categoria, Producto
 from apps.promociones.models import CompraPromocion, Promocion
 from apps.promociones.services import consumir_saldo, vencer_promociones, vender_promocion
 
 CLAVE_DEMO = 'Demo-Aguadelluvia-2026'
+
+
+def correo_demo(nombre, apellido):
+    """Correo ficticio de un cliente de demo: «hugo.fernandez@correo.demo»."""
+    return f"{slugify(f'{nombre} {apellido}').replace('-', '.')}@correo.demo"
 MARCA_HISTORIAL = '[demo]'
 
 CATEGORIAS = {
@@ -111,7 +117,7 @@ PERSONAL = [
     ('recargador.demo', 'Tomás', 'Benítez', '40125896', '3624778899', 'Recargador', None),
 ]
 
-# usuario web (o None), nombre, apellido, dni, tipo, frecuente, bidones habituales,
+# usuario web (o None), nombre ('' = institución o empresa), apellido, dni, tipo, frecuente, bidones habituales,
 # zona, barrio, calle, altura, piso, nota de seguridad, coordenadas, teléfonos [(número, relación)]
 CLIENTES = [
     ('marta.gimenez', 'Marta', 'Giménez', '27111001', 'Premium', True, 2, 'Centro', 'VILLA SAN MARTIN',
@@ -129,7 +135,7 @@ CLIENTES = [
     (None, 'Silvia', 'Duarte', '23111005', 'Normal', True, 2, 'Oeste', 'VILLA PROGRESO',
      'Av. Alvear', '3150', '', 'Casa con rejas verdes; avisar por WhatsApp al llegar.', '-27.4602,-59.0105',
      [('3624400501', 'Titular'), ('3624400502', 'Vecina (deja llave)')]),
-    (None, 'Oficina', 'Estudio Contable Ríos', '30711006', 'Premium', True, 4, 'Centro', 'VILLA DEL PARQUE',
+    (None, '', 'Oficina Estudio Contable Ríos', '30711006', 'Premium', True, 4, 'Centro', 'VILLA DEL PARQUE',
      'Güemes', '190', 'Piso 2 Of. 4', 'Subir por escalera; ascensor fuera de servicio los sábados.', '-27.4530,-58.9841',
      [('3624400601', 'Recepción'), ('3624400602', 'Administración')]),
     (None, 'Ramiro', 'Ojeda', '28111007', 'Normal', False, 0, 'Norte', 'VILLA LUISA',
@@ -141,7 +147,7 @@ CLIENTES = [
     (None, 'Diego', 'Cabrera', '32111009', 'Normal', True, 1, 'Oeste', 'SAN CAYETANO',
      'Calle 15', '742', '', '', '-27.4655,-59.0220',
      [('3624400901', 'Titular'), ('3624400902', 'Trabajo')]),
-    (None, 'Gimnasio', 'Fuerza Chaco', '30711010', 'Premium', True, 6, 'Norte', 'VILLA ALTA',
+    (None, '', 'Gimnasio Fuerza Chaco', '30711010', 'Premium', True, 6, 'Norte', 'VILLA ALTA',
      'Av. Castelli', '980', '', 'Entregar en recepción, horario 7 a 22.', '-27.4401,-58.9799',
      [('3624401001', 'Recepción'), ('3624401002', 'Dueño')]),
     (None, 'Norma', 'Aguirre', '14111011', 'Normal', False, 0, 'Sur', 'PROVINCIAS UNIDAS',
@@ -150,7 +156,7 @@ CLIENTES = [
     (None, 'Pablo', 'Villalba', '35111012', 'Normal', True, 2, 'Centro', 'VILLA SAN MARTIN',
      'Mitre', '1012', 'PB', '', '-27.4499,-58.9881',
      [('3624401201', 'Titular'), ('3624401202', 'Hermano')]),
-    (None, 'Escuela', 'N° 1234 Sarmiento', '30711013', 'Premium', True, 8, 'Oeste', 'VILLA DON ENRIQUE',
+    (None, '', 'Escuela N° 1234 Sarmiento', '30711013', 'Premium', True, 8, 'Oeste', 'VILLA DON ENRIQUE',
      'Av. Wilde', '2600', '', 'Ingreso por portería; firmar remito con dirección.', '-27.4588,-59.0181',
      [('3624401301', 'Dirección'), ('3624401302', 'Portería')]),
     (None, 'Andrea', 'Quiroga', '31111014', 'Normal', False, 0, 'Norte', 'VILLA GHIO',
@@ -327,6 +333,7 @@ class Command(BaseCommand):
                 else:
                     cliente = Cliente(nombre=nombre, apellido=apellido)
                 cliente.nombre, cliente.apellido, cliente.dni = nombre, apellido, dni
+                cliente.es_institucion = not nombre  # sin nombre: institución o empresa (sólo apellido)
                 cliente.tipo_cliente = tipo
                 cliente.es_frecuente = frecuente
                 cliente.cantidad_recurrente_default = habituales
@@ -339,6 +346,14 @@ class Command(BaseCommand):
                     cliente=cliente, calle=calle, altura=altura, piso_depto=piso,
                     barrio=self.barrios[barrio], ciudad='Resistencia', desc_seguridad=nota,
                     coordenadas=coords, es_principal=True)
+            # Correo ficticio para los que no tienen cuenta web (también completa
+            # los que se crearon antes, sin correo, al volver a correr el comando).
+            if not nombre and not cliente.es_institucion:  # bases cargadas antes de la casilla
+                cliente.nombre, cliente.apellido, cliente.es_institucion = '', apellido, True
+                cliente.save(update_fields=['nombre', 'apellido', 'es_institucion'])
+            if not cliente.email_display():
+                cliente.email_contacto = correo_demo(nombre, apellido)
+                cliente.save(update_fields=['email_contacto'])
             self.clientes.append(cliente)
         # Segundo domicilio (RF-03): el estudio contable también recibe en la casa del titular.
         estudio = self.clientes[5]
@@ -368,6 +383,10 @@ class Command(BaseCommand):
             DetallePedido.objects.create(pedido=pedido, producto=producto, precio_unitario=producto.precio,
                                          cantidad=cantidad, subtotal=producto.precio * cantidad)
         Pedido.objects.filter(pk=pedido.pk).update(fecha_pedido=_a_dt(fecha_pedido, 10, 30))
+        if metodo != 'MERCADOPAGO':
+            # Como cualquier pedido real: nace con su pago `Pendiente` por el total
+            # (al cobrarlo, `registrar_cobro` lo reemplaza). El de MercadoPago se crea aparte.
+            sincronizar_pago_pendiente(pedido)
         return pedido
 
     def _items_habituales(self, cliente):
@@ -408,7 +427,7 @@ class Command(BaseCommand):
                         registrar_entrega(parada, 'Cancelado', nota='No había nadie en el domicilio.')
                         continue
                     retirados = max(parada.cantidad_bidones - (1 if i % 5 == 0 else 0), 0)
-                    vendidos = 1 if (fecha.day + i) % 13 == 0 else 0
+                    vendidos = min(1, parada.cantidad_bidones) if (fecha.day + i) % 13 == 0 else 0
                     registrar_entrega(parada, 'Entregado', envases_retirados=retirados,
                                       envases_vendidos=vendidos)
                     if pedido.metodo_pago.codigo == 'MERCADOPAGO':

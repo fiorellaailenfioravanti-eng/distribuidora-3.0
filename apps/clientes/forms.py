@@ -14,6 +14,19 @@ _INPUT    = 'form-control'
 _SELECT   = 'form-select'
 _CHECK    = 'form-check-input'
 
+ETIQUETA_INSTITUCION = 'Nombre de la institución o empresa'
+ERROR_INSTITUCION = 'Ingresá el nombre de la institución o empresa.'
+
+
+def _casilla_institucion(campo_nombre, campo_apellido):
+    """Casilla «Institución o empresa»: con `institucion.js`, al marcarla oculta el
+    nombre y deja sólo el apellido, rotulado como nombre de la institución."""
+    return forms.CheckboxInput(attrs={
+        'class': _CHECK, 'data-institucion': '',
+        'data-nombre': f'id_{campo_nombre}', 'data-apellido': f'id_{campo_apellido}',
+        'data-etiqueta': ETIQUETA_INSTITUCION,
+    })
+
 
 class _ValidarDatosPersonalesMixin:
     """DNI con formato válido y único, y fecha de nacimiento no futura."""
@@ -44,7 +57,10 @@ class AltaClienteConCuentaForm(_ValidarDatosPersonalesMixin, RegistroUsuarioForm
     Formulario para alta de cliente con cuenta web, integrando datos
     del Usuario (credenciales) y del Cliente (personales).
     """
-    first_name = forms.CharField(label='Nombre', max_length=64, required=True, widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Nombre'}))
+    es_institucion = forms.BooleanField(label='Institución o empresa', required=False,
+                                        widget=_casilla_institucion('first_name', 'last_name'))
+    # Obligatorio salvo para una institución (ver `clean`).
+    first_name = forms.CharField(label='Nombre', max_length=64, required=False, widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Nombre'}))
     last_name  = forms.CharField(label='Apellido', max_length=64, required=True, widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Apellido'}))
     dni        = forms.CharField(label='DNI', max_length=15, required=False, widget=forms.TextInput(attrs={'class': _INPUT, 'placeholder': 'Ej: 30123456'}))
     fecha_nacimiento = forms.DateField(label='Fecha de nacimiento', required=False, widget=forms.DateInput(attrs={'type': 'date', 'class': _INPUT}))
@@ -58,6 +74,14 @@ class AltaClienteConCuentaForm(_ValidarDatosPersonalesMixin, RegistroUsuarioForm
         fields = ('first_name', 'last_name', 'username', 'email', 'password1', 'password2')
         # password1/2 vienen de UserCreationForm, username/email etc.
 
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get('es_institucion'):
+            cleaned['first_name'] = ''  # una institución tiene un solo nombre (el apellido)
+        elif not (cleaned.get('first_name') or '').strip():
+            self.add_error('first_name', 'Este campo es obligatorio.')
+        return cleaned
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.first_name = self.cleaned_data['first_name']
@@ -66,6 +90,7 @@ class AltaClienteConCuentaForm(_ValidarDatosPersonalesMixin, RegistroUsuarioForm
             user.save() # Se dispara la señal post_save que crea el Cliente
 
             cliente = user.perfil_cliente
+            cliente.es_institucion = bool(self.cleaned_data.get('es_institucion'))
             cliente.dni = self.cleaned_data.get('dni')
             cliente.fecha_nacimiento = self.cleaned_data.get('fecha_nacimiento')
             cliente.tipo_cliente = self.cleaned_data.get('tipo_cliente')
@@ -78,9 +103,10 @@ class ClienteForm(_ValidarDatosPersonalesMixin, forms.ModelForm):
     """Alta/edición de los datos de negocio del cliente (también el alta sin cuenta web)."""
     class Meta:
         model  = Cliente
-        fields = ['nombre', 'apellido', 'email_contacto', 'dni',
+        fields = ['es_institucion', 'nombre', 'apellido', 'email_contacto', 'dni',
                   'fecha_nacimiento', 'tipo_cliente', 'notas_internas']
         widgets = {
+            'es_institucion': _casilla_institucion('nombre', 'apellido'),
             'nombre': forms.TextInput(attrs={
                 'class': _INPUT,
                 'placeholder': 'Nombre'
@@ -111,7 +137,11 @@ class ClienteForm(_ValidarDatosPersonalesMixin, forms.ModelForm):
 
     def clean(self):
         cleaned = super().clean()
-        if not (cleaned.get('nombre') or '').strip() and not (cleaned.get('apellido') or '').strip():
+        if cleaned.get('es_institucion'):
+            cleaned['nombre'] = ''  # una institución tiene un solo nombre (el apellido)
+            if not (cleaned.get('apellido') or '').strip():
+                self.add_error('apellido', ERROR_INSTITUCION)
+        elif not (cleaned.get('nombre') or '').strip() and not (cleaned.get('apellido') or '').strip():
             raise forms.ValidationError('Ingresá al menos el nombre o el apellido del cliente.')
         return cleaned
 
@@ -249,7 +279,13 @@ class BuscarClienteForm(forms.Form):
 
 
 class EditarMiPerfilForm(forms.Form):
-    """Formulario para que un cliente edite su foto y su teléfono principal."""
+    """Formulario para que un cliente edite su foto, su correo y su teléfono principal."""
+    email = forms.EmailField(
+        label='Correo electrónico',
+        max_length=254,
+        widget=forms.EmailInput(attrs={'class': _INPUT, 'placeholder': 'Ej: nombre@correo.com',
+                                       'autocomplete': 'email'})
+    )
     celular = forms.CharField(
         label='Número de teléfono',
         max_length=20,
@@ -267,9 +303,20 @@ class EditarMiPerfilForm(forms.Form):
         widget=forms.CheckboxInput(attrs={'class': _CHECK})
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, usuario=None, **kwargs):
+        self.usuario = usuario
         super().__init__(*args, **kwargs)
         aplicar_attrs(self, 'celular', ATTRS_TELEFONO)
+
+    def clean_email(self):
+        from django.contrib.auth import get_user_model
+        email = (self.cleaned_data.get('email') or '').strip()
+        otros = get_user_model().objects.filter(email__iexact=email)
+        if self.usuario is not None:
+            otros = otros.exclude(pk=self.usuario.pk)
+        if otros.exists():
+            raise forms.ValidationError('Ya existe otra cuenta con ese correo.')
+        return email
 
     def clean_celular(self):
         return validar_telefono(self.cleaned_data.get('celular'))

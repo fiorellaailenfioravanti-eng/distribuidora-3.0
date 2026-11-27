@@ -145,10 +145,26 @@ class ActualizarEstadoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # El repartidor no puede volver a "Pendiente" una vez que actúa
         self.fields['estado'].choices = [
-            ('Entregado',    'Entregado ✅'),
-            ('Cancelado',    'Cancelado ❌'),
-            ('Reprogramado', 'Reprogramado 🔄'),
+            ('Entregado',    'Entregado'),
+            ('Cancelado',    'Cancelado'),
+            ('Reprogramado', 'Reprogramado'),
         ]
+        # Sólo se vende el envase de un botellón que lleva la parada.
+        if self.instance.pk:
+            from .services import envases_vendibles
+            bidones = envases_vendibles(self.instance)
+            self.fields['envases_vendidos'].widget.attrs.update({
+                'max': bidones, 'data-stock': bidones, 'data-stock-texto': 'botellones en esta parada'})
+
+    def clean_envases_vendidos(self):
+        vendidos = self.cleaned_data.get('envases_vendidos') or 0
+        if self.instance.pk:
+            from .services import envases_vendibles
+            bidones = envases_vendibles(self.instance)
+            if vendidos > bidones:
+                raise forms.ValidationError(
+                    f'No se pueden vender {vendidos} envases: la parada lleva {bidones} botellones.')
+        return vendidos
 
 
 class ZonaForm(forms.ModelForm):

@@ -11,6 +11,7 @@ from .models import (
     Zona, CalendarioExcepcion, Camion, HojaRuta, DetalleHojaRuta, Barrio,
     CargaHojaRuta,
 )
+from apps.pedidos.services import resolver_pago_pendiente
 from .services import (
     fecha_es_de_reparto, proxima_fecha_de_reparto,
     construir_borrador, crear_hoja_borrador,
@@ -19,7 +20,7 @@ from .services import (
     fecha_estimada_para_direccion, carga_sugerida,
 )
 from apps.clientes.models import Cliente, DireccionEntrega
-from apps.pedidos.models import Pedido, DetallePedido, MetodoPago
+from apps.pedidos.models import Pedido, DetallePedido, MetodoPago, PagoPedido
 from apps.productos.models import Producto
 
 
@@ -317,6 +318,40 @@ class ConfirmacionRegresoTests(TestCase):
         self.assertEqual(carga.cantidad_retornada, 1)
         self.assertEqual(self.producto.stock, 7)
 
+    def test_no_se_carga_mas_que_el_stock_del_deposito(self):
+        with self.assertRaisesMessage(ValueError, 'No alcanza el stock'):
+            confirmar_hoja(self.hoja, self.usuario, [
+                {'producto_id': self.producto.id_producto, 'cantidad': 11},
+            ])
+        self.hoja.refresh_from_db()
+        self.producto.refresh_from_db()
+        self.assertEqual(self.hoja.estado, 'Borrador')
+        self.assertEqual(self.producto.stock, 10)
+        self.assertFalse(self.hoja.cargas.exists())
+
+    def test_vista_confirmar_rechaza_carga_sin_stock_y_conserva_lo_tipeado(self):
+        self.client.force_login(self.usuario)
+        resp = self.client.post(reverse('apps.logistica:confirmar_ruta', args=[self.hoja.pk]),
+                                {f'cantidad_producto_{self.producto.pk}': 15})
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'No alcanza el stock')
+        self.hoja.refresh_from_db()
+        self.assertEqual(self.hoja.estado, 'Borrador')
+
+    def test_regreso_no_puede_superar_lo_cargado(self):
+        confirmar_hoja(self.hoja, self.usuario, [
+            {'producto_id': self.producto.id_producto, 'cantidad': 4},
+        ])
+        carga = self.hoja.cargas.get()
+        with self.assertRaisesMessage(ValueError, 'se cargaron 4'):
+            registrar_regreso(self.hoja, [
+                {'carga_id': carga.id_carga, 'cantidad_entregada': 3, 'cantidad_retornada': 2},
+            ])
+        self.hoja.refresh_from_db()
+        self.producto.refresh_from_db()
+        self.assertEqual(self.hoja.estado, 'Confirmada')
+        self.assertEqual(self.producto.stock, 6)
+
 
 class EntregaCalleTests(TestCase):
     def setUp(self):
@@ -360,6 +395,15 @@ class EntregaCalleTests(TestCase):
         self.assertEqual(self.pedido.estado, 'Entregado')
         self.assertEqual(self.envase.stock, 6)
 
+    def test_no_se_venden_mas_envases_que_botellones_entregados(self):
+        from django.core.exceptions import ValidationError
+        with self.assertRaises(ValidationError):
+            registrar_entrega(self.parada, 'Entregado', envases_retirados=0, envases_vendidos=3)
+        self.envase.refresh_from_db()
+        self.parada.refresh_from_db()
+        self.assertEqual(self.envase.stock, 5)
+        self.assertEqual(self.parada.estado, 'Pendiente')
+
     def test_registrar_entrega_dos_veces_no_duplica_envases(self):
         """H-28: volver a guardar la parada aplica sólo la diferencia."""
         registrar_entrega(self.parada, 'Entregado', envases_retirados=2, envases_vendidos=1)
@@ -389,6 +433,10 @@ class EntregaCalleTests(TestCase):
         self.assertEqual(parada.estado, 'Entregado')
         self.assertEqual(parada.pedido.origen, 'REPARTIDOR')
         self.assertEqual(parada.pedido.total, 200)
+        # Lo cobrado queda por aprobar hasta que el administrador cuente el efectivo.
+        self.assertFalse(parada.pedido.esta_pagado())
+        self.assertEqual(parada.pedido.pago_por_verificar().monto, 200)
+        resolver_pago_pendiente(parada.pedido, aprobar=True)
         self.assertTrue(parada.pedido.esta_pagado())
         self.assertTrue(parada.cliente.es_frecuente)
         self.assertEqual(parada.cliente.tipo_registro, 'pasajero')
@@ -474,6 +522,21 @@ class SeedDemoTests(TestCase):
         self.assertEqual(Cliente.objects.count(), clientes)
         self.assertEqual(Cliente.objects.filter(dni__isnull=True).count(), 0)  # el personal no es cliente
         self.assertTrue(all(c.cantidad_telefonos() >= 2 for c in Cliente.objects.all()))
+        self.assertTrue(all(c.email_display() for c in Cliente.objects.all()))  # todos con correo
+        self.assertTrue(Cliente.objects.filter(email_contacto='hugo.fernandez@correo.demo').exists())
+        # Las instituciones de demo se cargan con un solo nombre.
+        escuela = Cliente.objects.get(dni='30711013')
+        self.assertTrue(escuela.es_institucion)
+        self.assertEqual(escuela.apellido_nombre(), 'Escuela N° 1234 Sarmiento')
+        self.assertEqual(Cliente.objects.filter(es_institucion=True).count(), 3)
+        # Como en el checkout, todo pedido sin cobrar (web o armado por la empresa)
+        # tiene un pago por verificar.
+        sin_cobrar = [p for p in Pedido.objects.exclude(estado__in=['Entregado', 'Cancelado'])
+                      if p.saldo_pendiente() > 0]
+        self.assertTrue(any(p.origen == 'ADMIN' for p in sin_cobrar))
+        self.assertTrue(all(p.pago_por_verificar() for p in sin_cobrar))
+        # Y los entregados no quedan con un pago pendiente colgado.
+        self.assertFalse(any(p.pago_por_verificar() for p in Pedido.objects.filter(estado='Entregado')))
         self.assertFalse(any(p.estado == 'Entregado' and not p.esta_pagado() for p in Pedido.objects.all()))
 
 
@@ -637,19 +700,27 @@ class RecorridoRepartidorTests(TestCase):
                                     'metodo_pago': efectivo.pk})
         self.parada.refresh_from_db()
         self.assertEqual(self.parada.estado, 'Entregado')
-        self.assertTrue(self.parada.pedido.esta_pagado())
+        # Queda pendiente hasta que el administrador cuente el efectivo.
+        pedido = self.parada.pedido
+        self.assertFalse(pedido.esta_pagado())
+        self.assertEqual(pedido.pago_por_verificar().monto, Decimal('6000'))
+        self.assertEqual(pedido.saldo_por_cobrar(), 0)
         self.cliente.refresh_from_db()
         self.assertEqual(self.cliente.bidones_prestados, 0)  # +2 prestados, −2 retirados
         from .services import resumen_recorrido
-        self.assertEqual(resumen_recorrido(self.hoja)['efectivo'], Decimal('6000'))
+        self.assertEqual(resumen_recorrido(self.hoja)['efectivo'], Decimal('6000'))  # para rendir
+        resolver_pago_pendiente(pedido, aprobar=True)
+        self.assertTrue(pedido.esta_pagado())
 
     def test_pago_parcial_y_a_cuenta(self):
         efectivo = MetodoPago.objects.get(codigo='EFECTIVO')
         self.client.post(self.url, {'resultado': 'entregado', 'envases_retirados': 0, 'cobro': 'parcial',
                                     'monto': '2000', 'metodo_pago': efectivo.pk})
         pedido = self.parada.pedido
-        self.assertEqual(pedido.saldo_pendiente(), Decimal('4000'))
+        self.assertEqual(pedido.saldo_por_cobrar(), Decimal('4000'))
         self.client.post(self.url, {'resultado': 'entregado', 'envases_retirados': 0, 'cobro': 'cuenta'})
+        self.assertEqual(pedido.saldo_pendiente(), Decimal('2000'))   # los 2000 en efectivo, por aprobar
+        resolver_pago_pendiente(pedido, aprobar=True)
         self.assertTrue(pedido.esta_pagado())
         self.assertEqual(self.cliente.cuenta_corriente.saldo, Decimal('4000'))
 
@@ -748,6 +819,8 @@ class PedidoEspontaneoTests(TestCase):
         self._vender(nombre='Kiosco Pepe', calle='Belgrano', altura='300', barrio=self.barrio.pk, envases_retirados=1)
         parada = self.hoja.detalles.get(orden=2)
         self.assertEqual((parada.estado, parada.pedido.origen, parada.cantidad_bidones), ('Entregado', 'REPARTIDOR', 2))
+        self.assertEqual(parada.pedido.saldo_por_cobrar(), 0)       # cobrada, por aprobar
+        resolver_pago_pendiente(parada.pedido, aprobar=True)
         self.assertTrue(parada.pedido.esta_pagado())
         self.assertEqual(parada.cliente.bidones_prestados, 1)  # 2 prestados − 1 retirado
 
@@ -836,6 +909,17 @@ class InventarioCamionTests(TestCase):
                                       'productos': [{'producto_id': self.bidon.pk, 'cantidad': 4}]})
         c = inventario_camion(self.hoja)
         self.assertEqual((c['en_camion'], c['pendientes'], c['libres'], c['faltan']), (1, 2, -1, 1))
+
+    def test_venta_de_producto_no_cargado_respeta_el_stock_del_deposito(self):
+        from apps.productos.models import Producto
+        otro = Producto.objects.create(nombre='Bidón 12 L', descripcion='', precio=Decimal('2000'), stock=2,
+                                       es_botellon=True, es_retornable=True, envase=self.envase)
+        with self.assertRaisesMessage(ValueError, 'Hay 2 Bidón 12 L en stock'):
+            crear_venta_calle(self.hoja, {'nombre': 'Kiosco', 'calle': 'Belgrano', 'altura': '1',
+                                          'barrio_id': Barrio.objects.first().pk,
+                                          'productos': [{'producto_id': otro.pk, 'cantidad': 3}]})
+        otro.refresh_from_db()
+        self.assertEqual(otro.stock, 2)
 
     def test_no_se_vende_mas_de_lo_que_hay_en_el_camion(self):
         with self.assertRaises(ValueError):
@@ -932,3 +1016,311 @@ class BajaLogicaCamionTests(TestCase):
         self.assertNotIn('AB123CD', [c.pk for c in HojaRutaForm().fields['camion'].queryset])
         self.client.post(reverse('apps.logistica:restaurar_camion', args=['AB123CD']))
         self.assertTrue(Camion.objects.get(pk='AB123CD').activo)
+
+
+import shutil as _shutil
+import tempfile as _tempfile
+
+from django.core import mail
+from django.test import override_settings
+
+_MEDIA_RECIBOS = _tempfile.mkdtemp()
+
+
+@override_settings(MEDIA_ROOT=_MEDIA_RECIBOS, EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+class ReciboCobroEfectivoTests(TestCase):
+    """Al cobrar en efectivo en la calle se emite un recibo PDF, se guarda y se manda por correo."""
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        _shutil.rmtree(_MEDIA_RECIBOS, ignore_errors=True)
+
+    def setUp(self):
+        RecorridoRepartidorTests.setUp(self)
+        self.cliente.email_contacto = 'ana@correo.demo'
+        self.cliente.save()
+        self.efectivo = MetodoPago.objects.get(codigo='EFECTIVO')
+
+    def _cobrar(self, **datos):
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(self.url, {'resultado': 'entregado', 'envases_retirados': 0,
+                                        'metodo_pago': self.efectivo.pk, **datos})
+        return self.parada.pedido
+
+    def test_pago_total_genera_recibo_y_lo_manda_por_correo(self):
+        pedido = self._cobrar(cobro='total')
+        pago = pedido.pago_por_verificar()
+        self.assertTrue(pago.comprobante.name.startswith('comprobantes/'))
+        contenido = pago.comprobante.open('rb').read()
+        self.assertTrue(contenido.startswith(b'%PDF-1.4'))
+        self.assertIn(b'6.000,00', contenido)        # monto pagado
+        self.assertIn(b'Ram\xf3n Acosta', contenido)   # quién cobró (WinAnsi)
+        self.assertEqual(len(mail.outbox), 1)
+        correo = mail.outbox[0]
+        self.assertEqual(correo.to, ['ana@correo.demo'])
+        self.assertIn('Comprobante de pago', correo.subject)
+        nombre, adjunto, tipo = correo.attachments[0]
+        self.assertEqual(tipo, 'application/pdf')
+        self.assertEqual(adjunto, contenido)
+
+    def test_pago_parcial_recibo_con_el_monto_cobrado_y_saldo(self):
+        pedido = self._cobrar(cobro='parcial', monto='2000')
+        pago = pedido.pago_por_verificar()
+        contenido = pago.comprobante.open('rb').read()
+        self.assertIn(b'2.000,00', contenido)
+        self.assertIn(b'4.000,00', contenido)        # saldo pendiente
+        self.assertIn('$4.000,00', mail.outbox[0].body)
+
+    def test_queda_en_el_historial_del_cliente(self):
+        from django.contrib.auth import get_user_model
+        pedido = self._cobrar(cobro='total')
+        pago = pedido.pago_por_verificar()
+        self.client.force_login(get_user_model().objects.create_superuser('jefa', 'j@x.com', 'Agua-Lluvia-2026'))
+        respuesta = self.client.get(reverse('apps.clientes:ver_cliente', args=[self.cliente.pk]))
+        self.assertContains(respuesta, reverse('apps.pedidos:ver_comprobante', args=[pago.pk]))
+
+    def test_sin_cobro_o_a_cuenta_no_hay_recibo(self):
+        pedido = self._cobrar(cobro='ninguno')
+        self.assertFalse(any(p.comprobante for p in pedido.pagos.all()))
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_cliente_sin_correo_igual_guarda_el_recibo(self):
+        self.cliente.email_contacto = ''
+        self.cliente.save()
+        pedido = self._cobrar(cobro='total')
+        self.assertTrue(pedido.pago_por_verificar().comprobante)
+        self.assertEqual(len(mail.outbox), 0)
+
+
+class CobroSoloEfectivoTests(TestCase):
+    """Si el pedido es en efectivo, el repartidor no puede cobrarlo con otro medio."""
+
+    def setUp(self):
+        RecorridoRepartidorTests.setUp(self)
+
+    def test_el_formulario_no_ofrece_otros_medios(self):
+        respuesta = self.client.get(reverse('apps.logistica:mi_ruta_hoy'))
+        self.assertContains(respuesta, 'El cliente eligió pagar en efectivo')
+        self.assertNotContains(respuesta, 'Billetera Digital')
+
+    def test_aunque_llegue_otro_medio_se_cobra_en_efectivo(self):
+        billetera = MetodoPago.objects.get(codigo='BILLETERA')
+        self.client.post(self.url, {'resultado': 'entregado', 'envases_retirados': 0, 'cobro': 'total',
+                                    'metodo_pago': billetera.pk})
+        pago = self.parada.pedido.pago_por_verificar()
+        self.assertEqual(pago.metodo_pago.codigo, 'EFECTIVO')
+
+    def test_pedido_por_transferencia_sigue_mostrando_los_medios(self):
+        pedido = self.parada.pedido
+        pedido.metodo_pago = MetodoPago.objects.get(codigo='TRANSFERENCIA')
+        pedido.save()
+        respuesta = self.client.get(reverse('apps.logistica:mi_ruta_hoy'))
+        self.assertContains(respuesta, 'Billetera Digital')
+
+
+class CobroPorAprobarTests(TestCase):
+    """Lo que cobra el repartidor queda pendiente hasta que el administrador lo aprueba."""
+
+    def setUp(self):
+        RecorridoRepartidorTests.setUp(self)
+        self.efectivo = MetodoPago.objects.get(codigo='EFECTIVO')
+
+    def _entregar(self, **datos):
+        self.client.post(self.url, {'resultado': 'entregado', 'envases_retirados': 0,
+                                    'metodo_pago': self.efectivo.pk, **datos})
+        return self.parada.pedido
+
+    def test_corregir_la_parada_no_cobra_dos_veces(self):
+        pedido = self._entregar(cobro='total')
+        self._entregar(cobro='total')
+        self.assertEqual(pedido.pagos.filter(estado_pago='Pendiente').count(), 1)
+        self.assertEqual(pedido.saldo_por_cobrar(), 0)
+
+    def test_en_la_gestion_el_entregado_se_ve_pendiente_para_aprobar(self):
+        from django.contrib.auth import get_user_model
+        pedido = self._entregar(cobro='total')
+        self.client.force_login(get_user_model().objects.create_superuser('jefa', 'j@x.com', 'Agua-Lluvia-2026'))
+        respuesta = self.client.get(reverse('apps.pedidos:listar_pedidos') + '?estado=Entregado')
+        self.assertContains(respuesta, f'action="{reverse("apps.pedidos:cambiar_estado_pago", args=[pedido.pk])}"')
+
+    def test_si_el_administrador_lo_rechaza_vuelve_a_deberse(self):
+        pedido = self._entregar(cobro='total')
+        resolver_pago_pendiente(pedido, aprobar=False)
+        self.assertFalse(pedido.esta_pagado())
+        self.assertEqual(pedido.saldo_por_cobrar(), Decimal('6000'))
+
+
+@override_settings(MEDIA_ROOT=_MEDIA_RECIBOS)
+class ParadaYaTransferidaTests(TestCase):
+    """Si el cliente ya transfirió y subió el comprobante, el repartidor no le cobra."""
+
+    def setUp(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        RecorridoRepartidorTests.setUp(self)
+        pedido = self.parada.pedido
+        pedido.metodo_pago = MetodoPago.objects.get(codigo='TRANSFERENCIA')
+        pedido.save()
+        pedido.pagos.filter(estado_pago='Pendiente').delete()
+        PagoPedido.objects.create(pedido=pedido, monto=pedido.total, metodo_pago=pedido.metodo_pago,
+                                  estado_pago='Pendiente', referencia_comprobante='Comprobante subido por el cliente',
+                                  comprobante=SimpleUploadedFile('t.pdf', b'%PDF-1.4'))
+        self.pedido = pedido
+
+    def test_el_recorrido_no_lo_muestra_a_cobrar(self):
+        respuesta = self.client.get(reverse('apps.logistica:mi_ruta_hoy'))
+        self.assertContains(respuesta, 'Transferencia enviada')
+        self.assertNotContains(respuesta, 'Pagó todo')
+
+    def test_al_entregar_no_se_registra_otro_cobro(self):
+        self.client.post(self.url, {'resultado': 'entregado', 'envases_retirados': 0, 'cobro': 'total',
+                                    'metodo_pago': MetodoPago.objects.get(codigo='EFECTIVO').pk})
+        self.parada.refresh_from_db()
+        self.assertEqual(self.parada.estado, 'Entregado')
+        self.assertEqual(self.pedido.pagos.count(), 1)          # sólo la transferencia, por verificar
+        self.assertTrue(self.pedido.pago_por_verificar().comprobante)
+
+
+class TelefonosEnLaParadaTests(TestCase):
+    """La parada muestra todos los teléfonos del cliente, cada uno con su botón «Llamar»."""
+
+    def setUp(self):
+        from apps.clientes.models import TelefonoContacto
+        RecorridoRepartidorTests.setUp(self)
+        self.vecino = TelefonoContacto.objects.create(cliente=self.cliente, numero='3624999888',
+                                                      desc_relacion='Vecino')
+
+    def test_lista_cada_telefono_con_su_boton(self):
+        respuesta = self.client.get(reverse('apps.logistica:mi_ruta_hoy'))
+        self.assertContains(respuesta, 'href="tel:3624111111"')
+        self.assertContains(respuesta, 'href="tel:3624999888"')
+        self.assertContains(respuesta, 'Vecino')
+
+    def test_primero_los_elegidos_para_el_pedido(self):
+        from .views import _ficha_de_parada
+        self.parada.pedido.telefonos_contacto.set([self.vecino])
+        telefonos = _ficha_de_parada(self.parada, self.usuario)['telefonos']
+        self.assertEqual([t['telefono'].numero for t in telefonos], ['3624999888', '3624111111'])
+        self.assertEqual([t['elegido'] for t in telefonos], [True, False])
+
+
+
+class PromocionesAlPlanificarTests(TestCase):
+    """RF-09: los clientes de la zona con bidones de promoción se ofrecen al armar la hoja."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from apps.productos.models import Producto
+        from apps.promociones.models import Promocion
+        from apps.promociones.services import vender_promocion
+        self.fecha = timezone.localdate()
+        self.fecha_txt = self.fecha.isoformat()
+        self.client.force_login(get_user_model().objects.create_superuser('jefa', 'j@x.com', 'Agua-Lluvia-2026'))
+        self.zona = Zona.objects.create(nombre='Centro', dias_reparto='0,1,2,3,4,5,6')
+        barrio = Barrio.objects.create(nombre='Centro', zona=self.zona)
+        otro = Barrio.objects.create(nombre='Norte', zona=Zona.objects.create(nombre='Norte', dias_reparto='0'))
+        self.bidon = Producto.objects.create(nombre='Bidón 20 L', descripcion='', precio=Decimal('3000'), stock=50,
+                                             es_botellon=True)
+        promo = Promocion.objects.create(nombre='Paga 3, lleva 4', producto=self.bidon, cant_paga=3, cant_lleva=4,
+                                         precio=Decimal('9000'))
+        self.ana = Cliente.objects.create(nombre='Ana', apellido='Paz')
+        self.dir_ana = DireccionEntrega.objects.create(cliente=self.ana, calle='Mitre', altura='1', barrio=barrio,
+                                                       es_principal=True)
+        vender_promocion(self.ana, promo, fecha=self.fecha)
+        lejos = Cliente.objects.create(nombre='Lejos', apellido='Norte')
+        DireccionEntrega.objects.create(cliente=lejos, calle='Roca', altura='2', barrio=otro, es_principal=True)
+        vender_promocion(lejos, promo, fecha=self.fecha)
+        self.url = reverse('apps.logistica:planificar_reparto')
+
+    def _crear(self, cantidad):
+        self.client.post(self.url, {
+            'fecha': self.fecha_txt, 'zona': self.zona.id_zona, 'confirmar': '1',
+            f'frecuente_{self.ana.pk}': 'on', f'direccion_frecuente_{self.ana.pk}': self.dir_ana.pk,
+            f'producto_frecuente_{self.ana.pk}': self.bidon.pk, f'cantidad_frecuente_{self.ana.pk}': str(cantidad),
+            f'saldo_frecuente_{self.ana.pk}': 'on',
+            f'nota_frecuente_{self.ana.pk}': 'Retira bidones de su promoción prepaga.',
+        })
+        return HojaRuta.objects.get(zona=self.zona, fecha=self.fecha).detalles.get()
+
+    def test_el_borrador_ofrece_solo_los_saldos_de_la_zona(self):
+        from .services import construir_borrador
+        borrador = construir_borrador(self.fecha, self.zona)
+        self.assertEqual([f['cliente'] for f in borrador['promociones']], [self.ana])
+        self.assertEqual(borrador['promociones'][0]['cantidad_sugerida'], 4)
+        respuesta = self.client.get(self.url, {'fecha': self.fecha_txt, 'zona': self.zona.id_zona})
+        self.assertContains(respuesta, 'Bidones de promoción de la zona')
+        self.assertContains(respuesta, 'Saldo: 4 × Bidón 20 L')
+
+    def test_cargarlo_usa_el_saldo_y_no_cobra(self):
+        from apps.promociones.services import saldo_vigente
+        parada = self._crear(4)
+        self.assertEqual(parada.cantidad_bidones, 4)
+        self.assertEqual(parada.pedido.total, 0)
+        self.assertEqual(saldo_vigente(self.ana, self.bidon, fecha=self.fecha), 0)
+
+    def test_si_lleva_mas_que_el_saldo_cobra_la_diferencia(self):
+        parada = self._crear(5)
+        self.assertEqual(parada.pedido.total, Decimal('3000'))
+
+    def test_quitar_la_parada_devuelve_el_saldo(self):
+        from apps.promociones.services import saldo_vigente
+        parada = self._crear(4)
+        self.client.post(reverse('apps.logistica:eliminar_parada', args=[parada.pk]))
+        self.assertEqual(saldo_vigente(self.ana, self.bidon, fecha=self.fecha), 4)
+
+    def test_editar_la_cantidad_recalcula_con_el_saldo(self):
+        from apps.promociones.services import saldo_vigente
+        from .services import _fijar_botellones
+        parada = self._crear(4)
+        _fijar_botellones(parada.pedido, {self.bidon.pk: 2})
+        self.assertEqual(parada.pedido.total, 0)
+        self.assertEqual(saldo_vigente(self.ana, self.bidon, fecha=self.fecha), 2)
+
+    def test_un_frecuente_con_saldo_figura_como_ya_incluido(self):
+        from .services import construir_borrador
+        self.ana.es_frecuente = True
+        self.ana.save()
+        borrador = construir_borrador(self.fecha, self.zona)
+        self.assertEqual(borrador['promociones'][0]['ya_en'], 'frecuente')
+        self.assertEqual(borrador['frecuentes'][0]['saldos'][0]['unidades'], 4)
+        respuesta = self.client.get(self.url, {'fecha': self.fecha_txt, 'zona': self.zona.id_zona})
+        # Se tilda o destilda desde la sección de promociones (una sola casilla).
+        self.assertContains(respuesta, f'name="saldo_frecuente_{self.ana.pk}" id="promo_{self.ana.pk}"')
+        self.assertContains(respuesta, f'name="saldo_frecuente_{self.ana.pk}"', count=1)
+
+    def _crear_frecuente(self, usar_saldo):
+        datos = {'fecha': self.fecha_txt, 'zona': self.zona.id_zona, 'confirmar': '1',
+                 f'frecuente_{self.ana.pk}': 'on', f'direccion_frecuente_{self.ana.pk}': self.dir_ana.pk,
+                 f'producto_frecuente_{self.ana.pk}': self.bidon.pk, f'cantidad_frecuente_{self.ana.pk}': '2'}
+        if usar_saldo:
+            datos[f'saldo_frecuente_{self.ana.pk}'] = 'on'
+        self.client.post(self.url, datos)
+        return HojaRuta.objects.get(zona=self.zona, fecha=self.fecha).detalles.get()
+
+    def test_frecuente_tildado_usa_el_saldo(self):
+        self.ana.es_frecuente = True
+        self.ana.save()
+        self.assertEqual(self._crear_frecuente(usar_saldo=True).pedido.total, 0)
+
+    def test_frecuente_destildado_no_usa_el_saldo(self):
+        from apps.promociones.services import saldo_vigente
+        self.ana.es_frecuente = True
+        self.ana.save()
+        self.assertEqual(self._crear_frecuente(usar_saldo=False).pedido.total, Decimal('6000'))
+        self.assertEqual(saldo_vigente(self.ana, self.bidon, fecha=self.fecha), 4)
+
+    def test_bidones_de_promocion_no_superan_el_saldo_pendiente(self):
+        self.client.post(self.url, {
+            'fecha': self.fecha_txt, 'zona': self.zona.id_zona, 'confirmar': '1',
+            f'frecuente_{self.ana.pk}': 'on', f'direccion_frecuente_{self.ana.pk}': self.dir_ana.pk,
+            f'producto_frecuente_{self.ana.pk}': self.bidon.pk, f'cantidad_frecuente_{self.ana.pk}': '9',
+            f'saldo_frecuente_{self.ana.pk}': 'on', f'solo_saldo_frecuente_{self.ana.pk}': 'on',
+        })
+        parada = HojaRuta.objects.get(zona=self.zona, fecha=self.fecha).detalles.get()
+        self.assertEqual(parada.cantidad_bidones, 4)   # el saldo pendiente, no 9
+        self.assertEqual(parada.pedido.total, 0)
+
+    def test_la_cantidad_tiene_tope_en_pantalla(self):
+        respuesta = self.client.get(self.url, {'fecha': self.fecha_txt, 'zona': self.zona.id_zona})
+        self.assertContains(respuesta, 'max="4"')
+        self.assertContains(respuesta, 'de 4 pendientes')

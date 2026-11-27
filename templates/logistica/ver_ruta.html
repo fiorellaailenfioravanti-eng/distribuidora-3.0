@@ -231,7 +231,8 @@
                                 </div>
                                 <div class="col-6 col-md-4">
                                     <label class="form-label small mb-1" for="v-{{ d.id_detalle }}">Envases vendidos</label>
-                                    <input type="number" min="0" name="envases_vendidos" id="v-{{ d.id_detalle }}" class="form-control form-control-sm" value="{{ d.envases_vendidos }}">
+                                    <input type="number" min="0" max="{{ d.cantidad_bidones }}" data-stock="{{ d.cantidad_bidones }}" data-stock-texto="botellones en esta parada"
+                                           name="envases_vendidos" id="v-{{ d.id_detalle }}" class="form-control form-control-sm" value="{{ d.envases_vendidos }}">
                                 </div>
                                 {% if d.estado != 'Entregado' %}
                                 <div class="col-6 col-md-4">
@@ -319,12 +320,12 @@
                 {% for f in clientes_disponibles %}
                 <form method="post" action="{% url 'apps.logistica:agregar_parada' ruta.id_ruta %}"
                       class="cliente-hoja d-flex justify-content-between align-items-center gap-2 px-4 py-2 border-bottom"
-                      data-buscar="{{ f.cliente.nombre_completo|lower }} {{ f.direccion.direccion_completa|lower }}">
+                      data-buscar="{{ f.cliente.apellido_nombre|lower }} {{ f.cliente.nombre_completo|lower }} {{ f.direccion.direccion_completa|lower }}">
                     {% csrf_token %}
                     <input type="hidden" name="direccion" value="{{ f.direccion.pk }}">
                     <input type="hidden" name="producto" value="{{ botellon_defecto.pk }}">
                     <div class="flex-grow-1">
-                        <div class="fw-semibold text-main">{{ f.cliente.nombre_completo }}
+                        <div class="fw-semibold text-main">{{ f.cliente.apellido_nombre }}
                             {% if f.cliente.es_frecuente %}<span class="badge bg-primary bg-opacity-25 text-primary rounded-pill ms-1">Frecuente</span>{% endif %}</div>
                         <small class="text-muted">{{ f.direccion.direccion_completa }}</small>
                     </div>

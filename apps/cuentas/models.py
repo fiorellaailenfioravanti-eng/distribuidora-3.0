@@ -18,7 +18,7 @@ TIPOS_MOVIMIENTO = [
 
 # ────────────────────────────────────────────────
 # SEMAFORIZACIÓN DE MOROSIDAD — RF-14
-#    🟡 al inicio del mes · 🟠 a los 10 días · 🔴 a los 15 días
+#    amarillo al inicio del mes · naranja a los 10 días · rojo a los 15 días
 # ────────────────────────────────────────────────
 DIAS_NARANJA = 10
 DIAS_ROJO    = 15

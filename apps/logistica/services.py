@@ -8,6 +8,8 @@ from django.utils import timezone
 from apps.clientes.services import sincronizar_bidones_de_parada
 from apps.pedidos.services import metodo_pago_efectivo as _metodo_pago_efectivo
 from apps.pedidos.services import registrar_cobro  # noqa: F401 (API de logística)
+from apps.pedidos.services import sincronizar_pago_pendiente
+from apps.pedidos.recibos import emitir_recibo_efectivo
 
 from .models import CalendarioExcepcion, HojaRuta, DetalleHojaRuta, CargaHojaRuta
 
@@ -100,6 +102,25 @@ def clientes_para_hoja(zona, excluir_ids=()):
     return filas
 
 
+def saldos_promocion_por_cliente(zona, fecha):
+    """RF-09: {cliente_id: [{'producto', 'unidades', 'vence'}]} con el saldo de
+    promociones prepagas vigente a `fecha` de los clientes con domicilio en la zona.
+    Sólo botellones, que es lo que se carga al armar la hoja."""
+    from apps.promociones.models import CompraPromocion
+    compras = (CompraPromocion.objects
+               .filter(estado='Vigente', unid_restantes__gt=0, fecha_caducidad__gte=fecha,
+                       promocion__producto__es_botellon=True, promocion__producto__activo=True,
+                       cliente__eliminado=False, cliente__direcciones__barrio__zona=zona)
+               .select_related('promocion__producto').distinct().order_by('fecha_caducidad'))
+    saldos = {}
+    for compra in compras:
+        por_producto = saldos.setdefault(compra.cliente_id, {})
+        fila = por_producto.setdefault(compra.promocion.producto_id, {
+            'producto': compra.promocion.producto, 'unidades': 0, 'vence': compra.fecha_caducidad})
+        fila['unidades'] += compra.unid_restantes
+    return {cid: list(por_producto.values()) for cid, por_producto in saldos.items()}
+
+
 def clientes_frecuentes_de_zona(zona):
     """Clientes marcados como frecuentes con al menos una dirección en la zona."""
     from apps.clientes.models import Cliente
@@ -166,6 +187,18 @@ def bidones_de_pedido(pedido):
     )
 
 
+def envases_vendibles(parada):
+    """Tope de envases que se pueden vender en una parada: las unidades del
+    pedido que viajan en un envase (botellones o productos con envase)."""
+    pedido = parada.pedido if parada.pedido_id else None
+    if pedido is None:
+        return parada.cantidad_bidones or 0
+    return sum(
+        d.cantidad for d in pedido.detalles.select_related('producto')
+        if d.producto.es_botellon or d.producto.envase_id
+    )
+
+
 def botellones_por_producto(pedido):
     """`{producto_id: cantidad}` de los botellones del pedido."""
     cantidades = {}
@@ -195,23 +228,42 @@ def _reubicar_extras(hoja):
     renumerar_paradas(hoja)
 
 
-def _fijar_botellones(pedido, cantidades):
-    """Reemplaza los renglones de botellones del pedido y recalcula el total."""
+def _fijar_botellones(pedido, cantidades, usar_saldo=None):
+    """Reemplaza los renglones de botellones del pedido y recalcula el total.
+
+    Con `usar_saldo` (RF-09) los botellones que cubre el saldo prepago del cliente
+    van en un renglón a $0. Si no se indica, se mantiene lo que ya hacía el pedido
+    (si había usado saldo, lo vuelve a usar con las cantidades nuevas).
+    """
     from apps.pedidos.models import DetallePedido
     from apps.productos.models import Producto
+    from apps.promociones.services import consumir_saldo, revertir_consumos
 
+    if usar_saldo is None:
+        usar_saldo = pedido.consumos_promocion.exists()
+    if usar_saldo:
+        revertir_consumos(pedido, fecha=pedido.fecha_entrega)  # se recalcula con las cantidades nuevas
     pedido.detalles.filter(producto__es_botellon=True).delete()
     for producto_id, cantidad in cantidades.items():
         cantidad = int(cantidad or 0)
         if cantidad <= 0:
             continue
         producto = Producto.objects.get(pk=producto_id)
-        DetallePedido.objects.create(
-            pedido=pedido, producto=producto, precio_unitario=producto.precio,
-            cantidad=cantidad, subtotal=producto.precio * cantidad,
-        )
+        # El saldo tiene que estar vigente el día del reparto.
+        fecha = pedido.fecha_entrega or pedido.fecha_estimada_entrega
+        cubiertas = consumir_saldo(pedido.cliente, producto, cantidad, pedido, fecha=fecha) if usar_saldo else 0
+        if cubiertas:
+            DetallePedido.objects.create(pedido=pedido, producto=producto, precio_unitario=0,
+                                         cantidad=cubiertas, subtotal=0)
+        if cantidad - cubiertas:
+            DetallePedido.objects.create(
+                pedido=pedido, producto=producto, precio_unitario=producto.precio,
+                cantidad=cantidad - cubiertas, subtotal=producto.precio * (cantidad - cubiertas),
+            )
     pedido.total = sum(d.subtotal for d in pedido.detalles.all())
     pedido.save(update_fields=['total'])
+    # Como un pedido del checkout: queda con su pago pendiente por el total.
+    sincronizar_pago_pendiente(pedido)
 
 
 def construir_borrador(fecha, zona):
@@ -222,6 +274,7 @@ def construir_borrador(fecha, zona):
     """
     pedidos = list(pedidos_candidatos(zona, fecha))
     con_pedido = {p.cliente_id for p in pedidos}
+    saldos = saldos_promocion_por_cliente(zona, fecha)
     frecuentes = []
     for cliente in clientes_frecuentes_de_zona(zona):
         if cliente.pk in con_pedido:
@@ -233,12 +286,35 @@ def construir_borrador(fecha, zona):
             'cliente': cliente,
             'direccion': direccion,
             'cantidad_sugerida': cliente.cantidad_recurrente_default or 1,
+            'saldos': saldos.get(cliente.pk, []),
         })
+
+    # RF-09: clientes de la zona con bidones de promoción para retirar. Los que ya
+    # van (frecuentes o con su pedido) se indican con `ya_en`; el resto se puede
+    # cargar a la hoja y sus botellones salen del saldo prepago.
+    en_frecuentes = {f['cliente'].pk for f in frecuentes}
+    con_promocion = []
+    if saldos:
+        from apps.clientes.models import Cliente
+        for cliente in Cliente.objects.filter(pk__in=saldos).select_related('usuario').order_by('apellido', 'nombre'):
+            direccion = direccion_en_zona(cliente, zona)
+            if direccion is None:
+                continue
+            filas = saldos[cliente.pk]
+            con_promocion.append({
+                'cliente': cliente,
+                'direccion': direccion,
+                'saldos': filas,
+                'cantidad_sugerida': filas[0]['unidades'],
+                'ya_en': ('pedido' if cliente.pk in con_pedido
+                          else 'frecuente' if cliente.pk in en_frecuentes else ''),
+            })
 
     return {
         'fecha': fecha,
         'zona': zona,
         'frecuentes': frecuentes,
+        'promociones': con_promocion,
         'pedidos': pedidos,
         'ruta_default': ruta_default(zona, fecha),
     }
@@ -255,7 +331,10 @@ def crear_hoja_borrador(fecha, zona, usuario, seleccion, empleado=None, camion=N
 
     `seleccion` es un dict con las listas:
       - 'pedidos': [{'pedido_id': int, 'cantidad': int|None}, ...]
-      - 'frecuentes': [{'cliente_id': int, 'direccion_id': int|None, 'cantidad': int|None}, ...]
+      - 'frecuentes': [{'cliente_id': int, 'direccion_id': int|None, 'cantidad': int|None,
+                        'producto_id': int|None, 'nota': str|None, 'usar_saldo': bool}, ...]
+                        `usar_saldo`: los botellones salen del saldo de promoción del cliente;
+                        `solo_saldo`: bidones de promoción, la cantidad no supera el saldo pendiente.
     """
     from apps.clientes.models import Cliente, DireccionEntrega
     from apps.pedidos.models import Pedido
@@ -307,6 +386,15 @@ def crear_hoja_borrador(fecha, zona, usuario, seleccion, empleado=None, camion=N
             or direccion_en_zona(cliente, zona)
         )
         cantidad = item.get('cantidad') or cliente.cantidad_recurrente_default or 1
+        producto = item.get('producto_id') or getattr(botellon_por_defecto(), 'pk', None)
+        if item.get('solo_saldo'):
+            # Bidones de promoción: nunca más que el saldo pendiente del cliente ese día.
+            from apps.promociones.services import saldo_vigente
+            from apps.productos.models import Producto
+            pendiente = saldo_vigente(cliente, Producto.objects.filter(pk=producto).first(), fecha)
+            if pendiente <= 0:
+                continue
+            cantidad = min(cantidad, pendiente)
         pedido = Pedido.objects.create(
             cliente=cliente,
             direccion_entrega=direccion,
@@ -316,18 +404,17 @@ def crear_hoja_borrador(fecha, zona, usuario, seleccion, empleado=None, camion=N
             total=0,
             fecha_estimada_entrega=fecha,
             fecha_entrega=fecha,
-            notas_cliente='Cliente frecuente: pedido armado al planificar el reparto.',
+            notas_cliente=item.get('nota') or 'Cliente frecuente: pedido armado al planificar el reparto.',
         )
-        producto = item.get('producto_id') or getattr(botellon_por_defecto(), 'pk', None)
         if producto:
-            _fijar_botellones(pedido, {producto: cantidad})
+            _fijar_botellones(pedido, {producto: cantidad}, usar_saldo=bool(item.get('usar_saldo')))
         orden += 1
         DetalleHojaRuta.objects.create(
             hoja_ruta=hoja,
             orden=orden,
             pedido=pedido,
             cliente=cliente,
-            es_frecuente=True,
+            es_frecuente=cliente.es_frecuente,
             direccion_entrega=direccion,
             cliente_nombre=cliente.nombre_completo(),
             direccion_texto=_texto_direccion(direccion),
@@ -414,13 +501,24 @@ def confirmar_hoja(hoja, usuario, cargas=None):
     if hoja.estado != 'Borrador':
         raise ValueError('Solo se puede confirmar una hoja en estado Borrador.')
 
+    # No se puede cargar al camión más de lo que hay en el depósito.
+    renglones, faltantes = [], []
     for item in cargas or []:
         cantidad = int(item.get('cantidad') or 0)
-        if cantidad <= 0:
+        if cantidad < 0:
+            raise ValueError('Las cantidades a cargar no pueden ser negativas.')
+        if cantidad == 0:
             continue
         producto = Producto.objects.select_for_update().filter(pk=item.get('producto_id')).first()
         if producto is None:
             continue
+        if cantidad > producto.stock:
+            faltantes.append(f'{producto.nombre} (stock {max(producto.stock, 0)}, querés cargar {cantidad})')
+        renglones.append((producto, cantidad))
+    if faltantes:
+        raise ValueError('No alcanza el stock del depósito: ' + '; '.join(faltantes) + '.')
+
+    for producto, cantidad in renglones:
         carga, _ = CargaHojaRuta.objects.get_or_create(
             hoja_ruta=hoja, producto=producto,
             defaults={'cantidad_cargada': 0},
@@ -459,8 +557,9 @@ def registrar_regreso(hoja, cargas=None, vacios_recibidos=None):
     if hoja.estado != 'Confirmada':
         raise ValueError('Solo se puede registrar el regreso de una hoja confirmada.')
 
+    errores = []
     for item in cargas or []:
-        carga = hoja.cargas.filter(pk=item.get('carga_id')).first()
+        carga = hoja.cargas.select_related('producto').filter(pk=item.get('carga_id')).first()
         if carga is None:
             continue
         entregada = int(item.get('cantidad_entregada') or 0)
@@ -468,9 +567,20 @@ def registrar_regreso(hoja, cargas=None, vacios_recibidos=None):
         if retornada is None:
             retornada = carga.cantidad_cargada - entregada
         retornada = int(retornada)
+        # Lo entregado más lo que vuelve no puede superar lo que salió cargado.
+        if entregada < 0 or retornada < 0:
+            errores.append(f'{carga.producto.nombre}: las cantidades no pueden ser negativas')
+            continue
+        if entregada + retornada > carga.cantidad_cargada:
+            errores.append(f'{carga.producto.nombre}: se cargaron {carga.cantidad_cargada} y '
+                           f'figuran {entregada} entregados + {retornada} de vuelta')
+            continue
         carga.cantidad_entregada = entregada
         carga.cantidad_retornada = retornada
         carga.save(update_fields=['cantidad_entregada', 'cantidad_retornada'])
+    if errores:
+        # La transacción se revierte: no queda guardado nada a medias.
+        raise ValueError('Revisá el regreso: ' + '; '.join(errores) + '.')
 
     for carga in hoja.cargas.select_related('producto'):
         if carga.cantidad_retornada:
@@ -645,6 +755,12 @@ def registrar_entrega(parada, estado, envases_retirados=0, envases_vendidos=0, n
 
     parada.envases_retirados = max(0, int(envases_retirados or 0))
     parada.envases_vendidos = max(0, int(envases_vendidos or 0))
+    # Sólo se puede vender el envase de un botellón que se entregó en la parada.
+    bidones = envases_vendibles(parada)
+    if parada.envases_vendidos > bidones:
+        from django.core.exceptions import ValidationError
+        raise ValidationError(
+            f'No se pueden vender {parada.envases_vendidos} envases: la parada lleva {bidones} botellones.')
     if nota:
         parada.nota_entrega = nota
 
@@ -712,10 +828,14 @@ def crear_venta_calle(hoja, datos):
     if not renglones:
         raise ValueError('Indicá al menos un producto con cantidad.')
     camion = {p['producto'].pk: p for p in inventario_camion(hoja)['productos']}
+    cargados = set(hoja.cargas.values_list('producto_id', flat=True))
     for producto, cantidad in renglones:
         fila = camion.get(producto.pk)
         if fila is not None and fila['cargados'] and cantidad > fila['en_camion']:
             raise ValueError(f'En el camión quedan {max(fila["en_camion"], 0)} {producto.nombre}: no se pueden vender {cantidad}.')
+        # Lo que no salió en el camión se descuenta del depósito: no puede superarlo.
+        if producto.pk not in cargados and cantidad > producto.stock:
+            raise ValueError(f'Hay {max(producto.stock, 0)} {producto.nombre} en stock: no se pueden vender {cantidad}.')
 
     cliente = Cliente.objects.filter(pk=datos.get('cliente_id')).first() if datos.get('cliente_id') else None
     if cliente is not None:
@@ -745,7 +865,6 @@ def crear_venta_calle(hoja, datos):
         estado='En Camino', origen='REPARTIDOR', total=0, fecha_entrega=hoja.fecha,
         notas_cliente=datos.get('nota') or 'Venta en la calle durante el reparto.',
     )
-    cargados = set(hoja.cargas.values_list('producto_id', flat=True))
     for producto, cantidad in renglones:
         DetallePedido.objects.create(pedido=pedido, producto=producto, precio_unitario=producto.precio,
                                      cantidad=cantidad, subtotal=producto.precio * cantidad)
@@ -754,6 +873,7 @@ def crear_venta_calle(hoja, datos):
             producto.save(update_fields=['stock'])
     pedido.total = sum(d.subtotal for d in pedido.detalles.all())
     pedido.save(update_fields=['total'])
+    sincronizar_pago_pendiente(pedido)  # si no se cobra en el momento, queda por cobrar
 
     renumerar_paradas(hoja)
     parada = DetalleHojaRuta.objects.create(
@@ -769,10 +889,11 @@ def crear_venta_calle(hoja, datos):
         if cobro == 'cuenta':
             metodo = MetodoPago.objects.get(codigo=CODIGO_CUENTA_CORRIENTE)
         try:
-            registrar_pago_manual(pedido, pedido.total, metodo,
-                                  referencia=f'Cobro en calle — venta, hoja #{hoja.pk}')
+            pago = _registrar_cobro_en_calle(pedido, pedido.total, metodo,
+                                             f'Cobro en calle — venta, hoja #{hoja.pk}')
         except ValidationError as error:
             raise ValueError(' '.join(error.messages))
+        emitir_recibo_efectivo(pago, repartidor=_nombre_repartidor(hoja))
     return parada
 
 
@@ -822,9 +943,12 @@ def confirmar_entrega_en_calle(parada, entregado, *, envases_retirados=0, envase
     pedido = parada.pedido
     if pedido is None or cobro not in FORMAS_DE_COBRO or cobro == 'ninguno':
         return parada
-    saldo = pedido.saldo_pendiente()
+    saldo = pedido.saldo_por_cobrar()  # descuenta lo ya cobrado que espera aprobación
     if saldo <= 0:
         return parada
+    if pedido.metodo_pago.codigo == 'EFECTIVO' and cobro in ('total', 'parcial'):
+        # El cliente eligió pagar en efectivo: se cobra en efectivo aunque llegue otro medio.
+        metodo_pago = pedido.metodo_pago
     if cobro == 'total':
         importe, metodo = saldo, metodo_pago
     elif cobro == 'parcial':
@@ -832,8 +956,26 @@ def confirmar_entrega_en_calle(parada, entregado, *, envases_retirados=0, envase
     else:  # cuenta
         importe, metodo = saldo, MetodoPago.objects.get(codigo=CODIGO_CUENTA_CORRIENTE)
     metodo = metodo or MetodoPago.objects.get(codigo='EFECTIVO')
-    registrar_pago_manual(pedido, importe, metodo, referencia=f'Cobro en calle — hoja #{parada.hoja_ruta_id}')
+    pago = _registrar_cobro_en_calle(pedido, importe, metodo, f'Cobro en calle — hoja #{parada.hoja_ruta_id}')
+    # Cobro en efectivo (total o parcial): recibo en PDF al historial y por correo al cliente.
+    emitir_recibo_efectivo(pago, repartidor=_nombre_repartidor(parada.hoja_ruta))
     return parada
+
+
+def _registrar_cobro_en_calle(pedido, importe, metodo, referencia):
+    """Lo que cobra el repartidor queda `Pendiente` hasta que el administrador cuente
+    el efectivo o vea la transferencia. Lo cargado a cuenta corriente no es dinero
+    para rendir: se asienta aprobado en la cuenta del cliente."""
+    from apps.pedidos.models import CODIGO_CUENTA_CORRIENTE
+    from apps.pedidos.services import registrar_cobro_por_verificar, registrar_pago_manual
+    if metodo.codigo == CODIGO_CUENTA_CORRIENTE:
+        return registrar_pago_manual(pedido, importe, metodo, referencia=referencia)
+    return registrar_cobro_por_verificar(pedido, importe, metodo, referencia=referencia)
+
+
+def _nombre_repartidor(hoja):
+    empleado = hoja.empleado
+    return empleado.nombre_completo() if empleado else ""
 
 
 def resumen_recorrido(hoja):
@@ -845,7 +987,7 @@ def resumen_recorrido(hoja):
     paradas = [p for p in todas if not p.es_venta_calle]
     extras = [p for p in todas if p.es_venta_calle]
     pagos = PagoPedido.objects.filter(
-        pedido__paradas__hoja_ruta=hoja, estado_pago='Aprobado',
+        pedido__paradas__hoja_ruta=hoja, estado_pago__in=['Aprobado', 'Pendiente'],
         referencia_comprobante__startswith='Cobro en calle',
     ).exclude(metodo_pago__codigo=CODIGO_CUENTA_CORRIENTE)
     por_metodo = {f['metodo_pago__nombre']: f['total']

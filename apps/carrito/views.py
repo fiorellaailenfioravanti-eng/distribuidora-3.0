@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from .models import Carrito, ItemCarrito
+from .models import Carrito, ItemCarrito, PromocionCarrito
 from apps.productos.models import Producto
 from django.urls import reverse
 from django.contrib import messages
@@ -55,10 +55,16 @@ def ver_carrito(request):
         return fuera
 
     carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
+    # RF-09: lo que cubre el saldo prepago (el vigente y el de los packs del carrito) sale a $0.
+    from apps.promociones.services import cobertura_del_carrito
+    cobertura, descuento = cobertura_del_carrito(getattr(request.user, 'perfil_cliente', None), carrito)
     contexto = {
         'carrito': carrito,
         'items': carrito.items.all(),
-        'total_precio': carrito.total_precio(),
+        'promociones': carrito.promociones.select_related('promocion__producto'),
+        'cobertura_promocion': cobertura,
+        'descuento_promocion': descuento,
+        'total_precio': carrito.total_precio() - descuento,
     }
     return render(request, 'carrito/ver_carrito.html', contexto)
 
@@ -91,6 +97,48 @@ def vaciar_carrito(request):
     if request.method != 'POST':
         return redirect('apps.carrito:ver_carrito')
     carrito = get_object_or_404(Carrito, usuario=request.user)
-    carrito.items.all().delete()
+    carrito.vaciar()
+    return redirect('apps.carrito:ver_carrito')
+
+
+# ─────────────────────────────────────────────────────────────
+# PROMOCIONES PREPAGAS (RF-09): se compran desde el catálogo
+# ─────────────────────────────────────────────────────────────
+@login_required
+def agregar_promocion(request, promocion_id):
+    """Suma un pack de la promoción al carrito. Al confirmar el pedido se paga
+    el precio del pack y el cliente recibe el saldo de unidades para retirar."""
+    from apps.promociones.models import Promocion
+    if (fuera := solo_clientes(request)) is not None:
+        return fuera
+    promocion = get_object_or_404(Promocion, pk=promocion_id, activa=True, producto__activo=True)
+    if request.method != 'POST':
+        return redirect('apps.productos:listar_productos')
+    carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
+    item, creado = PromocionCarrito.objects.get_or_create(carrito=carrito, promocion=promocion)
+    if not creado:
+        item.cantidad += 1
+        item.save(update_fields=['cantidad'])
+    messages.success(request, f"La promoción «{promocion.nombre}» se añadió al carrito.")
+    return redirigir_a_origen(request, 'apps.productos:listar_productos')
+
+
+@login_required
+def quitar_promocion(request, item_id):
+    """Quita un pack de la promoción del carrito (o el renglón si queda uno)."""
+    if (fuera := solo_clientes(request)) is not None:
+        return fuera
+    if request.method != 'POST':
+        return redirect('apps.carrito:ver_carrito')
+    carrito = get_object_or_404(Carrito, usuario=request.user)
+    item = carrito.promociones.filter(pk=item_id).select_related('promocion').first()
+    if item:
+        if item.cantidad > 1:
+            item.cantidad -= 1
+            item.save(update_fields=['cantidad'])
+            messages.info(request, f"Se quitó un pack de «{item.promocion.nombre}».")
+        else:
+            item.delete()
+            messages.warning(request, f"«{item.promocion.nombre}» fue eliminada del carrito.")
     return redirect('apps.carrito:ver_carrito')
 

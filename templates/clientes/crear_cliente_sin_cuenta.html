@@ -1,4 +1,5 @@
 {% extends 'base_dashboard.html' %}
+{% load static %}
 
 {% block title %}Nuevo Cliente sin Cuenta{% endblock %}
 
@@ -32,14 +33,22 @@
                     </h5>
 
                     <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small text-uppercase">Nombre <span class="text-danger">*</span></label>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                {{ form.es_institucion }}
+                                <label class="form-check-label fw-semibold" for="{{ form.es_institucion.id_for_label }}">Institución o empresa</label>
+                                <div class="form-text mt-0">Escuela, oficina, comercio: se carga con un solo nombre.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6" data-contenedor-campo>
+                            <label class="form-label fw-bold text-muted small text-uppercase" for="{{ form.nombre.id_for_label }}">Nombre <span class="text-danger">*</span></label>
                             {{ form.nombre }}
                             {% for e in form.nombre.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small text-uppercase">Apellido</label>
+                            <label class="form-label fw-bold text-muted small text-uppercase" for="{{ form.apellido.id_for_label }}">Apellido</label>
                             {{ form.apellido }}
+                            {% for e in form.apellido.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold text-muted small text-uppercase">DNI</label>
@@ -93,7 +102,6 @@
 </div>
 </div>
 
-<script>
-</script>
+<script src="{% static 'js/institucion.js' %}?v=2"></script>
 {% endblock %}
 

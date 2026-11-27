@@ -152,17 +152,6 @@
 </div>
 {% endif %}
 
-{# ── Accesos rápidos ── #}
-{% if 'gestionar_zonas_camiones' in puede %}
-<div class="d-flex flex-column flex-md-row gap-2 mt-2 pb-4">
-    <a href="{% url 'apps.logistica:listar_zonas' %}" class="btn btn-outline-primary rounded-3 fw-bold px-4 text-center">
-        <i class="fa-solid fa-map-pin me-2"></i> Gestionar Zonas
-    </a>
-    <a href="{% url 'apps.logistica:listar_camiones' %}" class="btn btn-outline-primary rounded-3 fw-bold px-4 text-center">
-        <i class="fa-solid fa-truck me-2"></i> Gestionar Camiones
-    </a>
-</div>
-{% endif %}
 </div>
 
 {# ── Hojas de ruta eliminadas (baja lógica) ── #}

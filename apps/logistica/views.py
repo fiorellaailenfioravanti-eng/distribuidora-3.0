@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db.models import ProtectedError
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
@@ -407,13 +408,17 @@ def actualizar_estado_entrega(request, pk):
         form = ActualizarEstadoForm(request.POST, instance=parada)
         if form.is_valid():
             nuevo_estado = form.cleaned_data['estado']
-            registrar_entrega(
-                parada,
-                nuevo_estado,
-                envases_retirados=form.cleaned_data.get('envases_retirados') or 0,
-                envases_vendidos=form.cleaned_data.get('envases_vendidos') or 0,
-                nota=form.cleaned_data.get('nota_entrega') or '',
-            )
+            try:
+                registrar_entrega(
+                    parada,
+                    nuevo_estado,
+                    envases_retirados=form.cleaned_data.get('envases_retirados') or 0,
+                    envases_vendidos=form.cleaned_data.get('envases_vendidos') or 0,
+                    nota=form.cleaned_data.get('nota_entrega') or '',
+                )
+            except ValidationError as error:
+                form.add_error('envases_vendidos', error)
+                return render(request, 'logistica/actualizar_estado.html', {'form': form, 'parada': parada})
             monto = form.cleaned_data.get('monto_cobrado')
             if monto and parada.pedido is not None and nuevo_estado == 'Entregado':
                 if ya_entregada:
@@ -452,16 +457,25 @@ def _link_mapa(direccion, texto):
 def _ficha_de_parada(parada, user):
     """Lo que el repartidor necesita ver de cada parada en la calle."""
     cliente = parada.cliente or (parada.pedido.cliente if parada.pedido_id else None)
-    telefono = cliente.telefonos.order_by('-es_principal').first() if cliente else None
     pedido = parada.pedido
+    # Todos los teléfonos del cliente: primero los que eligió para este pedido.
+    elegidos = list(pedido.telefonos_contacto.order_by('-es_principal', 'pk')) if pedido else []
+    otros = [t for t in cliente.telefonos.order_by('-es_principal', 'pk') if t not in elegidos] if cliente else []
+    telefonos = [{'telefono': t, 'elegido': True} for t in elegidos] + \
+                [{'telefono': t, 'elegido': False} for t in otros]
     return {
         'parada': parada,
         'cliente': cliente,
-        'telefono': telefono,
+        'telefono': telefonos[0]['telefono'] if telefonos else None,
+        'telefonos': telefonos,
         'mapa': _link_mapa(parada.direccion_entrega, parada.direccion_texto),
         'items': list(pedido.detalles.select_related('producto')) if pedido else [],
-        'saldo': pedido.saldo_pendiente() if pedido else 0,
+        # Lo que falta cobrar en la puerta: no cuenta lo ya pagado que espera la
+        # aprobación del administrador (una transferencia con comprobante, un cobro anterior).
+        'saldo': pedido.saldo_por_cobrar() if pedido else 0,
         'pagado': pedido.esta_pagado() if pedido else False,
+        'transferido': bool(pedido) and any(p.estado_pago == 'Pendiente' and p.comprobante
+                                            and p.metodo_pago.codigo != 'EFECTIVO' for p in pedido.pagos.all()),
         'puede_fiar': bool(cliente and cliente.permite_fiado),
         'nota_seguridad': (parada.direccion_entrega.desc_seguridad
                            if parada.direccion_entrega_id and puede_ver_nota_seguridad(user, parada.direccion_entrega)
@@ -539,7 +553,6 @@ def mi_ruta_hoy(request):
 def confirmar_entrega(request, pk):
     """El repartidor registra la entrega (o el problema) de una parada desde su recorrido."""
     from decimal import Decimal, InvalidOperation
-    from django.core.exceptions import ValidationError
     from apps.pedidos.models import MetodoPago
 
     parada = get_object_or_404(DetalleHojaRuta.objects.select_related('hoja_ruta', 'pedido'), id_detalle=pk)
@@ -574,7 +587,7 @@ def confirmar_entrega(request, pk):
 
     parada.refresh_from_db()
     if parada.estado == 'Entregado':
-        messages.success(request, f'✔ Entregado a {parada.cliente_nombre}.')
+        messages.success(request, f'Entregado a {parada.cliente_nombre}.')
     else:
         messages.warning(request, f'{parada.cliente_nombre}: {parada.estado.lower()}.')
     return redirect(destino)
@@ -828,6 +841,9 @@ def _seleccion_desde_post(post):
                     'direccion_id': int(dir_id) if dir_id and dir_id.isdigit() else None,
                     'cantidad': _int_o_none(post.get(f'cantidad_frecuente_{cid}')),
                     'producto_id': _int_o_none(post.get(f'producto_frecuente_{cid}')),
+                    'nota': (post.get(f'nota_frecuente_{cid}') or '').strip()[:200] or None,
+                    'usar_saldo': post.get(f'saldo_frecuente_{cid}') == 'on',
+                    'solo_saldo': post.get(f'solo_saldo_frecuente_{cid}') == 'on',
                 })
     return seleccion
 
@@ -920,8 +936,12 @@ def _regreso_desde_post(post, hoja):
     return cargas
 
 
-def _productos_para_carga(ruta):
-    """Botellones llenos (con lo encargado en las paradas) y el envase vacío."""
+def _productos_para_carga(ruta, tipeado=None):
+    """Botellones llenos (con lo encargado en las paradas) y el envase vacío.
+
+    `tipeado` = {producto_id: cantidad} para volver a mostrar lo que se cargó
+    en el formulario cuando la confirmación fue rechazada.
+    """
     encargados = {c['producto'].pk: c['cantidad'] for c in carga_sugerida(ruta)}
     filas = [
         {'producto': p, 'encargado': encargados.get(p.pk, 0), 'cantidad': encargados.get(p.pk, 0)}
@@ -930,6 +950,9 @@ def _productos_para_carga(ruta):
     envase = envase_de_reparto()
     if envase is not None:
         filas.append({'producto': envase, 'encargado': None, 'cantidad': 0, 'es_vacio': True})
+    if tipeado is not None:
+        for fila in filas:
+            fila['cantidad'] = tipeado.get(fila['producto'].pk, 0)
     return filas
 
 
@@ -950,7 +973,17 @@ def confirmar_ruta(request, pk):
         ruta.camion = Camion.objects.filter(pk=request.POST.get('camion') or None, activo=True).first()
         ruta.save(update_fields=['empleado', 'camion'])
         cargas = _cargas_confirmacion_desde_post(request.POST)
-        confirmar_hoja(ruta, request.user, cargas)
+        try:
+            confirmar_hoja(ruta, request.user, cargas)
+        except ValueError as error:
+            messages.error(request, str(error))
+            productos = _productos_para_carga(ruta, {c['producto_id']: c['cantidad'] for c in cargas})
+            return render(request, 'logistica/confirmar_ruta.html', {
+                'ruta': ruta,
+                'productos': productos,
+                'falta_stock': [f for f in productos if f['encargado'] and f['encargado'] > f['producto'].stock],
+                **_opciones_equipo(ruta.ruta_reparto, hoja=ruta),
+            })
         messages.success(
             request,
             f'Hoja #{ruta.id_ruta} confirmada. Los pedidos pasaron a "En Camino".'
@@ -980,8 +1013,12 @@ def registrar_regreso_ruta(request, pk):
         if ruta.estado != 'Confirmada':
             messages.error(request, 'Solo se puede registrar el regreso de una hoja confirmada.')
             return redirect('apps.logistica:ver_ruta', pk=ruta.id_ruta)
-        registrar_regreso(ruta, _regreso_desde_post(request.POST, ruta),
-                          vacios_recibidos=_int_o_none(request.POST.get('vacios_recibidos')))
+        try:
+            registrar_regreso(ruta, _regreso_desde_post(request.POST, ruta),
+                              vacios_recibidos=_int_o_none(request.POST.get('vacios_recibidos')))
+        except ValueError as error:
+            messages.error(request, str(error))
+            return redirect('apps.logistica:registrar_regreso_ruta', pk=ruta.id_ruta)
         messages.success(request, f'Regreso de la hoja #{ruta.id_ruta} registrado. Sobrantes y vacíos devueltos al stock.')
         return redirect('apps.logistica:ver_ruta', pk=ruta.id_ruta)
 
@@ -1063,11 +1100,18 @@ def venta_calle(request, pk):
     barrios = Barrio.objects.exclude(zona=None).order_by('nombre')
     zonas = Zona.objects.vigentes().filter(pk__in=barrios.values('zona')).order_by('nombre')
     codigos = ['EFECTIVO', 'TRANSFERENCIA', 'MERCADOPAGO', 'BILLETERA']
+    # Máximo vendible por producto: lo que queda en el camión si salió cargado,
+    # si no, el stock del depósito (mismo criterio que `crear_venta_calle`).
+    camion = inventario_camion(hoja)
+    en_camion = {f['producto'].pk: f['en_camion'] for f in camion['productos'] if f['cargados']}
+    productos = list(productos_de_reparto())
+    for producto in productos:
+        producto.maximo_venta = max(en_camion.get(producto.pk, producto.stock), 0)
     return render(request, 'logistica/venta_calle.html', {
         'hoja': hoja,
-        'productos': productos_de_reparto(),
+        'productos': productos,
         'botellon_defecto': botellon_por_defecto(),
-        'camion': inventario_camion(hoja),
+        'camion': camion,
         'direcciones': direcciones,
         'barrios': barrios,
         'zonas': zonas,

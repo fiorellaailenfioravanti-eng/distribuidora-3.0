@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.contrib import messages
 from django.urls import reverse
-from django.http import HttpResponse
+from django.http import FileResponse, Http404, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -16,6 +16,7 @@ from .forms import CheckoutForm, RegistrarPagoForm, SuscripcionForm
 from .services import (
     aplicar_pago_mercadopago,
     consultar_pago_mercadopago,
+    corregir_pago_resuelto,
     firma_webhook_valida,
     pago_en_curso,
     registrar_pago_manual,
@@ -63,8 +64,9 @@ def checkout(request):
 
     carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
     items = carrito.items.all()
+    promociones_carrito = carrito.promociones.select_related('promocion__producto')
 
-    if not items.exists():
+    if carrito.esta_vacio():
         messages.warning(request, "Tu carrito está vacío. Añade productos antes de realizar un pedido.")
         return redirect('apps.productos:listar_productos')
 
@@ -92,24 +94,21 @@ def checkout(request):
     form = CheckoutForm(request.POST or None, cliente=cliente)
 
     # RF-09: cuánto cubre el saldo prepago vigente del cliente.
-    from apps.promociones.services import saldo_vigente
-    cobertura = []
-    descuento = 0
-    for item in items:
-        cubiertas = min(item.cantidad, saldo_vigente(cliente, item.producto))
-        if cubiertas:
-            cobertura.append({'producto': item.producto, 'cantidad': cubiertas})
-            descuento += item.producto.precio * cubiertas
+    # Incluye los packs que se compran en este mismo carrito.
+    from apps.promociones.services import cobertura_del_carrito
+    cobertura, descuento = cobertura_del_carrito(cliente, carrito)
 
     contexto = {
         'carrito': carrito,
         'items': items,
+        'promociones_carrito': promociones_carrito,
         'cobertura_promocion': cobertura,
         'total_precio': carrito.total_precio() - descuento,
         'cliente': cliente,
         'direcciones': direcciones,
         'form': form,
-        'cvu_cuenta': '0000003100037733165809',
+        'datos_transferencia': settings.DATOS_TRANSFERENCIA,
+        'id_transferencia': MetodoPago.objects.filter(codigo='TRANSFERENCIA').values_list('pk', flat=True).first(),
     }
     return render(request, 'pedidos/checkout.html', contexto)
 
@@ -125,21 +124,24 @@ def confirmar_pedido(request):
 
     carrito = get_object_or_404(Carrito, usuario=request.user)
     items = carrito.items.select_related('producto').all()
+    promociones_carrito = list(carrito.promociones.select_related('promocion__producto'))
 
-    if not items.exists():
+    if carrito.esta_vacio():
         messages.error(request, "No hay productos en el carrito.")
         return redirect('apps.productos:listar_productos')
 
     cliente = get_object_or_404(Cliente, usuario=request.user)
     if not _cliente_puede_comprar(request, cliente):
         return redirect('apps.clientes:mi_perfil')
-    form = CheckoutForm(request.POST, cliente=cliente)
+    form = CheckoutForm(request.POST, request.FILES, cliente=cliente)
 
     if not form.is_valid():
-        messages.error(request, "Por favor completa todos los campos requeridos correctamente.")
+        errores = ' '.join(e for lista in form.errors.values() for e in lista)
+        messages.error(request, errores or "Por favor completa todos los campos requeridos correctamente.")
         return redirect('apps.pedidos:checkout')
 
     direccion = form.cleaned_data['direccion_entrega']
+    telefonos = form.cleaned_data['telefonos_contacto']
     metodo_pago = form.cleaned_data['metodo_pago']
     notas = form.cleaned_data['notas_cliente']
 
@@ -172,6 +174,20 @@ def confirmar_pedido(request):
         origen='WEB',
         fecha_estimada_entrega=fecha_estimada_para_direccion(direccion),
     )
+    pedido.telefonos_contacto.set(telefonos)
+
+    # 2b. RF-09: los packs de promoción del carrito se pagan con este pedido y
+    #     abren el saldo ya, así las unidades del mismo carrito salen cubiertas.
+    from apps.promociones.services import abrir_packs_de_pedido
+    total_packs = 0
+    for p in promociones_carrito:
+        try:
+            abrir_packs_de_pedido(cliente, p.promocion, p.cantidad, pedido)
+        except ValidationError as error:
+            transaction.set_rollback(True)
+            messages.error(request, ' '.join(error.messages))
+            return redirect('apps.carrito:ver_carrito')
+        total_packs += p.subtotal()
 
     # 3. Crear DetallePedido. El stock NO se descuenta aquí: el descuento
     #    ocurre en logística al cargar el camión (confirmar la hoja de ruta),
@@ -194,12 +210,12 @@ def confirmar_pedido(request):
                 pedido=pedido, producto=item.producto, precio_unitario=item.producto.precio,
                 cantidad=restantes, subtotal=item.producto.precio * restantes,
             )
-    if unidades_promocion:
-        pedido.total = sum(d.subtotal for d in pedido.detalles.all())
-        pedido.save(update_fields=['total'])
+    # Total: los productos (con los cubiertos por promoción a $0) más los packs comprados.
+    pedido.total = sum(d.subtotal for d in pedido.detalles.all()) + total_packs
+    pedido.save(update_fields=['total'])
 
     # 4. Vaciar Carrito
-    carrito.items.all().delete()
+    carrito.vaciar()
 
     # Pedido cubierto por completo con el saldo prepago: no hay nada que cobrar.
     if pedido.total == 0:
@@ -273,15 +289,35 @@ def confirmar_pedido(request):
         return redirect('apps.pedidos:detalle_pedido', pk=pedido.id_pedido)
 
     else:
-        # Pago en efectivo / contra entrega
+        # Efectivo al recibir, o transferencia con su comprobante: el pago
+        # queda Pendiente hasta que el personal lo cobra o verifica.
+        comprobante = form.cleaned_data.get('comprobante')
         PagoPedido.objects.create(
             pedido=pedido,
             monto=pedido.total,
             metodo_pago=metodo_pago,
-            estado_pago='Pendiente'
+            estado_pago='Pendiente',
+            comprobante=comprobante or '',
+            referencia_comprobante='Comprobante subido por el cliente' if comprobante else '',
         )
-        messages.success(request, f"¡Gracias por tu compra! Tu pedido #{pedido.id_pedido} ha sido registrado correctamente.")
+        if comprobante:
+            messages.success(request, f"¡Gracias por tu compra! Recibimos el comprobante de tu pedido "
+                                      f"#{pedido.id_pedido}; lo vamos a verificar a la brevedad.")
+        else:
+            messages.success(request, f"¡Gracias por tu compra! Tu pedido #{pedido.id_pedido} ha sido registrado correctamente.")
         return redirect('apps.pedidos:detalle_pedido', pk=pedido.id_pedido)
+
+
+@login_required
+def ver_comprobante(request, pk):
+    """Muestra el comprobante de un pago: sólo al cliente dueño o al personal con `ver_pedidos`."""
+    pago = get_object_or_404(PagoPedido.objects.select_related('pedido__cliente'), pk=pk)
+    cliente = pago.pedido.cliente
+    if not (puede(request.user, 'ver_pedidos') or (cliente and cliente.usuario_id == request.user.pk)):
+        raise Http404
+    if not pago.comprobante:
+        raise Http404
+    return FileResponse(pago.comprobante.open('rb'), filename=pago.comprobante.name.rsplit('/', 1)[-1])
 
 
 @login_required
@@ -392,6 +428,22 @@ def webhook_mercadopago(request):
     return HttpResponse(status=200)
 
 
+def _packs_de_pedido(pedido):
+    """Packs de promoción comprados con el pedido, agrupados por promoción."""
+    packs = {}
+    for compra in pedido.compras_promocion.select_related('promocion__producto'):
+        fila = packs.setdefault(compra.promocion_id, {
+            'promocion': compra.promocion, 'cantidad': 0, 'unidades': 0, 'restantes': 0,
+            'vence': compra.fecha_caducidad,
+        })
+        fila['cantidad'] += 1
+        fila['unidades'] += compra.unid_totales
+        fila['restantes'] += compra.unid_restantes
+    for fila in packs.values():
+        fila['subtotal'] = fila['promocion'].precio * fila['cantidad']
+    return list(packs.values())
+
+
 @login_required
 def detalle_pedido(request, pk):
     """Muestra el detalle completo de un pedido."""
@@ -406,6 +458,7 @@ def detalle_pedido(request, pk):
     contexto = {
         'pedido': pedido,
         'detalles': pedido.detalles.select_related('producto').all(),
+        'packs': _packs_de_pedido(pedido),
         'pagos': pedido.pagos.all(),
         # RNF-02: la nota de seguridad se evalúa sobre la dirección concreta
         # del pedido, no sobre el rol del usuario.
@@ -477,12 +530,15 @@ def mis_pedidos(request):
 
     try:
         cliente = request.user.perfil_cliente
-        pedidos = Pedido.objects.filter(cliente=cliente).prefetch_related('detalles__producto')
+        todos = Pedido.objects.filter(cliente=cliente).select_related('metodo_pago')
     except AttributeError:
-        pedidos = Pedido.objects.none()
+        todos = Pedido.objects.none()
 
+    # Las ventas que el repartidor hace en la calle (origen REPARTIDOR) se le
+    # muestran al cliente aparte, como «compras esporádicas».
     contexto = {
-        'pedidos': pedidos
+        'pedidos': todos.exclude(origen='REPARTIDOR'),
+        'compras_esporadicas': todos.filter(origen='REPARTIDOR'),
     }
     return render(request, 'pedidos/mis_pedidos.html', contexto)
 
@@ -491,7 +547,7 @@ def mis_pedidos(request):
 @requiere('ver_pedidos')
 def listar_pedidos(request):
     """Panel de administración/vendedor para gestionar todos los pedidos recibidos."""
-    pedidos = Pedido.objects.all().select_related('cliente', 'direccion_entrega', 'metodo_pago').prefetch_related('detalles__producto', 'pagos')
+    pedidos = Pedido.objects.all().select_related('cliente', 'direccion_entrega', 'metodo_pago').prefetch_related('detalles__producto', 'pagos__metodo_pago')
 
     # Filtro opcional por estado de pedido
     estado_filtro = request.GET.get('estado')
@@ -536,12 +592,22 @@ def cambiar_estado_pedido(request, pk):
 @login_required
 @requiere('cobrar_pedidos')
 def cambiar_estado_pago(request, pk):
-    """Aprueba o rechaza el pago pendiente de verificación de un pedido.
+    """Aprueba o rechaza el pago pendiente de verificación de un pedido, o corrige
+    el último pago ya resuelto (`corregir`: lo vuelve a Pendiente o lo rechaza)
+    si el administrador se equivocó.
 
-    Nunca modifica cobros ya aprobados: los cobros nuevos se cargan con
-    `registrar_pago` desde el detalle del pedido.
+    Los cobros nuevos se cargan con `registrar_pago` desde el detalle del pedido.
     """
-    if request.method == 'POST':
+    if request.method == 'POST' and request.POST.get('corregir'):
+        pedido = get_object_or_404(Pedido, pk=pk)
+        try:
+            pago = corregir_pago_resuelto(pedido, request.POST['corregir'])
+        except ValidationError as error:
+            messages.error(request, ' '.join(error.messages))
+        else:
+            messages.success(request, f"Pago de ${pago.monto} del Pedido #{pedido.id_pedido} corregido: "
+                                      f"ahora está '{pago.estado_pago}'.")
+    elif request.method == 'POST':
         pedido = get_object_or_404(Pedido, pk=pk)
         nuevo_pago_estado = request.POST.get('estado_pago')
         if nuevo_pago_estado in ('Aprobado', 'Rechazado'):

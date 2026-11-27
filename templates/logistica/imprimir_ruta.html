@@ -57,7 +57,7 @@
     
     <div class="d-flex justify-content-end mb-3 no-print">
         <a href="{% url 'apps.logistica:ver_ruta' ruta.id_ruta %}" class="btn btn-secondary me-2">Volver</a>
-        <button onclick="window.print()" class="btn btn-primary">🖨️ Imprimir Hoja</button>
+        <button onclick="window.print()" class="btn btn-primary">Imprimir Hoja</button>
     </div>
 
     <!-- Encabezado -->
@@ -76,14 +76,14 @@
     <div class="row mb-4">
         <div class="col-6">
             <div class="info-box">
-                <strong>👤 Repartidor:</strong> {% if ruta.empleado %}{{ ruta.empleado.nombre }} {{ ruta.empleado.apellido }}{% else %}Sin asignar{% endif %}<br>
-                <strong>🚚 Vehículo:</strong> {{ ruta.camion.descripcion }} ({{ ruta.camion.patente }})
+                <strong>Repartidor:</strong> {% if ruta.empleado %}{{ ruta.empleado.nombre }} {{ ruta.empleado.apellido }}{% else %}Sin asignar{% endif %}<br>
+                <strong>Vehículo:</strong> {{ ruta.camion.descripcion }} ({{ ruta.camion.patente }})
             </div>
         </div>
         <div class="col-6">
             <div class="info-box">
-                <strong>📍 Progreso:</strong> {{ ruta.paradas_entregadas }} de {{ ruta.total_paradas }} ({{ ruta.porcentaje_completado|floatformat:1 }}%)<br>
-                <strong>📝 Observaciones:</strong> {{ ruta.observaciones|default:"Ninguna" }}
+                <strong>Progreso:</strong> {{ ruta.paradas_entregadas }} de {{ ruta.total_paradas }} ({{ ruta.porcentaje_completado|floatformat:1 }}%)<br>
+                <strong>Observaciones:</strong> {{ ruta.observaciones|default:"Ninguna" }}
             </div>
         </div>
     </div>

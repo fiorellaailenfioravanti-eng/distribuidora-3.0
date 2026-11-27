@@ -57,6 +57,11 @@ class Cliente(models.Model):
         help_text='Los importados conservan su número del sistema anterior (ej. 1003389); '
                   'los nuevos se numeran 0000001, 0000002…'
     )
+    es_institucion   = models.BooleanField(
+        default=False,
+        verbose_name='Institución o empresa',
+        help_text='Escuelas, oficinas, comercios: se identifican con un solo nombre (el campo apellido).'
+    )
     # ── Datos propios (para clientes sin cuenta) ───────────────
     nombre           = models.CharField(
         max_length=LARGO_NOMBRE,
@@ -181,6 +186,19 @@ class Cliente(models.Model):
         partes = [p for p in [self.nombre, self.apellido] if p]
         return ' '.join(partes) if partes else f'Cliente #{self.pk}'
 
+    def apellido_nombre(self):
+        """«Apellido Nombre», para buscar y listar clientes ordenados por apellido.
+
+        Con cuenta web se usan los datos del usuario; una institución sólo tiene
+        el apellido (su nombre). Si falta todo, cae en `nombre_completo()`.
+        """
+        if self.usuario_id:
+            partes = [self.usuario.last_name, self.usuario.first_name]
+        else:
+            partes = [self.apellido, self.nombre]
+        texto = ' '.join(p.strip() for p in partes if p and p.strip())
+        return texto or self.nombre_completo()
+
     def email_display(self):
         """Email para mostrar (de la cuenta si existe, sino el propio)."""
         if self.usuario_id:
@@ -260,7 +278,7 @@ class TelefonoContacto(models.Model):
         constraints = limite_largo(numero=20, desc_relacion=40)
 
     def __str__(self):
-        principal = ' ⭐' if self.es_principal else ''
+        principal = ' (principal)' if self.es_principal else ''
         return f"{self.numero} ({self.desc_relacion}){principal}"
 
     def dar_de_baja(self):

@@ -131,6 +131,9 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Los tests guardan sus archivos en una carpeta temporal, no en media/.
+TEST_RUNNER = 'distribuidora.test_runner.RunnerConMediaTemporal'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -158,6 +161,20 @@ LOGOUT_REDIRECT_URL = '/auth/ingresar/'  # Redirige al inicio de sesión despué
 MERCADOPAGO_ACCESS_TOKEN = config('MERCADOPAGO_ACCESS_TOKEN', default='')
 # Sin secreto no se valida la firma del webhook (sólo aceptable en desarrollo).
 MERCADOPAGO_WEBHOOK_SECRET = config('MERCADOPAGO_WEBHOOK_SECRET', default='')
+
+
+# ─────────────────────────────────────────────────────────────────────
+# TRANSFERENCIA (datos que ve el cliente al pagar por transferencia)
+# ─────────────────────────────────────────────────────────────────────
+# Valores ficticios para desarrollo: reemplazarlos por los reales con las
+# variables de entorno antes de pasar a producción.
+DATOS_TRANSFERENCIA = {
+    'titular': config('TRANSFERENCIA_TITULAR', default='Aguadelluvia S.R.L.'),
+    'cuit': config('TRANSFERENCIA_CUIT', default='30-71234567-8'),
+    'entidad': config('TRANSFERENCIA_ENTIDAD', default='Mercado Pago'),
+    'cbu': config('TRANSFERENCIA_CBU', default='0000003100012345678901'),
+    'alias': config('TRANSFERENCIA_ALIAS', default='AGUADELLUVIA.MP'),
+}
 
 
 # ─────────────────────────────────────────────────────────────────────

@@ -30,12 +30,26 @@ def _filtrar_por_categoria(request, productos):
 # ─────────────────────────────────────────────────────────────
 # PRODUCTOS
 # ─────────────────────────────────────────────────────────────
+# Categoría propia del catálogo para las promociones prepagas (RF-09). No es una
+# `Categoria` de productos: al elegirla se muestran sólo las promociones activas.
+CATEGORIA_PROMOCIONES = 'Promociones'
+
+
 def listar_productos(request):
-    productos, categoria_actual = _filtrar_por_categoria(
-        request, Producto.objects.filter(activo=True))
-    productos = agotados_al_final(productos)
+    from apps.promociones.models import Promocion
+    promociones = Promocion.objects.filter(activa=True, producto__activo=True).select_related('producto')
+    categoria_actual = request.GET.get('categoria', '').strip()
+    if categoria_actual == CATEGORIA_PROMOCIONES:
+        # Las promociones se compran desde su categoría, como tarjetas.
+        productos = Producto.objects.none()
+    else:
+        productos, categoria_actual = _filtrar_por_categoria(request, Producto.objects.filter(activo=True))
+        productos = agotados_al_final(productos)
     return render(request, 'productos/listar_productos.html', {
         'productos': Paginator(productos, 6).get_page(request.GET.get('page')),
+        'promociones': promociones if categoria_actual == CATEGORIA_PROMOCIONES else [],
+        'cantidad_promociones': promociones.count(),
+        'categoria_promociones': CATEGORIA_PROMOCIONES,
         'categorias': Categoria.objects.vigentes().order_by('nombre'),
         'categoria_actual': categoria_actual,
     })

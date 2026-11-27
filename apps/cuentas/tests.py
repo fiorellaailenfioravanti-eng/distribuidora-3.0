@@ -62,7 +62,7 @@ class ReglaFiadoTests(TestCase):
 
 
 class SemaforizacionTests(TestCase):
-    """RF-14: 🟡 en plazo, 🟠 a los 10 días, 🔴 a los 15 días."""
+    """RF-14: amarillo en plazo, naranja a los 10 días, rojo a los 15 días."""
 
     def setUp(self):
         self.cliente = Cliente.objects.create(

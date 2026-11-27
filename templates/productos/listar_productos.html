@@ -29,11 +29,59 @@
                         <span><i class="fa-solid fa-angle-right me-2 {% if categoria_actual == e.nombre %}text-white{% else %}text-muted{% endif %} opacity-50"></i>{{ e.nombre }}</span>
                     </a>
                     {% endfor %}
+                    {% if cantidad_promociones %}
+                    {# Categoría propia de las promociones prepagas #}
+                    <a href="{% url 'apps.productos:listar_productos' %}?categoria={{ categoria_promociones }}" class="list-group-item list-group-item-action py-3 px-3 border-0 {% if categoria_actual == categoria_promociones %}active fw-bold{% else %}hover-lift text-success fw-semibold{% endif %} d-flex align-items-center justify-content-between">
+                        <span><i class="fa-solid fa-tags me-2 {% if categoria_actual == categoria_promociones %}text-white{% else %}text-success{% endif %}"></i>{{ categoria_promociones }}</span>
+                        <span class="badge rounded-pill {% if categoria_actual == categoria_promociones %}bg-white text-success{% else %}bg-success{% endif %}">{{ cantidad_promociones }}</span>
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
         <div class="col-lg-9 col-md-8">
+            {% if promociones %}
+            {# ── Promociones prepagas (RF-09): se compran como un producto más ── #}
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
+                {% for promo in promociones %}
+                <div class="col product-card-container">
+                    <div class="card h-100 product-card shadow-sm rounded-4 hover-lift border-0 overflow-hidden">
+                        <div class="product-img-container text-center p-4 position-relative">
+                            {% if promo.producto.imagen %}
+                                <img src="{{ promo.producto.imagen.url }}" alt="{{ promo.producto.nombre }}" class="img-fluid" style="height: 200px; object-fit: contain;">
+                            {% else %}
+                                <img src="{% static 'img/no-image.png' %}" alt="Sin imagen" class="img-fluid" style="height: 200px;">
+                            {% endif %}
+                            <span class="badge bg-success position-absolute top-0 start-0 m-3 shadow-sm rounded-pill">
+                                Pagás {{ promo.cant_paga }}, llevás {{ promo.cant_lleva }}
+                            </span>
+                        </div>
+                        <div class="card-body d-flex flex-column pt-3">
+                            <h6 class="card-title fw-bold mb-1 text-body-emphasis">{{ promo.nombre }}</h6>
+                            <p class="card-text text-muted small mb-3 flex-grow-1" style="font-size: 0.85rem;">
+                                {% if promo.descripcion %}{{ promo.descripcion|truncatewords:16 }}{% else %}{{ promo.cant_lleva }} × {{ promo.producto.nombre }}. Retirás las unidades en tus pedidos durante {{ promo.dias_validez }} días.{% endif %}
+                            </p>
+                            <div class="d-flex flex-column gap-2 mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-bold h5 mb-0 text-primary tracking-tight">${{ promo.precio }}</span>
+                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1" style="font-size: 0.75rem;">${{ promo.precio_por_unidad }} c/u</span>
+                                </div>
+                                <form action="{% url 'apps.carrito:agregar_promocion' promo.pk %}" method="post" data-sin-aviso>
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-glow w-100 rounded-pill text-white fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center hover-lift" style="font-size: 0.9rem;">
+                                        <i class="fa-solid fa-cart-plus me-2"></i> Añadir promoción
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% elif categoria_actual == categoria_promociones %}
+            <p class="text-muted">No hay promociones vigentes por ahora.</p>
+            {% endif %}
             <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
                 {% for e in productos %}
                 <div class="col product-card-container">
@@ -115,6 +163,7 @@
     
 </div>
 <!-- Paginación -->
+    {% if categoria_actual != categoria_promociones %}
     <nav aria-label="Paginación de productos" class="mt-5">
         <ul class="pagination justify-content-center shadow-sm">
         {% if productos.has_previous %}
@@ -156,6 +205,7 @@
                 {% endif %}
             </ul>
     </nav>
+    {% endif %}
 
 {% block extra_js %}
 <script>
